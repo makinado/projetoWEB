@@ -1,0 +1,1021 @@
+<template>
+  <v-dialog
+    v-model="modalStore.compras.compras.add"
+    fullscreen
+    persistent
+    hide-overlay
+    transition="dialog-bottom-transition"
+  >
+    <v-card v-if="modalStore.compras.compras.add">
+      <v-toolbar dark :color="color" class="m-0 p-0">
+        <v-btn icon @click="modalStore.compras.compras.add = false">
+          <v-icon>close</v-icon>
+        </v-btn>
+        <v-toolbar-title
+          class="headline text-white font-weight-light"
+        >{{ modalStore.compras.compras.title }}</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn icon @click>
+          <v-icon>fa fa-2x fa-cog</v-icon>
+        </v-btn>
+      </v-toolbar>
+
+      <v-card-text>
+        <v-container fluid grid-list-xl>
+          <v-form v-model="valid" ref="form">
+            <v-text-field label="id" v-model="compra.id" v-show="false"></v-text-field>
+            <v-text-field v-model="compra.id_empresa" v-show="false"></v-text-field>
+            <v-layout wrap>
+              <v-flex xs12 md3>
+                <v-autocomplete
+                  class="tag-input"
+                  chips
+                  dense
+                  :color="color"
+                  label="Fornecedor*"
+                  :items="pessoaStore.pessoas"
+                  prepend-icon="fa fa-lg fa-plus-circle"
+                  @click:prepend="[pessoaStore.pessoa = null, modalStore.pessoas.visible = true]"
+                  v-model="compra.id_pessoa"
+                  no-data-text="Nenhum fornecedor cadastrado"
+                  :rules="pessoaRules"
+                ></v-autocomplete>
+              </v-flex>
+              <!-- <v-flex xs12 md3> //DESENVOLVIMENTO FUTURO
+              <v-autocomplete
+              class="tag-input"
+                  chips
+                dense
+                :color="color"
+                label="Pedido"
+                :items="pedidos"
+                v-model="compra.id_pedido"
+                no-data-text="Parece que não há pedidos pendentes"
+              ></v-autocomplete>
+              </v-flex>-->
+              <v-spacer></v-spacer>
+
+              <v-flex xs12 md3>
+                <v-layout wrap justify-end class="mt-1 mb-1">
+                  <v-tooltip bottom>
+                    <v-btn
+                      slot="activator"
+                      class="v-btn-common"
+                      color="danger"
+                      @click="limpaTela"
+                    >Limpar</v-btn>
+                    <span>Volta a tela ao seu estado inicial</span>
+                  </v-tooltip>
+                  <v-tooltip bottom>
+                    <v-btn
+                      slot="activator"
+                      class="v-btn-common"
+                      color="info"
+                      @click="modalStore.compras.download = true"
+                    >Carregar XML</v-btn>
+                    <span>Realize o download do XML diretamente da receita</span>
+                  </v-tooltip>
+                  <v-tooltip bottom>
+                    <v-btn
+                      slot="activator"
+                      class="v-btn-common"
+                      :loading="isLoading"
+                      :color="color"
+                      @click="save"
+                    >Salvar</v-btn>
+                    <span>Finalizar informativo de compra</span>
+                  </v-tooltip>
+                </v-layout>
+              </v-flex>
+            </v-layout>
+          </v-form>
+
+          <v-container fluid>
+            <v-layout justify-start wrap class="bege mb-4">
+              <v-flex xs12 md6>
+                <v-card flat>
+                  <v-layout justify-center wrap>
+                    <v-card-title>
+                      <span class="headline">Dados da compra</span>
+                    </v-card-title>
+                    <v-card-text>
+                      <v-container grid-list-xl>
+                        <v-form v-model="valid1" ref="form1">
+                          <v-layout wrap>
+                            <v-flex xs12 md4>
+                              <v-text-field
+                                v-model="compra.nota_fiscal"
+                                :color="color"
+                                label="Nota fiscal"
+                                :rules="notaRules"
+                              ></v-text-field>
+                            </v-flex>
+                            <v-flex xs12 md4>
+                              <v-menu
+                                v-model="menu"
+                                :close-on-content-click="false"
+                                :nudge-right="40"
+                                transition="scale-transition"
+                                offset-y
+                                full-width
+                                max-width="290px"
+                                min-width="290px"
+                              >
+                                <template v-slot:activator="{ on }">
+                                  <v-text-field
+                                    :color="color"
+                                    v-model="computedDateFormatted"
+                                    label="Data Nota fiscal"
+                                    prepend-icon="event"
+                                    readonly
+                                    v-on="on"
+                                    :rules="dataRules"
+                                  ></v-text-field>
+                                </template>
+                                <v-date-picker
+                                  :color="color"
+                                  v-model="compra.data_notafiscal"
+                                  @input="menu = false"
+                                  locale="pt-br"
+                                ></v-date-picker>
+                              </v-menu>
+                            </v-flex>
+                            <v-flex xs12 md4>
+                              <v-menu
+                                v-model="menu1"
+                                :close-on-content-click="false"
+                                :nudge-right="40"
+                                transition="scale-transition"
+                                offset-y
+                                full-width
+                                max-width="290px"
+                                min-width="290px"
+                              >
+                                <template v-slot:activator="{ on }">
+                                  <v-text-field
+                                    :color="color"
+                                    v-model="computedDateFormatted1"
+                                    label="Data de lançamento"
+                                    prepend-icon="event"
+                                    readonly
+                                    v-on="on"
+                                    :rules="dataRules"
+                                  ></v-text-field>
+                                </template>
+                                <v-date-picker
+                                  :color="color"
+                                  v-model="compra.data_lancamento"
+                                  @input="menu1 = false"
+                                  locale="pt-br"
+                                ></v-date-picker>
+                              </v-menu>
+                            </v-flex>
+                            <v-flex xs12>
+                              <v-textarea
+                                :color="color"
+                                label="Observação"
+                                box
+                                v-model="compra.observacao"
+                              ></v-textarea>
+                            </v-flex>
+                          </v-layout>
+                        </v-form>
+                      </v-container>
+                    </v-card-text>
+                  </v-layout>
+                </v-card>
+              </v-flex>
+              <v-flex xs12 md6>
+                <v-card flat>
+                  <v-layout justify-center wrap>
+                    <v-card-title>
+                      <span class="headline">Totalizadores</span>
+                    </v-card-title>
+                    <v-card-text>
+                      <v-container grid-list-xl>
+                        <v-layout wrap>
+                          <v-flex xs12 md3>
+                            <v-text-field
+                              ref="valor_frete"
+                              v-model="compra.valor_frete"
+                              :color="color"
+                              label="VALOR DO FRETE"
+                              v-money="money"
+                              @blur="calcTotalizadores"
+                            ></v-text-field>
+                          </v-flex>
+                          <v-flex xs12 md3>
+                            <v-text-field
+                              ref="valor_seguro"
+                              v-model="compra.valor_seguro"
+                              :color="color"
+                              label="VALOR DO SEGURO"
+                              v-money="money"
+                              @blur="calcTotalizadores"
+                            ></v-text-field>
+                          </v-flex>
+                          <v-flex xs12 md3>
+                            <v-text-field
+                              ref="valor_desconto"
+                              v-model="compra.valor_desconto"
+                              :color="color"
+                              label="VALOR DE DESCONTO"
+                              v-money="money"
+                              @blur="calcTotalizadores"
+                            ></v-text-field>
+                          </v-flex>
+                          <v-flex xs12 md3>
+                            <v-text-field
+                              ref="outras_despesas"
+                              v-model="compra.outras_despesas"
+                              :color="color"
+                              label="VALOR DE OUTRAS DESPESAS"
+                              v-money="money"
+                              @blur="calcTotalizadores"
+                            ></v-text-field>
+                          </v-flex>
+                        </v-layout>
+
+                        <v-layout wrap class>
+                          <v-flex xs12 md3>
+                            <v-text-field
+                              ref="valor_produtos"
+                              v-model="compra.valor_produtos"
+                              :color="color"
+                              label="VALOR TOTAL DOS PRODUTOS"
+                              placeholder="R$ 0,00"
+                              readonly
+                            ></v-text-field>
+                          </v-flex>
+                          <v-flex xs12 md3>
+                            <v-text-field
+                              ref="valor_total"
+                              v-model="compra.valor_total"
+                              :color="color"
+                              label="VALOR TOTAL DA COMPRA"
+                              placeholder="R$ 0,00"
+                              readonly
+                            ></v-text-field>
+                          </v-flex>
+                        </v-layout>
+                      </v-container>
+                    </v-card-text>
+                  </v-layout>
+                </v-card>
+              </v-flex>
+            </v-layout>
+
+            <v-flex xs12>
+              <v-layout justify-center>
+                <v-icon class="mt-2 mr-2">fa fa-2x fa-archive</v-icon>
+                <h2>Produtos</h2>
+              </v-layout>
+              <hr />
+            </v-flex>
+            <v-layout align-end>
+              <span>Edite valores e quantidades do produto diretamente na tabela</span>
+              <v-spacer></v-spacer>
+              <v-tooltip bottom>
+                <v-btn
+                  slot="activator"
+                  class="v-btn-common"
+                  :color="color"
+                  @click="addProduto()"
+                >Adicionar produto</v-btn>
+                <span>Adicionar novo produto à compra</span>
+              </v-tooltip>
+            </v-layout>
+          </v-container>
+
+          <v-data-table
+            class="elevation-5 mb-3"
+            :items="produtos_compra"
+            :headers="fieldsProdutos"
+            :pagination.sync="paginationProd"
+            :rows-per-page-items="[5, 10, 20, 50]"
+            rows-per-page-text="Produtos por página"
+            no-data-text="Nenhum produto adicionado"
+          >
+            <template slot="items" slot-scope="data">
+              <td>{{ data.item.sequencia }}</td>
+              <td>
+                <v-flex xs10>
+                  <v-autocomplete
+                    class="tag-input"
+                    chips
+                    v-model="data.item.id"
+                    label="Selecione"
+                    :items="produtoStore.produtos"
+                    prepend-icon="fa fa-lg fa-plus-circle"
+                    @click:prepend="[produtoStore.produto = null, modalStore.produtos.visible = true]"
+                    @change="[loadDados(data.item)]"
+                  ></v-autocomplete>
+                </v-flex>
+              </td>
+              <td>
+                <v-flex xs12 md6>
+                  <v-text-field
+                    class="mt-2"
+                    v-model="data.item.cfop"
+                    v-money="question"
+                    @blur="[calcTotal(data.item)]"
+                  ></v-text-field>
+                </v-flex>
+              </td>
+              <td>
+                <v-flex xs12 md8>
+                  <v-text-field
+                    class="mt-2"
+                    v-model="data.item.ncm"
+                    placeholder="ncm não informado"
+                    @blur="[calcTotal(data.item)]"
+                  ></v-text-field>
+                </v-flex>
+              </td>
+              <td>
+                <v-flex xs12 md6>
+                  <v-text-field
+                    class="mt-2"
+                    v-model="data.item.quantidade"
+                    v-money="decimal"
+                    @blur="[calcTotal(data.item)]"
+                  ></v-text-field>
+                </v-flex>
+              </td>
+              <td>
+                <v-flex xs12 md6>
+                  <v-text-field
+                    class="mt-2"
+                    v-model="data.item.valor_unitario"
+                    v-money="money"
+                    @blur="[calcTotal(data.item)]"
+                  ></v-text-field>
+                </v-flex>
+              </td>
+              <td>
+                <v-flex xs12 md6>
+                  <v-text-field
+                    class="mt-2"
+                    v-model="data.item.valor_desconto"
+                    v-money="money"
+                    @blur="[calcTotal(data.item)]"
+                  ></v-text-field>
+                </v-flex>
+              </td>
+              <td>
+                <v-flex xs12 md6>
+                  <v-text-field
+                    class="mt-2"
+                    v-model="data.item.perc_custo_adicional"
+                    v-money="percent"
+                    @blur="[calcTotal(data.item)]"
+                  ></v-text-field>
+                </v-flex>
+              </td>
+              <td>{{ data.item.valor_total || 'R$ 0,00'}}</td>
+              <td>
+                <v-tooltip bottom>
+                  <b-button
+                    slot="activator"
+                    variant="secundary"
+                    class="mr-1"
+                    @click="deleteItem(data.item)"
+                  >
+                    <i class="fa fa-lg fa-trash"></i>
+                  </b-button>
+                  <span>Excluir produto</span>
+                </v-tooltip>
+              </td>
+            </template>
+            <template slot="footer">
+              <td colspan="4">
+                <h5>TOTAIS</h5>
+              </td>
+              <td>
+                <v-layout row>{{ totais.quantidade || '0,00' }}</v-layout>
+              </td>
+              <td>
+                <v-layout row>{{ totais.valor_unitario || 'R$ 0,00' }}</v-layout>
+              </td>
+              <td colspan="2">
+                <v-layout row>{{ totais.valor_desconto || 'R$ 0,00' }}</v-layout>
+              </td>
+              <td colspan="2">
+                <v-layout row>{{ totais.valor_total || 'R$ 0,00' }}</v-layout>
+              </td>
+            </template>
+          </v-data-table>
+
+          <v-container fluid>
+            <v-flex xs12>
+              <v-layout justify-center>
+                <v-icon class="mt-2 mr-2">fa fa-2x fa-usd</v-icon>
+                <h2>Financeiro</h2>
+              </v-layout>
+              <hr />
+            </v-flex>
+            <v-layout align-end>
+              <span>Edite valores diretamente na tabela</span>
+              <v-spacer></v-spacer>
+              <v-tooltip bottom>
+                <v-btn
+                  slot="activator"
+                  class="v-btn-common"
+                  :color="color"
+                  @click="addParcela()"
+                >Adicionar parcela</v-btn>
+                <span>Adicionar nova parcela à compra</span>
+              </v-tooltip>
+            </v-layout>
+          </v-container>
+
+          <v-data-table
+            class="elevation-5 mb-3"
+            :items="financeiro"
+            :headers="fieldsFinanceiro"
+            :pagination.sync="paginationFinanc"
+            :rows-per-page-items="[5, 10, 20]"
+            rows-per-page-text="Parcelas por página"
+            no-data-text="Nenhuma parcela adicionada"
+          >
+            <template slot="items" slot-scope="data">
+              <td>{{ data.item.parcelas }}</td>
+              <td>
+                <v-text-field
+                  v-if="disable"
+                  v-model.number="data.item.valor"
+                  v-money="money"
+                  @blur="[data.item.edit = true, attGridParc()]"
+                ></v-text-field>
+                <span v-else>{{ data.item.valor || "R$ 0,00"}}</span>
+              </td>
+              <td>
+                <v-flex xs8>
+                  <v-menu
+                    v-model="data.item.menu"
+                    :close-on-content-click="false"
+                    :nudge-right="40"
+                    transition="scale-transition"
+                    offset-y
+                    full-width
+                    max-width="290px"
+                    min-width="290px"
+                  >
+                    <template v-slot:activator="{ on }">
+                      <v-text-field
+                        :color="color"
+                        v-model="data.item.data"
+                        prepend-icon="event"
+                        readonly
+                        v-on="on"
+                      ></v-text-field>
+                    </template>
+                    <v-date-picker
+                      :color="color"
+                      v-model="data.item.dataNotFormated"
+                      @input="[data.item.menu = false, data.item.data = formatDate(data.item.dataNotFormated)]"
+                      locale="pt-br"
+                    ></v-date-picker>
+                  </v-menu>
+                </v-flex>
+              </td>
+              <td>
+                <v-flex xs8>
+                  <v-autocomplete
+                    class="tag-input"
+                    chips
+                    dense
+                    :color="color"
+                    :items="financeiroStore.documentos"
+                    v-model="data.item.documento_origem"
+                    placeholder="Selecione"
+                    no-data-text="Nenhum resultado"
+                    auto-select-first
+                  ></v-autocomplete>
+                </v-flex>
+              </td>
+              <td>
+                <v-switch
+                  v-model="data.item.pago"
+                  :color="color"
+                  hide-details
+                  @click.native="calcTotalFinanc()"
+                ></v-switch>
+              </td>
+              <td>
+                <v-tooltip bottom>
+                  <b-button
+                    slot="activator"
+                    variant="secundary"
+                    class="mr-1"
+                    @click="deleteParcela(data.item)"
+                  >
+                    <i class="fa fa-lg fa-trash"></i>
+                  </b-button>
+                  <span>Excluir parcela</span>
+                </v-tooltip>
+              </td>
+            </template>
+            <template slot="footer">
+              <td>
+                <h5>TOTAIS</h5>
+              </td>
+              <td>
+                <v-tooltip bottom>
+                  <v-chip
+                    slot="activator"
+                    :color="getColor(totaisFinanc.valor)"
+                    dark
+                  >{{ totaisFinanc.valor || 'R$ 0,00' }}</v-chip>
+                  <span>Esse valor deve corresponder ao valor total da compra</span>
+                </v-tooltip>
+              </td>
+              <td colspan="2">{{ totaisFinanc.data || '0 meses' }}</td>
+              <td colspan="2">{{ totaisFinanc.pago || 'Nenhuma parcela paga' }}</td>
+            </template>
+          </v-data-table>
+        </v-container>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
+</template>
+
+<script>
+import { VMoney } from "v-money";
+import { urlBD, showError, parseNumber, formatDate } from "@/global";
+import axios from "axios";
+import { mapState } from "vuex";
+import { formatToBRL } from "brazilian-values";
+
+export default {
+  directives: { money: VMoney },
+  name: "AddCompra",
+  computed: {
+    ...mapState("app", ["color"]),
+    ...mapState([
+      "modalStore",
+      "comprasStore",
+      "pessoaStore",
+      "produtoStore",
+      "financeiroStore",
+      "empresaStore",
+      "usuarioStore"
+    ]),
+    computedDateFormatted() {
+      return formatDate(this.compra.data_notafiscal);
+    },
+    computedDateFormatted1() {
+      return formatDate(this.compra.data_lancamento);
+    }
+  },
+  data() {
+    return {
+      menu: false,
+      menu1: false,
+      data: null,
+      expand: false,
+      isLoading: false,
+      disable: true,
+      valid: true,
+      valid1: true,
+      compra: {},
+      situacoes_trib: [],
+      produto: {},
+      produtos_compra: [],
+      pedidos: [],
+      financeiro: [],
+      fab: false,
+      money: {
+        decimal: ",",
+        thousands: ".",
+        precision: 2,
+        prefix: "R$ "
+      },
+      percent: {
+        decimal: ",",
+        thousands: ".",
+        precision: 2,
+        suffix: " %"
+      },
+      decimal: {
+        decimal: ",",
+        thousands: ".",
+        precision: 2
+      },
+      question: {
+        prefix: "?.",
+        decimal: "",
+        thousands: ""
+      },
+      fieldsFinanceiro: [
+        { value: "parcelas", text: "Parcelas" },
+        { value: "valor", text: "Valor" },
+        { value: "data", text: "Data de pagamento" },
+        { value: "documento_origem", text: "Documento" },
+        { value: "pago", text: "Pago?" },
+        { value: "actions", text: "Ações" }
+      ],
+      fieldsProdutos: [
+        { value: "sequencia", text: "Item", sortable: true },
+        { value: "produto", text: "Produto", sortable: true },
+        { value: "cfop", text: "CFOP", sortable: false },
+        { value: "ncm", text: "NCM", sortable: false },
+        { value: "quantidade", text: "Quantidade", sortable: true },
+        { value: "valor_unitario", text: "Valor unitário", sortable: true },
+        { value: "valor_desconto", text: "Valor desconto", sortable: false },
+        {
+          value: "perc_custo_adicional",
+          text: "Percentual adicional",
+          sortable: false
+        },
+        { value: "valor_total", text: "Valor total", sortable: true },
+        { value: "actions", text: "Ações", sortable: false }
+      ],
+      totais: [
+        { value: "quantidade" },
+        { value: "valor_unitario" },
+        { value: "valor_desconto" },
+        { value: "valor_total" }
+      ],
+      totaisFinanc: [{ value: "valor" }, { value: "data" }, { value: "pago" }],
+      paginationProd: {
+        descending: false,
+        page: 1,
+        rowsPerPage: 10, // -1 for All,
+        sortBy: "item",
+        totalItems: 0
+      },
+      paginationFinanc: {
+        descending: false,
+        page: 1,
+        rowsPerPage: 5, // -1 for All,
+        sortBy: "parcelas",
+        totalItems: 0
+      },
+      empRules: [v => !!v || "Empresa é obrigatória"],
+      pessoaRules: [v => !!v || "Fornecedor é obrigatório"],
+      dataRules: [v => !!v || "Datas são obrigatórias"],
+      notaRules: [v => !!v || "Nota fiscal é obrigatória"],
+      cfopRules: [
+        v => !!v || "CFOP é obrigatório",
+        v => (!!v && v !== "?.000") || "CFOP é obrigatório"
+      ]
+    };
+  },
+  watch: {
+    "$store.state.modalStore.compras.compras.add": function() {
+      if (this.modalStore.compras.compras.add) {
+        this.limpaTela();
+      }
+    }
+  },
+  methods: {
+    getColor(valor) {
+      if (!this.compra.valor_total || valor === this.compra.valor_total)
+        return "green";
+      else return "red";
+    },
+    formatDate(date) {
+      if (!date) return null;
+
+      const [year, month, day] = date.split("-");
+      return `${day}/${month}/${year}`;
+    },
+    async limpaTela() {
+      this.reset();
+      this.loadTela(this.comprasStore.compra);
+    },
+    async addProduto(addProd) {
+      if (!addProd) {
+        const produto = {
+          sequencia: this.produtos_compra.length
+        };
+
+        this.produtos_compra.push(produto);
+      }
+    },
+    async addParcela(addParc) {
+      if (!addParc) {
+        let data;
+        let documento_origem;
+        if (this.financeiro.length > 0) {
+          data = this.financeiro[this.financeiro.length - 1].data;
+          const [day, month, year] = data.split("/");
+
+          data = new Date(year, month, day).toISOString().substr(0, 10);
+          documento_origem = this.financeiro[this.financeiro.length - 1]
+            .documento_origem;
+        } else {
+          data = new Date().toISOString().substr(0, 10);
+        }
+
+        const parcela = {
+          edit: false,
+          parcelas:
+            this.financeiro.length + 1 + "/" + (this.financeiro.length + 1),
+          data,
+          data: formatDate(data),
+          documento_origem
+        };
+        this.financeiro.push(parcela);
+      }
+      this.attGridParc();
+    },
+    async attGridParc() {
+      // gambiarra necessária para forçar o campo valor a se atualizar
+      this.disable = false;
+      const valor = formatToBRL(
+        parseNumber(this.compra.valor_total || "0,00") / this.financeiro.length
+      );
+
+      this.financeiro.forEach(item => {
+        const parcelaAtual = item.parcelas.split("/");
+        item.parcelas = parcelaAtual[0] + "/" + this.financeiro.length;
+
+        if (!item.edit) item.valor = valor;
+      });
+
+      this.calcTotalFinanc().then(() => (this.disable = true));
+    },
+    async deleteParcela(parcela) {
+      if (parcela) {
+        this.financeiro = this.financeiro.filter(item => {
+          return item.parcelas !== parcela.parcelas;
+        });
+      }
+
+      this.calcTotalFinanc();
+    },
+    async reset() {
+      this.produto = {};
+      this.produtos_compra = [];
+      this.compra = {};
+      this.totais = {};
+      this.totaisFinanc = {};
+      this.financeiro = [];
+
+      this.$refs.form ? this.$refs.form.reset() : "";
+      this.$refs.form1 ? this.$refs.form1.reset() : "";
+
+      this.$refs.valor_frete
+        ? (this.$refs.valor_frete.$el.getElementsByTagName(
+            "input"
+          )[0].value = 0)
+        : "";
+      this.$refs.valor_seguro
+        ? (this.$refs.valor_seguro.$el.getElementsByTagName(
+            "input"
+          )[0].value = 0)
+        : "";
+      this.$refs.valor_desconto
+        ? (this.$refs.valor_desconto.$el.getElementsByTagName(
+            "input"
+          )[0].value = 0)
+        : "";
+      this.$refs.outras_despesas
+        ? (this.$refs.outras_despesas.$el.getElementsByTagName(
+            "input"
+          )[0].value = 0)
+        : "";
+    },
+    async loadCompras() {
+      const url = `${urlBD}/compras`;
+      axios.get(url).then(res => {
+        this.comprasStore.compras = res.data.map(compra => {
+          compra.data_notafiscal = formatDate(compra.data_notafiscal);
+          compra.data_lancamento = formatDate(compra.data_lancamento);
+          compra.valor_total = formatToBRL(compra.valor_total);
+
+          return compra;
+        });
+      });
+    },
+    async loadTela(compra) {
+      let url = `${urlBD}/compras/Tela`;
+
+      if (!compra) {
+        axios
+          .get(url)
+          .then(res => {
+            const tela = res.data;
+
+            this.pessoaStore.pessoas = tela.pessoas;
+            this.financeiroStore.documentos = tela.documentos;
+            this.produtoStore.produtos = tela.produtos.map(produto => {
+              produto.valor_unitario = formatToBRL(produto.valor_unitario);
+              return produto;
+            });
+          })
+          .catch(showError);
+      } else if (compra.id) {
+        axios
+          .get(`${url}/${compra.id}`)
+          .then(res => {
+            const tela = res.data;
+
+            this.compra = tela.compra;
+
+            this.pessoaStore.pessoas = tela.pessoas;
+            this.financeiroStore.documentos = tela.documentos;
+            this.produtoStore.produtos = tela.produtos.map(produto => {
+              produto.valor_unitario = formatToBRL(produto.valor_unitario);
+              return produto;
+            });
+            this.parseValores();
+            this.calcTotal();
+            this.calcTotalFinanc();
+          })
+          .catch(showError);
+      }
+    },
+    async loadDados(item) {
+      const produtoFilter = this.produtoStore.produtos.find(produto => {
+        return produto.value === item.id;
+      });
+
+      this.produtos_compra = this.produtos_compra.map(produto => {
+        if (produto.sequencia === item.sequencia) {
+          produto.ncm = produtoFilter.ncm;
+          produto.valor_unitario = produtoFilter.valor_unitario;
+        }
+        return produto;
+      });
+    },
+    async deleteItem(item) {
+      this.produtos_compra = this.produtos_compra.filter(produto => {
+        return produto.sequencia !== item.sequencia;
+      });
+      this.calcTotal();
+    },
+    async calcTotal(item) {
+      if (item) {
+        this.produtos_compra = this.produtos_compra.filter(produto => {
+          if (produto.sequencia === item.sequencia) {
+            produto.valor_total = formatToBRL(
+              parseNumber(produto.quantidade || "0,00", ",") *
+                parseNumber(produto.valor_unitario || "0,00", ",") -
+                parseNumber(produto.valor_desconto || "0,00", ",")
+            );
+          }
+          return produto;
+        });
+      }
+
+      let quantidade = 0,
+        valor_unitario = 0,
+        valor_desconto = 0,
+        valor_total = 0;
+
+      this.produtos_compra.forEach(produto => {
+        quantidade += parseNumber(produto.quantidade || "0,00", ",");
+        valor_unitario += parseNumber(produto.valor_unitario || "0,00", ",");
+        valor_desconto += parseNumber(produto.valor_desconto || "0,00", ",");
+        valor_total += parseNumber(produto.valor_total || "0,00", ",");
+      });
+      this.totais = {
+        quantidade: formatToBRL(quantidade).replace("R$", ""),
+        valor_unitario: formatToBRL(valor_unitario),
+        valor_desconto: formatToBRL(valor_desconto),
+        valor_total: formatToBRL(valor_total)
+      };
+
+      this.calcTotalizadores();
+    },
+    async calcTotalizadores() {
+      const {
+        valor_frete,
+        valor_seguro,
+        valor_desconto,
+        outras_despesas
+      } = this.compra;
+
+      // valor dos produtos
+      this.compra.valor_produtos = this.totais.valor_total;
+      const valor_produtos = this.compra.valor_produtos;
+      this.$refs.valor_produtos.$el.getElementsByTagName("input")[0].value =
+        this.compra.valor_produtos || "";
+
+      // valor total da nota
+      this.compra.valor_total = formatToBRL(
+        parseNumber(valor_produtos || "0,00", ",") +
+          parseNumber(valor_frete, ",") +
+          parseNumber(valor_seguro, ",") +
+          parseNumber(outras_despesas, ",") -
+          parseNumber(valor_desconto, ",")
+      );
+      this.$refs.valor_total.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.compra.valor_total;
+    },
+    async calcTotalFinanc() {
+      let valor = 0,
+        data = 0,
+        pago = 0;
+
+      this.financeiro.forEach(parcela => {
+        valor += parseNumber(parcela.valor || "0,00");
+        data += 1;
+        pago += parcela.pago ? parseNumber(parcela.valor || "0,00") : 0;
+      });
+
+      this.totaisFinanc = {
+        valor: formatToBRL(valor),
+        data: data === 1 ? `${data} mês` : `${data} meses`,
+        pago:
+          pago === 0
+            ? "Nenhuma parcela paga"
+            : `Total pago - ${formatToBRL(pago)}`
+      };
+    },
+    parseValores() {
+      this.compra.valor_frete = formatToBRL(this.compra.valor_frete);
+      this.compra.valor_seguro = formatToBRL(this.compra.valor_seguro);
+      this.compra.valor_desconto = formatToBRL(this.compra.valor_desconto);
+      this.compra.outras_despesas = formatToBRL(this.compra.outras_despesas);
+      this.compra.valor_produtos = formatToBRL(this.compra.valor_produtos);
+      this.compra.valor_total = formatToBRL(this.compra.valor_total);
+
+      this.$refs.cfop.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.compra.cfop;
+      this.$refs.valor_frete.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.compra.valor_frete;
+      this.$refs.valor_seguro.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.compra.valor_seguro;
+      this.$refs.valor_desconto.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.compra.valor_desconto;
+      this.$refs.outras_despesas.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.compra.outras_despesas;
+      this.$refs.valor_produtos.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.compra.valor_produtos;
+      this.$refs.valor_total.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.compra.valor_total;
+
+      this.produtos_compra = this.compra.produtos;
+      this.financeiro = this.compra.financeiro;
+
+      let i = 0;
+      this.produtos_compra = this.produtos_compra.map(produto => {
+        produto.valor_unitario = formatToBRL(produto.valor_unitario);
+        produto.valor_desconto = formatToBRL(produto.valor_desconto);
+        produto.quantidade = formatToBRL(produto.quantidade).replace("R$", "");
+        produto.perc_custo_adicional =
+          formatToBRL(produto.perc_custo_adicional).replace("R$", "") + " %";
+        produto.valor_total = formatToBRL(produto.valor_total);
+        produto.seq = i++;
+
+        return produto;
+      });
+      delete this.compra.produtos;
+
+      this.financeiro = this.financeiro.map(parcela => {
+        parcela.valor = formatToBRL(parcela.valor);
+        parcela.dataNotFormated = parcela.data;
+        parcela.data = formatDate(parcela.data);
+
+        return parcela;
+      });
+      delete this.compra.financeiro;
+    },
+    save() {
+      if (!this.$refs.form.validate() || !this.$refs.form1.validate()) return;
+
+      this.isLoading = true;
+
+      const method = this.compra.id ? "put" : "post";
+      const id = this.compra.id ? this.compra.id : "";
+      const url = `${urlBD}/compras/${id}`;
+
+      if (!this.compra.id_empresa) {
+        this.compra.id_empresa = this.empresaStore.currentEmpresa.value;
+      }
+      this.compra.produtos = this.produtos_compra;
+      this.compra.financeiro = this.financeiro;
+      this.compra.importado = false;
+
+      axios[method](url, this.compra)
+        .then(() => {
+          this.$toasted.global.defaultSuccess();
+          this.modalStore.compras.compras.add = false;
+
+          saveLog(
+            new Date(),
+            method === "post" ? "GRAVAÇÃO" : "ALTERAÇÃO",
+            "COMPRAS",
+            `Usuário ${this.usuarioStore.currentUsuario.nome} ${
+              method === "post" ? "ADICIONOU" : "ALTEROU"
+            } uma compra do fornecedor ${this.compra.id_pessoa}`
+          );
+        })
+        .catch(showError)
+        .then(() => (this.isLoading = false));
+    }
+  }
+};
+</script>

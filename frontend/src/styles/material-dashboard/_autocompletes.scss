@@ -1,0 +1,45 @@
+.theme--light.v-autocomplete .v-input__slot:before {
+    border-color: $input-color !important;
+  }
+  
+  .input--is-focused .v-input__control .v-input__slot:after{
+    border-color: red !important;
+  }
+  
+  .v-autocomplete__slot {
+    input {
+      @include material-placeholder{
+        color: $input-color;
+      };
+    }
+  
+    .v-label {
+      color: $label-color !important;
+      font-size: $font-size-general;
+      font-weight: $font-weight-base;
+    }
+  }
+
+  .tag-input span.v-chip {
+    background-color: $brand-primary !important;
+    color: $white !important;
+    font-size: 0.9em;
+    font-weight: 400;
+  }
+  
+  .v-data-table.v-autocomplete {
+    width: 5000px;
+  }
+  
+  .theme--light.v-input:not(.v-input--is-disabled) input,
+  .theme--light.v-input:not(.v-input--is-disabled) textarea {
+    color: $black-color;
+    font-size: $font-size-default;
+  }
+  
+  @include inputs-color($brand-primary, 'primary');
+  @include inputs-color($brand-warning, 'orange');
+  @include inputs-color($brand-info, 'info');
+  @include inputs-color($brand-danger, 'danger');
+  @include inputs-color($brand-success, 'success');
+  

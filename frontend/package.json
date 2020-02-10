@@ -1,0 +1,80 @@
+{
+  "name": "campag-vuetify",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "@feathersjs/feathers": "^4.3.10",
+    "@fortawesome/fontawesome-svg-core": "^1.2.19",
+    "@fortawesome/free-solid-svg-icons": "^5.9.0",
+    "@fortawesome/vue-fontawesome": "^0.1.6",
+    "axios": "^0.19.0",
+    "bootstrap-vue": "^2.0.0-rc.19",
+    "brazilian-values": "^0.5.0",
+    "chart.js": "^2.9.3",
+    "core-js": "^2.6.5",
+    "export-to-csv": "^0.2.1",
+    "font-awesome": "4.7.0",
+    "formatar-valores": "0.0.6",
+    "jspdf": "^1.5.3",
+    "jspdf-autotable": "^3.2.11",
+    "material-design-icons-iconfont": "^5.0.1",
+    "node-sass": "^4.13.1",
+    "npm-check-updates": "^3.1.20",
+    "nprogress": "^0.2.0",
+    "sass-loader": "^7.1.0",
+    "v-money": "^0.8.1",
+    "vue": "^2.6.10",
+    "vue-facebook-signin-button-directive": "^1.0.2",
+    "vue-google-signin-button-directive": "^1.0.3",
+    "vue-loading-overlay": "^3.2.0",
+    "vue-router": "^3.0.3",
+    "vue-scrollto": "^2.17.1",
+    "vue-the-mask": "^0.11.1",
+    "vue-toast-notification": "0.0.2",
+    "vue-toasted": "1.1.24",
+    "vuetify": "^1.5.5",
+    "vuex": "^3.0.1"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "^3.8.0",
+    "@vue/cli-plugin-eslint": "^3.8.0",
+    "@vue/cli-service": "^3.8.0",
+    "@vue/eslint-config-standard": "^4.0.0",
+    "babel-eslint": "^10.0.1",
+    "eslint": "^5.16.0",
+    "eslint-plugin-vue": "^5.0.0",
+    "stylus": "^0.54.5",
+    "stylus-loader": "^3.0.1",
+    "vue-cli-plugin-vuetify": "^0.5.0",
+    "vue-template-compiler": "^2.6.10",
+    "vuetify-loader": "^1.0.5"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "@vue/standard"
+    ],
+    "rules": {},
+    "parserOptions": {
+      "parser": "babel-eslint"
+    }
+  },
+  "postcss": {
+    "plugins": {
+      "autoprefixer": {}
+    }
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions"
+  ]
+}
