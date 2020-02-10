@@ -7,7 +7,7 @@ npm i
 
 ### Compiles and hot-reloads for development
 ```
-npm run serve (frontend)
+npm run serve (frontend) - npm audit fix (if necessary)
 npm start (backend)
 ```
 
