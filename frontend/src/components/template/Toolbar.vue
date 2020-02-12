@@ -89,7 +89,7 @@ import { usuarioKey, loadAtividades } from "@/global";
 export default {
   computed: {
     ...mapState("app", ["color"]),
-    ...mapState(["isLoading", "notificacoes", "empresaStore"]),
+    ...mapState(["isLoading", "notificacoes", "usuarioStore", "empresaStore"])
   },
   data() {
     return {
@@ -123,7 +123,9 @@ export default {
     },
     logout() {
       localStorage.removeItem(usuarioKey);
+      socket.emit("logout", this.usuarioStore.currentUsuario);
       this.$store.commit("setUsuario", null);
+
       this.$router.push({ path: "/auth" });
     }
   }

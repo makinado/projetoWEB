@@ -4,33 +4,60 @@
       <v-flex md12>
         <PageTitle main="Agenda" icon="fa fa-calendar" sub="Gerencie seus agendamentos" />
       </v-flex>
+      <v-flex sm4 xs12 class="text-sm-left text-xs-center">
+        <v-btn class="v-btn-common" :color="color" @click="$refs.calendar.prev()">
+          <v-icon dark left>keyboard_arrow_left</v-icon>Ant
+        </v-btn>
+        <v-btn class="v-btn-common" :color="color" @click="$refs.calendar.next()">
+          Prox
+          <v-icon right dark>keyboard_arrow_right</v-icon>
+        </v-btn>
+      </v-flex>
+      <v-flex sm4 xs12 class="text-xs-center">
+        <v-autocomplete
+          class="tag-input"
+          label="Tipo"
+          dense
+          chips
+          v-model="type"
+          :color="color"
+          :items="options"
+        ></v-autocomplete>
+      </v-flex>
+      <v-flex sm4 xs12 class="text-sm-right text-xs-center">
+        <v-btn
+          class="v-btn-common"
+          :color="color"
+          @click="[modalStore.eventos.visible = true, this.eventoStore.evento = null]"
+        >Adicionar evento</v-btn>
+      </v-flex>
+
       <v-flex xs12>
-        <v-sheet height="500">
+        <v-sheet height="550">
           <v-calendar
             ref="calendar"
             locale="pt-br"
             v-model="start"
             :type="type"
             :end="end"
-            color="primary"
+            :color="color"
             :now="today"
             :value="today"
           >
-            <template v-slot:day="{ date }">
-              <!-- Evento mes - dia todo/hora -->
+            <template slot="day" slot-scope="{ date }">
               <template v-for="evento in eventsMap[date]">
                 <v-menu :key="evento.descricao" v-model="evento.open" full-width offset-x>
                   <template v-slot:activator="{ on }">
                     <v-card
                       v-on="on"
                       v-html="evento.descricao"
-                      color="primary"
+                      :color="color"
                       flat
                       class="pt-0 pl-1 text-light my-event"
                     ></v-card>
                   </template>
                   <v-card color="grey lighten-4" min-width="350px" flat>
-                    <v-toolbar color="primary" dark>
+                    <v-toolbar :color="color" dark>
                       <v-toolbar-title class="text-light" v-html="evento.descricao"></v-toolbar-title>
                     </v-toolbar>
                     <v-card-title primary-title>
@@ -53,8 +80,7 @@
               </template>
             </template>
 
-            <template v-slot:dayHeader="{ date }">
-              <!-- Evento semanal - dia todo -->
+            <template slot="dayHeader" slot-scope="{ date }">
               <template v-for="evento in eventsMap[date]">
                 <v-menu :key="evento.descricao" v-model="evento.open" full-width offset-x>
                   <template v-slot:activator="{ on }">
@@ -62,13 +88,13 @@
                       v-if="!evento.hora"
                       v-on="on"
                       v-html="evento.descricao"
-                      color="primary"
+                      :color="color"
                       flat
                       class="pt-0 pl-1 text-light my-event"
                     ></v-card>
                   </template>
                   <v-card color="grey lighten-4" min-width="350px" flat>
-                    <v-toolbar color="primary" dark>
+                    <v-toolbar :color="color" dark>
                       <v-toolbar-title class="text-light" v-html="evento.descricao"></v-toolbar-title>
                     </v-toolbar>
                     <v-card-title primary-title>
@@ -91,23 +117,23 @@
               </template>
             </template>
 
-            <template v-slot:dayBody="{ date, timeToY, minutesToPixels }">
-              <!-- Evento semanal - hora -->
+            <template slot="dayBody" slot-scope="{ date, timeToY, minutesToPixels }">
               <template v-for="evento in eventsMap[date]">
                 <v-menu :key="evento.descricao" v-model="evento.open" full-width offset-x>
                   <template v-slot:activator="{ on }">
                     <v-card
-                      v-if="evento.hora"
                       v-on="on"
-                      v-html="evento.descricao"
-                      color="primary"
-                      :style="{ top: '200px', heigth: '10rpx' }"
-                      flat
-                      class="pt-0 pl-1 text-light my-event"
+                      v-if="evento.hora"
+                      :key="evento.descricao"
+                      v-html="evento.descricao + ' - ' + evento.hora"
+                      :style="{ top: timeToY(evento.hora) + 'px', height: '40px' }"
+                      :color="color"
+                      dark
+                      class="my-event with-time"
                     ></v-card>
                   </template>
                   <v-card color="grey lighten-4" min-width="350px" flat>
-                    <v-toolbar color="primary" dark>
+                    <v-toolbar :color="color" dark>
                       <v-toolbar-title class="text-light" v-html="evento.descricao"></v-toolbar-title>
                     </v-toolbar>
                     <v-card-title primary-title>
@@ -133,25 +159,6 @@
         </v-sheet>
       </v-flex>
 
-      <v-flex sm4 xs12 class="text-sm-left text-xs-center">
-        <v-btn class="v-btn-common" color="primary" @click="$refs.calendar.prev()">
-          <v-icon dark left>keyboard_arrow_left</v-icon>Ant
-        </v-btn>
-        <v-btn class="v-btn-common" color="primary" @click="$refs.calendar.next()">
-          Prox
-          <v-icon right dark>keyboard_arrow_right</v-icon>
-        </v-btn>
-      </v-flex>
-      <v-flex sm4 xs12 class="text-xs-center">
-        <v-select v-model="type" :items="options" label="Tipo"></v-select>
-      </v-flex>
-      <v-flex sm4 xs12 class="text-sm-right text-xs-center">
-        <v-btn
-          class="v-btn-common"
-          color="primary"
-          @click="[modalStore.eventos.visible = true, this.eventoStore.evento = null]"
-        >Adicionar evento</v-btn>
-      </v-flex>
       <AddEvento />
       <v-dialog
         v-model="modalStore.eventos.deleteEvento"
@@ -184,13 +191,14 @@ import PageTitle from "@/components/template/PageTitle";
 import AddEvento from "./AddEvento";
 
 import axios from "axios";
-import { urlBD, showError } from "@/global";
+import { urlBD, showError, formatDate } from "@/global";
 import { mapState } from "vuex";
 
 export default {
   name: "Agenda",
   components: { PageTitle, AddEvento },
   computed: {
+    ...mapState("app", ["color"]),
     ...mapState(["modalStore", "eventoStore"]),
     eventsMap() {
       const map = {};
@@ -198,15 +206,6 @@ export default {
         (map[e.data] = map[e.data] || []).push(e)
       );
       return map;
-    },
-    title() {
-      return "";
-    },
-    monthFormatter() {
-      return this.$refs.calendar.getFormatter({
-        timeZone: "UTC",
-        month: "long"
-      });
     }
   },
   watch: {
@@ -228,6 +227,25 @@ export default {
         { text: "Mês", value: "month" }
       ],
       eventos: [],
+      events: [
+        {
+          descricao: "Weekly Meeting",
+          data: "2020-02-11",
+          hora: "09:00",
+          duration: 45
+        },
+        {
+          descricao: "Thomas' Birthday",
+          data: "2020-02-12",
+          hora: null
+        },
+        {
+          descricao: "Mash Potatoes",
+          data: "2020-02-13",
+          hora: "12:30",
+          duration: 180
+        }
+      ],
       today: new Date().toISOString().substr(0, 10)
     };
   },
@@ -235,6 +253,7 @@ export default {
     loadEventos() {
       const url = `${urlBD}/eventos_agenda`;
       axios.get(url).then(res => {
+        console.log(res.data);
         this.eventoStore.eventos = res.data;
         this.eventoStore.eventos.map(evento => {
           evento.open = false;
@@ -262,11 +281,29 @@ export default {
 };
 </script>
 
-<style>
-.my-event {
+<style lang="stylus" scoped>
+/* .my-event {
   height: 25px;
   width: 100%;
   cursor: pointer;
   margin-bottom: 1px;
+} */
+.my-event {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-radius: 5px;
+  border: 1px solid;
+  padding: 3px;
+  cursor: pointer;
+  margin-bottom: 1px;
+  left: 4px;
+  margin-right: 8px;
+  position: relative;
+
+  &.with-time {
+    position: absolute;
+    right: 4px;
+    margin-right: 0px;
+  }
 }
 </style>

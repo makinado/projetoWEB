@@ -8,39 +8,38 @@ module.exports = app => {
 
         try {
             existsOrError(financeiro, 'Nenhuma parcela adicionada')
-            financeiro =
-                financeiro.map(financ => {
-                    try {
-                        existsOrError(financ.id_empresa, 'Empresa da conta não informada')
-                        existsOrError(financ.id_pessoa, 'Pessoa não informada')
-                        existsOrError(financ.tipo_conta, 'Tipo de conta não informada')
-                        existsOrError(financ.data_vencimento, 'Data de vencimento da conta não informada')
+            financeiro.map(financ => {
+                try {
+                    existsOrError(financ.id_empresa, 'Empresa da conta não informada')
+                    existsOrError(financ.id_pessoa, 'Pessoa não informada')
+                    existsOrError(financ.tipo_conta, 'Tipo de conta não informada')
+                    existsOrError(financ.data_vencimento, 'Data de vencimento da conta não informada')
 
-                        if (financ.pago) {
-                            existsOrError(financ.financ.id_conta, 'Conta para pagamento não informada')
-                            existsOrError(financ.data_baixa, 'Data do pagamento não informada')
-                            if (financ.valor_pago == "R$ 0,00") throw "Valor do pagamento não informado"
-                        }
-                    } catch (e) {
-                        return res.status(400).send(e.toString())
+                    if (financ.pago) {
+                        existsOrError(financ.id_conta, 'Conta para pagamento não informada')
+                        existsOrError(financ.data_baixa, 'Data do pagamento não informada')
+                        if (financ.valor_pago == "R$ 0,00") throw "Valor do pagamento não informado"
                     }
+                } catch (e) {
+                    return res.status(400).send(e.toString())
+                }
 
-                    financ.data_criacao = financ.data_criacao ? financ.data_criacao : new Date()
-                    financ.valor_parcela = parseNumber(financ.valor)
-                    financ.valor_desconto = parseNumber(financ.valor_desconto || "0,00")
-                    financ.valor_acrescimo = parseNumber(financ.valor_acrescimo || "0,00")
-                    financ.valor_pago = parseNumber(financ.valor_pago || "0,00")
-                    financ.valor_total = parseNumber(financ.valor_total)
+                financ.data_criacao = financ.data_criacao ? financ.data_criacao : new Date()
+                financ.valor_parcela = parseNumber(financ.valor)
+                financ.valor_desconto = parseNumber(financ.valor_desconto || "0,00")
+                financ.valor_acrescimo = parseNumber(financ.valor_acrescimo || "0,00")
+                financ.valor_pago = parseNumber(financ.valor_pago || "0,00")
+                financ.valor_total = parseNumber(financ.valor_total)
 
-                    delete financ.edit
-                    delete financ.menu
-                    delete financ.menu1
-                    delete financ.data
-                    delete financ.dataNotFormated
-                    delete financ.valor
+                delete financ.edit
+                delete financ.menu
+                delete financ.menu1
+                delete financ.data
+                delete financ.dataNotFormated
+                delete financ.valor
 
-                    return financ
-                })
+                return financ
+            })
         } catch (e) {
             return res.status(400).send(e.toString())
         }
@@ -73,7 +72,12 @@ module.exports = app => {
                         })
                         .then(trx.commit)
                         .catch(trx.rollback);
-                })
+                }).then(function (inserts) {
+                    res.status(204).send()
+                }).catch(function (error) {
+                    console.log(error.toString())
+                    res.status(500).send(error.toString())
+                });
             } else {
                 return app.db.transaction(async function (trx) {
                     return app.db('financeiro')
@@ -99,11 +103,14 @@ module.exports = app => {
                         })
                         .then(trx.commit)
                         .catch(trx.rollback);
-                })
+                }).then(function (inserts) {
+                    res.status(204).send()
+                }).catch(function (error) {
+                    console.log(error.toString())
+                    res.status(500).send(error.toString())
+                });
             }
         })
-
-        return res.status(204).send()
     }
 
     const save_pagamento = async (req, res) => {

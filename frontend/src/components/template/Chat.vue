@@ -28,7 +28,7 @@
       </v-badge>
       <v-icon>fa fa-lg fa-comments</v-icon>
     </v-btn>
-    <v-card>
+    <v-card v-if="menu">
       <v-toolbar dark dense flat :color="color">
         <v-toolbar-title class="white--text">Bem vindo ao chat!</v-toolbar-title>
         <!-- <small>Usuários - {{ connections }}</small> -->
@@ -65,6 +65,56 @@
             <v-icon>fa fa-lg fa-phone</v-icon>
           </v-tab>
 
+          <v-tab-item value="tab-1">
+            <v-container grid-list-xl>
+              <v-form ref="priv_form" v-model="priv_valid">
+                <v-layout wrap justify-center>
+                  <v-flex xs12>
+                    <v-autocomplete
+                      class="tag-input"
+                      dense
+                      chips
+                      deletable-chips
+                      :color="color"
+                      label="Selecione um usuário"
+                      v-model="message.receiver"
+                      :items="usuarios"
+                      item-value="email"
+                      return-object
+                      @change="joinPrivate"
+                      :rules="usuarioRules"
+                    >
+                      <template slot="item" slot-scope="data">
+                        <v-avatar v-if="data.item.online" class="mr-4" color="success" size="15"></v-avatar>
+                        <v-avatar v-else class="mr-4" color="danger" size="15"></v-avatar>
+                        {{ data.item.text }}
+                      </template>
+                    </v-autocomplete>
+                  </v-flex>
+                  <v-flex xs12>
+                    <div class="chat-container" ref="privChatContainer">
+                      <Message :messages="messages"></Message>
+                    </div>
+                  </v-flex>
+                  <v-flex xs12>
+                    <v-layout wrap justify-space-between>
+                      <v-text-field
+                        autofocus
+                        v-model="message.content"
+                        class="ml-3"
+                        placeholder="Digite aqui"
+                        @keyup.enter="sendPrivateMessage"
+                      ></v-text-field>
+                      <v-btn :color="color" class="mt-3" @click="sendPrivateMessage">
+                        <v-icon>fa fa-lg fa-paper-plane</v-icon>
+                      </v-btn>
+                    </v-layout>
+                  </v-flex>
+                </v-layout>
+              </v-form>
+            </v-container>
+          </v-tab-item>
+
           <v-tab-item value="tab-2">
             <v-container grid-list-xl>
               <v-form ref="team_form" v-model="team_valid">
@@ -86,7 +136,7 @@
                   </v-flex>
                   <v-flex xs12>
                     <div class="chat-container" ref="teamChatContainer">
-                      <Message :messages="team_messages"></Message>
+                      <Message :messages="messages"></Message>
                     </div>
                   </v-flex>
                   <v-flex xs12>
@@ -96,52 +146,9 @@
                         v-model="message.content"
                         class="ml-3"
                         placeholder="Digite aqui"
-                        @keyup.enter="send"
+                        @keyup.enter="sendMessage"
                       ></v-text-field>
-                      <v-btn :color="color" class="mt-3" @click="send">
-                        <v-icon>fa fa-lg fa-paper-plane</v-icon>
-                      </v-btn>
-                    </v-layout>
-                  </v-flex>
-                </v-layout>
-              </v-form>
-            </v-container>
-          </v-tab-item>
-
-          <v-tab-item value="tab-3">
-            <v-container grid-list-xl>
-              <v-form ref="supp_form" v-model="supp_valid">
-                <v-layout wrap justify-center>
-                  <v-flex xs12>
-                    <v-autocomplete
-                      class="tag-input"
-                      dense
-                      chips
-                      deletable-chips
-                      :color="color"
-                      label="Selecione a empresa"
-                      v-model="message.id_chat"
-                      :items="empresaStore.currentEmpresas"
-                      item-value="cnpj"
-                      @change="join"
-                      :rules="empresaRules"
-                    ></v-autocomplete>
-                  </v-flex>
-                  <v-flex xs12>
-                    <div class="chat-container" ref="supportChatContainer">
-                      <Message :messages="support_messages"></Message>
-                    </div>
-                  </v-flex>
-                  <v-flex xs12>
-                    <v-layout wrap justify-space-between>
-                      <v-text-field
-                        autofocus
-                        v-model="message.content"
-                        class="ml-3"
-                        placeholder="Digite aqui"
-                        @keyup.enter="send"
-                      ></v-text-field>
-                      <v-btn :color="color" class="mt-3" @click="send">
+                      <v-btn :color="color" class="mt-3" @click="sendMessage">
                         <v-icon>fa fa-lg fa-paper-plane</v-icon>
                       </v-btn>
                     </v-layout>
@@ -159,8 +166,7 @@
 <script>
 import { mapState } from "vuex";
 import axios from "axios";
-import { urlBD, showError, loadEmpresas } from "@/global";
-
+import { urlBD, showError, loadUsuarios } from "@/global";
 export default {
   name: "Chat",
   components: {
@@ -169,18 +175,29 @@ export default {
   computed: {
     ...mapState("app", ["color"]),
     ...mapState(["usuarioStore", "empresaStore"]),
-    user() {
-      return {
-        id: this.usuarioStore.currentUsuario.id,
-        nome: this.usuarioStore.currentUsuario.nome
-      };
+    user: {
+      get() {
+        return this.usuarioStore.currentUsuario;
+      }
+    }
+  },
+  watch: {
+    menu() {
+      if (this.menu) {
+        this.loadUsuariosChat();
+      }
+    },
+    tabIndex() {
+      if (this.message.receiver && this.tabIndex == "tab-1") this.joinPrivate();
+      else if (this.message.id_chat && this.tabIndex == "tab-2") this.join();
+      else this.messages = null;
     }
   },
   data() {
     return {
       message: {},
-      team_messages: [],
-      support_messages: [],
+      messages: [],
+      usuarios: [],
       info: [],
       menu: false,
       tabIndex: "tab-2",
@@ -189,61 +206,110 @@ export default {
       priv_valid: true,
       team_valid: true,
       supp_valid: true,
-      empresaRules: [v => !!v || "Selecione a empresa para participar do chat"]
+      empresaRules: [v => !!v || "Selecione a empresa para participar do chat"],
+      usuarioRules: [v => !!v || "Selecione um usuário para conversar"]
     };
   },
-  props: ["id"],
   methods: {
     reset() {
       this.tabIndex = "tab-2";
       this.message = {};
-      this.support_messages = [];
-      this.team_messages = [];
-
-      this.support_messages.push({
-        content: "Tire suas dúvidas com o nosso suporte online",
-        user: { id: "", nome: "NOME_EMPRESA" }
-      });
-      this.team_messages.push({
+      this.messages = [];
+      this.messages.push({
         content:
           "Dica! não compartilhe seu login e/ou senha com outros usuários ;)",
         user: { id: "", nome: "NOME_EMPRESA" }
       });
-
       this.$refs.priv_form ? this.$refs.priv_form.reset() : "";
       this.$refs.team_form ? this.$refs.team_form.reset() : "";
       this.$refs.supp_form ? this.$refs.supp_form.reset() : "";
     },
+    loadUsuariosChat() {
+      loadUsuarios();
+      this.usuarios = this.usuarioStore.usuarios
+        .filter(u => u.value != this.usuarioStore.currentUsuario.id)
+        .map(u => {
+          if (u.nome in this.usuarioStore.currentUsuarios) u.online = true;
+          else u.online = false;
+
+          return u;
+        });
+    },
+    joinPrivate() {
+      if (!this.message.receiver) return;
+
+      socket.emit("join private", {
+        receiver: {
+          id: this.message.receiver.id,
+          nome: this.message.receiver.nome,
+          email: this.message.receiver.email
+        },
+        sender: {
+          id: this.usuarioStore.currentUsuario.id,
+          nome: this.usuarioStore.currentUsuario.nome,
+          email: this.usuarioStore.currentUsuario.email
+        }
+      });
+      this.scrollToEnd();
+    },
     join() {
       if (!this.message.id_chat) return;
-
       socket.emit("join", this.message.id_chat);
+      this.scrollToEnd();
     },
-    send() {
-      if (this.tabIndex == "tab-1" && !this.$refs.priv_form.validate()) return;
-      if (this.tabIndex == "tab-2" && !this.$refs.team_form.validate()) return;
-      if (this.tabIndex == "tab-3" && !this.$refs.supp_form.validate()) return;
-
-      if (!this.message.content) return;
+    sendPrivateMessage() {
+      if (!this.message.content || this.$refs.team_form.validate()) return;
 
       const new_message = {
-        user: this.user,
+        user: {
+          id: this.usuarioStore.currentUsuario.id,
+          nome: this.usuarioStore.currentUsuario.nome,
+          email: this.usuarioStore.currentUsuario.email
+        },
+        receiver: {
+          id: this.message.receiver.id,
+          nome: this.message.receiver.nome,
+          email: this.message.receiver.email
+        },
         content: this.message.content,
         data: new Date().toLocaleString().substr(0, 18),
         id_chat: this.message.id_chat
       };
-      this.team_messages.push(new_message);
+      this.messages.push(new_message);
+      socket.emit("private chat message", new_message);
+      this.message.content = "";
+      this.scrollToEnd();
+    },
+    sendMessage() {
+      if (!this.message.content || !this.$refs.team_form.validate()) return;
 
+      const new_message = {
+        user: {
+          id: this.usuarioStore.currentUsuario.id,
+          nome: this.usuarioStore.currentUsuario.nome,
+          email: this.usuarioStore.currentUsuario.email
+        },
+        content: this.message.content,
+        data: new Date().toLocaleString().substr(0, 18),
+        id_chat: this.message.id_chat
+      };
+      this.messages.push(new_message);
       socket.emit("chat message", new_message);
       this.message.content = "";
       this.scrollToEnd();
     },
-    scrollToEnd() {
+    scrollToEnd(container) {
       this.$nextTick(() => {
-        var container1 = this.$refs.teamChatContainer;
-        var container2 = this.$refs.supportChatContainer;
-        if (container1) container1.scrollTop = container1.scrollHeight;
-        if (container2) container2.scrollTop = container2.scrollHeight;
+        if (this.tabIndex == "tab-1") {
+          var container = this.$refs.privChatContainer;
+          container.scrollTop = container.scrollHeight;
+        } else if (this.tabIndex == "tab-2") {
+          const container = this.$refs.teamChatContainer;
+          container.scrollTop = container.scrollHeight;
+        } else {
+          const container = this.$refs.supportChatContainer;
+          container.scrollTop = container.scrollHeight;
+        }
       });
     },
     playSound(sound) {
@@ -263,18 +329,30 @@ export default {
       }
     }
   },
+  mounted() {
+    this.reset();
+    this.loadUsuariosChat();
+  },
   created() {
     socket.on("chat message", msg => {
-      this.team_messages.push(msg);
+      this.messages.push(msg);
       this.notify();
+    });
+
+    socket.on("private chat message", msg => {
+      this.messages.push(msg);
+      this.notify();
+    });
+
+    socket.on("online users", data => {
+      this.usuarioStore.currentUsuarios = data;
+
+      this.loadUsuariosChat();
     });
 
     socket.on("join", msgs => {
-      this.team_messages = msgs;
-      this.notify();
+      this.messages = msgs;
     });
-
-    this.reset();
   }
 };
 </script>
@@ -299,7 +377,7 @@ export default {
   margin-right: 0;
 }
 .chat-container .username {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: bold;
 }
 .chat-container .content {
@@ -310,6 +388,9 @@ export default {
     0 2px 1px -1px rgba(0, 0, 0, 0.12);
   max-width: 50%;
   word-wrap: break-word;
+}
+.chat-container .data {
+  font-size: 11px;
 }
 @media (max-width: 480px) {
   .chat-container .content {

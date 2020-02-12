@@ -63,6 +63,7 @@ export default {
 
       if (res.data) {
         this.$store.commit("setUsuario", usuario);
+        socket.emit("login", usuario);
 
         axios
           .get(
@@ -70,7 +71,10 @@ export default {
           )
           .then(res => {
             this.empresaStore.currentEmpresas = res.data;
-            this.$store.commit("setEmpresa", this.empresaStore.currentEmpresas[0]);
+            this.$store.commit(
+              "setEmpresa",
+              this.empresaStore.currentEmpresas[0]
+            );
           });
 
         axios

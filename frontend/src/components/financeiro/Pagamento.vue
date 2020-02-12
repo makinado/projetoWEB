@@ -22,18 +22,8 @@
         <v-container grid-list-xl>
           <v-form v-model="valid" ref="form">
             <v-text-field label="id" v-model="pagamento.id" v-show="false"></v-text-field>
+            <v-text-field label="id" v-model="pagamento.id_empresa" v-show="false"></v-text-field>
             <v-layout row wrap>
-              <v-flex xs12 md6>
-                <v-autocomplete
-                  dense
-                  :color="color"
-                  label="Empresa*"
-                  :items="empresaStore.empresas"
-                  v-model="pagamento.id_empresa"
-                  no-data-text="Nenhuma empresa cadastrada"
-                  :rules="empRules"
-                ></v-autocomplete>
-              </v-flex>
               <v-flex xs12 md6>
                 <v-autocomplete
                   dense
@@ -58,7 +48,7 @@
                   readonly
                 ></v-text-field>
               </v-flex>
-              <v-flex xs12 md6>
+              <v-flex xs12 md4>
                 <v-menu
                   v-model="menu"
                   :close-on-content-click="false"
@@ -88,7 +78,7 @@
                   ></v-date-picker>
                 </v-menu>
               </v-flex>
-              <v-flex xs12 md6>
+              <v-flex xs12 md4>
                 <v-autocomplete
                   dense
                   :color="color"
@@ -101,7 +91,7 @@
                   :rules="docRules"
                 ></v-autocomplete>
               </v-flex>
-              <v-flex xs12 md6>
+              <v-flex xs12 md4>
                 <v-text-field
                   :color="color"
                   v-model="pagamento.num_documento_baixa"
@@ -158,14 +148,7 @@
 import { VMoney } from "v-money";
 
 import axios from "axios";
-import {
-  urlBD,
-  showError,
-  loadEmpresas,
-  parseNumber,
-  formatDate,
-  saveLog
-} from "@/global";
+import { urlBD, showError, parseNumber, formatDate, saveLog } from "@/global";
 import { mapState } from "vuex";
 import { formatToBRL } from "brazilian-values";
 
@@ -230,11 +213,6 @@ export default {
     async limpaTela() {
       this.reset();
       this.loadTela(this.financeiroStore.financ);
-      loadEmpresas().then(_ => {
-        if (this.empresaStore.empresas.length === 1) {
-          this.pagamento.id_empresa = this.empresaStore.empresas[0].value;
-        }
-      });
     },
     async reset() {
       this.pagamento = {};
@@ -311,6 +289,10 @@ export default {
     async save() {
       if (!this.$refs.form.validate()) return;
       const url = `${urlBD}/financeiro/pagamento/`;
+
+      if (!this.pagamento.id_empresa) {
+        this.pagamento.id_empresa = this.empresaStore.currentEmpresa.value;
+      }
 
       if (!this.pagamento.id) {
         this.financs = this.financs.map(item => {

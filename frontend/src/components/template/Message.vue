@@ -15,7 +15,7 @@
       <div style="margin-top: 5px"></div>
       <div class="content">
         <div v-html="message.content"></div>
-        <!-- <small v-html="message.data.substr(11, 8)"></small> -->
+        <small class="data" v-html="message.data ? message.data.substr(11, 5) : null"></small>
       </div>
     </div>
   </div>

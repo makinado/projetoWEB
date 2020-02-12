@@ -52,7 +52,6 @@
                   label="Tipo de conta*"
                   v-model="financ.tipo_conta"
                   no-data-text="Sem dados"
-                  :loading="isLoading"
                   :rules="pessoaRules"
                   @change="loadClassificacoes()"
                 ></v-autocomplete>
@@ -70,7 +69,13 @@
                     <span>Volta a tela ao seu estado inicial</span>
                   </v-tooltip>
                   <v-tooltip bottom>
-                    <v-btn slot="activator" class="v-btn-common" :color="color" @click="save">Salvar</v-btn>
+                    <v-btn
+                      slot="activator"
+                      class="v-btn-common"
+                      :loading="isLoading"
+                      :color="color"
+                      @click="save"
+                    >Salvar</v-btn>
                     <span>Finalizar lançamento</span>
                   </v-tooltip>
                 </v-layout>

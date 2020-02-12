@@ -501,16 +501,42 @@ export default {
       });
     },
     async remove() {
-      const id = this.vendaStore.orcamento.id;
-      const url = `${urlBD}/orcamentos/${id}`;
-      axios
-        .delete(url)
-        .then(() => {
-          this.$toasted.global.defaultSuccess();
-          this.loadOrcamentos();
-          this.modalStore.vendas.orcamentos.deleteOrcamento = false;
-        })
-        .catch(showError);
+      let itens = [];
+
+      if (!this.vendaStore.orcamento.id) {
+        itens = this.vendaStore.orcamento.map(item => {
+          return {
+            id: item.id,
+            valor_total: item.valor_total
+          };
+        });
+      } else {
+        itens.push({
+          id: this.vendaStore.orcamento.id,
+          valor_total: this.vendaStore.orcamento.valor_total
+        });
+      }
+
+      itens.map(async item => {
+        const url = `${urlBD}/orcamentos/${item.id}`;
+        await axios
+          .delete(url)
+          .then(() => {
+            this.$toasted.global.defaultSuccess();
+            this.modalStore.vendas.deleteOrcamento = false;
+            this.orcamentos_selecionados = [];
+
+            this.loadPedidos();
+
+            saveLog(
+              new Date(),
+              "EXCLUSÃO",
+              "PEDIDOS",
+              `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu o pedido ${item.id} no valor de ${item.valor_total}`
+            );
+          })
+          .catch(showError);
+      });
     }
   },
   mounted() {

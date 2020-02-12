@@ -145,6 +145,7 @@ export default {
         .then(res => {
           this.$store.commit("setUsuario", res.data);
           localStorage.setItem(usuarioKey, JSON.stringify(res.data));
+          socket.emit("login", res.data);
 
           axios
             .get(
