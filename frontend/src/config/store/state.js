@@ -20,7 +20,8 @@ export default {
   },
   usuarioStore: {
     currentUsuario: null,
-    currentUsuarios: null,
+    usuariosOnline: null,
+    currentUsuarios: [],
 
     usuario: null,
     usuarios: [],

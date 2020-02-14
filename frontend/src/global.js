@@ -5,7 +5,7 @@ import store from './config/store/state'
 import { formatToBRL } from 'brazilian-values'
 
 export const usuarioKey = 'campag-vuetify123'
-//export const urlBD = 'http://3.15.52.156:3000'          // EC2
+// export const urlBD = 'http://3.15.52.156:3000'          // EC2
 export const urlBD = 'http://192.168.0.80:3000'          // LOCAL NETWORK
 // export const urlBD = 'http://localhost:3000'              // LOCAL
 
@@ -90,7 +90,7 @@ export async function loadFornecs() {
 export async function loadUsuarios() {
     const url = `${urlBD}/usuarios/todos`;
     axios.get(url).then(res => {
-        store.usuarioStore.usuarios = res.data.map(usuario => {
+        store.usuarioStore.currentUsuarios = res.data.map(usuario => {
             usuario.value = usuario.id;
             usuario.text = usuario.nome;
 

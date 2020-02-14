@@ -190,7 +190,14 @@ export default {
     tabIndex() {
       if (this.message.receiver && this.tabIndex == "tab-1") this.joinPrivate();
       else if (this.message.id_chat && this.tabIndex == "tab-2") this.join();
-      else this.messages = null;
+      else
+        this.messages = [
+          {
+            content:
+              "Dica! não compartilhe seu login e/ou senha com outros usuários ;)",
+            user: { id: "", nome: "NOME_EMPRESA" }
+          }
+        ];
     }
   },
   data() {
@@ -226,10 +233,10 @@ export default {
     },
     loadUsuariosChat() {
       loadUsuarios();
-      this.usuarios = this.usuarioStore.usuarios
+      this.usuarios = this.usuarioStore.currentUsuarios
         .filter(u => u.value != this.usuarioStore.currentUsuario.id)
         .map(u => {
-          if (u.nome in this.usuarioStore.currentUsuarios) u.online = true;
+          if (u.nome in this.usuarioStore.usuariosOnline) u.online = true;
           else u.online = false;
 
           return u;
@@ -345,7 +352,7 @@ export default {
     });
 
     socket.on("online users", data => {
-      this.usuarioStore.currentUsuarios = data;
+      this.usuarioStore.usuariosOnline = data;
 
       this.loadUsuariosChat();
     });

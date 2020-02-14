@@ -1,7 +1,6 @@
 const bcrypt = require('bcrypt-nodejs')
 const generator = require('generate-password')
 const jwt = require('jwt-simple')
-const { authSecret, EMAIL, SENHA } = require('../../.env')
 const nodemailer = require("nodemailer");
 require('dotenv').config()
 
@@ -191,7 +190,7 @@ module.exports = app => {
             exp: now + 3600000
         }
 
-        const token = jwt.encode(payload, authSecret)
+        const token = jwt.encode(payload, process.env.AUTH_SECRET)
 
         try {
             let transporter = nodemailer.createTransport({
@@ -199,8 +198,8 @@ module.exports = app => {
                 port: 465,
                 secure: true, // use SSL
                 auth: {
-                    user: EMAIL, // 
-                    pass: SENHA // 
+                    user: process.env.EMAIL, // 
+                    pass: process.env.SENHA // 
                 },
             });
             const message = {

@@ -490,6 +490,16 @@ export default {
       const csvExporter = new ExportToCsv(options);
 
       if (data.pessoas) {
+        data.pessoas.map(pessoa => {
+          if (pessoa.cpf) pessoa.cnpj = "";
+          else pessoa.cpf = "";
+
+          if (!pessoa.categoria) pessoa.categoria = "";
+
+          return pessoa;
+        });
+
+        console.log(data.pessoas)
         csvExporter.generateCsv(data.pessoas);
       } else if (data.usuarios) {
         csvExporter.generateCsv(data.usuarios);

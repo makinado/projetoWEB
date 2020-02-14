@@ -149,7 +149,7 @@ module.exports = app => {
     const getById = async (req, res) => {
         app.db('empresas')
             .leftJoin('municipios', 'empresas.id_cidade', 'municipios.cmun')
-            .select('*', 'municipios.xuf as uf', 'municipios.xmun as cidade')
+            .select('*', 'municipios.uf as uf', 'municipios.xmun as cidade')
             .where({ id: req.params.id })
             .first()
             .then(empresa => res.json(empresa))

@@ -2,6 +2,8 @@ var app = require('express')();
 var http = require('http').createServer(app);
 const io = require('socket.io')(http)
 
+require('dotenv').config()
+
 const compression = require('compression')
 require('./api/chat/socket')(io, app);
 const consign = require('consign')

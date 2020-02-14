@@ -38,6 +38,15 @@ module.exports = (io, app) => {
 
         })
 
+        socket.on('disconnect', () => {
+            if ("user" in socket) {
+                onlineUsers = removeUser(onlineUsers, socket.user.nome)
+
+                emitOnlineUsers()
+            }
+
+        })
+
         socket.on('join', async room => {
             socket.join(room)
 

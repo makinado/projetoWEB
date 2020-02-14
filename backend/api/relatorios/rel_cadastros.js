@@ -1,7 +1,5 @@
 module.exports = app => {
     const getData = async (req, res) => {
-        console.log(req.query)
-
         var produtos, usuarios, pessoas
 
         if (req.query.cadastros.includes('cliente') ||
@@ -11,7 +9,31 @@ module.exports = app => {
             req.query.cadastros.includes('transportadora')) {
             pessoas = await app.db('pessoas')
                 .leftJoin('categorias', 'pessoas.categoria', 'categorias.id')
-                .select('pessoas.*', 'categorias.descricao as categoria')
+                .leftJoin('municipios', 'pessoas.id_cidade', 'municipios.cmun')
+                .select(
+                    'pessoas.id',
+                    'pessoas.nome',
+                    'pessoas.fantasia',
+                    'pessoas.cpf',
+                    'pessoas.cnpj',
+                    'pessoas.cep',
+                    'municipios.xuf as uf',
+                    'municipios.xmun as cidade',
+                    'pessoas.bairro',
+                    'pessoas.logradouro',
+                    'pessoas.numero',
+                    'pessoas.contato',
+                    'pessoas.contato2',
+                    'pessoas.email',
+                    'pessoas.email2',
+                    'pessoas.situacao',
+                    'categorias.descricao as categoria',
+                    'pessoas.inscricao_estadual',
+                    'pessoas.inscricao_municipal',
+                    'pessoas.data_criado',
+                    'pessoas.data_atualizado',
+                    'pessoas.observacao',
+                )
                 .orderBy(req.query.ordem || "nome")
                 .where((qb) => {
                     if (req.query.cadastros.includes('cliente')) {
@@ -37,8 +59,20 @@ module.exports = app => {
                         }
                     }
                 })
+            pessoas.push(
+                totais = {
+                    pessoas: await app.db('pessoas').count('id').first().then(c => c.count),
+                    clientes: await app.db('pessoas').count('id').where({ cliente: true }).first().then(c => c.count),
+                    fornecedores: await app.db('pessoas').count('id').where({ fornecedor: true }).first().then(c => c.count),
+                    vendedores: await app.db('pessoas').count('id').where({ vendedor: true }).first().then(c => c.count),
+                    funcionarios: await app.db('pessoas').count('id').where({ funcionario: true }).first().then(c => c.count),
+                    transportadoras: await app.db('pessoas').count('id').where({ transportadora: true }).first().then(c => c.count)
+                }
+            )
+
         } else if (req.query.cadastros.includes('usuario')) {
             usuarios = await app.dbUsers('usuarios')
+                .select('id', 'nome', 'email', 'contato', 'data_criado', 'data_atualizado', 'id_perfil', 'img')
                 .orderBy(req.query.ordem || "nome")
                 .where((qb) => {
                     if (req.query.data_inicial && req.query.data_final) {
@@ -49,6 +83,8 @@ module.exports = app => {
                         }
                     }
                 })
+            usuarios.usuariosCount = await app.dbUsers('usuarios').count('id').first()
+
         } else if (req.query.cadastros.includes('produto')) {
             produtos = await app.db('produtos')
                 .select('produtos.*')
@@ -62,9 +98,11 @@ module.exports = app => {
                         }
                     }
                 })
+            produtos.produtosCount = await app.db('produtos').count('id').first()
         }
 
-        console.log('pessoas - ', pessoas, 'usuarios - ', usuarios, 'produtos - ', produtos)
+        console.log(pessoas)
+
         res.json({ pessoas, usuarios, produtos })
     }
 

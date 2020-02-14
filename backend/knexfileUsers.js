@@ -1,11 +1,9 @@
-const { hostDev } = require('./.env')
-
 const db = {
-	host: hostDev,
-	port: 5432,
+	host: process.env.DB_HOST,
+	port: process.env.DB_PORT,
 	database: 'CampagUsers',
 	user: 'postgres',
-	password: 'postgres'
+	password: process.env.DB_PASS
 }
 
 module.exports = {

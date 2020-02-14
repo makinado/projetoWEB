@@ -232,16 +232,11 @@ module.exports = app => {
 
     const getTela = async (req, res) => {
         if (req.params.id) {
-            let pessoa = await app.db('pessoas')
+            const pessoa = await app.db('pessoas')
+                .leftJoin('municipios', 'pessoas.id_cidade', 'municipios.cmun')
+                .select('pessoas.*', 'municipios.uf as uf', 'municipios.xmun as cidade')
                 .where({ id: req.params.id }).first()
                 .catch(e => res.status(500).send(e))
-
-            if (pessoa.id_cidade) {
-                const municipio = await app.db('municipios').select('xuf', 'xmun').where({ cmun: pessoa.id_cidade }).first()
-                    .catch(e => res.status(500).send(e.toString()))
-                pessoa.uf = municipio.xuf;
-                pessoa.cidade = municipio.xmun;
-            }
 
             const categorias = await app.db('categorias').select('id as value', 'descricao as text').where({ tipo: 1 })
                 .catch(e => res.status(500).send(e.toString()))
