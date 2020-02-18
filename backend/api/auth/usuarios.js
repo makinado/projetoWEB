@@ -208,7 +208,7 @@ module.exports = app => {
                 subject: 'Recuperação de senha NOME_EMPRESA', // Subject line
                 text: `Olá ${usuarioBD.nome}, você solicitou a recuperação de senha para a sua conta na NOME_EMPRESA.\n\n` +
                     'Clique no link para recuperar a senha:\n\n' +
-                    'http://' + req.headers.host + '/reset/' + token + '\n\n' +
+                    'http://localhost:8081/reset/' + token + '\n\n' +
                     'Caso não tenha solicitado a recuperação, apenas ignore este e-mail.\n\n' +
                     'Atenciosamente,\n' +
                     'NOME_EMPRESA.'

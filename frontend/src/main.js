@@ -11,6 +11,8 @@ import './config/bootstrap'
 import './config/axios'
 import './config/msg'
 
+import ViaCep from 'vue-viacep'
+Vue.use(ViaCep);
 import VueTheMask from 'vue-the-mask'
 Vue.use(VueTheMask)
 

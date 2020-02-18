@@ -96,9 +96,9 @@
                 slot="activator"
                 class="v-btn-common"
                 :color="color"
-                @click.prevent="[pessoaStore.pessoa = null,modalStore.pessoas.visible = true,modalStore.pessoas.title = 'Adicionar pessoa']"
+                @click.prevent="[empresaStore.meta = null, modalStore.empresas.metas.visible = true, modalStore.empresas.metas.title = 'Adicionar meta']"
               >Adicionar</v-btn>
-              <span>Adicionar pessoa</span>
+              <span>Adicionar meta</span>
             </v-tooltip>
           </v-layout>
         </v-flex>
@@ -191,9 +191,9 @@
             slot="activator"
             class="v-btn-common"
             :color="color"
-            @click.prevent="[pessoaStore.pessoa = null,modalStore.pessoas.visible = true,modalStore.pessoas.title = 'Adicionar pessoa']"
+            @click.prevent="[empresaStore.meta = null, modalStore.empresas.metas.visible = true, modalStore.empresas.metas.title = 'Adicionar meta']"
           >Adicionar</v-btn>
-          <span>Adicionar pessoa</span>
+          <span>Adicionar meta</span>
         </v-tooltip>
       </v-layout>
     </v-container>

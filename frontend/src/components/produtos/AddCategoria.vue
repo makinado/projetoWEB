@@ -191,7 +191,7 @@ export default {
             "CATEGORIAS",
             `Usuário ${this.usuarioStore.currentUsuario.nome} ${
               method === "post" ? "ADICIONOU" : "ALTEROU"
-            } a categoria ${this.categoriaStore.categoria.descricao}`
+            } a categoria ${this.categoria.descricao}`
           );
           this.reset();
         })

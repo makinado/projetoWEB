@@ -341,7 +341,7 @@
                             </v-flex>
                             <v-textarea
                               :color="color"
-                              label="Observações"
+                              label="Alguma observação?"
                               box
                               v-model="pessoa.observacao"
                             ></v-textarea>
@@ -368,8 +368,10 @@
 
 <script>
 import axios from "axios";
-import { urlBD, showError, formatDate, removeMascara, saveLog } from "@/global";
+import { urlBD, showError, saveLog } from "@/global";
 import { mapState } from "vuex";
+
+import ViaCep from "vue-viacep";
 
 import { isCNPJ, isCPF, formatToCNPJ } from "brazilian-values";
 
@@ -440,9 +442,10 @@ export default {
       if (this.modalStore.pessoas.visible) {
         this.reset();
         this.loadTela(this.pessoaStore.pessoa);
-      } else {
-        this.loadCategorias();
       }
+    },
+    "$store.state.modalStore.categorias.visible": function() {
+      if (!this.modalStore.categorias.visible) this.loadCategorias();
     }
   },
   methods: {
@@ -458,27 +461,22 @@ export default {
       this.tabIndex = "tab-1";
     },
     getCep() {
-      const url_cep = "https://viacep.com.br/ws/" + this.pessoa.cep + "/json/";
-
-      axios.defaults.headers.common = null;
-
-      axios
-        .get(url_cep)
+      this.$viaCep
+        .buscarCep(this.pessoa.cep)
         .then(res => {
-          this.pessoa.cep = res.data.cep;
-          this.pessoa.bairro = res.data.bairro;
-          this.pessoa.logradouro = res.data.logradouro;
-          this.pessoa.complemento = res.data.complemento;
-          this.pessoa.cidade = res.data.localidade;
-          this.pessoa.uf = res.data.uf;
-          this.pessoa.id_cidade = res.data.ibge;
+          this.pessoa.cep = res.cep;
+          this.pessoa.bairro = res.bairro;
+          this.pessoa.logradouro = res.logradouro;
+          this.pessoa.complemento = res.complemento;
+          this.pessoa.cidade = res.localidade;
+          this.pessoa.uf = res.uf;
+          this.pessoa.id_cidade = res.ibge;
           this.tabIndex = "tab-3";
           this.tabIndex = "tab-2";
+
           this.$toasted.global.defaultSuccess();
         })
-        .catch(() => {
-          showError("CEP inválido");
-        });
+        .catch(showError);
     },
     loadTela(pessoa) {
       let url = `${urlBD}/pessoas/tela`;
@@ -561,7 +559,7 @@ export default {
 
       const method = this.pessoa.id ? "put" : "post";
       const id = this.pessoa.id ? this.pessoa.id : "";
-      const urlPessoas = `${urlBD}/pessoas/${id}`;
+      const url = `${urlBD}/pessoas/${id}`;
 
       this.selected.includes("Cliente")
         ? (this.pessoa.cliente = true)
@@ -579,7 +577,7 @@ export default {
         ? (this.pessoa.vendedor = true)
         : (this.pessoa.vendedor = false);
 
-      axios[method](urlPessoas, this.pessoa)
+      axios[method](url, this.pessoa)
         .then(() => {
           this.$toasted.global.defaultSuccess();
           this.modalStore.pessoas.visible = false;
@@ -593,7 +591,7 @@ export default {
             } a pessoa ${this.pessoa.nome}`
           );
         })
-        .catch(e => showError(e));
+        .catch(showError);
     }
   }
 };

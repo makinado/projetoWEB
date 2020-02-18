@@ -10,25 +10,30 @@ module.exports = app => {
             pessoa.id = req.params.id
         }
 
-
         try {
             existsOrError(pessoa.tipo, 'Tipo de pessoa inválido')
-            if (pessoa.tipo === 'Física')
+            if (pessoa.tipo === 'Física') {
                 existsOrError(pessoa.cpf, 'CPF inválido')
-            else
+                pessoa.cnpj = null
+            } else {
                 existsOrError(pessoa.cnpj, 'CNPJ inválido')
+                pessoa.cpf = null
+            }
             existsOrError(pessoa.nome, 'Nome inválido')
             existsOrError(pessoa.cep, 'CEP inválido')
             if (!pessoa.cliente && !pessoa.fornecedor && !pessoa.funcionario && !pessoa.transportadora && !pessoa.vendedor) {
                 throw 'Informe cliente, fornecedor, funcionário, transportadora ou vendedor'
             }
-            let pessoaDB = {}
-            if (pessoa.cpf && !pessoa.id) {
+            var pessoaDB
+            if (pessoa.cpf) {
                 pessoaDB = await app.db('pessoas').where({ cpf: pessoa.cpf }).first()
-            } else if (pessoa.cnpj && !pessoa.id) {
+            } else if (pessoa.cnpj) {
                 pessoaDB = await app.db('pessoas').where({ cnpj: pessoa.cnpj }).first()
             }
-            notExistsOrError(pessoaDB, `${pessoaDB ? pessoaDB.nome : "Pessoa"} já cadastrado(a)`)
+
+            if (!pessoa.id) {
+                notExistsOrError(pessoaDB, `${pessoaDB ? pessoaDB.nome : "Pessoa"} já cadastrado(a)`)
+            }
 
         } catch (e) {
             return res.status(400).send(e.toString())

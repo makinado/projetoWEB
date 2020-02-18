@@ -16,7 +16,7 @@ module.exports = app => {
             if (meta.valor_total === '0,00')
                 throw 'O valor da meta não pode ser 0,00'
 
-            meta.valor_total = parseFloat(parseNumber(meta.valor_total, ','))
+            meta.valor_total = parseFloat(parseNumber(meta.valor_total))
 
             const metaBD = await app.db('meta_empresa')
                 .where({ id_empresa: meta.id_empresa, tipo_receita_despesa: meta.tipo_receita_despesa, valor_total: meta.valor_total }).first()
@@ -47,8 +47,8 @@ module.exports = app => {
                             id_meta: meta.id,
                             mes: metaAnual.mes,
                             ano: year,
-                            valor: parseFloat(parseNumber(metaAnual.valor, ',')),
-                            percentual: parseFloat(parseNumber(metaAnual.percentual, ','))
+                            valor: parseFloat(parseNumber(metaAnual.valor)),
+                            percentual: parseFloat(parseNumber(metaAnual.percentual))
                         }
 
                         app.db('meta_empresa_valores')
@@ -68,8 +68,8 @@ module.exports = app => {
                     id_meta: id_meta[0],
                     mes: meta.mes,
                     ano: year,
-                    valor: parseFloat(parseNumber(meta.valor, ',')),
-                    percentual: parseFloat(parseNumber(meta.percentual, ','))
+                    valor: parseFloat(parseNumber(meta.valor)),
+                    percentual: parseFloat(parseNumber(meta.percentual))
                 }
 
                 app.db('meta_empresa_valores')

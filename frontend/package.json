@@ -15,6 +15,7 @@
     "axios": "^0.19.0",
     "bootstrap-vue": "^2.0.0-rc.19",
     "brazilian-values": "^0.5.0",
+    "canvas-toBlob": "^1.0.0",
     "chart.js": "^2.9.3",
     "core-js": "^2.6.5",
     "dotenv": "^8.2.0",
@@ -39,6 +40,7 @@
     "vue-the-mask": "^0.11.1",
     "vue-toast-notification": "0.0.2",
     "vue-toasted": "1.1.24",
+    "vue-viacep": "^1.0.3",
     "vuetify": "^1.5.5",
     "vuex": "^3.0.1"
   },

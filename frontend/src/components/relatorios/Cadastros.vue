@@ -112,6 +112,7 @@
                       class="v-btn-common"
                       :color="color"
                       @click="emit('pdf')"
+                      :loading="isLoading"
                     >confirmar pdf</v-btn>
                     <span>Confirma as opções e emite o relatório em PDF</span>
                   </v-tooltip>
@@ -121,6 +122,7 @@
                       class="v-btn-common"
                       color="warning"
                       @click="emit('csv')"
+                      :loading="isLoading"
                     >confirmar csv</v-btn>
                     <span>Confirma as opções e emite o relatório em CSV</span>
                   </v-tooltip>
@@ -154,8 +156,6 @@ import {
 } from "@/global";
 import axios from "axios";
 
-import jsPDF from "jspdf";
-import "jspdf-autotable";
 import { ExportToCsv } from "export-to-csv";
 
 export default {
@@ -281,6 +281,7 @@ export default {
       valid: true,
       menu: false,
       menu1: false,
+      isLoading: false,
       empresaRules: [v => !!v || "Empresa é obrigatória"],
       cadRules: [
         v =>
@@ -305,50 +306,38 @@ export default {
 
         //cabeçalho
         doc.setFontSize(8);
-        doc.textEx(
-          this.filter.empresa.text || "ERRO NA EMPRESA",
-          155,
-          35,
-          "right",
-          "middle"
+        doc.text(
+          this.empresaStore.currentEmpresa.text || "ERRO NA EMPRESA",
+          40,
+          35
         );
         doc.setFontSize(12);
-        doc.textEx(
+        doc.text(
           "Relatório de cadastros",
-          doc.internal.pageSize.width / 2,
-          20,
-          "center",
-          "middle"
+          doc.internal.pageSize.width / 2 - 60,
+          20
         );
         doc.setFontSize(8);
         const date = new Date();
-        doc.textEx(
+        doc.text(
           date.toLocaleDateString() + " - " + date.toLocaleTimeString(),
           doc.internal.pageSize.width - 120,
-          35,
-          "left",
-          "middle"
+          35
         );
 
         //rodapé
-        doc.textEx(
-          this.usuarioStore.currentUsuario.nome,
-          100,
-          580,
-          "right",
-          "middle"
-        );
+        doc.text(this.usuarioStore.currentUsuario.nome, 40, 580);
         doc.text(
           String(i) + " de " + String(pageCount),
           doc.internal.pageSize.width - 70,
-          580,
-          "left",
-          "bottom"
+          580
         );
       }
     },
     emit(type) {
-      if (!this.$refs.form.validate()) return;
+      if (!this.$refs.form.validate() || !type) return;
+
+      this.isLoading = true;
 
       const url = `${urlBD}/rel_cadastros?ordem=${this.filter.ordem ||
         ""}&cadastros=${this.filter.cadastros || ""}&data_type=${
@@ -367,7 +356,8 @@ export default {
             this.emitCSV(res.data);
           }
         })
-        .catch(showError);
+        .catch(showError)
+        .then(() => (this.isLoading = false));
     },
     emitPDF(data) {
       var splitRegex = /\r\n|\r|\n/g;
@@ -429,8 +419,21 @@ export default {
           { title: "Email", dataKey: "email" },
           { title: "Contato", dataKey: "contato" }
         ],
-        usuarios_columns = [],
-        produtos_columns = [];
+        usuarios_columns = [
+          { title: "Código", dataKey: "id" },
+          { title: "Nome", dataKey: "nome" },
+          { title: "E-mail", dataKey: "email" },
+          { title: "Contato", dataKey: "contato" },
+          { title: "Permissões", dataKey: "tipo" }
+        ],
+        produtos_columns = [
+          { title: "Código", dataKey: "id" },
+          { title: "Descrição", dataKey: "descricao" },
+          { title: "Categoria", dataKey: "categoria" },
+          { title: "Valor unitário", dataKey: "valor_unitario" },
+          { title: "Valor venda", dataKey: "valor_venda" },
+          { title: "Valor custo", dataKey: "valor_custo_medio" }
+        ];
 
       if (data.pessoas) {
         data.pessoas.map(pessoa => {
@@ -499,7 +502,7 @@ export default {
           return pessoa;
         });
 
-        console.log(data.pessoas)
+        console.log(data.pessoas);
         csvExporter.generateCsv(data.pessoas);
       } else if (data.usuarios) {
         csvExporter.generateCsv(data.usuarios);

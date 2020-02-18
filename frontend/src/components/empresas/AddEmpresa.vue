@@ -722,27 +722,22 @@ export default {
         : "";
     },
     getCep() {
-      const url_cep = "https://viacep.com.br/ws/" + this.empresa.cep + "/json/";
-
-      axios.defaults.headers.common = null;
-
-      axios
-        .get(url_cep)
+      this.$viaCep
+        .buscarCep(this.empresa.cep)
         .then(res => {
-          this.empresa.cep = res.data.cep;
-          this.empresa.bairro = res.data.bairro;
-          this.empresa.logradouro = res.data.logradouro;
-          this.empresa.complemento = res.data.complemento;
-          this.empresa.cidade = res.data.localidade;
-          this.empresa.uf = res.data.uf;
-          this.empresa.id_cidade = res.data.ibge;
+          this.empresa.cep = res.cep;
+          this.empresa.bairro = res.bairro;
+          this.empresa.logradouro = res.logradouro;
+          this.empresa.complemento = res.complemento;
+          this.empresa.cidade = res.localidade;
+          this.empresa.uf = res.uf;
+          this.empresa.id_cidade = res.ibge;
           this.tabIndex = "tab-3";
           this.tabIndex = "tab-2";
+
           this.$toasted.global.defaultSuccess();
         })
-        .catch(() => {
-          showError("CEP inválido");
-        });
+        .catch(showError);
     },
     loadEmpresas() {
       const url = `${urlBD}/empresas`;

@@ -72,7 +72,7 @@
                     </v-layout>
                     <v-divider class="mb-4" />
                   </v-flex>
-                  <v-flex xs12 v-show="!showForgotPassword">
+                  <!-- <v-flex xs12 v-show="!showForgotPassword">
                     <v-layout align-center justify-center>
                       <v-btn v-facebook-signin-button="appId" color="#4267B2" dark large>
                         <v-icon class="mr-2">fa fa-facebook</v-icon>
@@ -83,7 +83,7 @@
                         <span>Google</span>
                       </v-btn>
                     </v-layout>
-                  </v-flex>
+                  </v-flex> -->
                   <v-flex xs12>
                     <v-layout justify-center>
                       <v-btn
@@ -108,18 +108,11 @@
 </template>
 
 <script>
-import GoogleSignInButton from "vue-google-signin-button-directive";
-import FacebookSignInButton from "vue-facebook-signin-button-directive";
-
 import { urlBD, showError, usuarioKey } from "@/global";
 import axios from "axios";
 import { mapState } from "vuex";
 
 export default {
-  directives: {
-    GoogleSignInButton,
-    FacebookSignInButton
-  },
   name: "Auth",
   computed: {
     ...mapState("app", ["color"]),
@@ -127,9 +120,6 @@ export default {
   },
   data: function() {
     return {
-      clientId:
-        "53939190937-uk5vdlanvqab009o2plhgcshv01tb909.apps.googleusercontent.com",
-      appId: "2495008730618015",
       showSignup: false,
       showForgotPassword: false,
       valid: true,
@@ -180,18 +170,6 @@ export default {
         })
         .catch(showError)
         .then(() => (this.isLoading = false));
-    },
-    OnGoogleAuthSuccess(idToken) {
-      console.log(idToken);
-    },
-    OnGoogleAuthFail(error) {
-      console.log(error);
-    },
-    OnFacebookAuthSuccess(idToken) {
-      console.log(idToken);
-    },
-    OnFacebookAuthFail(error) {
-      console.log(error);
     }
   }
 };

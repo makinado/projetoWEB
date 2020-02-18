@@ -56,7 +56,9 @@ export default {
 
       if (!usuario) {
         this.validatingToken = false;
-        return this.$router.push({ path: "/auth" });
+        if (this.$route.params.token)
+          return this.$router.push({ path: "/reset" });
+        else return this.$router.push({ path: "/auth" });
       }
 
       const res = await axios.post(`${urlBD}/validateToken`, usuario);
