@@ -100,14 +100,11 @@ export default {
     documentos: []
   },
   vendaStore: {
-    orcamento: null,
-    orcamentos: [],
+    venda: null,
+    vendas: [],
 
     tabela: null,
-    tabelas: [],
-
-    pedido: null,
-    pedidos: []
+    tabelas: []
   },
   modalStore: {
     complementos: {
@@ -125,18 +122,15 @@ export default {
     pessoas: {
       visible: false,
       title: "Adicionar pessoa",
-      deletePessoa: false,
 
       metas: {
         visible: false,
         title: "Gerenciar metas",
-        deleteMeta: false
       },
 
       comissoes: {
         visible: false,
         title: "Gerenciar metas",
-        deleteComissao: false
       }
     },
     empresas: {
@@ -145,26 +139,21 @@ export default {
       metas: {
         visible: false,
         title: "Gerenciar metas",
-        deleteMeta: false
       },
-      deleteEmpresa: false
     },
     produtos: {
       visible: false,
       title: "Adicionar produto",
-      deleteProduto: false,
       estoque: {
         visible: false,
         title: 'Estoque',
 
         movim: null,
-        deleteMovim: false
       }
     },
     usuarios: {
       visible: false,
       title: "Adicionar usuário",
-      deleteUsuario: false,
     },
     perfis: {
       visible: false,
@@ -174,54 +163,38 @@ export default {
     marcas: {
       visible: false,
       title: "Adicionar marca",
-      deleteMarca: false
     },
     classificacoes: {
       visible: false,
       add: false,
       title: "Adicionar classificação",
-      deleteClass: false
     },
     tabelas: {
       visible: false,
       add: false,
       title: "Adicionar tabela",
-      deleteTab: false
     },
     documentos: {
       visible: false,
       add: false,
       title: "Adicionar documento",
-      deleteDoc: false
     },
     categorias: {
       visible: false,
       title: "Adicionar categoria de produto",
-      deleteCategoria: false
     },
     unidades: {
       visible: false,
       title: "Adicionar unidade de produto",
-      deleteUnidade: false
     },
     grupo_trib: {
       addGrupo: false,
       visible: false,
       title: "Adicionar grupo de tributação",
-      deleteGrupo: false
     },
     eventos: {
       visible: false,
       title: "Adicionar evento na agenda",
-      deleteEvento: false
-    },
-    atividades: {
-      deleteAtiv: false
-    },
-    backups: {
-      visible: false,
-      title: "Adicionar backup",
-      deleteBackup: false
     },
     compras: {
       pedidos: {
@@ -234,18 +207,15 @@ export default {
         title: "Adicionar nota de compra"
       },
       download: false,
-      deletePedido: false,
-      deleteCompra: false
     },
     vendas: {
       pdv: {
         visible: false,
         status: "Aberto"
       },
-      orcamentos: {
+      vendas: {
         visible: false,
         title: "",
-        deleteOrcamento: false
       }
     },
     financeiro: {
@@ -255,20 +225,16 @@ export default {
         pagamento: false,
         visualizar: false
       },
-      deleteFinanc: false,
-      cancelFinanc: false,
 
       conta: {
         visible: false,
         title: "Adicionar conta conta"
       },
-      deleteConta: false,
 
       movimento: {
         visible: false,
         title: "Gerenciar movimento de conta"
       },
-      deleteMovimento: false,
     },
 
   }

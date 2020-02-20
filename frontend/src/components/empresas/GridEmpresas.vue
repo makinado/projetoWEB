@@ -190,84 +190,96 @@
         </v-tooltip>
       </v-layout>
     </v-container>
-    <v-data-table
-      class="elevation-5"
-      :items="empresaStore.empresas"
-      :headers="fields"
-      rows-per-page-text="Registros por página"
-      no-results-text="Nenhum registro encontrado"
-      no-data-text="Nenhuma empresa cadastrada"
-      :rows-per-page-items="[5, 10, 20, 50, 100]"
-      :total-items="count"
-      :pagination.sync="pagination"
-      :loading="loading"
-    >
-      <template v-slot:progress>
-        <v-progress-linear :color="color" :indeterminate="true" height="3"></v-progress-linear>
-      </template>
-      <template slot="items" slot-scope="data">
-        <tr>
-          <td>{{ data.item.id }}</td>
-          <td>{{ data.item.cnpj }}</td>
-          <td>{{ data.item.nome }}</td>
-          <td>{{ data.item.email }}</td>
-          <td>{{ data.item.contato }}</td>
-          <td>
-            <v-tooltip bottom>
-              <b-button
-                slot="activator"
-                variant="secundary"
-                @click.prevent="[empresaStore.empresa = data.item, modalStore.empresas.visible = true, modalStore.empresas.title = 'Alterar empresa']"
-                class="mr-1"
-              >
-                <i class="fa fa-lg fa-pencil"></i>
-              </b-button>
-              <span>Editar empresa</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <b-button
-                slot="activator"
-                variant="secundary"
-                @click.prevent="[modalStore.empresas.deleteEmpresa = true,empresaStore.empresa = data.item]"
-                class="mr-1"
-              >
-                <i class="fa fa-lg fa-trash"></i>
-              </b-button>
-              <span>Excluir empresa</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <b-button
-                slot="activator"
-                variant="secundary"
-                @click.prevent="[modalStore.email.visible = true, modalStore.email.para = data.item.email]"
-              >
-                <i class="fa fa-lg fa-envelope"></i>
-              </b-button>
-              <span>Enviar e-mail</span>
-            </v-tooltip>
-          </td>
-        </tr>
-      </template>
-    </v-data-table>
+    <Card v-resize="onResize" :color="color" title="Ações rápidas" :actions="globalActions">
+      <v-data-table
+        :items="empresaStore.empresas"
+        :headers="fields"
+        rows-per-page-text="Registros por página"
+        no-results-text="Nenhum registro encontrado"
+        no-data-text="Nenhuma empresa cadastrada"
+        :rows-per-page-items="[5, 10, 20, 50, 100]"
+        :total-items="count"
+        :pagination.sync="pagination"
+        v-model="itens_selecionados"
+        select-all
+        :hide-headers="isMobile"
+        :class="{mobile: isMobile}"
+      >
+        <template slot="items" slot-scope="data">
+          <tr v-if="!isMobile">
+            <td>
+              <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
+            </td>
+            <td>{{ data.item.id }}</td>
+            <td>{{ data.item.cnpj }}</td>
+            <td>{{ data.item.nome }}</td>
+            <td>{{ data.item.email }}</td>
+            <td>{{ data.item.contato }}</td>
+            <td>
+              <v-tooltip bottom>
+                <b-button
+                  slot="activator"
+                  variant="secundary"
+                  @click.prevent="[empresaStore.empresa = data.item, modalStore.empresas.visible = true, modalStore.empresas.title = 'Alterar empresa']"
+                  class="mr-1"
+                >
+                  <i class="fa fa-lg fa-pencil"></i>
+                </b-button>
+                <span>Editar empresa</span>
+              </v-tooltip>
+              <v-tooltip bottom>
+                <b-button
+                  slot="activator"
+                  variant="secundary"
+                  @click.prevent="[confirmaExclusao = true,empresaStore.empresa = data.item]"
+                  class="mr-1"
+                >
+                  <i class="fa fa-lg fa-trash"></i>
+                </b-button>
+                <span>Excluir empresa</span>
+              </v-tooltip>
+              <v-tooltip bottom>
+                <b-button
+                  slot="activator"
+                  variant="secundary"
+                  @click.prevent="[modalStore.email.visible = true, modalStore.email.para = data.item.email]"
+                >
+                  <i class="fa fa-lg fa-envelope"></i>
+                </b-button>
+                <span>Enviar e-mail</span>
+              </v-tooltip>
+            </td>
+          </tr>
+          <tr v-else>
+            <td>
+              <ul class="flex-content">
+                <li class="flex-item" data-label="Código">{{ data.item.id }}</li>
+                <li class="flex-item" data-label="CNPJ">{{ data.item.cnpj }}</li>
+                <li class="flex-item" data-label="Nome">{{ data.item.nome }}</li>
+                <li class="flex-item" data-label="E-mail">{{ data.item.email }}</li>
+                <li class="flex-item" data-label="Contato">{{ data.item.contato }}</li>
+              </ul>
+            </td>
+          </tr>
+        </template>
+      </v-data-table>
+    </Card>
 
-    <v-dialog
-      v-model="modalStore.empresas.deleteEmpresa"
-      persistent
-      max-width="500px"
-      v-if="empresaStore.empresa"
-    >
+    <v-dialog v-model="confirmaExclusao" persistent max-width="500px" v-if="empresaStore.empresa">
       <v-card>
         <v-card-title>
           <span class="headline">Excluir empresa</span>
         </v-card-title>
-        <v-card-text>Excluir {{ empresaStore.empresa.nome }} ?</v-card-text>
+        <v-card-text
+          v-if="!Array.isArray(empresaStore.empresa)"
+        >Excluir {{ empresaStore.empresa.nome }}?</v-card-text>
+        <v-card-text v-else>
+          <v-flex xs12>Excluir {{ empresaStore.empresa.length }} empresas?</v-flex>
+        </v-card-text>
+
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn
-            color="blue darken-1"
-            flat
-            @click="modalStore.empresas.deleteEmpresa = false"
-          >Fechar</v-btn>
+          <v-btn color="blue darken-1" flat @click="[confirmaExclusao = false]">Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
       </v-card>
@@ -282,6 +294,9 @@ import { mapState } from "vuex";
 
 export default {
   name: "GridEmpresas",
+  components: {
+    Card: () => import("../material/Card")
+  },
   computed: {
     ...mapState("app", ["color"]),
     ...mapState(["empresaStore", "modalStore", "usuarioStore"]),
@@ -307,10 +322,13 @@ export default {
       }
     }
   },
-  data: function() {
+  data() {
     return {
+      itens_selecionados: [],
       valid: true,
       loading: true,
+      isMobile: false,
+      confirmaExclusao: false,
       fields: [
         { value: "id", text: "Código", sortable: true },
         { value: "cnpj", text: "CNPJ", sortable: true },
@@ -322,16 +340,39 @@ export default {
       pagination: {
         descending: false,
         page: 1,
-        rowsPerPage: 10, // -1 for All,
+        rowsPerPage: 20, // -1 for All,
         sortBy: "nome",
         totalItems: 0
       },
       count: 0,
       filter: {},
-      pesquisa: false
+      pesquisa: false,
+      globalActions: [
+        {
+          icon: "fa fa-lg fa-print",
+          tooltip: "Imprimir selecionados",
+          method: "print"
+        },
+        {
+          icon: "fa fa-lg fa-trash",
+          tooltip: "Excluir selecionados",
+          method: "remove",
+          store: "empresa"
+        },
+        {
+          icon: "fa fa-lg fa-refresh",
+          tooltip: "Recarregar itens",
+          method: "loadEmpresas",
+          required: true
+        }
+      ]
     };
   },
   methods: {
+    onResize() {
+      if (window.innerWidth < 769) this.isMobile = true;
+      else this.isMobile = false;
+    },
     navigate(path, newTab) {
       if (newTab) {
         const routeData = this.$router.resolve({ path: path });
@@ -357,40 +398,109 @@ export default {
       });
     },
     async remove() {
-      const id = this.empresaStore.empresa.id;
-      const url = `${urlBD}/empresas/${id}`;
+      if (!this.confirmaExclusao) {
+        this.confirmaExclusao = true;
+        return;
+      }
 
-      let data = new Date();
-      const hora = `${data.getHours()}:${data.getMinutes()}:${data.getSeconds()}`;
-      const log = {
-        id_usuario: this.usuarioStore.currentUsuario.id,
-        data: formatDate(data.toISOString().substr(0, 10)),
-        hora,
-        tipo: "EXCLUSÃO",
-        tela: "EMPRESA",
-        detalhe: `Empresa excluída: ${this.empresaStore.empresa.id}-${this.empresaStore.empresa.nome}`
-      };
+      var empresas = [];
 
-      await axios
-        .delete(url)
-        .then(() => {
-          this.$toasted.global.defaultSuccess();
+      if (!this.empresaStore.empresa.id) {
+        empresas = this.empresaStore.empresa.map(item => {
+          return {
+            id: item.id,
+            nome: item.nome
+          };
+        });
+      } else {
+        empresas.push({
+          id: this.empresaStore.empresa.id,
+          nome: this.empresaStore.empresa.nome
+        });
+      }
 
-          this.loadEmpresas();
-          this.modalStore.empresas.deleteEmpresa = false;
+      empresas.map(async item => {
+        const url = `${urlBD}/empresas/${item.id}`;
 
-          saveLog(
-            new Date(),
-            "EXCLUSÃO",
-            "EMPRESAS",
-            `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu a empresa ${this.empresaStore.empresa.nome}`
-          );
-        })
-        .catch(showError);
+        await axios
+          .delete(url)
+          .then(() => {
+            this.$toasted.global.defaultSuccess();
+
+            this.loadEmpresas();
+            this.confirmaExclusao = false;
+
+            saveLog(
+              new Date(),
+              "EXCLUSÃO",
+              "EMPRESAS",
+              `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu a empresa ${this.empresaStore.empresa.nome}`
+            );
+          })
+          .catch(showError);
+      });
     }
   }
 };
 </script>
 
 <style>
+.mobile {
+  color: #333;
+}
+
+@media screen and (max-width: 768px) {
+  .mobile table.v-table tr {
+    max-width: 100%;
+    position: relative;
+    display: block;
+  }
+
+  .mobile table.v-table tr:nth-child(odd) {
+    border-left: 6px solid deeppink;
+  }
+
+  .mobile table.v-table tr:nth-child(even) {
+    border-left: 6px solid cyan;
+  }
+
+  .mobile table.v-table tr td {
+    display: flex;
+    width: 100%;
+    border-bottom: 1px solid #f5f5f5;
+    height: auto;
+    padding: 10px;
+  }
+
+  .mobile table.v-table tr td ul li:before {
+    content: attr(data-label);
+    padding-right: 0.5em;
+    text-align: left;
+    display: block;
+    color: #999;
+  }
+  .v-datatable__actions__select {
+    width: 50%;
+    margin: 0px;
+    justify-content: flex-start;
+  }
+  .mobile .theme--light.v-table tbody tr:hover:not(.v-datatable__expand-row) {
+    background: transparent;
+  }
+}
+.flex-content {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.flex-item {
+  padding: 5px;
+  width: 50%;
+  height: 40px;
+  font-weight: bold;
+}
 </style>

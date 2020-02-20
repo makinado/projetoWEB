@@ -372,11 +372,6 @@ export default {
             title: "Atividades",
             icon: "fa fa-align-left",
             link: "/atividades"
-          },
-          {
-            title: "Backup",
-            icon: "fa fa-cloud",
-            link: "/backup"
           }
         ]
       },
@@ -426,7 +421,7 @@ export default {
             visible: false
           },
           {
-            title: "Importações",
+            title: "Compras",
             icon: "fa fa-arrow-circle-down",
             link: "/importacoes",
             visible: false
@@ -438,7 +433,7 @@ export default {
         icon: "fa fa-shopping-cart",
         items: [
           {
-            title: "Orçamentos",
+            title: "Orçamentos/Vendas",
             icon: "fa fa-file-text",
             link: "/orcamentos",
             visible: false
@@ -447,12 +442,6 @@ export default {
             title: "PDV",
             icon: "fa fa-tv",
             link: "/pdv",
-            visible: false
-          },
-          {
-            title: "Venda (NF-e)",
-            icon: "fa fa-th",
-            link: "/venda",
             visible: false
           }
         ]
@@ -617,9 +606,6 @@ export default {
       this.perfil.pdv
         ? (this.vendas.items[1].visible = true)
         : (this.vendas.items[1].visible = false);
-      this.perfil.venda
-        ? (this.vendas.items[2].visible = true)
-        : (this.vendas.items[2].visible = false);
 
       this.perfil.financeiro
         ? (this.financeiro.items[0].visible = true)

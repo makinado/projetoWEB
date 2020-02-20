@@ -140,94 +140,93 @@
         </v-tooltip>
       </v-layout>
     </v-container>
-    <v-data-table
-      class="elevation-5"
-      :items="financeiroStore.contas"
-      :headers="fields"
-      :pagination.sync="pagination"
-      :rows-per-page-items="[5, 10, 20, 50, 100]"
-      rows-per-page-text="Registros por página"
-      no-results-text="Nenhum registro encontrado"
-      no-data-text="Nenhuma conta cadastrada"
-      :total-items="count"
-      select-all
-      v-model="contas_selecionados"
-    >
-      <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
-      <template slot="items" slot-scope="data">
-        <td>
-          <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
-        </td>
-        <td>{{ data.item.id }}</td>
-        <td>{{ data.item.empresa }}</td>
-        <td>{{ data.item.nome }}</td>
-        <td>{{ data.item.saldo_atual || "R$ 0,00" }}</td>
-        <td>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[financeiroStore.conta = data.item, modalStore.financeiro.movimento.visible = true]"
-              class="mr-1"
-            >
-              <i class="fa fa-lg fa-eye"></i>
-            </b-button>
-            <span>Ver movimento</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[financeiroStore.conta = data.item, modalStore.financeiro.conta.visible = true,modalStore.financeiro.conta.title = 'Alterar conta']"
-              class="mr-1"
-            >
-              <i class="fa fa-lg fa-pencil"></i>
-            </b-button>
-            <span>Editar conta</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[modalStore.financeiro.deleteConta = true, financeiroStore.conta = data.item]"
-              class="mr-1"
-            >
-              <i class="fa fa-lg fa-trash"></i>
-            </b-button>
-            <span>Excluir conta</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[modalStore.complementos.impressao = true]"
-            >
-              <i class="fa fa-lg fa-print"></i>
-            </b-button>
-            <span>Exportar conta</span>
-          </v-tooltip>
-        </td>
-      </template>
-    </v-data-table>
 
-    <v-dialog
-      v-model="modalStore.financeiro.deleteConta"
-      persistent
-      max-width="500px"
-      v-if="financeiroStore.conta"
-    >
+    <Card :color="color" title="Ações rápidas" :actions="globalActions">
+      <v-data-table
+        :items="financeiroStore.contas"
+        :headers="fields"
+        :pagination.sync="pagination"
+        :rows-per-page-items="[5, 10, 20, 50, 100]"
+        rows-per-page-text="Registros por página"
+        no-results-text="Nenhum registro encontrado"
+        no-data-text="Nenhuma conta cadastrada"
+        :total-items="count"
+        select-all
+        v-model="itens_selecionados"
+      >
+        <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
+        <template slot="items" slot-scope="data">
+          <td>
+            <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
+          </td>
+          <td>{{ data.item.id }}</td>
+          <td>{{ data.item.empresa }}</td>
+          <td>{{ data.item.nome }}</td>
+          <td>{{ data.item.saldo_atual || "R$ 0,00" }}</td>
+          <td>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[financeiroStore.conta = data.item, modalStore.financeiro.movimento.visible = true]"
+                class="mr-1"
+              >
+                <i class="fa fa-lg fa-eye"></i>
+              </b-button>
+              <span>Ver movimento</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[financeiroStore.conta = data.item, modalStore.financeiro.conta.visible = true,modalStore.financeiro.conta.title = 'Alterar conta']"
+                class="mr-1"
+              >
+                <i class="fa fa-lg fa-pencil"></i>
+              </b-button>
+              <span>Editar conta</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[confirmaExclusao = true, financeiroStore.conta = data.item]"
+                class="mr-1"
+              >
+                <i class="fa fa-lg fa-trash"></i>
+              </b-button>
+              <span>Excluir conta</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[modalStore.complementos.impressao = true]"
+              >
+                <i class="fa fa-lg fa-print"></i>
+              </b-button>
+              <span>Exportar conta</span>
+            </v-tooltip>
+          </td>
+        </template>
+      </v-data-table>
+    </Card>
+
+    <v-dialog v-model="confirmaExclusao" persistent max-width="500px" v-if="financeiroStore.conta">
       <v-card>
         <v-card-title>
-          <span class="headline">Excluir conta conta</span>
+          <span class="headline">Excluir conta</span>
         </v-card-title>
-        <v-card-text>Excluir {{ financeiroStore.conta.nome }} ?</v-card-text>
+        <v-card-text
+          v-if="!Array.isArray(financeiroStore.conta)"
+        >Excluir conta {{ financeiroStore.conta.id }}?</v-card-text>
+        <v-card-text v-else>
+          <v-flex xs12>Excluir {{ financeiroStore.conta.length }} contas?</v-flex>
+        </v-card-text>
+
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn
-            color="blue darken-1"
-            flat
-            @click="modalStore.financeiro.deleteConta = false"
-          >Fechar</v-btn>
+          <v-btn color="blue darken-1" flat @click="[confirmaExclusao = false]">Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
       </v-card>
@@ -261,10 +260,13 @@ export default {
       };
     }
   },
-  data: function() {
+  components: {
+    Card: () => import("../material/Card")
+  },
+  data() {
     return {
       valid: true,
-      contas_selecionados: [],
+      itens_selecionados: [],
       fields: [
         { value: "id", text: "Código", sortable: true },
         { value: "empresa", text: "Empresa", sortable: true },
@@ -275,7 +277,7 @@ export default {
       pagination: {
         descending: false,
         page: 1,
-        rowsPerPage: 20, // -1 for All,
+        rowsPerPage: 10, // -1 for All,
         sortBy: "nome",
         totalItems: 0
       },
@@ -283,12 +285,32 @@ export default {
       concluir: false,
       filter: {},
       pesquisa: false,
+      confirmaExclusao: false,
       money: {
         decimal: ",",
         thousands: ".",
         prefix: "R$ ",
         precision: 2
-      }
+      },
+      globalActions: [
+        {
+          icon: "fa fa-lg fa-print",
+          tooltip: "Imprimir selecionados",
+          method: "print"
+        },
+        {
+          icon: "fa fa-lg fa-trash",
+          tooltip: "Excluir selecionados",
+          method: "remove",
+          store: "conta"
+        },
+        {
+          icon: "fa fa-lg fa-refresh",
+          tooltip: "Recarregar itens",
+          method: "loadContas",
+          required: true
+        }
+      ]
     };
   },
   watch: {
@@ -327,24 +349,47 @@ export default {
         .catch(showError);
     },
     async remove() {
-      const url = `${urlBD}/conta/${this.financeiroStore.conta.id}`;
+      if (!this.confirmaExclusao) {
+        this.confirmaExclusao = true;
+        return;
+      }
 
-      await axios
-        .delete(url)
-        .then(() => {
-          this.$toasted.global.defaultSuccess();
+      var contas = [];
 
-          this.loadContas();
-          this.modalStore.financeiro.deleteConta = false;
+      if (!this.financeiroStore.conta.id) {
+        contas = this.financeiroStore.conta.map(item => {
+          return {
+            id: item.id,
+            nome: item.nome
+          };
+        });
+      } else {
+        contas.push({
+          id: this.financeiroStore.conta.id,
+          nome: this.financeiroStore.conta.nome
+        });
+      }
 
-          saveLog(
-            new Date(),
-            "EXCLUSÃO",
-            "CONTAS",
-            `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu a conta ${this.financeiroStore.conta.nome}`
-          );
-        })
-        .catch(showError);
+      contas.map(async item => {
+        const url = `${urlBD}/conta/${item.id}`;
+        await axios
+          .delete(url)
+          .then(() => {
+            this.$toasted.global.defaultSuccess();
+            this.confirmaExclusao = false;
+            this.itens_selecionados = [];
+
+            this.loadContas();
+
+            saveLog(
+              new Date(),
+              "EXCLUSÃO",
+              "CONTAS",
+              `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu a conta ${this.financeiroStore.conta.nome}`
+            );
+          })
+          .catch(showError);
+      });
     }
   }
 };

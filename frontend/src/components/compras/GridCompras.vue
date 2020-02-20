@@ -1,52 +1,6 @@
 <template>
   <div class="grid-importacoes">
     <v-container fluid>
-      <v-menu
-        :close-on-content-click="false"
-        :close-on-click="false"
-        width="300"
-        nudge-left="12"
-        transition="slide-y-transition"
-        v-model="funcoes"
-        :position-x="getWindowSize()"
-        
-      >
-        <v-card>
-          <v-card-title class="headline">
-            <v-icon class="mr-2">fa fa-cogs</v-icon>
-            <span>Selecione uma opção</span>
-          </v-card-title>
-          <v-card-text>
-            <hr />
-            <v-layout wrap justify-center>
-              <v-tooltip bottom>
-                <v-btn
-                  slot="activator"
-                  flat
-                  icon
-                  color="danger"
-                  @click="[comprasStore.compra = compras_selecionadas, modalStore.compras.deleteCompra = true]"
-                >
-                  <v-icon>fa fa-2x fa-trash</v-icon>
-                </v-btn>
-                <span>Excluir conta</span>
-              </v-tooltip>
-              <v-tooltip bottom>
-                <v-btn
-                  slot="activator"
-                  flat
-                  icon
-                  color="primary"
-                  @click="[modalStore.complementos.impressao.docs = compras_selecionadas, modalStore.complementos.impressao.visible = true]"
-                >
-                  <v-icon>fa fa-2x fa-print</v-icon>
-                </v-btn>
-                <span>Exportar conta</span>
-              </v-tooltip>
-            </v-layout>
-          </v-card-text>
-        </v-card>
-      </v-menu>
       <v-layout
         justify-center
         v-if="$vuetify.breakpoint.name === 'xs' || $vuetify.breakpoint.name === 'sm' || $vuetify.breakpoint.name === 'md'"
@@ -342,75 +296,77 @@
         >Adicionar</v-btn>
       </v-layout>
     </v-container>
-    <v-data-table
-      class="elevation-5"
-      :items="comprasStore.compras"
-      :headers="fields"
-      rows-per-page-text="Registros por página"
-      no-results-text="Nenhum registro encontrado"
-      no-data-text="Nenhuma compra realizada"
-      :rows-per-page-items="[5, 10, 20, 50, 100]"
-      :total-items="count"
-      :pagination.sync="pagination"
-      :loading="loading"
-      select-all
-      v-model="compras_selecionadas"
-    >
-      <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
-      <template slot="items" slot-scope="data">
-        <td>
-          <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
-        </td>
-        <td>{{ data.item.id }}</td>
-        <td>{{ data.item.empresa }}</td>
-        <td>{{ data.item.pessoa }}</td>
-        <td>
-          <v-chip :color="getColor(data.item.situacao)" dark>{{ data.item.situacao }}</v-chip>
-        </td>
-        <td>{{ data.item.nota_fiscal }}</td>
-        <td>{{ data.item.data_notafiscal }}</td>
-        <td>{{ data.item.data_lancamento }}</td>
-        <td>{{ data.item.valor_total }}</td>
-        <td>
-          <v-tooltip v-if="!data.item.importado" bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              class="mr-1"
-              @click.prevent="[comprasStore.compra = data.item, modalStore.compras.compras.add = true, modalStore.produtos.title = 'Alterar nota fiscal de compra']"
-            >
-              <i class="fa fa-lg fa-pencil"></i>
-            </b-button>
-            <span>Editar compra</span>
-          </v-tooltip>
-          <v-tooltip v-else bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              class="mr-1"
-              @click.prevent="gerarDANFe(data.item)"
-            >
-              <i class="fa fa-lg fa-eye"></i>
-            </b-button>
-            <span>Visualizar DANFe</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              class="mr-1"
-              @click.prevent="[modalStore.compras.deleteCompra = true, comprasStore.compra = data.item]"
-            >
-              <i class="fa fa-lg fa-trash"></i>
-            </b-button>
-            <span>Excluir compra</span>
-          </v-tooltip>
-        </td>
-      </template>
-    </v-data-table>
+
+    <Card :color="color" title="Ações rápidas" :actions="globalActions">
+      <v-data-table
+        :items="comprasStore.compras"
+        :headers="fields"
+        rows-per-page-text="Registros por página"
+        no-results-text="Nenhum registro encontrado"
+        no-data-text="Nenhuma compra realizada"
+        :rows-per-page-items="[5, 10, 20, 50, 100]"
+        :total-items="count"
+        :pagination.sync="pagination"
+        :loading="loading"
+        select-all
+        v-model="itens_selecionados"
+      >
+        <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
+        <template slot="items" slot-scope="data">
+          <td>
+            <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
+          </td>
+          <td>{{ data.item.id }}</td>
+          <td>{{ data.item.empresa }}</td>
+          <td>{{ data.item.pessoa }}</td>
+          <td>
+            <v-chip :color="getColor(data.item.situacao)" dark>{{ data.item.situacao }}</v-chip>
+          </td>
+          <td>{{ data.item.nota_fiscal }}</td>
+          <td>{{ data.item.data_notafiscal }}</td>
+          <td>{{ data.item.data_lancamento }}</td>
+          <td>{{ data.item.valor_total }}</td>
+          <td>
+            <v-tooltip v-if="!data.item.importado" bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                class="mr-1"
+                @click.prevent="[comprasStore.compra = data.item, modalStore.compras.compras.add = true, modalStore.produtos.title = 'Alterar nota fiscal de compra']"
+              >
+                <i class="fa fa-lg fa-pencil"></i>
+              </b-button>
+              <span>Editar compra</span>
+            </v-tooltip>
+            <v-tooltip v-else bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                class="mr-1"
+                @click.prevent="gerarDANFe(data.item)"
+              >
+                <i class="fa fa-lg fa-eye"></i>
+              </b-button>
+              <span>Visualizar DANFe</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                class="mr-1"
+                @click.prevent="[confirmaExclusao = true, comprasStore.compra = data.item]"
+              >
+                <i class="fa fa-lg fa-trash"></i>
+              </b-button>
+              <span>Excluir compra</span>
+            </v-tooltip>
+          </td>
+        </template>
+      </v-data-table>
+    </Card>
 
     <v-dialog
-      v-model="modalStore.compras.deleteCompra"
+      v-model="confirmaExclusao"
       persistent
       max-width="500px"
       v-if="comprasStore.compra"
@@ -437,7 +393,7 @@
           <v-btn
             color="blue darken-1"
             flat
-            @click="[modalStore.compras.deleteCompra = false, confirmacao = false]"
+            @click="[confirmaExclusao = false, confirmacao = false]"
           >Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
@@ -474,16 +430,10 @@ export default {
     }
   },
   components: {
-    Impressao: () => import("@/components/complementos/Impressao")
+    Impressao: () => import("@/components/complementos/Impressao"),
+    Card: () => import("../material/Card")
   },
   watch: {
-    compras_selecionadas: function() {
-      if (this.compras_selecionadas.length > 1) {
-        this.funcoes = true;
-      } else {
-        this.funcoes = false;
-      }
-    },
     params() {
       this.loadCompras();
     },
@@ -498,9 +448,9 @@ export default {
       }
     }
   },
-  data: function() {
+  data() {
     return {
-      compras_selecionadas: [],
+      itens_selecionados: [],
       valid: true,
       loading: true,
       fields: [
@@ -523,12 +473,32 @@ export default {
         totalItems: 0
       },
       count: 0,
+      confirmaExclusao: false,
       concluir: false,
       menu1: false,
       menu2: false,
       pesquisa: false,
       funcoes: false,
-      confirmacao: false
+      confirmacao: false,
+      globalActions: [
+        {
+          icon: "fa fa-lg fa-print",
+          tooltip: "Imprimir selecionados",
+          method: "print"
+        },
+        {
+          icon: "fa fa-lg fa-trash",
+          tooltip: "Excluir selecionados",
+          method: "remove",
+          store: "compra"
+        },
+        {
+          icon: "fa fa-lg fa-refresh",
+          tooltip: "Recarregar itens",
+          method: "loadCompras",
+          required: true
+        }
+      ]
     };
   },
   methods: {
@@ -576,30 +546,35 @@ export default {
       });
     },
     async remove() {
-      let itens = [];
+      if (!this.confirmaExclusao) {
+        this.confirmaExclusao = true;
+        return;
+      }
+
+      let compras = [];
 
       if (!this.comprasStore.compra.id) {
-        itens = this.comprasStore.compra.map(item => {
+        compras = this.comprasStore.compra.map(item => {
           return {
             id: item.id,
             valor_total: item.valor_total
           };
         });
       } else {
-        itens.push({
+        compras.push({
           id: this.comprasStore.compra.id,
           valor_total: this.comprasStore.compra.valor_total
         });
       }
 
-      itens.map(async item => {
+      compras.map(async item => {
         const url = `${urlBD}/compras/${item.id}`;
         await axios
           .delete(url)
           .then(() => {
             this.$toasted.global.defaultSuccess();
-            this.modalStore.compras.deleteCompra = false;
-            this.compras_selecionadas = [];
+            this.confirmaExclusao = false;
+            this.itens_selecionados = [];
 
             this.loadCompras();
 

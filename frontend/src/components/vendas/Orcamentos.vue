@@ -8,7 +8,7 @@
 
     <v-layout justify-center wrap>
       <v-flex md12>
-        <PageTitle main="Orçamentos" icon="fa fa-file-text" sub="Gerenciar orçamentos" />
+        <PageTitle main="Orçamentos / Vendas" icon="fa fa-file-text" sub="Gerenciar orçamentos" />
         <v-card class="p-3">
           <GridOrcamentos />
         </v-card>

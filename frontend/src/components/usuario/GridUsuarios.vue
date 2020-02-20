@@ -171,77 +171,81 @@
         </v-tooltip>
       </v-layout>
     </v-container>
-    <v-data-table
-      class="elevation-5"
-      :items="usuarioStore.usuarios"
-      :headers="fields"
-      rows-per-page-text="Registros por página"
-      no-results-text="Nenhum registro encontrado"
-      no-data-text="Nenhum produto cadastrado"
-      :rows-per-page-items="[5, 10, 20, 50, 100]"
-      :total-items="count"
-      :pagination.sync="pagination"
-      :loading="loading"
-    >
-      <template slot="items" slot-scope="data">
-        <td>{{ data.item.id }}</td>
-        <td>{{ data.item.nome }}</td>
-        <td>{{ data.item.email }}</td>
-        <td>{{ data.item.contato }}</td>
-        <td>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[usuarioStore.usuario = data.item, modalStore.usuarios.visible = true,modalStore.usuarios.title = 'Alterar usuario']"
-              class="mr-1"
-            >
-              <i class="fa fa-lg fa-pencil"></i>
-            </b-button>
-            <span>Editar usuário</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[modalStore.usuarios.deleteUsuario = true,usuarioStore.usuario = data.item]"
-              class="mr-1"
-            >
-              <i class="fa fa-lg fa-trash"></i>
-            </b-button>
-            <span>Excluir usuário</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[modalStore.email.visible = true, modalStore.email.para = data.item.email]"
-            >
-              <i class="fa fa-lg fa-envelope"></i>
-            </b-button>
-            <span>Enviar e-mail</span>
-          </v-tooltip>
-        </td>
-      </template>
-    </v-data-table>
 
-    <v-dialog
-      v-model="modalStore.usuarios.deleteUsuario"
-      max-width="500px"
-      v-if="usuarioStore.usuario"
-    >
+    <Card :color="color" title="Ações rápidas" :actions="globalActions">
+      <v-data-table
+        :items="usuarioStore.usuarios"
+        :headers="fields"
+        rows-per-page-text="Registros por página"
+        no-results-text="Nenhum registro encontrado"
+        no-data-text="Nenhum produto cadastrado"
+        :rows-per-page-items="[5, 10, 20, 50, 100]"
+        :total-items="count"
+        :pagination.sync="pagination"
+        v-model="itens_selecionados"
+        select-all
+      >
+        <template slot="items" slot-scope="data">
+          <td>
+            <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
+          </td>
+          <td>{{ data.item.id }}</td>
+          <td>{{ data.item.nome }}</td>
+          <td>{{ data.item.email }}</td>
+          <td>{{ data.item.contato }}</td>
+          <td>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[usuarioStore.usuario = data.item, modalStore.usuarios.visible = true,modalStore.usuarios.title = 'Alterar usuario']"
+                class="mr-1"
+              >
+                <i class="fa fa-lg fa-pencil"></i>
+              </b-button>
+              <span>Editar usuário</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[confirmaExclusao = true,usuarioStore.usuario = data.item]"
+                class="mr-1"
+              >
+                <i class="fa fa-lg fa-trash"></i>
+              </b-button>
+              <span>Excluir usuário</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[modalStore.email.visible = true, modalStore.email.para = data.item.email]"
+              >
+                <i class="fa fa-lg fa-envelope"></i>
+              </b-button>
+              <span>Enviar e-mail</span>
+            </v-tooltip>
+          </td>
+        </template>
+      </v-data-table>
+    </Card>
+
+    <v-dialog v-model="confirmaExclusao" persistent max-width="500px" v-if="usuarioStore.usuario">
       <v-card>
         <v-card-title>
-          <span class="headline">Excluir usuário</span>
+          <span class="headline">Excluir usuario</span>
         </v-card-title>
-        <v-card-text>Excluir {{ usuarioStore.usuario.nome }} ?</v-card-text>
+        <v-card-text
+          v-if="!Array.isArray(usuarioStore.usuario)"
+        >Excluir {{ usuarioStore.usuario.nome }}?</v-card-text>
+        <v-card-text v-else>
+          <v-flex xs12>Excluir {{ usuarioStore.usuario.length }} usuarios?</v-flex>
+        </v-card-text>
+
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn
-            color="blue darken-1"
-            flat
-            @click="modalStore.usuarios.deleteUsuario = false"
-          >Fechar</v-btn>
+          <v-btn color="blue darken-1" flat @click="[confirmaExclusao = false]">Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
       </v-card>
@@ -256,6 +260,9 @@ import { mapState } from "vuex";
 
 export default {
   name: "Gridusuarios",
+  components: {
+    Card: () => import("../material/Card")
+  },
   computed: {
     ...mapState("app", ["color"]),
     ...mapState(["usuarioStore", "modalStore"]),
@@ -278,6 +285,7 @@ export default {
   },
   data: function() {
     return {
+      itens_selecionados: [],
       valid: true,
       loading: true,
       fields: [
@@ -290,14 +298,34 @@ export default {
       filter: {},
       concluir: false,
       pesquisa: false,
+      confirmaExclusao: false,
       count: 0,
       pagination: {
         descending: false,
         page: 1,
-        rowsPerPage: 10, // -1 for All,
+        rowsPerPage: 20, // -1 for All,
         sortBy: "nome",
         totalItems: 0
-      }
+      },
+      globalActions: [
+        {
+          icon: "fa fa-lg fa-print",
+          tooltip: "Imprimir selecionados",
+          method: "print"
+        },
+        {
+          icon: "fa fa-lg fa-trash",
+          tooltip: "Excluir selecionados",
+          method: "remove",
+          store: "usuario"
+        },
+        {
+          icon: "fa fa-lg fa-refresh",
+          tooltip: "Recarregar itens",
+          method: "loadUsuarios",
+          required: true
+        }
+      ]
     };
   },
   methods: {
@@ -323,32 +351,52 @@ export default {
       });
     },
     remove() {
-      const id = this.usuarioStore.usuario.id;
-      const url = `${urlBD}/usuarios/${id}`;
-
-      if (id === this.usuarioStore.currentUsuario.id) {
-        this.modalStore.usuarios.deleteUsuario = false;
-        return showError(
-          "Não é possível excluir a si mesmo, consulte a documentação"
-        );
+      if (!this.confirmaExclusao) {
+        this.confirmaExclusao = true;
+        return;
       }
 
-      axios
-        .delete(url)
-        .then(() => {
-          this.$toasted.global.defaultSuccess();
+      var usuarios = [];
 
-          this.loadUsuarios();
-          this.modalStore.usuarios.deleteUsuario = false;
+      if (!this.usuarioStore.usuario.id) {
+        usuarios = this.usuarioStore.usuario.map(item => {
+          return {
+            id: item.id,
+            nome: item.nome
+          };
+        });
+      } else {
+        usuarios.push({
+          id: this.usuarioStore.usuario.id,
+          nome: this.usuarioStore.usuario.nome
+        });
+      }
 
-          saveLog(
-            new Date(),
-            "EXCLUSÃO",
-            "USUÁRIOS",
-            `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu o usuário ${this.usuarioStore.usuario.nome}`
-          );
-        })
-        .catch(showError);
+      if (usuarios.find(u => u.id == this.usuarioStore.currentUsuario.id)) {
+        this.confirmaExclusao = false;
+        return showError("Não é possível excluir a si mesmo");
+      }
+
+      usuarios.map(async item => {
+        const url = `${urlBD}/empresas/${item.id}`;
+
+        await axios
+          .delete(url)
+          .then(() => {
+            this.$toasted.global.defaultSuccess();
+
+            this.loadUsuarios();
+            this.confirmaExclusao = false;
+
+            saveLog(
+              new Date(),
+              "EXCLUSÃO",
+              "USUÁRIOS",
+              `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu o usuário ${this.usuarioStore.usuario.nome}`
+            );
+          })
+          .catch(showError);
+      });
     }
   }
 };

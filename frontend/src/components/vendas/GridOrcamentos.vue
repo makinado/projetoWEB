@@ -1,5 +1,5 @@
 <template>
-  <div class="grid-orcamentos">
+  <div class="grid-vendas">
     <v-container fluid>
       <v-layout
         justify-center
@@ -149,7 +149,7 @@
                 slot="activator"
                 class="v-btn-common"
                 :color="color"
-                @click.prevent="[vendaStore.orcamento = null, modalStore.vendas.orcamentos.visible = true, modalStore.vendas.orcamentos.title = 'Adicionar orçamento']"
+                @click.prevent="[vendaStore.venda = null, modalStore.vendas.visible = true, modalStore.vendas.title = 'Adicionar orçamento / venda']"
               >Adicionar</v-btn>
               <span>Adicionar empresa</span>
             </v-tooltip>
@@ -300,7 +300,7 @@
             slot="activator"
             class="v-btn-common"
             :color="color"
-            @click.prevent="[vendaStore.orcamento = null, modalStore.vendas.orcamentos.visible = true, modalStore.vendas.orcamentos.title = 'Adicionar orçamento']"
+            @click.prevent="[vendaStore.venda = null, modalStore.vendas.visible = true, modalStore.vendas.title = 'Adicionar orçamento / venda']"
           >Adicionar</v-btn>
           <span>Adicionar empresa</span>
         </v-tooltip>
@@ -308,7 +308,7 @@
     </v-container>
     <v-data-table
       class="elevation-5"
-      :items="vendaStore.orcamentos"
+      :items="vendaStore.vendas"
       :headers="fields"
       :pagination.sync="pagination"
       :rows-per-page-items="[5, 10, 20, 50, 100]"
@@ -316,7 +316,7 @@
       no-results-text="Nenhum registro encontrado"
       no-data-text="Nenhum orçamento realizado"
       select-all
-      v-model="orcamentos_selecionados"
+      v-model="vendas_selecionados"
     >
       <template v-slot:progress>
         <v-progress-linear color="blue" :indeterminate="true" height="3"></v-progress-linear>
@@ -338,7 +338,7 @@
             <b-button
               slot="activator"
               variant="secundary"
-              @click.prevent="[vendaStore.orcamento = data.item, modalStore.vendas.orcamentos.visible = true, modalStore.vendas.orcamentos.title = 'Alterar orçamento']"
+              @click.prevent="[vendaStore.venda = data.item, modalStore.vendas.visible = true, modalStore.vendas.title = 'Alterar orçamento / venda']"
               class="mr-1"
             >
               <i class="fa fa-lg fa-pencil"></i>
@@ -349,7 +349,7 @@
             <b-button
               slot="activator"
               variant="secundary"
-              @click.prevent="[modalStore.vendas.orcamentos.deleteOrcamento = true,vendaStore.orcamento = data.item]"
+              @click.prevent="[modalStore.vendas.vendas.deleteVenda = true,vendaStore.venda = data.item]"
               class="mr-1"
             >
               <i class="fa fa-lg fa-trash"></i>
@@ -371,22 +371,22 @@
     </v-data-table>
 
     <v-dialog
-      v-model="modalStore.vendas.orcamentos.deleteOrcamento"
+      v-model="modalStore.vendas.vendas.deleteVenda"
       persistent
       max-width="500px"
-      v-if="vendaStore.orcamento"
+      v-if="vendaStore.venda"
     >
       <v-card>
         <v-card-title>
           <span class="headline">Excluir orçamento</span>
         </v-card-title>
-        <v-card-text>Excluir orcamento {{ vendaStore.orcamento.id }} ?</v-card-text>
+        <v-card-text>Excluir venda {{ vendaStore.venda.id }} ?</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn
             color="blue darken-1"
             flat
-            @click="modalStore.vendas.orcamentos.deleteOrcamento = false"
+            @click="modalStore.vendas.vendas.deleteVenda = false"
           >Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
@@ -403,7 +403,7 @@ import { mapState } from "vuex";
 import { formatToBRL } from "brazilian-values";
 
 export default {
-  name: "GridOrcamentos",
+  name: "Gridvendas",
   computed: {
     ...mapState("app", ["color"]),
     ...mapState([
@@ -427,19 +427,19 @@ export default {
     }
   },
   watch: {
-    orcamentos_selecionados: function() {
-      if (this.orcamentos_selecionados.length > 0) {
+    vendas_selecionados: function() {
+      if (this.vendas_selecionados.length > 0) {
         this.modalStore.complementos.funcoes.visible = true;
       } else {
         this.modalStore.complementos.funcoes.visible = false;
       }
     },
     params() {
-      this.loadOrcamentos();
+      this.loadvendas();
     },
-    "$store.state.modalStore.vendas.orcamentos.visible": function() {
-      if (!this.modalStore.vendas.orcamentos.visible) {
-        this.loadOrcamentos();
+    "$store.state.modalStore.vendas.visible": function() {
+      if (!this.modalStore.vendas.visible) {
+        this.loadvendas();
       }
     }
   },
@@ -447,7 +447,7 @@ export default {
     return {
       valid: true,
       loading: true,
-      orcamentos_selecionados: [],
+      vendas_selecionados: [],
       fields: [
         { value: "id", text: "Código", sortable: true },
         { value: "empresa", text: "Empresa", sortable: true },
@@ -478,8 +478,8 @@ export default {
       else if (situacao === "CANCELADO") return "red";
       else return "blue";
     },
-    async loadOrcamentos() {
-      const url = `${urlBD}/orcamentos?page=${this.pagination.page}&limit=${
+    async loadvendas() {
+      const url = `${urlBD}/vendas?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
       }&tipo=${this.filter.tipo || 1}&id=${this.filter.id || ""}&cliente=${this
         .filter.cliente || ""}&tipo_data=${this.filter.tipo_data ||
@@ -488,13 +488,13 @@ export default {
         ""}&concluidos=${this.filter.concluidos || ""}`;
 
       axios.get(url).then(res => {
-        this.vendaStore.orcamentos = res.data.data.map(orcamento => {
-          orcamento.data_agendamento = formatDate(
-            new Date(orcamento.data_agendamento).toISOString().substr(0, 10)
+        this.vendaStore.vendas = res.data.data.map(venda => {
+          venda.data_agendamento = formatDate(
+            new Date(venda.data_agendamento).toISOString().substr(0, 10)
           );
-          orcamento.valor_total = formatToBRL(orcamento.valor_total);
+          venda.valor_total = formatToBRL(venda.valor_total);
 
-          return orcamento;
+          return venda;
         });
         this.count = res.data.count;
         this.pagination.rowsPerPage = res.data.limit;
@@ -503,8 +503,8 @@ export default {
     async remove() {
       let itens = [];
 
-      if (!this.vendaStore.orcamento.id) {
-        itens = this.vendaStore.orcamento.map(item => {
+      if (!this.vendaStore.venda.id) {
+        itens = this.vendaStore.venda.map(item => {
           return {
             id: item.id,
             valor_total: item.valor_total
@@ -512,19 +512,19 @@ export default {
         });
       } else {
         itens.push({
-          id: this.vendaStore.orcamento.id,
-          valor_total: this.vendaStore.orcamento.valor_total
+          id: this.vendaStore.venda.id,
+          valor_total: this.vendaStore.venda.valor_total
         });
       }
 
       itens.map(async item => {
-        const url = `${urlBD}/orcamentos/${item.id}`;
+        const url = `${urlBD}/vendas/${item.id}`;
         await axios
           .delete(url)
           .then(() => {
             this.$toasted.global.defaultSuccess();
-            this.modalStore.vendas.deleteOrcamento = false;
-            this.orcamentos_selecionados = [];
+            this.modalStore.vendas.deleteVenda = false;
+            this.vendas_selecionados = [];
 
             this.loadPedidos();
 

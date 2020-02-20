@@ -748,7 +748,7 @@ export default {
       if (!this.financ) return;
 
       if (this.financ.id_pessoa) {
-        const url = `${urlBD}/pessoas/financeiro/${this.financ.id_pessoa}`;
+        const url = `${urlBD}/pessoasComFinanceiro/${this.financ.id_pessoa}`;
 
         axios.get(url).then(res => {
           this.pessoa = res.data;

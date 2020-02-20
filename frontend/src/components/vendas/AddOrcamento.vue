@@ -1,19 +1,19 @@
 <template>
   <v-dialog
-    v-model="modalStore.vendas.orcamentos.visible"
+    v-model="modalStore.vendas.visible"
     fullscreen
     persistent
     hide-overlay
     transition="dialog-bottom-transition"
   >
-    <v-card v-if="modalStore.vendas.orcamentos.visible">
+    <v-card v-if="modalStore.vendas.visible">
       <v-toolbar dark :color="color" class="m-0 p-0">
-        <v-btn icon @click="modalStore.vendas.orcamentos.visible = false">
+        <v-btn icon @click="modalStore.vendas.visible = false">
           <v-icon>close</v-icon>
         </v-btn>
         <v-toolbar-title
           class="headline text-white font-weight-light"
-        >{{ modalStore.vendas.orcamentos.title }}</v-toolbar-title>
+        >{{ modalStore.vendas.title }}</v-toolbar-title>
         <v-spacer></v-spacer>
         <v-btn icon @click>
           <v-icon>fa fa-2x fa-cog</v-icon>
@@ -23,10 +23,21 @@
       <v-card-text>
         <v-container fluid grid-list-xl>
           <v-form v-model="valid" ref="form">
-            <v-text-field label="id" v-model="orcamento.id" v-show="false"></v-text-field>
-            <v-text-field v-model="orcamento.id_empresa" v-show="false"></v-text-field>
+            <v-text-field label="id" v-model="obj_venda.id" v-show="false"></v-text-field>
+            <v-text-field v-model="obj_venda.id_empresa" v-show="false"></v-text-field>
             <v-layout wrap>
-              <v-flex xs12 md3>
+              <v-flex xs12 md2>
+                <v-autocomplete
+                  class="tag-input"
+                  chips
+                  dense
+                  :color="color"
+                  label="Tipo*"
+                  :items="[{ value: 1, text: 'Orçamento' }, { value: 2, text: 'Venda' }]"
+                  v-model="obj_venda.tipo"
+                ></v-autocomplete>
+              </v-flex>
+              <v-flex xs12 md2>
                 <v-combobox
                   class="tag-input"
                   dense
@@ -37,7 +48,7 @@
                   :items="pessoaStore.pessoas"
                   prepend-icon="fa fa-lg fa-plus-circle"
                   @click:prepend="[pessoaStore.pessoa = null, modalStore.pessoas.visible = true, modalStore.pessoas.title = 'Adicionar pessoa']"
-                  v-model="orcamento.pessoa"
+                  v-model="obj_venda.pessoa"
                   :search-input.sync="clienteFilter"
                   @change="loadCliente"
                   :rules="pessoaRules"
@@ -154,7 +165,7 @@
                                   @input="menu1 = false"
                                   scrollable
                                   :color="color"
-                                  v-model="orcamento.data_agendamento"
+                                  v-model="obj_venda.data_agendamento"
                                   locale="pt-br"
                                 ></v-date-picker>
                               </v-menu>
@@ -164,7 +175,7 @@
                                 :color="color"
                                 label="Observação"
                                 box
-                                v-model="orcamento.observacao"
+                                v-model="obj_venda.observacao"
                               ></v-textarea>
                             </v-flex>
                           </v-layout>
@@ -249,7 +260,7 @@
                             <v-flex xs12 md6>
                               <v-text-field
                                 ref="valor_frete"
-                                v-model="orcamento.valor_frete"
+                                v-model="obj_venda.valor_frete"
                                 :color="color"
                                 label="VALOR DO FRETE"
                                 v-money="money"
@@ -259,7 +270,7 @@
                             <v-flex xs12 md6>
                               <v-text-field
                                 ref="valor_seguro"
-                                v-model="orcamento.valor_seguro"
+                                v-model="obj_venda.valor_seguro"
                                 :color="color"
                                 label="VALOR DO SEGURO"
                                 v-money="money"
@@ -269,7 +280,7 @@
                             <v-flex xs12 md6>
                               <v-text-field
                                 ref="valor_desconto"
-                                v-model="orcamento.valor_desconto"
+                                v-model="obj_venda.valor_desconto"
                                 :color="color"
                                 label="VALOR DE DESCONTO"
                                 v-money="money"
@@ -279,7 +290,7 @@
                             <v-flex xs12 md6>
                               <v-text-field
                                 ref="outras_despesas"
-                                v-model="orcamento.outras_despesas"
+                                v-model="obj_venda.outras_despesas"
                                 :color="color"
                                 label="VALOR DE OUTRAS DESPESAS"
                                 v-money="money"
@@ -289,7 +300,7 @@
                             <v-flex xs12 md6>
                               <v-text-field
                                 ref="valor_produtos"
-                                v-model="orcamento.valor_produtos"
+                                v-model="obj_venda.valor_produtos"
                                 :color="color"
                                 label="VALOR TOTAL DOS PRODUTOS"
                                 placeholder="R$ 0,00"
@@ -299,7 +310,7 @@
                             <v-flex xs12 md6>
                               <v-text-field
                                 ref="valor_total"
-                                v-model="orcamento.valor_total"
+                                v-model="obj_venda.valor_total"
                                 :color="color"
                                 label="VALOR TOTAL DO ORÇAMENTO"
                                 placeholder="R$ 0,00"
@@ -333,7 +344,7 @@
                     deletable-chips
                     dense
                     chips
-                    v-model="orcamento.id_tabela_preco"
+                    v-model="obj_venda.id_tabela_preco"
                     label="Tabela de preços"
                     :items="vendaStore.tabelas"
                     no-data-text="Nenhuma tabela cadastrada ou nenhuma empresa selecionada"
@@ -352,14 +363,14 @@
                   :color="color"
                   @click="addProduto()"
                 >Adicionar produto</v-btn>
-                <span>Adicionar novo produto à orcamento</span>
+                <span>Adicionar novo produto à obj_venda</span>
               </v-tooltip>
             </v-layout>
           </v-container>
 
           <v-data-table
             class="elevation-5 mb-3"
-            :items="produtos_orcamento"
+            :items="produtos_obj_venda"
             :headers="fieldsProdutos"
             :pagination.sync="paginationProd"
             :rows-per-page-items="[5, 10, 20, 50]"
@@ -474,7 +485,7 @@ import { formatToBRL } from "brazilian-values";
 
 export default {
   directives: { money: VMoney },
-  name: "AddOrcamento",
+  name: "Addobj_venda",
   computed: {
     ...mapState("app", ["color"]),
     ...mapState([
@@ -489,12 +500,12 @@ export default {
       return formatDate(this.data_contato);
     },
     computedDateFormatted1() {
-      return formatDate(this.orcamento.data_agendamento);
+      return formatDate(this.obj_venda.data_agendamento);
     }
   },
   watch: {
-    "$store.state.modalStore.vendas.orcamentos.visible": function() {
-      if (this.modalStore.vendas.orcamentos.visible) {
+    "$store.state.modalStore.vendas.visible": function() {
+      if (this.modalStore.vendas.visible) {
         this.limpaTela();
       }
     },
@@ -517,8 +528,8 @@ export default {
   data() {
     return {
       data_contato: new Date().toISOString().substr(0, 10),
-      orcamento: {},
-      produtos_orcamento: [],
+      obj_venda: {},
+      produtos_obj_venda: [],
       cliente: {},
       clienteFilter: null,
       menu: false,
@@ -579,22 +590,22 @@ export default {
     },
     async limpaTela() {
       this.reset();
-      this.loadTela(this.vendaStore.orcamento);
+      this.loadTela(this.vendaStore.obj_venda);
       this.data_contato = new Date().toISOString().substr(0, 10);
     },
     async addProduto(addProd) {
       if (!addProd) {
         const produto = {
-          sequencia: this.produtos_orcamento.length
+          sequencia: this.produtos_obj_venda.length
         };
 
-        this.produtos_orcamento.push(produto);
+        this.produtos_obj_venda.push(produto);
       }
     },
     async reset() {
       this.produto = {};
-      this.produtos_orcamento = [];
-      this.orcamento = {};
+      this.produtos_obj_venda = [];
+      this.obj_venda = {};
       this.cliente = {};
       this.totais = {};
 
@@ -622,10 +633,10 @@ export default {
           )[0].value = 0)
         : "";
     },
-    async loadTela(orcamento) {
-      let url = `${urlBD}/orcamentos/tela`;
+    async loadTela(obj_venda) {
+      let url = `${urlBD}/obj_vendas/tela`;
 
-      if (!orcamento) {
+      if (!obj_venda) {
         axios
           .get(`${url}`)
           .then(res => {
@@ -644,14 +655,14 @@ export default {
             });
           })
           .catch(showError);
-      } else if (orcamento.id) {
+      } else if (obj_venda.id) {
         axios
-          .get(`${url}/${orcamento.id}`)
+          .get(`${url}/${obj_venda.id}`)
           .then(res => {
             const tela = res.data;
 
-            this.orcamento = tela.orcamento;
-            this.data_contato = this.orcamento.data_contato;
+            this.obj_venda = tela.obj_venda;
+            this.data_contato = this.obj_venda.data_contato;
 
             this.pessoaStore.pessoas = tela.pessoas;
             this.vendaStore.tabelas = tela.tabelas;
@@ -664,49 +675,49 @@ export default {
             });
             this.parseValores();
             this.calcTotal();
-            this.orcamento.pessoa.value ? this.loadCliente() : "";
+            this.obj_venda.pessoa.value ? this.loadCliente() : "";
           })
           .catch(showError);
       }
     },
     parseValores() {
-      this.orcamento.valor_frete = formatToBRL(this.orcamento.valor_frete);
-      this.orcamento.valor_seguro = formatToBRL(this.orcamento.valor_seguro);
-      this.orcamento.valor_desconto = formatToBRL(
-        this.orcamento.valor_desconto
+      this.obj_venda.valor_frete = formatToBRL(this.obj_venda.valor_frete);
+      this.obj_venda.valor_seguro = formatToBRL(this.obj_venda.valor_seguro);
+      this.obj_venda.valor_desconto = formatToBRL(
+        this.obj_venda.valor_desconto
       );
-      this.orcamento.outras_despesas = formatToBRL(
-        this.orcamento.outras_despesas
+      this.obj_venda.outras_despesas = formatToBRL(
+        this.obj_venda.outras_despesas
       );
-      this.orcamento.valor_produtos = formatToBRL(
-        this.orcamento.valor_produtos
+      this.obj_venda.valor_produtos = formatToBRL(
+        this.obj_venda.valor_produtos
       );
-      this.orcamento.valor_total = formatToBRL(this.orcamento.valor_total);
+      this.obj_venda.valor_total = formatToBRL(this.obj_venda.valor_total);
 
       this.$refs.valor_frete.$el.getElementsByTagName(
         "input"
-      )[0].value = this.orcamento.valor_frete;
+      )[0].value = this.obj_venda.valor_frete;
       this.$refs.valor_seguro.$el.getElementsByTagName(
         "input"
-      )[0].value = this.orcamento.valor_seguro;
+      )[0].value = this.obj_venda.valor_seguro;
       this.$refs.valor_desconto.$el.getElementsByTagName(
         "input"
-      )[0].value = this.orcamento.valor_desconto;
+      )[0].value = this.obj_venda.valor_desconto;
       this.$refs.outras_despesas.$el.getElementsByTagName(
         "input"
-      )[0].value = this.orcamento.outras_despesas;
+      )[0].value = this.obj_venda.outras_despesas;
       this.$refs.valor_produtos.$el.getElementsByTagName(
         "input"
-      )[0].value = this.orcamento.valor_produtos;
+      )[0].value = this.obj_venda.valor_produtos;
       this.$refs.valor_total.$el.getElementsByTagName(
         "input"
-      )[0].value = this.orcamento.valor_total;
+      )[0].value = this.obj_venda.valor_total;
 
-      this.produtos_orcamento = this.orcamento.produtos;
-      this.financeiro = this.orcamento.financeiro;
+      this.produtos_obj_venda = this.obj_venda.produtos;
+      this.financeiro = this.obj_venda.financeiro;
 
       let i = 0;
-      this.produtos_orcamento = this.produtos_orcamento.map(produto => {
+      this.produtos_obj_venda = this.produtos_obj_venda.map(produto => {
         produto.quantidade = formatToBRL(produto.quantidade).replace("R$", "");
         produto.valor_venda = formatToBRL(produto.valor_venda);
         produto.valor_desconto = formatToBRL(produto.valor_desconto);
@@ -715,13 +726,13 @@ export default {
 
         return produto;
       });
-      delete this.orcamento.produtos;
+      delete this.obj_venda.produtos;
     },
     async loadCliente() {
-      if (!this.orcamento) return;
+      if (!this.obj_venda) return;
 
-      if (this.orcamento.pessoa && this.orcamento.pessoa.value) {
-        const url = `${urlBD}/pessoas/financeiro/${this.orcamento.pessoa.value}`;
+      if (this.obj_venda.pessoa && this.obj_venda.pessoa.value) {
+        const url = `${urlBD}/pessoasComFinanceiro/${this.obj_venda.pessoa.value}`;
         axios.get(url).then(res => {
           this.cliente = res.data;
           this.cliente.cpf_cnpj = res.data.cpf ? res.data.cpf : res.data.cnpj;
@@ -738,7 +749,7 @@ export default {
         return produto.value === item.id;
       });
 
-      this.produtos_orcamento = this.produtos_orcamento.map(produto => {
+      this.produtos_obj_venda = this.produtos_obj_venda.map(produto => {
         if (produto.sequencia === item.sequencia) {
           produto.valor_venda = produtoFilter.valor_venda;
           produto.qtdEstoque = produtoFilter.qtdEstoque;
@@ -749,17 +760,17 @@ export default {
       this.$refs.qtde.focus();
     },
     async deleteItem(item) {
-      this.produtos_orcamento = this.produtos_orcamento.filter(produto => {
+      this.produtos_obj_venda = this.produtos_obj_venda.filter(produto => {
         return produto.sequencia !== item.sequencia;
       });
       this.calcTotal();
     },
     async calcTotal(item, flag = true) {
       if (item) {
-        this.produtos_orcamento = this.produtos_orcamento.filter(produto => {
+        this.produtos_obj_venda = this.produtos_obj_venda.filter(produto => {
           if (produto.sequencia === item.sequencia) {
-            const percentual = this.orcamento.id_tabela_preco
-              ? this.orcamento.id_tabela_preco.percentual
+            const percentual = this.obj_venda.id_tabela_preco
+              ? this.obj_venda.id_tabela_preco.percentual
               : "0,00";
 
             produto.valor_total =
@@ -785,7 +796,7 @@ export default {
           valor_desconto = 0,
           valor_total = 0;
 
-        this.produtos_orcamento.forEach(produto => {
+        this.produtos_obj_venda.forEach(produto => {
           quantidade += parseNumber(produto.quantidade || "0,00");
           valor_venda += parseNumber(produto.valor_venda || "0,00");
           valor_desconto += parseNumber(produto.valor_desconto || "0,00");
@@ -802,7 +813,7 @@ export default {
       }
     },
     async aplicarTabela() {
-      this.produtos_orcamento.forEach(item => {
+      this.produtos_obj_venda.forEach(item => {
         this.calcTotal(item, false);
       });
       this.calcTotal();
@@ -813,16 +824,16 @@ export default {
         valor_seguro,
         valor_desconto,
         outras_despesas
-      } = this.orcamento;
+      } = this.obj_venda;
 
       // valor dos produtos
-      this.orcamento.valor_produtos = this.totais.valor_total;
-      const valor_produtos = this.orcamento.valor_produtos;
+      this.obj_venda.valor_produtos = this.totais.valor_total;
+      const valor_produtos = this.obj_venda.valor_produtos;
       this.$refs.valor_produtos.$el.getElementsByTagName("input")[0].value =
-        this.orcamento.valor_produtos || "";
+        this.obj_venda.valor_produtos || "";
 
       // valor total da nota
-      this.orcamento.valor_total = formatToBRL(
+      this.obj_venda.valor_total = formatToBRL(
         parseNumber(valor_produtos || "0,00") +
           parseNumber(valor_frete) +
           parseNumber(valor_seguro) +
@@ -831,28 +842,28 @@ export default {
       );
       this.$refs.valor_total.$el.getElementsByTagName(
         "input"
-      )[0].value = this.orcamento.valor_total;
+      )[0].value = this.obj_venda.valor_total;
     },
     save() {
       if (!this.$refs.form.validate() || !this.$refs.form1.validate()) return;
 
       this.isLoading = true;
 
-      const method = this.orcamento.id ? "put" : "post";
-      const id = this.orcamento.id ? this.orcamento.id : "";
-      const url = `${urlBD}/orcamentos/${id}`;
+      const method = this.obj_venda.id ? "put" : "post";
+      const id = this.obj_venda.id ? this.obj_venda.id : "";
+      const url = `${urlBD}/obj_vendas/${id}`;
 
-      if (!this.orcamento.id_empresa) {
-        this.orcamento.id_empresa = this.empresaStore.currentEmpresa.value;
+      if (!this.obj_venda.id_empresa) {
+        this.obj_venda.id_empresa = this.empresaStore.currentEmpresa.value;
       }
 
-      this.orcamento.produtos = this.produtos_orcamento;
-      this.orcamento.data_contato = this.data_contato;
+      this.obj_venda.produtos = this.produtos_obj_venda;
+      this.obj_venda.data_contato = this.data_contato;
 
-      axios[method](url, this.orcamento)
+      axios[method](url, this.obj_venda)
         .then(() => {
           this.$toasted.global.defaultSuccess();
-          this.modalStore.vendas.orcamentos.visible = false;
+          this.modalStore.vendas.visible = false;
 
           let data = new Date();
           const hora = `${data.getHours()}:${data.getMinutes()}:${data.getSeconds()}`;
@@ -864,8 +875,8 @@ export default {
             tela: "ORÇAMENTOS/ADICIONAR",
             detalhe:
               method === "post"
-                ? `Orçamento adicionado: /Data de lançamento: ${this.orcamento.data_lancamento}`
-                : `Orçamento alterado: Código: ${this.orcamento.id}/de lançamento: ${this.orcamento.data_lancamento}`
+                ? `Orçamento adicionado: /Data de lançamento: ${this.obj_venda.data_lancamento}`
+                : `Orçamento alterado: Código: ${this.obj_venda.id}/de lançamento: ${this.obj_venda.data_lancamento}`
           };
 
           axios.post(`${urlBD}/log`, log).catch(showError);

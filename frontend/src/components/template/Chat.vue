@@ -233,14 +233,14 @@ export default {
     },
     loadUsuariosChat() {
       loadUsuarios();
-      this.usuarios = this.usuarioStore.currentUsuarios
-        .filter(u => u.value != this.usuarioStore.currentUsuario.id)
-        .map(u => {
-          if (u.nome in this.usuarioStore.usuariosOnline) u.online = true;
-          else u.online = false;
-
-          return u;
-        });
+      this.usuarios = this.usuarioStore.currentUsuarios.map(u => {
+        if (u.value == this.usuarioStore.currentUsuario.id) {
+          u.disabled = true;
+        }
+        if (u.nome in this.usuarioStore.usuariosOnline) u.online = true;
+        else u.online = false;
+        return u;
+      });
     },
     joinPrivate() {
       if (!this.message.receiver) return;

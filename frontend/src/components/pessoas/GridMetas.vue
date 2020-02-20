@@ -197,51 +197,53 @@
         </v-tooltip>
       </v-layout>
     </v-container>
-    <v-data-table
-      class="elevation-5"
-      :items="pessoaStore.metas"
-      :headers="fields"
-      :pagination.sync="pagination"
-      :rows-per-page-items="[5, 10, 15, 20]"
-      rows-per-page-text="Registros por página"
-      no-results-text="Nenhum registro encontrado"
-      no-data-text="Nenhuma meta cadastrada"
-    >
-      <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
-      <template slot="items" slot-scope="data">
-        <td>{{ data.item.id }}</td>
-        <td>{{ data.item.pessoa }}</td>
-        <td>
-          <v-chip
-            :color="getColor(data.item.tipo_receita_despesa)"
-            dark
-          >{{ data.item.tipo_receita_despesa }}</v-chip>
-        </td>
-        <td>{{ data.item.valor_total }}</td>
-        <td>
-          <b-button
-            variant="secundary"
-            @click.prevent="[pessoaStore.meta = data.item, modalStore.pessoas.metas.visible = true,modalStore.pessoas.metas.title = 'Alterar meta']"
-            class="mr-1"
-          >
-            <i class="fa fa-lg fa-pencil"></i>
-          </b-button>
-          <b-button
-            variant="secundary"
-            @click.prevent="[modalStore.pessoas.metas.deleteMeta = true,pessoaStore.meta = data.item]"
-            class="mr-1"
-          >
-            <i class="fa fa-lg fa-trash"></i>
-          </b-button>
-          <b-button
-            variant="secundary"
-            @click.prevent="[modalStore.email.visible = true, modalStore.email.para = data.item.email]"
-          >
-            <i class="fa fa-lg fa-envelope"></i>
-          </b-button>
-        </td>
-      </template>
-    </v-data-table>
+
+    <Card :color="color" title="Ações rápidas" :actions="globalActions">
+      <v-data-table
+        :items="pessoaStore.metas"
+        :headers="fields"
+        :pagination.sync="pagination"
+        :rows-per-page-items="[5, 10, 15, 20]"
+        rows-per-page-text="Registros por página"
+        no-results-text="Nenhum registro encontrado"
+        no-data-text="Nenhuma meta cadastrada"
+      >
+        <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
+        <template slot="items" slot-scope="data">
+          <td>{{ data.item.id }}</td>
+          <td>{{ data.item.pessoa }}</td>
+          <td>
+            <v-chip
+              :color="getColor(data.item.tipo_receita_despesa)"
+              dark
+            >{{ data.item.tipo_receita_despesa }}</v-chip>
+          </td>
+          <td>{{ data.item.valor_total }}</td>
+          <td>
+            <b-button
+              variant="secundary"
+              @click.prevent="[pessoaStore.meta = data.item, modalStore.pessoas.metas.visible = true,modalStore.pessoas.metas.title = 'Alterar meta']"
+              class="mr-1"
+            >
+              <i class="fa fa-lg fa-pencil"></i>
+            </b-button>
+            <b-button
+              variant="secundary"
+              @click.prevent="[modalStore.pessoas.metas.deleteMeta = true,pessoaStore.meta = data.item]"
+              class="mr-1"
+            >
+              <i class="fa fa-lg fa-trash"></i>
+            </b-button>
+            <b-button
+              variant="secundary"
+              @click.prevent="[modalStore.email.visible = true, modalStore.email.para = data.item.email]"
+            >
+              <i class="fa fa-lg fa-envelope"></i>
+            </b-button>
+          </td>
+        </template>
+      </v-data-table>
+    </Card>
   </div>
 </template>
 
@@ -254,7 +256,10 @@ export default {
     ...mapState("app", ["color"]),
     ...mapState(["pessoaStore", "modalStore"])
   },
-  data: function() {
+  components: {
+    Card: () => import("../material/Card")
+  },
+  data() {
     return {
       valid: true,
       fields: [
@@ -273,7 +278,25 @@ export default {
         sortBy: "pessoa",
         totalItems: 0
       },
-      count: 0
+      count: 0,
+      globalActions: [
+        {
+          icon: "fa fa-lg fa-print",
+          tooltip: "Imprimir selecionados",
+          method: "print"
+        },
+        {
+          icon: "fa fa-lg fa-trash",
+          tooltip: "Excluir selecionados",
+          method: "remove",
+          store: "meta"
+        },
+        {
+          icon: "fa fa-lg fa-refresh",
+          tooltip: "Recarregar itens",
+          method: "loadMetas"
+        }
+      ]
     };
   },
   methods: {

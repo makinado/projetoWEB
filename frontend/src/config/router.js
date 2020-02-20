@@ -51,10 +51,6 @@ const routes = [{
     path: "/atividades",
     component: () => import('@/components/ferramentas/Atividade')
 }, {
-    name: 'Backup',
-    path: "/backup",
-    component: () => import('@/components/ferramentas/Backup')
-}, {
     name: 'Pedidos',
     path: '/pedidos',
     component: () => import('@/components/compras/Pedidos')
@@ -95,10 +91,6 @@ const routes = [{
     name: 'PDV',
     path: '/pdv',
     component: () => import('@/components/vendas/PDV')
-}, {
-    name: 'Venda',
-    path: '/venda',
-    component: () => import('@/components/vendas/Venda')
 }, {
     name: 'Dúvidas',
     path: "/duvidas",

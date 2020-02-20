@@ -1,52 +1,6 @@
 <template>
   <div class="grid-produtos">
     <v-container fluid>
-      <v-menu
-        :close-on-content-click="false"
-        :close-on-click="false"
-        width="300"
-        nudge-left="12"
-        transition="slide-y-transition"
-        v-model="funcoes"
-        :position-x="getWindowSize()"
-        
-      >
-        <v-card>
-          <v-card-title class="headline">
-            <v-icon class="mr-2">fa fa-cogs</v-icon>
-            <span>Selecione uma opção</span>
-          </v-card-title>
-          <v-card-text>
-            <hr />
-            <v-layout wrap justify-center>
-              <v-tooltip bottom>
-                <v-btn
-                  slot="activator"
-                  flat
-                  icon
-                  color="danger"
-                  @click="[produtoStore.produto = produtos_selecionados, modalStore.produtos.deleteProduto = true]"
-                >
-                  <v-icon>fa fa-2x fa-trash</v-icon>
-                </v-btn>
-                <span>Excluir produto</span>
-              </v-tooltip>
-              <v-tooltip bottom>
-                <v-btn
-                  slot="activator"
-                  flat
-                  icon
-                  color="primary"
-                  @click="[modalStore.complementos.impressao.docs = produtos_selecionados, modalStore.complementos.impressao.visible = true]"
-                >
-                  <v-icon>fa fa-2x fa-print</v-icon>
-                </v-btn>
-                <span>Exportar produto</span>
-              </v-tooltip>
-            </v-layout>
-          </v-card-text>
-        </v-card>
-      </v-menu>
       <v-layout
         justify-center
         v-if="$vuetify.breakpoint.name === 'xs' || $vuetify.breakpoint.name === 'sm' || $vuetify.breakpoint.name === 'md'"
@@ -331,93 +285,72 @@
         </v-tooltip>
       </v-layout>
     </v-container>
-    <v-data-table
-      v-model="produtos_selecionados"
-      class="elevation-5"
-      :items="produtoStore.produtos"
-      :headers="fields"
-      rows-per-page-text="Registros por página"
-      no-results-text="Nenhum registro encontrado"
-      no-data-text="Nenhum produto cadastrado"
-      :rows-per-page-items="[5, 10, 20, 50, 100]"
-      :total-items="count"
-      :pagination.sync="pagination"
-      select-all
-    >
-      <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
-      <template slot="items" slot-scope="data">
-        <td>
-          <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
-        </td>
-        <td>{{ data.item.id }}</td>
-        <td>{{ data.item.descricao }}</td>
-        <td>{{ data.item.categoria }}</td>
-        <td>{{ data.item.marca }}</td>
-        <td>{{ data.item.valor_venda }}</td>
-        <td>{{ data.item.qtdEstoque || 0 }}</td>
-        <td>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[produtoStore.produto = data.item, modalStore.produtos.visible = true, modalStore.produtos.title = 'Alterar produto']"
-              class="mr-1"
-            >
-              <i class="fa fa-lg fa-pencil"></i>
-            </b-button>
-            <span>Editar produto</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[modalStore.produtos.deleteProduto = true,produtoStore.produto = data.item]"
-              class="mr-1"
-            >
-              <i class="fa fa-lg fa-trash"></i>
-            </b-button>
-            <span>Excluir produto</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              class="mr-1"
-              @click.prevent="[modalStore.produtos.estoque.visible = true, produtoStore.produto = data.item]"
-            >
-              <i class="fa fa-lg fa-th"></i>
-            </b-button>
-            <span>Estoque do produto</span>
-          </v-tooltip>
-        </td>
-      </template>
-    </v-data-table>
+
+    <Card :color="color" title="Ações rápidas" :actions="globalActions">
+      <v-data-table
+        v-model="itens_selecionados"
+        :items="produtoStore.produtos"
+        :headers="fields"
+        rows-per-page-text="Registros por página"
+        no-results-text="Nenhum registro encontrado"
+        no-data-text="Nenhum produto cadastrado"
+        :rows-per-page-items="[5, 10, 20, 50, 100]"
+        :total-items="count"
+        :pagination.sync="pagination"
+        select-all
+      >
+        <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
+        <template slot="items" slot-scope="data">
+          <td>
+            <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
+          </td>
+          <td>{{ data.item.id }}</td>
+          <td>{{ data.item.descricao }}</td>
+          <td>{{ data.item.categoria }}</td>
+          <td>{{ data.item.marca }}</td>
+          <td>{{ data.item.valor_venda }}</td>
+          <td>{{ data.item.qtdEstoque || 0 }}</td>
+          <td>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[produtoStore.produto = data.item, modalStore.produtos.visible = true, modalStore.produtos.title = 'Alterar produto']"
+                class="mr-1"
+              >
+                <i class="fa fa-lg fa-pencil"></i>
+              </b-button>
+              <span>Editar produto</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[confirmaExclusao = true,produtoStore.produto = data.item]"
+                class="mr-1"
+              >
+                <i class="fa fa-lg fa-trash"></i>
+              </b-button>
+              <span>Excluir produto</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                class="mr-1"
+                @click.prevent="[modalStore.produtos.estoque.visible = true, produtoStore.produto = data.item]"
+              >
+                <i class="fa fa-lg fa-th"></i>
+              </b-button>
+              <span>Estoque do produto</span>
+            </v-tooltip>
+          </td>
+        </template>
+      </v-data-table>
+    </Card>
 
     <v-dialog
-      v-model="modalStore.produtos.deleteProduto"
-      persistent
-      max-width="500px"
-      v-if="produtoStore.produto"
-    >
-      <v-card>
-        <v-card-title>
-          <span class="headline">Excluir produto</span>
-        </v-card-title>
-        <v-card-text>Excluir {{ produtoStore.produto.descricao }} ?</v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn
-            color="blue darken-1"
-            flat
-            @click="modalStore.produtos.deleteProduto = false"
-          >Fechar</v-btn>
-          <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <v-dialog
-      v-model="modalStore.produtos.deleteProduto"
+      v-model="confirmaExclusao"
       persistent
       max-width="500px"
       v-if="produtoStore.produto"
@@ -436,11 +369,7 @@
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn
-            color="blue darken-1"
-            flat
-            @click="[modalStore.produtos.deleteProduto = false]"
-          >Fechar</v-btn>
+          <v-btn color="blue darken-1" flat @click="[confirmaExclusao = false]">Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
       </v-card>
@@ -468,6 +397,9 @@ import { formatToBRL } from "brazilian-values";
 export default {
   directives: { money: VMoney },
   name: "GridProdutos",
+  components: {
+    Card: () => import("../material/Card")
+  },
   computed: {
     ...mapState("app", ["color"]),
     ...mapState([
@@ -484,13 +416,6 @@ export default {
     }
   },
   watch: {
-    produtos_selecionados: function() {
-      if (this.produtos_selecionados.length > 1) {
-        this.funcoes = true;
-      } else {
-        this.funcoes = false;
-      }
-    },
     params() {
       this.loadProdutos();
     },
@@ -514,7 +439,7 @@ export default {
   },
   data: function() {
     return {
-      produtos_selecionados: [],
+      itens_selecionados: [],
       valid: true,
       true: true,
       fields: [
@@ -529,10 +454,11 @@ export default {
       filter: {},
       concluir: false,
       pesquisa: false,
+      confirmaExclusao: false,
       pagination: {
         descending: false,
         page: 1,
-        rowsPerPage: 10, // -1 for All,
+        rowsPerPage: 20, // -1 for All,
         sortBy: "descricao",
         totalItems: 0
       },
@@ -542,7 +468,26 @@ export default {
         thousands: ".",
         prefix: "R$ ",
         precision: 2
-      }
+      },
+      globalActions: [
+        {
+          icon: "fa fa-lg fa-print",
+          tooltip: "Imprimir selecionados",
+          method: "print"
+        },
+        {
+          icon: "fa fa-lg fa-trash",
+          tooltip: "Excluir selecionados",
+          method: "remove",
+          store: "produto"
+        },
+        {
+          icon: "fa fa-lg fa-refresh",
+          tooltip: "Recarregar itens",
+          method: "loadProdutos",
+          required: true
+        }
+      ]
     };
   },
   methods: {
@@ -572,24 +517,47 @@ export default {
       });
     },
     async remove() {
-      const url = `${urlBD}/produtos/${this.produtoStore.produto.id}`;
+      if (!this.confirmaExclusao) {
+        this.confirmaExclusao = true;
+        return;
+      }
 
-      await axios
-        .delete(url)
-        .then(() => {
-          this.$toasted.global.defaultSuccess();
+      var produtos = [];
 
-          this.loadProdutos();
-          this.modalStore.produtos.deleteProduto = false;
+      if (!this.produtoStore.produto.id) {
+        produtos = this.produtoStore.produto.map(item => {
+          return {
+            id: item.id,
+            descricao: item.descricao
+          };
+        });
+      } else {
+        produtos.push({
+          id: this.produtoStore.produto.id,
+          descricao: this.produtoStore.produto.descricao
+        });
+      }
 
-          saveLog(
-            new Date(),
-            "EXCLUSÃO",
-            "PRODUTOS",
-            `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu o produto ${this.produtoStore.produto.descricao}`
-          );
-        })
-        .catch(showError);
+      pessoas.map(async item => {
+        const url = `${urlBD}/produtos/${item.id}`;
+
+        await axios
+          .delete(url)
+          .then(() => {
+            this.$toasted.global.defaultSuccess();
+
+            this.loadProdutos();
+            this.confirmaExclusao = false;
+
+            saveLog(
+              new Date(),
+              "EXCLUSÃO",
+              "PRODUTOS",
+              `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu o produto ${this.produtoStore.produto.descricao}`
+            );
+          })
+          .catch(showError);
+      });
     }
   }
 };

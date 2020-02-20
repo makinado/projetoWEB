@@ -1,64 +1,6 @@
 <template>
   <div class="grid-import">
     <v-container fluid>
-      <v-menu
-        :close-on-content-click="false"
-        :close-on-click="false"
-        width="300"
-        nudge-left="12"
-        transition="slide-y-transition"
-        v-model="funcoes"
-        :position-x="getWindowSize()"
-        
-      >
-        <v-card>
-          <v-card-title class="headline">
-            <v-icon class="mr-2">fa fa-cogs</v-icon>
-            <span>Selecione uma opção</span>
-          </v-card-title>
-          <v-card-text>
-            <hr />
-            <v-layout wrap justify-center>
-              <v-tooltip bottom v-if="concluir">
-                <v-btn
-                  slot="activator"
-                  flat
-                  icon
-                  color="success"
-                  @click="[comprasStore.pedido = pedidos_selecionados, finalizar = true]"
-                >
-                  <v-icon>fa fa-2x fa-check</v-icon>
-                </v-btn>
-                <span>Concluir pedido</span>
-              </v-tooltip>
-              <v-tooltip bottom>
-                <v-btn
-                  slot="activator"
-                  flat
-                  icon
-                  color="danger"
-                  @click="[comprasStore.pedido = pedidos_selecionados, modalStore.compras.deletePedido = true]"
-                >
-                  <v-icon>fa fa-2x fa-trash</v-icon>
-                </v-btn>
-                <span>Excluir conta</span>
-              </v-tooltip>
-              <v-tooltip bottom>
-                <v-btn
-                  slot="activator"
-                  flat
-                  icon
-                  color="primary"
-                  @click="[modalStore.complementos.impressao.docs = pedidos_selecionados, modalStore.complementos.impressao.visible = true]"
-                >
-                  <v-icon>fa fa-2x fa-print</v-icon>
-                </v-btn>
-                <span>Exportar conta</span>
-              </v-tooltip>
-            </v-layout>
-          </v-card-text>
-        </v-card>
-      </v-menu>
       <v-layout
         justify-center
         v-if="$vuetify.breakpoint.name === 'xs' || $vuetify.breakpoint.name === 'sm' || $vuetify.breakpoint.name === 'md'"
@@ -352,87 +294,84 @@
         </v-tooltip>
       </v-layout>
     </v-container>
-    <v-data-table
-      class="elevation-5"
-      :items="comprasStore.pedidos"
-      :headers="fields"
-      rows-per-page-text="Registros por página"
-      no-results-text="Nenhum registro encontrado"
-      no-data-text="Nenhuma compra realizada"
-      :rows-per-page-items="[5, 10, 20, 50, 100]"
-      :total-items="count"
-      :pagination.sync="pagination"
-      :loading="loading"
-      select-all
-      v-model="pedidos_selecionados"
-    >
-      <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
-      <template slot="items" slot-scope="data">
-        <td>
-          <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
-        </td>
-        <td>{{ data.item.id }}</td>
-        <td>{{ data.item.empresa }}</td>
-        <td>{{ data.item.pessoa }}</td>
-        <td>
-          <v-chip :color="getColor(data.item.situacao)" dark>{{ data.item.situacao }}</v-chip>
-        </td>
-        <td>{{ data.item.nota_fiscal }}</td>
-        <td>{{ data.item.data_pedido }}</td>
-        <td>{{ data.item.valor_total }}</td>
-        <td>
-          <v-tooltip bottom v-if="data.item.situacao === 'PENDENTE'">
-            <b-button
-              slot="activator"
-              variant="secundary"
-              class="mr-1"
-              @click.prevent="[finalizar = true]"
-            >
-              <i class="fa fa-lg fa-check"></i>
-            </b-button>
-            <span>Concluir pedido</span>
-          </v-tooltip>
-          <v-tooltip bottom v-else>
-            <b-button slot="activator" variant="secundary" class="mr-1">
-              <i class="fa fa-lg fa-info"></i>
-            </b-button>
-            <span>Informações do pedido</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[comprasStore.pedido = data.item, modalStore.compras.pedidos.visible = true,modalStore.compras.pedidos.title = 'Alterar pedido de compra']"
-              class="mr-1"
-            >
-              <i class="fa fa-lg fa-pencil"></i>
-            </b-button>
-            <span>Editar pedido</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[modalStore.compras.deletePedido = true, comprasStore.pedido = data.item]"
-              class="mr-1"
-            >
-              <i class="fa fa-lg fa-trash"></i>
-            </b-button>
-            <span>Excluir pedido</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[modalStore.complementos.impressao = true]"
-            >
-              <i class="fa fa-lg fa-print"></i>
-            </b-button>
-            <span>Exportar pedido</span>
-          </v-tooltip>
-        </td>
-      </template>
-    </v-data-table>
+
+    <Card :color="color" title="Ações rápidas" :actions="globalActions">
+      <v-data-table
+        :items="comprasStore.pedidos"
+        :headers="fields"
+        rows-per-page-text="Registros por página"
+        no-results-text="Nenhum registro encontrado"
+        no-data-text="Nenhuma compra realizada"
+        :rows-per-page-items="[5, 10, 20, 50, 100]"
+        :total-items="count"
+        :pagination.sync="pagination"
+        :loading="loading"
+        select-all
+        v-model="itens_selecionados"
+      >
+        <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
+        <template slot="items" slot-scope="data">
+          <td>
+            <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
+          </td>
+          <td>{{ data.item.id }}</td>
+          <td>{{ data.item.empresa }}</td>
+          <td>{{ data.item.pessoa }}</td>
+          <td>
+            <v-chip :color="getColor(data.item.situacao)" dark>{{ data.item.situacao }}</v-chip>
+          </td>
+          <td>{{ data.item.nota_fiscal }}</td>
+          <td>{{ data.item.data_pedido }}</td>
+          <td>{{ data.item.valor_total }}</td>
+          <td>
+            <v-tooltip bottom v-if="data.item.situacao === 'PENDENTE'">
+              <b-button slot="activator" variant="secundary" class="mr-1" @click="concluirPedido">
+                <i class="fa fa-lg fa-check"></i>
+              </b-button>
+              <span>Concluir pedido</span>
+            </v-tooltip>
+            <v-tooltip bottom v-else>
+              <b-button slot="activator" variant="secundary" class="mr-1">
+                <i class="fa fa-lg fa-info"></i>
+              </b-button>
+              <span>Informações do pedido</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[comprasStore.pedido = data.item, modalStore.compras.pedidos.visible = true,modalStore.compras.pedidos.title = 'Alterar pedido de compra']"
+                class="mr-1"
+              >
+                <i class="fa fa-lg fa-pencil"></i>
+              </b-button>
+              <span>Editar pedido</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[confirmaExclusao = true, comprasStore.pedido = data.item]"
+                class="mr-1"
+              >
+                <i class="fa fa-lg fa-trash"></i>
+              </b-button>
+              <span>Excluir pedido</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[modalStore.complementos.impressao = true]"
+              >
+                <i class="fa fa-lg fa-print"></i>
+              </b-button>
+              <span>Exportar pedido</span>
+            </v-tooltip>
+          </td>
+        </template>
+      </v-data-table>
+    </Card>
 
     <v-dialog v-model="finalizar" lazy max-width="700px">
       <v-card>
@@ -484,25 +423,19 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog
-      v-model="modalStore.compras.deletePedido"
-      persistent
-      max-width="500px"
-      v-if="comprasStore.pedido"
-      lazy
-    >
+    <v-dialog v-model="confirmaExclusao" persistent max-width="500px" v-if="comprasStore.pedido">
       <v-card>
         <v-card-title>
-          <span class="headline">Excluir parcela</span>
+          <span class="headline">Excluir pedido</span>
         </v-card-title>
         <v-card-text
           v-if="!Array.isArray(comprasStore.pedido)"
-        >Cancelar conta {{ comprasStore.pedido.id }} no valor de {{ comprasStore.pedido.valor_total }}?</v-card-text>
+        >Excluir pedido {{ comprasStore.pedido.id }} no valor de {{ comprasStore.pedido.valor_total }}?</v-card-text>
         <v-card-text v-else>
-          <v-flex xs12>Excluir {{ comprasStore.pedido.length }} compras?</v-flex>
+          <v-flex xs12>Excluir {{ comprasStore.pedido.length }} pedidos?</v-flex>
           <v-flex xs12>
             <font color="red" v-if="confirmacao">
-              <small>Você selecionou compras já concluidas, confirma exclusão?</small>
+              <small>Você selecionou pedidos já concluidos, confirma exclusão?</small>
             </font>
           </v-flex>
         </v-card-text>
@@ -512,7 +445,7 @@
           <v-btn
             color="blue darken-1"
             flat
-            @click="[modalStore.compras.deletePedido = false, confirmacao = false]"
+            @click="[confirmaExclusao = false, confirmacao = false]"
           >Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
@@ -546,11 +479,14 @@ export default {
       };
     }
   },
-  data: function() {
+  components: {
+    Card: () => import("../material/Card")
+  },
+  data() {
     return {
       valid: true,
       loading: true,
-      pedidos_selecionados: [],
+      itens_selecionados: [],
       fields: [
         { value: "id", text: "Código", sortable: true },
         { value: "empresa", text: "Empresa", sortable: true },
@@ -571,25 +507,42 @@ export default {
       },
       count: 0,
       finalizar: false,
+      confirmaExclusao: false,
       confirmacao: false,
       concluir: false,
       cancelar: false,
       menu1: false,
       menu2: false,
       pesquisa: false,
-      funcoes: false
+      globalActions: [
+        {
+          icon: "fa fa-lg fa-check",
+          tooltip: "Concluir selecionados",
+          method: "concluirPedido"
+        },
+        {
+          icon: "fa fa-lg fa-print",
+          tooltip: "Imprimir selecionados",
+          method: "print"
+        },
+        {
+          icon: "fa fa-lg fa-trash",
+          tooltip: "Excluir selecionados",
+          method: "remove",
+          store: "pedido"
+        },
+        {
+          icon: "fa fa-lg fa-refresh",
+          tooltip: "Recarregar itens",
+          method: "loadPedidos",
+          required: true
+        }
+      ]
     };
   },
   watch: {
     finalizar: function() {
-      if (!this.finalizar) this.pedidos_selecionados = [];
-    },
-    pedidos_selecionados: function() {
-      if (this.pedidos_selecionados.length > 1) {
-        this.funcoes = this.getPedSit();
-      } else {
-        this.funcoes = false;
-      }
+      if (!this.finalizar) this.itens_selecionados = [];
     },
     params() {
       this.loadPedidos();
@@ -604,31 +557,13 @@ export default {
     getWindowSize() {
       return window.innerWidth / 2 - 150;
     },
-    getPedSit() {
-      const item_concluido = this.pedidos_selecionados.filter(
-        item => item.situacao === "CONCLUÍDO"
-      );
-      const item_pendente = this.pedidos_selecionados.filter(
-        item => item.situacao === "PENDENTE"
-      );
-
-      if (item_concluido.length > 0 && item_pendente.length == 0) {
-        this.concluir = false;
-        this.cancelar = true;
-      } else if (item_pendente.length > 0 && item_concluido.length == 0) {
-        this.concluir = true;
-        this.cancelar = false;
-      } else {
-        this.concluir = false;
-        this.cancelar = false;
-      }
-
-      return true;
-    },
     getColor(situacao) {
       if (situacao === "PENDENTE") return "blue";
       else if (situacao === "CANCELADO") return "red";
       else return "green";
+    },
+    concluirPedido() {
+      this.finalizar = true;
     },
     async loadPedidos() {
       const url = `${urlBD}/pedidos?page=${this.pagination.page}&limit=${
@@ -654,29 +589,40 @@ export default {
       });
     },
     async remove() {
-      let itens = [];
+      if (!this.confirmaExclusao) {
+        this.confirmaExclusao = true;
+        return;
+      }
+
+      let pedidos = [];
 
       if (!this.comprasStore.pedido.id) {
-        itens = this.comprasStore.pedido.map(item => {
+        pedidos = this.comprasStore.pedido.map(item => {
           return {
             id: item.id,
             valor_total: item.valor_total
           };
         });
       } else {
-        itens.push({
+        pedidos.push({
           id: this.comprasStore.pedido.id,
           valor_total: this.comprasStore.pedido.valor_total
         });
       }
 
-      itens.map(async item => {
+      const aux = financs.filter(item => item.situacao == "CONCLUÍDO");
+      if (aux.length > 0 && !this.confirmacao) {
+        this.confirmacao = true;
+        return;
+      }
+
+      pedidos.map(async item => {
         const url = `${urlBD}/pedidos/${item.id}`;
         await axios
           .delete(url)
           .then(() => {
             this.$toasted.global.defaultSuccess();
-            this.modalStore.compras.deletePedido = false;
+            this.confirmaExclusao = false;
             this.compras_selecionadas = [];
 
             this.loadPedidos();

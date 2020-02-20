@@ -1,76 +1,6 @@
 <template>
   <div class="grid-import">
     <v-container fluid>
-      <v-menu
-        :close-on-content-click="false"
-        :close-on-click="false"
-        width="300"
-        nudge-left="12"
-        transition="slide-y-transition"
-        v-model="funcoes"
-        :position-x="getWindowSize()"
-      >
-        <v-card>
-          <v-card-title class="headline">
-            <v-icon class="mr-2">fa fa-cogs</v-icon>
-            <span>Selecione uma opção</span>
-          </v-card-title>
-          <v-card-text>
-            <hr />
-            <v-layout wrap justify-center>
-              <v-tooltip bottom v-if="concluir">
-                <v-btn
-                  slot="activator"
-                  flat
-                  icon
-                  color="success"
-                  @click="[financeiroStore.financ = financs_selecionados, modalStore.financeiro.financ.pagamento = true]"
-                >
-                  <v-icon>fa fa-2x fa-check</v-icon>
-                </v-btn>
-                <span>Realizar pagamento/recebimento</span>
-              </v-tooltip>
-              <v-tooltip bottom v-if="cancelar">
-                <v-btn
-                  slot="activator"
-                  flat
-                  icon
-                  color="danger"
-                  @click="[financeiroStore.financ = financs_selecionados, modalStore.financeiro.cancelFinanc = true]"
-                >
-                  <v-icon>fa fa-2x fa-times</v-icon>
-                </v-btn>
-                <span>Cancelar pagamento/recebimento</span>
-              </v-tooltip>
-              <v-tooltip bottom>
-                <v-btn
-                  slot="activator"
-                  flat
-                  icon
-                  color="danger"
-                  @click="[financeiroStore.financ = financs_selecionados, modalStore.financeiro.deleteFinanc = true]"
-                >
-                  <v-icon>fa fa-2x fa-trash</v-icon>
-                </v-btn>
-                <span>Excluir conta</span>
-              </v-tooltip>
-              <v-tooltip bottom>
-                <v-btn
-                  slot="activator"
-                  flat
-                  icon
-                  color="primary"
-                  @click="[modalStore.complementos.impressao.docs = financs_selecionados, modalStore.complementos.impressao.visible = true]"
-                >
-                  <v-icon>fa fa-2x fa-print</v-icon>
-                </v-btn>
-                <span>Exportar conta</span>
-              </v-tooltip>
-            </v-layout>
-          </v-card-text>
-        </v-card>
-      </v-menu>
-
       <v-layout
         justify-center
         v-if="$vuetify.breakpoint.name === 'xs' || $vuetify.breakpoint.name === 'sm' || $vuetify.breakpoint.name === 'md'"
@@ -424,115 +354,111 @@
         </v-tooltip>
       </v-layout>
     </v-container>
-    <v-data-table
-      class="elevation-5"
-      :items="financeiroStore.financs"
-      :headers="fields"
-      :pagination.sync="pagination"
-      :rows-per-page-items="[5, 10, 20, 50, 100]"
-      rows-per-page-text="Registros por página"
-      no-results-text="Nenhum registro encontrado"
-      no-data-text="Nenhuma conta cadastrada"
-      select-all
-      v-model="financs_selecionados"
-      :total-items="count"
-    >
-      <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
-      <template slot="items" slot-scope="data">
-        <td>
-          <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
-        </td>
-        <td>{{ data.item.id }}</td>
 
-        <td>{{ data.item.empresa }}</td>
-        <td>{{ data.item.pessoa }}</td>
-        <td>
-          <v-chip :color="getColor(data.item.tipo_conta)" dark>{{ data.item.tipo_conta }}</v-chip>
-        </td>
-        <td>
-          <v-chip :color="getColor(data.item.pago)" dark>{{ data.item.pago }}</v-chip>
-        </td>
-        <td>{{ data.item.documento_origem }}</td>
-        <td>{{ data.item.data_vencimento }}</td>
-        <td>{{ data.item.data_baixa == '01/01/1970' ? "" : data.item.data_baixa }}</td>
-        <td>{{ data.item.valor_parcela }}</td>
-        <td>
-          <v-tooltip bottom v-if="data.item.pago == 'PENDENTE'">
-            <b-button
-              slot="activator"
-              variant="secundary"
-              class="mr-1"
-              @click.prevent="[financeiroStore.financ = data.item, modalStore.financeiro.financ.pagamento = true]"
-            >
-              <i class="fa fa-lg fa-check"></i>
-            </b-button>
-            <span>Realizar pagamento/recebimento</span>
-          </v-tooltip>
-          <v-tooltip bottom v-else-if="data.item.pago == 'CONCLUÍDA'">
-            <b-button
-              slot="activator"
-              variant="secundary"
-              class="mr-1"
-              @click.prevent="[modalStore.financeiro.cancelFinanc = true, financeiroStore.financ = data.item]"
-            >
-              <i class="fa fa-lg fa-times"></i>
-            </b-button>
-            <span>Cancelar pagamento/recebimento</span>
-          </v-tooltip>
-          <v-tooltip bottom v-if="data.item.pago == 'PENDENTE'">
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[financeiroStore.financ = data.item, modalStore.financeiro.financ.visible = true,modalStore.financeiro.financ.title = 'Alterar parcela do financeiro']"
-              class="mr-1"
-            >
-              <i class="fa fa-lg fa-pencil"></i>
-            </b-button>
-            <span>Editar conta</span>
-          </v-tooltip>
-          <v-tooltip bottom v-else>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[financeiroStore.financ = data.item, modalStore.financeiro.financ.visualizar = true]"
-              class="mr-1"
-            >
-              <i class="fa fa-lg fa-eye"></i>
-            </b-button>
-            <span>Visualizar detalhes da conta</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[modalStore.financeiro.deleteFinanc = true, financeiroStore.financ = data.item]"
-              class="mr-1"
-            >
-              <i class="fa fa-lg fa-trash"></i>
-            </b-button>
-            <span>Excluir conta</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[modalStore.complementos.impressao.visible = true]"
-            >
-              <i class="fa fa-lg fa-print"></i>
-            </b-button>
-            <span>Exportar conta</span>
-          </v-tooltip>
-        </td>
-      </template>
-    </v-data-table>
+    <Card :color="color" title="Ações rápidas" :actions="globalActions">
+      <v-data-table
+        :items="financeiroStore.financs"
+        :headers="fields"
+        :pagination.sync="pagination"
+        :rows-per-page-items="[5, 10, 20, 50, 100]"
+        rows-per-page-text="Registros por página"
+        no-results-text="Nenhum registro encontrado"
+        no-data-text="Nenhuma conta cadastrada"
+        select-all
+        v-model="itens_selecionados"
+        :total-items="count"
+      >
+        <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
+        <template slot="items" slot-scope="data">
+          <td>
+            <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
+          </td>
+          <td>{{ data.item.id }}</td>
 
-    <v-dialog
-      v-model="modalStore.financeiro.deleteFinanc"
-      persistent
-      max-width="500px"
-      v-if="financeiroStore.financ"
-      lazy
-    >
+          <td>{{ data.item.empresa }}</td>
+          <td>{{ data.item.pessoa }}</td>
+          <td>
+            <v-chip :color="getColor(data.item.tipo_conta)" dark>{{ data.item.tipo_conta }}</v-chip>
+          </td>
+          <td>
+            <v-chip :color="getColor(data.item.pago)" dark>{{ data.item.pago }}</v-chip>
+          </td>
+          <td>{{ data.item.documento_origem }}</td>
+          <td>{{ data.item.data_vencimento }}</td>
+          <td>{{ data.item.data_baixa == '01/01/1970' ? "" : data.item.data_baixa }}</td>
+          <td>{{ data.item.valor_parcela }}</td>
+          <td>
+            <v-tooltip bottom v-if="data.item.pago == 'PENDENTE'">
+              <b-button
+                slot="activator"
+                variant="secundary"
+                class="mr-1"
+                @click.prevent="concluirConta"
+              >
+                <i class="fa fa-lg fa-check"></i>
+              </b-button>
+              <span>Realizar pagamento/recebimento</span>
+            </v-tooltip>
+            <v-tooltip bottom v-else-if="data.item.pago == 'CONCLUÍDA'">
+              <b-button
+                slot="activator"
+                variant="secundary"
+                class="mr-1"
+                @click.prevent="cancelarConta"
+              >
+                <i class="fa fa-lg fa-times"></i>
+              </b-button>
+              <span>Cancelar pagamento/recebimento</span>
+            </v-tooltip>
+            <v-tooltip bottom v-if="data.item.pago == 'PENDENTE'">
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[financeiroStore.financ = data.item, modalStore.financeiro.financ.visible = true,modalStore.financeiro.financ.title = 'Alterar parcela do financeiro']"
+                class="mr-1"
+              >
+                <i class="fa fa-lg fa-pencil"></i>
+              </b-button>
+              <span>Editar conta</span>
+            </v-tooltip>
+            <v-tooltip bottom v-else>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[financeiroStore.financ = data.item, modalStore.financeiro.financ.visualizar = true]"
+                class="mr-1"
+              >
+                <i class="fa fa-lg fa-eye"></i>
+              </b-button>
+              <span>Visualizar detalhes da conta</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[confirmaExclusao = true, financeiroStore.financ = data.item]"
+                class="mr-1"
+              >
+                <i class="fa fa-lg fa-trash"></i>
+              </b-button>
+              <span>Excluir conta</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[modalStore.complementos.impressao.visible = true]"
+              >
+                <i class="fa fa-lg fa-print"></i>
+              </b-button>
+              <span>Exportar conta</span>
+            </v-tooltip>
+          </td>
+        </template>
+      </v-data-table>
+    </Card>
+
+    <v-dialog v-model="confirmaExclusao" persistent max-width="500px" v-if="financeiroStore.financ">
       <v-card>
         <v-card-title>
           <span class="headline">Excluir parcela</span>
@@ -554,7 +480,7 @@
           <v-btn
             color="blue darken-1"
             flat
-            @click="[modalStore.financeiro.deleteFinanc = false, confirmacao = false]"
+            @click="[confirmaExclusao = false, confirmacao = false]"
           >Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
@@ -562,7 +488,7 @@
     </v-dialog>
 
     <v-dialog
-      v-model="modalStore.financeiro.cancelFinanc"
+      v-model="confirmaCancelamento"
       persistent
       max-width="500px"
       v-if="financeiroStore.financ"
@@ -580,16 +506,12 @@
         <v-card-text v-else>Cancelar {{ financeiroStore.financ.length }} contas?</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn
-            color="blue darken-1"
-            flat
-            @click="modalStore.financeiro.cancelFinanc = false"
-          >Fechar</v-btn>
+          <v-btn color="blue darken-1" flat @click="confirmaCancelamento = false">Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove_pagamento()">Confirmar</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <Impressao />
+    <!-- <Impressao /> -->
   </div>
 </template>
 
@@ -624,14 +546,15 @@ export default {
     }
   },
   components: {
-    Impressao: () => import("@/components/complementos/Impressao")
+    Impressao: () => import("@/components/complementos/Impressao"),
+    Card: () => import("../material/Card")
   },
-  data: function() {
+  data() {
     return {
       valid: true,
       concluir: true,
       cancelar: true,
-      financs_selecionados: [],
+      itens_selecionados: [],
       fields: [
         { value: "id", text: "Código", sortable: true },
         { value: "empresa", text: "Empresa", sortable: true },
@@ -652,22 +575,59 @@ export default {
         totalItems: 0
       },
       count: 0,
+      confirmaExclusao: false,
+      confirmaCancelamento: false,
       concluir: false,
       filter: {},
       menu1: false,
       menu2: false,
       pesquisa: false,
       funcoes: false,
-      confirmacao: false
+      confirmacao: false,
+      globalActions: [
+        {
+          icon: "fa fa-lg fa-check",
+          tooltip: "Concluir selecionados",
+          method: "concluirConta",
+          store: "financ",
+          disabled: false
+        },
+        {
+          icon: "fa fa-lg fa-times",
+          tooltip: "Cancelar selecionados",
+          method: "cancelarConta",
+          store: "financ",
+          disabled: false
+        },
+        {
+          icon: "fa fa-lg fa-print",
+          tooltip: "Imprimir selecionados",
+          method: "print"
+        },
+        {
+          icon: "fa fa-lg fa-trash",
+          tooltip: "Excluir selecionados",
+          method: "remove",
+          store: "financ"
+        },
+        {
+          icon: "fa fa-lg fa-refresh",
+          tooltip: "Recarregar itens",
+          method: "loadFinanceiro",
+          required: true
+        }
+      ]
     };
   },
   watch: {
-    financs_selecionados: function() {
-      if (this.financs_selecionados.length > 1) {
-        this.funcoes = this.getFinancSit();
-      } else {
-        this.funcoes = false;
-      }
+    itens_selecionados() {
+      if (this.itens_selecionados.find(item => item.pago == "CONCLUÍDA"))
+        this.globalActions[0].disabled = true;
+      else this.globalActions[0].disabled = false;
+
+      if (this.itens_selecionados.find(item => item.pago == "PENDENTE"))
+        this.globalActions[1].disabled = true;
+      else this.globalActions[1].disabled = false;
     },
     params() {
       this.loadFinanceiro();
@@ -680,34 +640,13 @@ export default {
     "$store.state.modalStore.financeiro.financ.pagamento": function() {
       if (!this.modalStore.financeiro.financ.pagamento) {
         this.loadFinanceiro();
-        this.financs_selecionados = [];
+        this.itens_selecionados = [];
       }
     }
   },
   methods: {
     getWindowSize() {
       return window.innerWidth / 2 - 150;
-    },
-    getFinancSit() {
-      const item_pago = this.financs_selecionados.filter(
-        item => item.pago === "CONCLUÍDA"
-      );
-      const item_pendente = this.financs_selecionados.filter(
-        item => item.pago === "PENDENTE"
-      );
-
-      if (item_pago.length > 0 && item_pendente.length == 0) {
-        this.concluir = false;
-        this.cancelar = true;
-      } else if (item_pendente.length > 0 && item_pago.length == 0) {
-        this.concluir = true;
-        this.cancelar = false;
-      } else {
-        this.concluir = false;
-        this.cancelar = false;
-      }
-
-      return true;
     },
     getColor(situacao) {
       if (situacao === "PENDENTE") return "blue";
@@ -716,6 +655,12 @@ export default {
       else if (situacao === "PAGAR") return "warning";
       else if (situacao === "RECEBER") return "green";
       else return "red";
+    },
+    concluirConta() {
+      this.modalStore.financeiro.financ.pagamento = true;
+    },
+    cancelarConta() {
+      this.confirmaCancelamento = true;
     },
     async loadFinanceiro() {
       const url = `${urlBD}/financeiro?page=${this.pagination.page}&limit=${
@@ -748,6 +693,11 @@ export default {
       });
     },
     async remove() {
+      if (!this.confirmaExclusao) {
+        this.confirmaExclusao = true;
+        return;
+      }
+
       var financs = [];
 
       if (!this.financeiroStore.financ.id) {
@@ -778,11 +728,12 @@ export default {
           .delete(url)
           .then(() => {
             this.$toasted.global.defaultSuccess();
-            this.modalStore.financeiro.deleteFinanc = false;
-            this.financs_selecionados = [];
+            this.confirmaExclusao = false;
+            this.itens_selecionados = [];
             this.confirmacao = false;
 
             this.loadFinanceiro();
+            this.confirmaExclusao = false;
 
             saveLog(
               new Date(),
@@ -817,8 +768,8 @@ export default {
           .delete(url)
           .then(() => {
             this.$toasted.global.defaultSuccess();
-            this.modalStore.financeiro.cancelFinanc = false;
-            this.financs_selecionados = [];
+            this.confirmaCancelamento = false;
+            this.itens_selecionados = [];
 
             this.loadFinanceiro();
 

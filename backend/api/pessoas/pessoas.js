@@ -220,7 +220,8 @@ module.exports = app => {
 
     const getClientes = async (req, res) => {
         app.db('pessoas')
-            .select('id', 'nome').where({ cliente: true })
+            .select('id as value', 'nome as text')
+            .where({ cliente: true })
             .orderBy('nome')
             .then(pessoas => res.json(pessoas))
             .catch(e => res.status(500).send(e.toString()))

@@ -5,51 +5,51 @@ module.exports = app => {
     const { withEstoque } = app.api.produtos.produtos
 
     const save = async (req, res) => {
-        const orcamento = { ...req.body }
+        const venda = { ...req.body }
         if (req.params.id) {
-            orcamento.id = req.params.id
+            venda.id = req.params.id
         }
 
         try {
-            existsOrError(orcamento.id_empresa, 'Informe a empresa do orçamento')
-            existsOrError(orcamento.pessoa, 'Informe o cliente do orçamento')
+            existsOrError(venda.id_empresa, 'Informe a empresa do orçamento')
+            existsOrError(venda.pessoa, 'Informe o cliente do orçamento')
 
-            if (orcamento.pessoa.value)
-                orcamento.id_pessoa = orcamento.pessoa.value
+            if (venda.pessoa.value)
+                venda.id_pessoa = venda.pessoa.value
             else
-                orcamento.nome_pessoa = orcamento.pessoa
-            delete orcamento.pessoa
+                venda.nome_pessoa = venda.pessoa
+            delete venda.pessoa
 
-            existsOrError(orcamento.produtos, 'Informe os produtos do orçamento')
+            existsOrError(venda.produtos, 'Informe os produtos do orçamento')
         } catch (e) {
             return res.status(400).send(e.toString())
         }
 
-        orcamento.situacao = orcamento.situacao ? orcamento.situacao : 'PENDENTE'
-        var produtos = orcamento.produtos
-        delete orcamento.produtos
+        venda.situacao = venda.situacao ? venda.situacao : 'PENDENTE'
+        var produtos = venda.produtos
+        delete venda.produtos
 
         try {
-            orcamento.valor_frete = parseNumber(orcamento.valor_frete || "0,00")
-            orcamento.valor_seguro = parseNumber(orcamento.valor_seguro || "0,00")
-            orcamento.outras_despesas = parseNumber(orcamento.outras_despesas || "0,00")
-            orcamento.valor_desconto = parseNumber(orcamento.valor_desconto || "0,00")
-            orcamento.valor_produtos = parseNumber(orcamento.valor_produtos || "0,00")
-            orcamento.valor_total = parseNumber(orcamento.valor_total || "0,00")
+            venda.valor_frete = parseNumber(venda.valor_frete || "0,00")
+            venda.valor_seguro = parseNumber(venda.valor_seguro || "0,00")
+            venda.outras_despesas = parseNumber(venda.outras_despesas || "0,00")
+            venda.valor_desconto = parseNumber(venda.valor_desconto || "0,00")
+            venda.valor_produtos = parseNumber(venda.valor_produtos || "0,00")
+            venda.valor_total = parseNumber(venda.valor_total || "0,00")
 
-            if (orcamento.id) {
+            if (venda.id) {
                 return app.db.transaction(async function (trx) {
-                    return app.db('orcamentos')
-                        .update(orcamento)
-                        .where({ id: orcamento.id })
+                    return app.db('venda')
+                        .update(venda)
+                        .where({ id: venda.id })
                         .transacting(trx)
                         .then(async function () {
-                            await app.db('produto_orcamento').where({ id_orcamento: orcamento.id }).delete()
+                            await app.db('produto_venda').where({ id_venda: venda.id }).delete()
 
                             produtos = produtos.map(produto => {
                                 const newProd = {
-                                    id_orcamento: orcamento.id,
-                                    id_empresa: orcamento.id_empresa,
+                                    id_venda: venda.id,
+                                    id_empresa: venda.id_empresa,
                                     id_produto: produto.id,
 
                                     quantidade: (parseNumber(produto.quantidade || "0,00")),
@@ -61,7 +61,7 @@ module.exports = app => {
                                 return newProd
                             })
 
-                            return app.db.batchInsert('produto_orcamento', produtos)
+                            return app.db.batchInsert('produto_venda', produtos)
                                 .transacting(trx)
 
                         })
@@ -75,14 +75,14 @@ module.exports = app => {
                 });
             } else {
                 return app.db.transaction(async function (trx) {
-                    return app.db('orcamentos')
-                        .insert(orcamento).returning('id')
+                    return app.db('venda')
+                        .insert(venda).returning('id')
                         .transacting(trx)
                         .then(function (id) {
                             produtos = produtos.map(produto => {
                                 const newProd = {
-                                    id_orcamento: id[0],
-                                    id_empresa: orcamento.id_empresa,
+                                    id_venda: id[0],
+                                    id_empresa: venda.id_empresa,
                                     id_produto: produto.id,
 
                                     quantidade: (parseNumber(produto.quantidade || "0,00")),
@@ -94,7 +94,7 @@ module.exports = app => {
                                 return newProd
                             })
 
-                            return app.db.batchInsert('produto_orcamento', produtos)
+                            return app.db.batchInsert('produto_venda', produtos)
                                 .transacting(trx)
 
                         })
@@ -116,68 +116,68 @@ module.exports = app => {
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 10
 
-        const result = await app.db('orcamentos').count('id').first()
+        const result = await app.db('venda').count('id').first()
         const count = parseInt(result.count)
 
-        app.db('orcamentos')
-            .join('empresas', 'orcamentos.id_empresa', 'empresas.id')
-            .join('pessoas', 'orcamentos.id_pessoa', 'pessoas.id')
+        app.db('venda')
+            .join('empresas', 'vendas.id_empresa', 'empresas.id')
+            .join('pessoas', 'vendas.id_pessoa', 'pessoas.id')
             .select(
-                'orcamentos.id',
+                'vendas.id',
                 'id_empresa',
                 'id_pessoa',
-                'orcamentos.situacao',
+                'vendas.situacao',
                 'data_agendamento',
                 'valor_total',
                 'empresas.nome as empresa',
                 'pessoas.nome as pessoa'
             )
             .limit(limit).offset(page * limit - limit)
-            .orderBy('orcamentos.situacao')
+            .orderBy('vendas.situacao')
             .where(async (qb) => {
                 if (req.query.tipo == 2) {
                     // pesquisa avançada
                     if (req.query.cliente) {
-                        qb.where('orcamentos.id_pessoa', '=', req.query.cliente);
+                        qb.where('vendas.id_pessoa', '=', req.query.cliente);
                     } else if (req.query.id) {
-                        qb.orWhere('orcamentos.id', '=', req.query.id);
+                        qb.orWhere('vendas.id', '=', req.query.id);
                     }
                     if (req.query.tipo_data == 1) {
                         if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('orcamentos.data_contato', [req.query.data_inicial, req.query.data_final])
+                            qb.whereBetween('vendas.data_contato', [req.query.data_inicial, req.query.data_final])
                         }
                     } else {
                         if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('orcamentos.data_agendamento', [req.query.data_inicial, req.query.data_final])
+                            qb.whereBetween('vendas.data_agendamento', [req.query.data_inicial, req.query.data_final])
                         }
                     }
                     if (req.query.pendentes) {
-                        qb.where('orcamentos.situacao', 'PENDENTE');
+                        qb.where('vendas.situacao', 'PENDENTE');
                     }
                     if (req.query.concluidos) {
-                        qb.where('orcamentos.situacao', 'CONCLUÍDOS');
+                        qb.where('vendas.situacao', 'CONCLUÍDOS');
                     }
                 } else {
                     // pesquisa rapida
                     if (req.query.cliente) {
-                        qb.where('orcamentos.id_pessoa', '=', req.query.cliente);
+                        qb.where('vendas.id_pessoa', '=', req.query.cliente);
                     } else if (req.query.id) {
-                        qb.orWhere('orcamentos.id', '=', req.query.id);
+                        qb.orWhere('vendas.id', '=', req.query.id);
                     }
                     if (req.query.tipo_data == 1) {
                         if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('orcamentos.data_contato', [req.query.data_inicial, req.query.data_final])
+                            qb.whereBetween('vendas.data_contato', [req.query.data_inicial, req.query.data_final])
                         }
                     } else {
                         if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('orcamentos.data_agendamento', [req.query.data_inicial, req.query.data_final])
+                            qb.whereBetween('vendas.data_agendamento', [req.query.data_inicial, req.query.data_final])
                         }
                     }
                     if (req.query.concluidas) {
-                        qb.where('orcamentos.situacao', 'PENDENTE');
+                        qb.where('vendas.situacao', 'PENDENTE');
                     }
                     if (req.query.concluidos) {
-                        qb.where('orcamentos.situacao', 'CONCLUÍDOS');
+                        qb.where('vendas.situacao', 'CONCLUÍDOS');
                     }
                 }
             })
@@ -186,17 +186,17 @@ module.exports = app => {
     }
 
     const getById = async (req, res) => {
-        let orcamento = await app.db('orcamentos')
-            .leftJoin('pessoas', 'orcamentos.id_pessoa', 'pessoas.id')
+        let venda = await app.db('venda')
+            .leftJoin('pessoas', 'vendas.id_pessoa', 'pessoas.id')
             .select('*', 'pessoas.nome as pessoa')
-            .where({ 'orcamentos.id': req.params.id })
+            .where({ 'vendas.id': req.params.id })
             .first()
             .catch(e => res.status(500).send(e.toString()))
 
-        orcamento.data_orcamento = orcamento.data_orcamento.toISOString().substr(0, 10)
-        orcamento.data_lancamento = orcamento.data_lancamento.toISOString().substr(0, 10)
+        venda.data_venda = venda.data_venda.toISOString().substr(0, 10)
+        venda.data_lancamento = venda.data_lancamento.toISOString().substr(0, 10)
 
-        const pedProds = await app.db('produto_orcamento').where({ id_orcamento: orcamento.id })
+        const pedProds = await app.db('produto_venda').where({ id_venda: venda.id })
             .then(produtos => {
                 return produtos
             })
@@ -225,52 +225,52 @@ module.exports = app => {
 
         const resultado = await Promise.all(newPedProds);
 
-        orcamento.produtos = resultado
-        res.json(orcamento)
+        venda.produtos = resultado
+        res.json(venda)
     }
 
     const getTela = async (req, res) => {
         if (req.params.id) {
-            var orcamento = await app.db('orcamentos')
-                .leftJoin('pessoas', 'orcamentos.id_pessoa', 'pessoas.id')
+            var venda = await app.db('venda')
+                .leftJoin('pessoas', 'vendas.id_pessoa', 'pessoas.id')
                 .select(
-                    'orcamentos.id',
-                    'orcamentos.id_pessoa',
-                    'orcamentos.id_empresa',
-                    'orcamentos.situacao',
-                    'orcamentos.data_contato',
-                    'orcamentos.data_agendamento',
-                    'orcamentos.observacao',
-                    'orcamentos.id_venda_gerada',
-                    'orcamentos.id_tabela_preco',
-                    'orcamentos.valor_total',
-                    'orcamentos.valor_frete',
-                    'orcamentos.valor_seguro',
-                    'orcamentos.valor_desconto',
-                    'orcamentos.outras_despesas',
-                    'orcamentos.valor_produtos',
-                    'orcamentos.nome_pessoa',
+                    'vendas.id',
+                    'vendas.id_pessoa',
+                    'vendas.id_empresa',
+                    'vendas.situacao',
+                    'vendas.data_contato',
+                    'vendas.data_agendamento',
+                    'vendas.observacao',
+                    'vendas.id_venda_gerada',
+                    'vendas.id_tabela_preco',
+                    'vendas.valor_total',
+                    'vendas.valor_frete',
+                    'vendas.valor_seguro',
+                    'vendas.valor_desconto',
+                    'vendas.outras_despesas',
+                    'vendas.valor_produtos',
+                    'vendas.nome_pessoa',
 
                     'pessoas.nome as nome_pessoa'
                 )
-                .where({ 'orcamentos.id': req.params.id }).first()
+                .where({ 'vendas.id': req.params.id }).first()
                 .catch(e => res.status(500).send(e.toString()))
 
-            orcamento.pessoa = orcamento.id_pessoa ? { value: orcamento.id_pessoa, text: orcamento.nome_pessoa } : orcamento.nome_pessoa
+            venda.pessoa = venda.id_pessoa ? { value: venda.id_pessoa, text: venda.nome_pessoa } : venda.nome_pessoa
 
-            orcamento.data_contato = new Date(orcamento.data_contato).toISOString().substr(0, 10)
-            orcamento.data_agendamento = new Date(orcamento.data_agendamento).toISOString().substr(0, 10)
+            venda.data_contato = new Date(venda.data_contato).toISOString().substr(0, 10)
+            venda.data_agendamento = new Date(venda.data_agendamento).toISOString().substr(0, 10)
 
-            orcamento.produtos = await app.db('produto_orcamento')
-                .join('produtos', 'produto_orcamento.id_produto', 'produtos.id')
+            venda.produtos = await app.db('produto_venda')
+                .join('produtos', 'produto_venda.id_produto', 'produtos.id')
                 .select(
-                    'produto_orcamento.id_produto as id',
-                    'produto_orcamento.quantidade',
-                    'produto_orcamento.valor_venda',
-                    'produto_orcamento.valor_desconto',
-                    'produto_orcamento.valor_total'
+                    'produto_venda.id_produto as id',
+                    'produto_venda.quantidade',
+                    'produto_venda.valor_venda',
+                    'produto_venda.valor_desconto',
+                    'produto_venda.valor_total'
                 )
-                .where({ id_orcamento: orcamento.id })
+                .where({ id_venda: venda.id })
         }
 
         var pessoas = await app.db('pessoas')
@@ -292,7 +292,7 @@ module.exports = app => {
 
 
         const tela = {
-            orcamento,
+            venda,
             pessoas,
             produtos,
         }
@@ -303,31 +303,31 @@ module.exports = app => {
     const getBySituacao = async (req, res) => {
         if (req.params.situacao === '1') {
             try {
-                let orcamentos = await app.db('orcamentos')
-                    .join('empresas', 'orcamentos.id_empresa', 'empresas.id')
-                    .join('pessoas', 'orcamentos.id_pessoa', 'pessoas.id')
+                let vendas = await app.db('venda')
+                    .join('empresas', 'vendas.id_empresa', 'empresas.id')
+                    .join('pessoas', 'vendas.id_pessoa', 'pessoas.id')
                     .select(
-                        'orcamentos.id',
+                        'vendas.id',
                         'id_empresa',
                         'id_pessoa',
-                        'orcamentos.situacao',
+                        'vendas.situacao',
                         'nota_fiscal',
-                        'data_orcamento',
+                        'data_venda',
                         'valor_total',
                         'empresas.nome as empresa',
                         'pessoas.nome as pessoa'
                     )
-                    .where('orcamentos.situacao', 'like', 'PENDENTE')
+                    .where('vendas.situacao', 'like', 'PENDENTE')
                     .catch(e => {
                         res.status(500).send('Erro no servidor')
                         console.log(e)
                     })
 
-                orcamentos = orcamentos.map(async orcamento => {
-                    orcamento.data_orcamento = orcamento.data_orcamento.toISOString().substr(0, 10)
-                    return orcamento
+                vendas = vendas.map(async venda => {
+                    venda.data_venda = venda.data_venda.toISOString().substr(0, 10)
+                    return venda
                 })
-                const resultado = await Promise.all(orcamentos);
+                const resultado = await Promise.all(vendas);
 
                 res.json(resultado);
             } catch (e) {
@@ -335,31 +335,31 @@ module.exports = app => {
             }
         } else {
             try {
-                let orcamentos = await app.db('orcamentos')
-                    .join('empresas', 'orcamentos.id_empresa', 'empresas.id')
-                    .join('pessoas', 'orcamentos.id_pessoa', 'pessoas.id')
+                let vendas = await app.db('venda')
+                    .join('empresas', 'vendas.id_empresa', 'empresas.id')
+                    .join('pessoas', 'vendas.id_pessoa', 'pessoas.id')
                     .select(
-                        'orcamentos.id',
+                        'vendas.id',
                         'id_empresa',
                         'id_pessoa',
-                        'orcamentos.situacao',
+                        'vendas.situacao',
                         'nota_fiscal',
-                        'data_orcamento',
+                        'data_venda',
                         'valor_total',
                         'empresas.nome as empresa',
                         'pessoas.nome as pessoa'
                     )
-                    .where('orcamentos.situacao', '=', 'CONCLUÍDO')
+                    .where('vendas.situacao', '=', 'CONCLUÍDO')
                     .catch(e => {
                         res.status(500).send('Erro no servidor')
                         console.log(e)
                     })
 
-                orcamentos = orcamentos.map(async orcamento => {
-                    orcamento.data_orcamento = orcamento.data_orcamento.toISOString().substr(0, 10)
-                    return orcamento
+                vendas = vendas.map(async venda => {
+                    venda.data_venda = venda.data_venda.toISOString().substr(0, 10)
+                    return venda
                 })
-                const resultado = await Promise.all(orcamentos);
+                const resultado = await Promise.all(vendas);
 
                 res.json(resultado);
             } catch (e) {
@@ -370,10 +370,10 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
-            const orcamento = await app.db('orcamentos')
+            const venda = await app.db('venda')
                 .where({ id: req.params.id }).delete()
 
-            existsOrError(orcamento, 'Orçamento não encontrado')
+            existsOrError(venda, 'Orçamento não encontrado')
             res.status(204).send()
         } catch (e) {
             return res.status(500).send()

@@ -1,52 +1,6 @@
 <template>
   <div class="grid-pessoas">
     <v-container fluid>
-      <v-menu
-        :close-on-content-click="false"
-        :close-on-click="false"
-        width="300"
-        nudge-left="12"
-        transition="slide-y-transition"
-        v-model="funcoes"
-        :position-x="getWindowSize()"
-        
-      >
-        <v-card>
-          <v-card-title class="headline">
-            <v-icon class="mr-2">fa fa-cogs</v-icon>
-            <span>Selecione uma opção</span>
-          </v-card-title>
-          <v-card-text>
-            <hr />
-            <v-layout wrap justify-center>
-              <v-tooltip bottom>
-                <v-btn
-                  slot="activator"
-                  flat
-                  icon
-                  color="danger"
-                  @click="[pessoaStore.pessoa = pessoas_selecionadas, modalStore.pessoas.deletePessoa = true]"
-                >
-                  <v-icon>fa fa-2x fa-trash</v-icon>
-                </v-btn>
-                <span>Excluir pessoa</span>
-              </v-tooltip>
-              <v-tooltip bottom>
-                <v-btn
-                  slot="activator"
-                  flat
-                  icon
-                  color="primary"
-                  @click="[modalStore.complementos.impressao.docs = pessoas_selecionadas, modalStore.complementos.impressao.visible = true]"
-                >
-                  <v-icon>fa fa-2x fa-print</v-icon>
-                </v-btn>
-                <span>Exportar pessoa</span>
-              </v-tooltip>
-            </v-layout>
-          </v-card-text>
-        </v-card>
-      </v-menu>
       <v-layout
         justify-center
         v-if="$vuetify.breakpoint.name === 'xs' || $vuetify.breakpoint.name === 'sm' || $vuetify.breakpoint.name === 'md'"
@@ -313,98 +267,71 @@
         </v-tooltip>
       </v-layout>
     </v-container>
-    <v-data-table
-      class="elevation-5"
-      :items="pessoaStore.pessoas"
-      :headers="fields"
-      rows-per-page-text="Registros por página"
-      no-results-text="Nenhum registro encontrado"
-      no-data-text="Nenhuma pessoa encontrada"
-      :rows-per-page-items="[5, 10, 20, 50, 100]"
-      :total-items="count"
-      :pagination.sync="pagination"
-      v-model="pessoas_selecionadas"
-      select-all
-    >
-      <template slot="items" slot-scope="data">
-        <td>
-          <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
-        </td>
-        <td>{{ data.item.id }}</td>
-        <td>{{ data.item.nome }}</td>
-        <td>{{ data.item.cpf }}</td>
-        <td>{{ data.item.cnpj }}</td>
-        <td>{{ data.item.email }}</td>
-        <td>{{ data.item.contato }}</td>
-        <td>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[pessoaStore.pessoa = data.item, modalStore.pessoas.visible = true,modalStore.pessoas.title = 'Alterar pessoa']"
-              class="mr-1"
-            >
-              <i class="fa fa-lg fa-pencil"></i>
-            </b-button>
-            <span>Editar pessoa</span>
-          </v-tooltip>
 
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[modalStore.pessoas.deletePessoa = true, pessoaStore.pessoa = data.item]"
-              class="mr-1"
-            >
-              <i class="fa fa-lg fa-trash"></i>
-            </b-button>
-            <span>Excluir pessoa</span>
-          </v-tooltip>
+    <Card :color="color" title="Ações rápidas" :actions="globalActions">
+      <v-data-table
+        :items="pessoaStore.pessoas"
+        :headers="fields"
+        rows-per-page-text="Registros por página"
+        no-results-text="Nenhum registro encontrado"
+        no-data-text="Nenhuma pessoa encontrada"
+        :rows-per-page-items="[5, 10, 20, 50, 100]"
+        :total-items="count"
+        :pagination.sync="pagination"
+        v-model="itens_selecionados"
+        select-all
+      >
+        <template slot="items" slot-scope="data">
+          <td>
+            <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
+          </td>
+          <td>{{ data.item.id }}</td>
+          <td>{{ data.item.nome }}</td>
+          <td>{{ data.item.cpf }}</td>
+          <td>{{ data.item.cnpj }}</td>
+          <td>{{ data.item.email }}</td>
+          <td>{{ data.item.contato }}</td>
+          <td>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[pessoaStore.pessoa = data.item, modalStore.pessoas.visible = true,modalStore.pessoas.title = 'Alterar pessoa']"
+                class="mr-1"
+              >
+                <i class="fa fa-lg fa-pencil"></i>
+              </b-button>
+              <span>Editar pessoa</span>
+            </v-tooltip>
 
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[modalStore.email.visible = true, modalStore.email.para = data.item.email]"
-            >
-              <i class="fa fa-lg fa-envelope"></i>
-            </b-button>
-            <span>Enviar e-mail</span>
-          </v-tooltip>
-        </td>
-      </template>
-    </v-data-table>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[confirmaExclusao = true, pessoaStore.pessoa = data.item]"
+                class="mr-1"
+              >
+                <i class="fa fa-lg fa-trash"></i>
+              </b-button>
+              <span>Excluir pessoa</span>
+            </v-tooltip>
 
-    <v-dialog
-      v-model="modalStore.pessoas.deletePessoa"
-      persistent
-      max-width="500px"
-      v-if="pessoaStore.pessoa"
-    >
-      <v-card>
-        <v-card-title>
-          <span class="headline">Excluir pessoa</span>
-        </v-card-title>
-        <v-card-text>Excluir {{ pessoaStore.pessoa.nome }} ?</v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn
-            color="blue darken-1"
-            flat
-            @click="[modalStore.pessoas.deletePessoa = false, funcoes = false]"
-          >Fechar</v-btn>
-          <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[modalStore.email.visible = true, modalStore.email.para = data.item.email]"
+              >
+                <i class="fa fa-lg fa-envelope"></i>
+              </b-button>
+              <span>Enviar e-mail</span>
+            </v-tooltip>
+          </td>
+        </template>
+      </v-data-table>
+    </Card>
 
-    <v-dialog
-      v-model="modalStore.pessoas.deletePessoa"
-      persistent
-      max-width="500px"
-      v-if="pessoaStore.pessoa"
-      lazy
-    >
+    <v-dialog v-model="confirmaExclusao" persistent max-width="500px" v-if="pessoaStore.pessoa">
       <v-card>
         <v-card-title>
           <span class="headline">Excluir pessoa</span>
@@ -418,11 +345,7 @@
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn
-            color="blue darken-1"
-            flat
-            @click="[modalStore.pessoas.deletePessoa = false]"
-          >Fechar</v-btn>
+          <v-btn color="blue darken-1" flat @click="[confirmaExclusao = false]">Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
       </v-card>
@@ -432,6 +355,7 @@
 
 <script>
 import axios from "axios";
+
 import {
   urlBD,
   showError,
@@ -443,6 +367,9 @@ import { mapState } from "vuex";
 
 export default {
   name: "GridPessoas",
+  components: {
+    Card: () => import("../material/Card")
+  },
   computed: {
     ...mapState("app", ["color"]),
     ...mapState([
@@ -459,13 +386,6 @@ export default {
     }
   },
   watch: {
-    pessoas_selecionadas: function() {
-      if (this.pessoas_selecionadas.length > 0) {
-        this.funcoes = true;
-      } else {
-        this.funcoes = false;
-      }
-    },
     params() {
       this.loadPessoas();
     },
@@ -480,11 +400,10 @@ export default {
       }
     }
   },
-  data: function() {
+  data() {
     return {
-      pessoas_selecionadas: [],
+      itens_selecionados: [],
       valid: true,
-      true: true,
       fields: [
         { value: "id", text: "Código", sortable: true },
         { value: "nome", text: "Nome", sortable: true },
@@ -497,14 +416,34 @@ export default {
       filter: {},
       concluir: false,
       pesquisa: false,
+      confirmaExclusao: false,
       pagination: {
         descending: false,
         page: 1,
-        rowsPerPage: 10, // -1 for All,
+        rowsPerPage: 20, // -1 for All,
         sortBy: "nome",
         totalItems: 0
       },
-      count: 0
+      count: 0,
+      globalActions: [
+        {
+          icon: "fa fa-lg fa-print",
+          tooltip: "Imprimir selecionados",
+          method: "print"
+        },
+        {
+          icon: "fa fa-lg fa-trash",
+          tooltip: "Excluir selecionados",
+          method: "remove",
+          store: "pessoa"
+        },
+        {
+          icon: "fa fa-lg fa-refresh",
+          tooltip: "Recarregar itens",
+          method: "loadPessoas",
+          required: true
+        }
+      ]
     };
   },
   methods: {
@@ -537,25 +476,47 @@ export default {
       });
     },
     async remove() {
-      const id = this.pessoaStore.pessoa.id;
-      const url = `${urlBD}/pessoas/${id}`;
+      if (!this.confirmaExclusao) {
+        this.confirmaExclusao = true;
+        return;
+      }
 
-      await axios
-        .delete(url)
-        .then(() => {
-          this.$toasted.global.defaultSuccess();
+      var pessoas = [];
 
-          this.loadUsuarios();
-          this.modalStore.usuarios.deleteUsuario = false;
+      if (!this.pessoaStore.pessoa.id) {
+        pessoas = this.pessoaStore.pessoa.map(item => {
+          return {
+            id: item.id,
+            nome: item.nome
+          };
+        });
+      } else {
+        pessoas.push({
+          id: this.pessoaStore.pessoa.id,
+          valor_parcela: this.pessoaStore.pessoa.nome
+        });
+      }
 
-          saveLog(
-            new Date(),
-            "EXCLUSÃO",
-            "PESSOAS",
-            `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu a pessoa ${this.pessoaStore.pessoa.nome}`
-          );
-        })
-        .catch(showError);
+      pessoas.map(async item => {
+        const url = `${urlBD}/pessoas/${item.id}`;
+
+        await axios
+          .delete(url)
+          .then(() => {
+            this.$toasted.global.defaultSuccess();
+
+            this.loadPessoas();
+            this.confirmaExclusao = false;
+
+            saveLog(
+              new Date(),
+              "EXCLUSÃO",
+              "PESSOAS",
+              `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu a pessoa ${this.pessoaStore.pessoa.nome}`
+            );
+          })
+          .catch(showError);
+      });
     }
   }
 };

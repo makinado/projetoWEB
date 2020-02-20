@@ -66,12 +66,8 @@ export async function loadProdutos() {
 export async function loadClientes() {
     const url = `${urlBD}/pessoas/clientes`;
     axios.get(url).then(res => {
-        store.pessoaStore.pessoas = res.data.map(pessoa => {
-            pessoa.value = pessoa.id;
-            pessoa.text = pessoa.nome;
-
-            return pessoa;
-        });
+        console.log(res.data)
+        store.pessoaStore.pessoas = res.data
     });
 }
 
