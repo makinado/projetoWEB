@@ -1,18 +1,14 @@
 <template>
   <v-container fill-height fluid grid-list-xl>
-    <v-layout justify-center wrap>
-      <v-flex xs12 md8>
-        <v-card class="mt-5">
-          <v-card-title>
-            <span class="headline">Editar perfil</span>
-          </v-card-title>
-          <v-card-text></v-card-text>
+    <v-layout justify-center wrap >
+      <v-flex xs12 md8 my-5>
+        <Card :color="color" title="Editar perfil">
           <v-form v-model="valid" ref="form">
             <v-container py-0>
               <v-layout wrap>
                 <v-flex xs12 md4>
                   <v-text-field
-                    color="primary"
+                    :color="color"
                     label="Nome*"
                     v-model="usuarioStore.currentUsuario.nome"
                     :rules="nameRules"
@@ -20,7 +16,7 @@
                 </v-flex>
                 <v-flex xs12 md4>
                   <v-text-field
-                    color="primary"
+                    :color="color"
                     label="E-mail*"
                     v-model="usuarioStore.currentUsuario.email"
                     :rules="emailRules"
@@ -28,7 +24,7 @@
                 </v-flex>
                 <v-flex xs12 md4>
                   <v-text-field
-                    color="primary"
+                    :color="color"
                     label="Contato"
                     v-mask="['(##)####-####','(##)#####-####']"
                     v-model="usuarioStore.currentUsuario.contato"
@@ -37,7 +33,7 @@
                 </v-flex>
                 <v-flex xs12 md4>
                   <v-text-field
-                    color="primary"
+                    :color="color"
                     label="Imagem de perfil"
                     prepend-icon="fa fa-lg fa-folder-open-o"
                     readonly
@@ -56,7 +52,7 @@
                 </v-flex>
                 <v-flex xs12 md4>
                   <v-text-field
-                    color="primary"
+                    :color="color"
                     label="Senha"
                     type="password"
                     v-model="usuarioStore.currentUsuario.senha"
@@ -65,7 +61,7 @@
                 </v-flex>
                 <v-flex xs12 md4>
                   <v-text-field
-                    color="primary"
+                    :color="color"
                     label="Confirmação de senha"
                     type="password"
                     v-model="usuarioStore.currentUsuario.confirmaSenha"
@@ -73,33 +69,33 @@
                   />
                 </v-flex>
                 <v-flex xs12 text-xs-right>
-                  <v-btn class="v-btn-common" color="primary" @click="save()">Atualizar</v-btn>
+                  <v-btn class="v-btn-common" :color="color" @click="save()">Atualizar</v-btn>
                 </v-flex>
               </v-layout>
             </v-container>
           </v-form>
-        </v-card>
+        </Card>
       </v-flex>
-      <v-flex xs12 md4>
-        <v-card class="mt-5 v-card-profile">
-          <v-card-text class="text-xs-center">
-            <v-avatar color="primary" class="mx-auto d-block avatar" size="180">
-              <img
-                v-if="usuarioStore.currentUsuario.img"
-                :src="`${urlBD}/${usuarioStore.currentUsuario.img}`"
-                alt="Imagem de perfil"
-                height="50"
-              />
-              <v-icon v-else class="text-light">fa fa-user fa-4x</v-icon>
-            </v-avatar>
-            <h4 class="card-title font-weight-light">{{ usuario.nome }}</h4>
-            <p class="card-description font-weight-light">
-              A única maneira de fazer um bom trabalho é amando o que se faz.
-              <i>Steve Jobs</i>.
-            </p>
-            <v-btn color="primary" round class="v-btn-common">Planos</v-btn>
-          </v-card-text>
-        </v-card>
+      <v-flex xs12 md4 my-5>
+        <Card class="v-card-profile">
+          <v-avatar slot="offset" :color="color" class="mx-auto d-block avatar" size="180">
+            <img
+              v-if="usuarioStore.currentUsuario.img"
+              :src="`${urlBD}/${usuarioStore.currentUsuario.img}`"
+              alt="Imagem de perfil"
+              height="50"
+            />
+            <v-icon v-else class="text-light">fa fa-user fa-4x</v-icon>
+          </v-avatar>
+          <h4 class="card-title font-weight-light">{{ usuario.nome }}</h4>
+          <p class="card-description font-weight-light">
+            A única maneira de fazer um bom trabalho é amando o que se faz.
+            <i>Steve Jobs</i>.
+          </p>
+          <v-flex xs12 text-xs-center>
+            <v-btn :color="color" round class="v-btn-common">Planos</v-btn>
+          </v-flex>
+        </Card>
       </v-flex>
     </v-layout>
   </v-container>
@@ -113,9 +109,13 @@ import { mapState } from "vuex";
 export default {
   name: "Usuario",
   computed: {
+    ...mapState("app", ["color"]),
     ...mapState(["usuarioStore", "modalStore"])
   },
-  data: function() {
+  components: {
+    Card: () => import("../material/Card")
+  },
+  data() {
     return {
       urlBD: urlBD,
       valid: true,

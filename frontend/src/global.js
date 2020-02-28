@@ -6,8 +6,8 @@ import { formatToBRL } from 'brazilian-values'
 
 export const usuarioKey = 'campag-vuetify123'
 // export const urlBD = 'http://3.15.52.156:3000'          // EC2
-export const urlBD = 'http://localhost:3000'          // LOCAL NETWORK
-// export const urlBD = 'http://localhost:3000'              // LOCAL
+// export const urlBD = 'http://192.168.0.80:3000'          // LOCAL NETWORK
+export const urlBD = 'http://localhost:3000'              // LOCAL
 
 Vue.directive('uppercase', {
     bind(el, _, vnode) {
@@ -24,6 +24,8 @@ export function showError(e) {
 
     } else if (typeof e === 'string') {
         Vue.toasted.global.defaultError({ msg: e })
+    } else if (e.message) {
+        Vue.toasted.global.defaultError({ msg: e.message })
     } else if (e.length > 0) {
         e.forEach((e) = this.Vue.toasted.global.defaultError(e.message))
     } else {
@@ -66,7 +68,6 @@ export async function loadProdutos() {
 export async function loadClientes() {
     const url = `${urlBD}/pessoas/clientes`;
     axios.get(url).then(res => {
-        console.log(res.data)
         store.pessoaStore.pessoas = res.data
     });
 }
@@ -179,8 +180,54 @@ export async function loadTabelas() {
         .catch(showError);
 }
 
+export async function loadDocumentos() {
+    const url = `${urlBD}/documentos`;
+    axios.get(url).then(res => {
+        store.financeiroStore.documentos = res.data.map(doc => {
+            doc.value = doc.id;
+            doc.text = doc.nome;
+
+            return doc;
+        });
+    });
+}
+
+export async function loadContas() {
+    const url = `${urlBD}/conta/todos`;
+    axios.get(url).then(res => {
+        store.financeiroStore.contas = res.data
+    });
+}
+
+export async function loadClassificacoes() {
+    const url = `${urlBD}/classificacoes/todos`
+    axios.get(url).then(res => {
+        this.classificacaoStore.classificacoes = res.data.map(item => {
+            item.text = item.descricao;
+            item.value = item.id;
+            return item;
+        });
+    });
+}
+
 export async function loadEmpresas() {
     if (!store.usuarioStore.currentUsuario) return
+
+    const url = `${urlBD}/empresas/todas`;
+    axios.get(url)
+        .then(res => {
+            store.empresaStore.empresas = res.data
+        })
+        .catch(showError);
+}
+
+export async function loadAtividades() {
+    axios
+        .get(`${urlBD}/log/hoje`)
+        .then(res => {
+            store.atividades = res.data;
+        })
+        .catch(showError);
 }
 
 export async function saveLog(data, tipo, tela, detalhe) {
@@ -195,15 +242,6 @@ export async function saveLog(data, tipo, tela, detalhe) {
     };
 
     return axios.post(`${urlBD}/log`, log).catch(showError);
-}
-
-export async function loadAtividades() {
-    axios
-        .get(`${urlBD}/log/hoje`)
-        .then(res => {
-            store.atividades = res.data;
-        })
-        .catch(showError);
 }
 
 export default { showError, usuarioKey }

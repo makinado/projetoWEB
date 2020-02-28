@@ -190,7 +190,7 @@
         </v-tooltip>
       </v-layout>
     </v-container>
-    <Card v-resize="onResize" :color="color" title="Ações rápidas" :actions="globalActions">
+    <Card :color="color" title="Ações rápidas" :actions="globalActions">
       <v-data-table
         :items="empresaStore.empresas"
         :headers="fields"
@@ -206,61 +206,48 @@
         :class="{mobile: isMobile}"
       >
         <template slot="items" slot-scope="data">
-          <tr v-if="!isMobile">
-            <td>
-              <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
-            </td>
-            <td>{{ data.item.id }}</td>
-            <td>{{ data.item.cnpj }}</td>
-            <td>{{ data.item.nome }}</td>
-            <td>{{ data.item.email }}</td>
-            <td>{{ data.item.contato }}</td>
-            <td>
-              <v-tooltip bottom>
-                <b-button
-                  slot="activator"
-                  variant="secundary"
-                  @click.prevent="[empresaStore.empresa = data.item, modalStore.empresas.visible = true, modalStore.empresas.title = 'Alterar empresa']"
-                  class="mr-1"
-                >
-                  <i class="fa fa-lg fa-pencil"></i>
-                </b-button>
-                <span>Editar empresa</span>
-              </v-tooltip>
-              <v-tooltip bottom>
-                <b-button
-                  slot="activator"
-                  variant="secundary"
-                  @click.prevent="[confirmaExclusao = true,empresaStore.empresa = data.item]"
-                  class="mr-1"
-                >
-                  <i class="fa fa-lg fa-trash"></i>
-                </b-button>
-                <span>Excluir empresa</span>
-              </v-tooltip>
-              <v-tooltip bottom>
-                <b-button
-                  slot="activator"
-                  variant="secundary"
-                  @click.prevent="[modalStore.email.visible = true, modalStore.email.para = data.item.email]"
-                >
-                  <i class="fa fa-lg fa-envelope"></i>
-                </b-button>
-                <span>Enviar e-mail</span>
-              </v-tooltip>
-            </td>
-          </tr>
-          <tr v-else>
-            <td>
-              <ul class="flex-content">
-                <li class="flex-item" data-label="Código">{{ data.item.id }}</li>
-                <li class="flex-item" data-label="CNPJ">{{ data.item.cnpj }}</li>
-                <li class="flex-item" data-label="Nome">{{ data.item.nome }}</li>
-                <li class="flex-item" data-label="E-mail">{{ data.item.email }}</li>
-                <li class="flex-item" data-label="Contato">{{ data.item.contato }}</li>
-              </ul>
-            </td>
-          </tr>
+          <td>
+            <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
+          </td>
+          <td>{{ data.item.id }}</td>
+          <td>{{ data.item.cnpj }}</td>
+          <td>{{ data.item.nome }}</td>
+          <td>{{ data.item.email }}</td>
+          <td>{{ data.item.contato }}</td>
+          <td>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[empresaStore.empresa = data.item, modalStore.empresas.visible = true, modalStore.empresas.title = 'Alterar empresa']"
+                class="mr-1"
+              >
+                <i class="fa fa-lg fa-pencil"></i>
+              </b-button>
+              <span>Editar empresa</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[confirmaExclusao = true,empresaStore.empresa = data.item]"
+                class="mr-1"
+              >
+                <i class="fa fa-lg fa-trash"></i>
+              </b-button>
+              <span>Excluir empresa</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[modalStore.email.visible = true, modalStore.email.para = data.item.email]"
+              >
+                <i class="fa fa-lg fa-envelope"></i>
+              </b-button>
+              <span>Enviar e-mail</span>
+            </v-tooltip>
+          </td>
         </template>
       </v-data-table>
     </Card>
@@ -369,10 +356,6 @@ export default {
     };
   },
   methods: {
-    onResize() {
-      if (window.innerWidth < 769) this.isMobile = true;
-      else this.isMobile = false;
-    },
     navigate(path, newTab) {
       if (newTab) {
         const routeData = this.$router.resolve({ path: path });

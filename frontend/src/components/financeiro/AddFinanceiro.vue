@@ -183,7 +183,7 @@
                               v-model="pessoa.situacao"
                               readonly
                               :color="color"
-                              label="Situação do pessoa"
+                              label="Situação da pessoa"
                             ></v-text-field>
                           </v-flex>
                           <v-flex xs12 md4>
@@ -377,14 +377,15 @@
               </td>
             </template>
             <template slot="expand" slot-scope="data">
-              <v-card v-if="data.expanded" flat>
+              <v-card v-if="data.expanded" flat color="bege">
                 <v-card-title>
                   <span class="headline">Preencha os dados do pagamento desta parcela</span>
                 </v-card-title>
                 <v-card-text>
                   <v-layout row wrap>
-                    <v-flex xs12 md3>
+                    <v-flex xs12 md2>
                       <v-autocomplete
+                        clearable
                         dense
                         :color="color"
                         label="Conta*"
@@ -393,9 +394,20 @@
                         no-data-text="Nenhum caixa encontrado"
                         prepend-icon="fa fa-lg fa-plus-circle"
                         @click:prepend="[financeiroStore.caixa = null, modalStore.financeiro.caixa.visible = true]"
+                        @change="loadSaldoConta(data.item)"
                       ></v-autocomplete>
                     </v-flex>
-                    <v-flex xs12 md3>
+                    <v-flex xs12 md2>
+                      <v-text-field
+                        label="Saldo em conta"
+                        placeholder="Selecione a conta para carregar"
+                        readonly
+                        v-model="data.item.saldo_atual"
+                      ></v-text-field>
+                    </v-flex>
+                  </v-layout>
+                  <v-layout row wrap>
+                    <v-flex xs12 md2>
                       <v-menu
                         v-model="data.item.menu1"
                         :close-on-content-click="false"
@@ -424,11 +436,11 @@
                         ></v-date-picker>
                       </v-menu>
                     </v-flex>
-                    <v-flex xs12 md3>
+                    <v-flex xs12 md2>
                       <v-autocomplete
                         dense
                         :color="color"
-                        label="Documento do pagamento"
+                        label="Forma de pagamento"
                         v-model="data.item.documento_baixa"
                         :items="financeiroStore.documentos"
                         no-data-text="Nenhum documento encontrado"
@@ -436,14 +448,14 @@
                         @click:prepend="[financeiroStore.documento = null, modalStore.documentos.visible = true]"
                       ></v-autocomplete>
                     </v-flex>
-                    <v-flex xs12 md3>
+                    <v-flex xs12 md2>
                       <v-text-field
                         :color="color"
                         v-model="data.item.num_documento_baixa"
                         label="Número documento"
                       ></v-text-field>
                     </v-flex>
-                    <v-flex xs12 md3>
+                    <v-flex xs12 md2>
                       <v-text-field
                         v-model="data.item.valor_acrescimo"
                         :color="color"
@@ -451,7 +463,7 @@
                         v-money="money"
                       ></v-text-field>
                     </v-flex>
-                    <v-flex xs12 md3>
+                    <v-flex xs12 md2>
                       <v-text-field
                         v-model="data.item.valor_desconto"
                         :color="color"
@@ -459,7 +471,7 @@
                         v-money="money"
                       ></v-text-field>
                     </v-flex>
-                    <v-flex xs12 md3>
+                    <v-flex xs12 md2>
                       <v-text-field
                         v-model="data.item.valor_pago"
                         :color="color"
@@ -503,11 +515,14 @@ import {
   parseNumber,
   formatDate,
   loadPessoas,
+  loadDocumentos,
+  loadContas,
+  loadClassificacoes,
   saveLog
 } from "@/global";
 import axios from "axios";
 import { mapState } from "vuex";
-import { formatToBRL } from "brazilian-values";
+import { formatToBRL, isCPF } from "brazilian-values";
 
 export default {
   directives: { money: VMoney },
@@ -522,8 +537,13 @@ export default {
       "usuarioStore",
       "classificacaoStore"
     ]),
-    computedDateFormatted() {
-      return formatDate(this.financ.data_emissao);
+    computedDateFormatted: {
+      get() {
+        return formatDate(this.financ.data_emissao);
+      },
+      set(value) {
+        this.financ.data_emissao = formatDate(value);
+      }
     }
   },
   data() {
@@ -593,17 +613,17 @@ export default {
     },
     "$store.state.modalStore.classificacoes.visible": function() {
       if (!this.modalStore.classificacoes.visible) {
-        // loadClassificacoes();
+        loadClassificacoes();
       }
     },
     "$store.state.modalStore.financeiro.conta.visible": function() {
       if (!this.modalStore.financeiro.conta.visible) {
-        // loadContas();
+        loadContas();
       }
     },
     "$store.state.modalStore.documentos.visible": function() {
       if (!this.modalStore.documentos.visible) {
-        // loadDocumentos();
+        loadDocumentos();
       }
     }
   },
@@ -624,23 +644,32 @@ export default {
       const [year, month, day] = date.split("-");
       return `${day}/${month}/${year}`;
     },
+    loadSaldoConta(item) {
+      if (!item.id_conta) {
+        item.saldo_atual = "";
+        return;
+      }
+
+      item.saldo_atual = formatToBRL(
+        this.financeiroStore.contas.find(conta => conta.value == item.id_conta)
+          .saldo_atual || 0
+      );
+    },
     async limpaTela() {
       this.reset();
       this.loadTela(this.financeiroStore.financ);
     },
-    async getTipoConta() {
-      if (!this.financ.id_pessoa) {
+    getTipoConta() {
+      if (!this.pessoa) {
         this.financ.tipo_conta = "";
         return;
       }
-      const pessoa = this.pessoaStore.pessoas.find(pessoa => {
-        return pessoa.value === this.financ.id_pessoa;
-      });
-      this.financ.tipo_conta = pessoa.pessoa ? 2 : 1;
+      if (isCPF(this.pessoa.cpf_cnpj)) this.financ.tipo_conta = 2;
+      else this.financ.tipo_conta = 1;
 
       this.loadClassificacoes();
     },
-    async loadClassificacoes() {
+    loadClassificacoes() {
       const url = `${urlBD}/classificacoes/?tipo=${
         this.financ.tipo_conta == 1 ? 2 : 1
       }`;
@@ -652,7 +681,7 @@ export default {
         });
       });
     },
-    async reset() {
+    reset() {
       this.financ = {};
       this.pessoa = {};
       this.totaisFinanc = {};
@@ -677,11 +706,11 @@ export default {
           )[0].value = 0)
         : "";
     },
-    async loadPagamento(item) {
+    loadPagamento(item) {
       item.data_baixa = formatDate(new Date().toISOString().substr(0, 10));
       item.valor_pago = item.valor;
     },
-    async limpaPagamento(data) {
+    limpaPagamento(data) {
       data.expanded = false;
       data.item.data_baixa = "";
       data.item.documento_baixa = "";
@@ -689,31 +718,17 @@ export default {
       data.item.observacao = "";
     },
     loadTela(financ) {
-      let url = `${urlBD}/financeiro/Tela`;
+      loadPessoas();
+      loadDocumentos();
+      loadContas();
 
-      if (!financ) {
-        axios
-          .get(url)
-          .then(res => {
-            const tela = res.data;
-
-            this.pessoaStore.pessoas = tela.pessoas;
-            this.classificacaoStore.classificacoes = tela.classificacoes;
-            this.financeiroStore.documentos = tela.documentos;
-            this.financeiroStore.contas = tela.contas;
-          })
-          .catch(showError);
-      } else if (financ.id) {
+      if (!financ) return;
+      let url = `${urlBD}/financeiro`;
+      if (financ.id) {
         axios
           .get(`${url}/${financ.id}`)
           .then(res => {
-            const tela = res.data;
-
-            this.financ = tela.financ;
-            this.pessoaStore.pessoas = tela.pessoas;
-            this.classificacaoStore.classificacoes = tela.classificacoes;
-            this.financeiroStore.documentos = tela.documentos;
-            this.financeiroStore.contas = tela.contas;
+            this.financ = res.data;
 
             this.parseValores();
             this.calcTotalFinanc();
@@ -723,25 +738,33 @@ export default {
       }
     },
     parseValores() {
+      this.financ.data_emissao = new Date(this.financ.data_emissao)
+        .toISOString()
+        .substr(0, 10);
+      this.financ.data_vencimento = new Date(this.financ.data_vencimento)
+        .toISOString()
+        .substr(0, 10);
+
       this.$refs.valor_total.$el.getElementsByTagName(
         "input"
-      )[0].value = this.financ.valor_total;
+      )[0].value = formatToBRL(this.financ.valor_total);
 
       this.financeiro.push({
         parcela: this.financ.parcela,
         num_documento_origem: this.financ.num_documento_origem,
-        valor: this.financ.valor_parcela,
+        valor: formatToBRL(this.financ.valor_parcela),
         data_vencimento: formatDate(this.financ.data_vencimento),
         observacao: this.financ.observacao,
         pago: this.financ.pago,
+
         data_baixa: this.financ.data_baixa
           ? formatDate(this.financ.data_baixa)
-          : "",
-        documento_baixa: this.financ.documento_baixa || "",
-        num_documento_baixa: this.financ.num_documento_baixa || "",
-        valor_acrescimo: this.financ.valor_acrescimo || "R$ 0,00",
-        valor_desconto: this.financ.valor_desconto || "R$ 0,00",
-        valor_pago: this.financ.valor_pago || "R$ 0,00"
+          : undefined,
+        documento_baixa: this.financ.documento_baixa || undefined,
+        num_documento_baixa: this.financ.num_documento_baixa || undefined,
+        valor_acrescimo: formatToBRL(this.financ.valor_acrescimo || 0),
+        valor_desconto: formatToBRL(this.financ.valor_desconto || 0),
+        valor_pago: formatToBRL(this.financ.valor_pago || 0)
       });
     },
     async loadPessoa() {
@@ -848,7 +871,7 @@ export default {
       const url = `${urlBD}/financeiro/${id}`;
 
       if (!this.financ.id_empresa) {
-        this.financ.id_empresa = this.empresaStore.currentEmpresa.value;
+        this.financ.id_empresa = this.empresaStore.currentEmpresa;
       }
 
       const financeiro = this.financeiro.map(item => {

@@ -55,7 +55,7 @@
                   </b-button>
                   <b-button
                     variant="secundary"
-                    @click.prevent="[modalStore.unidades.deleteUnidade = true, produtoStore.unidade = data.item]"
+                    @click.prevent="[confirmaExlusao = true, produtoStore.unidade = data.item]"
                     class="mr-1"
                   >
                     <i class="fa fa-lg fa-trash"></i>
@@ -77,7 +77,7 @@
       </v-card>
     </v-dialog>
     <v-dialog
-      v-model="modalStore.unidades.deleteUnidade"
+      v-model="confirmaExlusao"
       persistent
       max-width="500px"
       v-if="produtoStore.unidade"
@@ -92,7 +92,7 @@
           <v-btn
             color="blue darken-1"
             flat
-            @click="modalStore.unidades.deleteUnidade = false"
+            @click="confirmaExlusao = false"
           >Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
@@ -129,6 +129,7 @@ export default {
         totalItems: 0
       },
       valid: true,
+      confirmaExlusao: false,
       siglaRules: [
         v => !!v || "Sigla é obrigatória",
         v => (!!v && v.length <= 3) || "Sigla deve ter no máxio 3 caracteres"
@@ -144,7 +145,7 @@ export default {
     "$store.state.modalStore.unidades.visible": function() {
       this.reset();
     },
-    "$store.state.modalStore.unidades.deleteUnidade": function() {
+    "$store.state.confirmaExlusao": function() {
       this.reset();
     }
   },
@@ -197,7 +198,7 @@ export default {
         .delete(urlunidades)
         .then(() => {
           this.$toasted.global.defaultSuccess();
-          this.modalStore.unidades.deleteUnidade = false;
+          this.confirmaExlusao = false;
 
           saveLog(
             new Date(),

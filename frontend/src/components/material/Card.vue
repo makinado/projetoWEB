@@ -110,7 +110,8 @@ export default {
       "empresaStore",
       "produtoStore",
       "comprasStore",
-      "financeiroStore"
+      "financeiroStore",
+      "vendaStore"
     ]),
     empresa: {
       get() {
@@ -175,6 +176,14 @@ export default {
       set(value) {
         this.financeiroStore.conta = value;
       }
+    },
+    venda: {
+      get() {
+        return this.vendaStore.venda;
+      },
+      set(value) {
+        this.vendaStore.venda = value;
+      }
     }
   },
   methods: {
@@ -185,8 +194,9 @@ export default {
       // required significa que posso chamar o método do componente pai diretamente
       // sem verificar a store antes
       if (required) {
-        this.$parent[method]();
-        return this.$toasted.global.defaultSuccess();
+        return this.$parent[method]().then(() =>
+          this.$toasted.global.defaultSuccess()
+        );
       }
 
       if (this.$parent.itens_selecionados.length == 0)

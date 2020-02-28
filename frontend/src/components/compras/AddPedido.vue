@@ -72,7 +72,7 @@
           <v-container fluid>
             <v-form v-model="valid1" ref="form1">
               <v-layout justify-start wrap class="bege">
-                <v-flex xs12 md4>
+                <v-flex xs12 md6>
                   <v-card flat>
                     <v-layout justify-center wrap>
                       <v-card-title>
@@ -95,7 +95,7 @@
                                 <template v-slot:activator="{ on }">
                                   <v-text-field
                                     :color="color"
-                                    v-model="computedDateFormatted"
+                                    :value="computedDateFormatted"
                                     label="Data do pedido"
                                     prepend-icon="event"
                                     readonly
@@ -127,7 +127,7 @@
                                 <template v-slot:activator="{ on }">
                                   <v-text-field
                                     :color="color"
-                                    v-model="computedDateFormatted1"
+                                    :value="computedDateFormatted1"
                                     label="Data lançamento"
                                     prepend-icon="event"
                                     readonly
@@ -146,7 +146,7 @@
                             <v-flex xs12>
                               <v-textarea
                                 :color="color"
-                                label="Observação"
+                                label="Alguma observação?"
                                 box
                                 v-model="pedido.observacao"
                               ></v-textarea>
@@ -157,7 +157,7 @@
                     </v-layout>
                   </v-card>
                 </v-flex>
-                <v-flex xs12 md4>
+                <v-flex xs12 md6>
                   <v-card flat>
                     <v-layout justify-center wrap>
                       <v-card-title>
@@ -274,7 +274,7 @@
                     chips
                     v-model="data.item.id"
                     label="Selecione"
-                    :items="produtos"
+                    :items="produtoStore.produtos"
                     prepend-icon="fa fa-lg fa-plus-circle"
                     @click:prepend="modalStore.produtos.visible = true"
                     @change="[loadDados(data.item)]"
@@ -315,7 +315,7 @@
                   ></v-text-field>
                 </v-flex>
               </td>
-              <td>{{ data.item.valor_total || 'R$ 0,00'}}</td>
+              <td>{{ data.item.valor_total || "R$ 0,00"}}</td>
               <td>
                 <v-tooltip bottom>
                   <b-button
@@ -360,7 +360,15 @@ import { formatToBRL, formatToNumber } from "brazilian-values";
 import VueScrollTo from "vue-scrollto";
 
 import axios from "axios";
-import { urlBD, showError, formatDate, parseNumber, saveLog } from "@/global";
+import {
+  urlBD,
+  showError,
+  formatDate,
+  parseNumber,
+  saveLog,
+  loadFornecs,
+  loadProdutos
+} from "@/global";
 import { mapState } from "vuex";
 
 export default {
@@ -376,11 +384,21 @@ export default {
       "produtoStore",
       "pessoaStore"
     ]),
-    computedDateFormatted() {
-      return formatDate(this.pedido.data_pedido);
+    computedDateFormatted: {
+      get() {
+        return formatDate(this.pedido.data_pedido);
+      },
+      set(value) {
+        this.pedido.data_pedido = value;
+      }
     },
-    computedDateFormatted1() {
-      return formatDate(this.pedido.data_lancamento);
+    computedDateFormatted1: {
+      get() {
+        return formatDate(this.pedido.data_lancamento);
+      },
+      set(value) {
+        this.pedido.data_lancamento = value;
+      }
     }
   },
   data() {
@@ -456,9 +474,11 @@ export default {
     },
     async reset() {
       this.pedido = {};
+
       this.totais = {};
       this.produtos_pedido = [];
       this.$refs.form ? this.$refs.form.reset() : "";
+      this.$refs.form1 ? this.$refs.form1.reset() : "";
 
       this.$refs.valor_frete
         ? (this.$refs.valor_frete.$el.getElementsByTagName(
@@ -482,36 +502,16 @@ export default {
         : "";
     },
     async loadTela(pedido) {
-      let url = `${urlBD}/pedidos/TelaPedido`;
-      if (!pedido) {
-        axios
-          .get(url)
-          .then(res => {
-            const tela = res.data;
+      loadFornecs();
+      loadProdutos();
 
-            this.pessoaStore.pessoas = tela.pessoas;
-            this.produtos = tela.produtos.map(produto => {
-              produto.valor_unitario = formatToBRL(produto.valor_unitario);
-
-              return produto;
-            });
-          })
-          .catch(showError);
-      } else if (pedido.id) {
+      if (!pedido) return;
+      let url = `${urlBD}/pedidos`;
+      if (pedido.id) {
         axios
           .get(`${url}/${pedido.id}`)
           .then(res => {
-            const tela = res.data;
-
-            this.pedido = tela.pedido;
-            this.date = this.pedido.data_pedido;
-            this.date2 = this.pedido.data_lancamento;
-            this.pessoaStore.pessoas = tela.pessoas;
-            this.produtos = tela.produtos.map(produto => {
-              produto.valor_unitario = formatToBRL(produto.valor_unitario);
-
-              return produto;
-            });
+            this.pedido = res.data;
             this.parseValores();
             this.calcTotal();
           })
@@ -519,6 +519,13 @@ export default {
       }
     },
     parseValores() {
+      this.pedido.data_pedido = new Date(this.pedido.data_pedido)
+        .toISOString()
+        .substr(0, 10);
+      this.pedido.data_lancamento = new Date(this.pedido.data_lancamento)
+        .toISOString()
+        .substr(0, 10);
+
       this.pedido.valor_frete = formatToBRL(this.pedido.valor_frete);
       this.pedido.valor_seguro = formatToBRL(this.pedido.valor_seguro);
       this.pedido.valor_desconto = formatToBRL(this.pedido.valor_desconto);
@@ -546,14 +553,12 @@ export default {
       )[0].value = this.pedido.valor_total;
 
       this.produtos_pedido = this.pedido.produtos;
-
       let i = 0;
-
       this.produtos_pedido = this.produtos_pedido.map(produto => {
-        produto.valor_unitario = formatToBRL(produto.valor_unitario);
-        produto.valor_total = formatToBRL(produto.valor_total);
+        produto.quantidade = formatToBRL(produto.quantidade);
         produto.valor_desconto = formatToBRL(produto.valor_desconto);
-        produto.quantidade = formatToBRL(produto.quantidade).replace("R$", "");
+        produto.valor_unitario = formatToBRL(produto.valor_unitario);
+        produto.valor_total = produto.valor_total;
         produto.sequencia = i++;
 
         return produto;
@@ -572,42 +577,39 @@ export default {
         return produto;
       });
     },
-    async calcTotal(item, flag = true) {
+    calcTotal(item) {
       if (item) {
         this.produtos_pedido = this.produtos_pedido.filter(produto => {
           if (produto.sequencia === item.sequencia) {
-            produto.valor_total =
-              parseNumber(produto.quantidade || "0,00") *
-                parseNumber(produto.valor_unitario || "0,00") -
-              parseNumber(produto.valor_desconto || "0,00");
-            produto.valor_total = formatToBRL(produto.valor_total);
+            produto.valor_total = formatToBRL(
+              parseNumber(produto.quantidade || "0,00", ",") *
+                parseNumber(produto.valor_unitario || "0,00", ",") -
+                parseNumber(produto.valor_desconto || "0,00", ",")
+            );
           }
-
           return produto;
         });
       }
 
-      if (flag) {
-        let quantidade = 0,
-          valor_unitario = 0,
-          valor_desconto = 0,
-          valor_total = 0;
+      let quantidade = 0,
+        valor_unitario = 0,
+        valor_desconto = 0,
+        valor_total = 0;
 
-        this.produtos_pedido.forEach(produto => {
-          quantidade += parseNumber(produto.quantidade || "0,00");
-          valor_unitario += parseNumber(produto.valor_unitario || "0,00");
-          valor_desconto += parseNumber(produto.valor_desconto || "0,00");
-          valor_total += parseNumber(produto.valor_total || "0,00");
-        });
-        this.totais = {
-          quantidade: formatToBRL(quantidade).replace("R$", ""),
-          valor_unitario: formatToBRL(valor_unitario),
-          valor_desconto: formatToBRL(valor_desconto),
-          valor_total: formatToBRL(valor_total)
-        };
+      this.produtos_pedido.forEach(produto => {
+        quantidade += parseNumber(produto.quantidade || "0,00");
+        valor_unitario += parseNumber(produto.valor_unitario || "0,00");
+        valor_desconto += parseNumber(produto.valor_desconto || "0,00");
+        valor_total += parseNumber(produto.valor_total || "0,00");
+      });
+      this.totais = {
+        quantidade: formatToBRL(quantidade).replace("R$", ""),
+        valor_unitario: formatToBRL(valor_unitario),
+        valor_desconto: formatToBRL(valor_desconto),
+        valor_total: formatToBRL(valor_total)
+      };
 
-        this.calcTotalizadores();
-      }
+      this.calcTotalizadores();
     },
     async calcTotalizadores() {
       const {
@@ -625,11 +627,11 @@ export default {
 
       // valor total da nota
       this.pedido.valor_total = formatToBRL(
-        parseNumber(valor_produtos || "0,00") +
-          parseNumber(valor_frete) +
-          parseNumber(valor_seguro) +
-          parseNumber(outras_despesas) -
-          parseNumber(valor_desconto)
+        parseNumber(valor_produtos || "0,00", ",") +
+          parseNumber(valor_frete, ",") +
+          parseNumber(valor_seguro, ",") +
+          parseNumber(outras_despesas, ",") -
+          parseNumber(valor_desconto, ",")
       );
       this.$refs.valor_total.$el.getElementsByTagName(
         "input"
@@ -652,7 +654,7 @@ export default {
       const urlpedidos = `${urlBD}/pedidos/${id}`;
 
       if (!this.pedido.id_empresa) {
-        this.pedido.id_empresa = this.empresaStore.currentEmpresa.value;
+        this.pedido.id_empresa = this.empresaStore.currentEmpresa;
       }
 
       this.pedido.produtos = this.produtos_pedido;

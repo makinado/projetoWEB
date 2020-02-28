@@ -308,8 +308,8 @@
           <td>{{ data.item.descricao }}</td>
           <td>{{ data.item.categoria }}</td>
           <td>{{ data.item.marca }}</td>
-          <td>{{ data.item.valor_venda }}</td>
-          <td>{{ data.item.qtdEstoque || 0 }}</td>
+          <td>{{ data.item.valor_venda | currency }}</td>
+          <td>{{ data.item.qtdEstoque | decimal }}</td>
           <td>
             <v-tooltip bottom>
               <b-button
@@ -505,13 +505,7 @@ export default {
         ""}`;
 
       axios.get(url).then(res => {
-        this.produtoStore.produtos = res.data.data.map(produto => {
-          produto.valor_unitario = formatToBRL(produto.valor_unitario);
-          produto.valor_venda = formatToBRL(produto.valor_venda);
-          produto.qtdEstoque = moneyToNumber(formatToBRL(produto.qtdEstoque));
-
-          return produto;
-        });
+        this.produtoStore.produtos = res.data.data
         this.count = res.data.count;
         this.pagination.rowsPerPage = res.data.limit;
       });

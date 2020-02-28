@@ -76,7 +76,10 @@
                             <v-flex xs12 md4>
                               <v-autocomplete
                                 no-data-text="Nenhum resultado"
+                                class="tag-input"
                                 dense
+                                chips
+                                deletable-chips
                                 color="primary"
                                 label="Categoria"
                                 :items="categoriaStore.categorias"
@@ -88,7 +91,10 @@
                             <v-flex xs12 md4>
                               <v-autocomplete
                                 no-data-text="Nenhum resultado"
+                                class="tag-input"
                                 dense
+                                chips
+                                deletable-chips
                                 color="primary"
                                 label="Marca"
                                 :items="produtoStore.marcas"
@@ -100,7 +106,10 @@
                             <v-flex xs12 md4>
                               <v-autocomplete
                                 no-data-text="Nenhum resultado"
+                                class="tag-input"
                                 dense
+                                chips
+                                deletable-chips
                                 color="primary"
                                 label="Unidade"
                                 :items="produtoStore.unidades"
@@ -370,7 +379,11 @@ import {
   formatDate,
   parseNumber,
   moneyToNumber,
-  saveLog
+  saveLog,
+  loadCategoriasProdutos,
+  loadMarcas,
+  loadUnidades,
+  loadFornecs
 } from "@/global";
 
 export default {
@@ -448,11 +461,23 @@ export default {
     };
   },
   watch: {
-    "$store.state.modalStore.produtos.visible": function() {
+    "$store.state.modalStore.produtos.visible"() {
       if (this.modalStore.produtos.visible) {
         this.reset();
         this.loadTela(this.produtoStore.produto);
       }
+    },
+    "$store.state.modalStore.pessoas.visible"() {
+      if (!this.modalStore.pessoas.visible) loadFornecs();
+    },
+    "$store.state.modalStore.categorias.visible"() {
+      if (!this.modalStore.categorias.visible) loadCategoriasProdutos();
+    },
+    "$store.state.modalStore.marcas.visible"() {
+      if (!this.modalStore.marcas.visible) loadMarcas();
+    },
+    "$store.state.modalStore.unidades.visible"() {
+      if (!this.modalStore.unidades.visible) loadUnidades();
     }
   },
   methods: {
@@ -620,58 +645,29 @@ export default {
         })
         .catch(showError);
     },
-    loadTela(produto) {
-      let url = `${urlBD}/produtos/TelaProduto`;
-      if (!produto) {
-        axios
-          .get(url)
-          .then(res => {
-            const tela = res.data;
+    async loadTela(produto) {
+      loadFornecs();
+      loadCategoriasProdutos();
+      loadMarcas();
+      loadUnidades();
 
-            this.pessoaStore.pessoas = tela.pessoas;
-            this.categoriaStore.categorias = tela.categorias;
-            this.produtoStore.marcas = tela.marcas;
-            this.produtoStore.unidades = tela.unidades;
-            this.grupos_trib = tela.grupos;
-
-            this.ativo.push("ativo");
-          })
-          .catch(showError);
-      } else if (produto.id) {
-        axios
+      if (!produto) return;
+      let url = `${urlBD}/produtos`;
+      if (produto.id) {
+        await axios
           .get(`${url}/${produto.id}`)
           .then(res => {
-            const tela = res.data;
-
-            this.produto = tela.produto;
+            this.produto = res.data;
             this.produto.qtdEstoque = moneyToNumber(
               formatToBRL(this.produto.qtdEstoque)
             );
             this.parseValores();
-            this.pessoaStore.pessoas = tela.pessoas;
-            this.categoriaStore.categorias = tela.categorias;
-            this.produtoStore.marcas = tela.marcas;
-            this.produtoStore.unidades = tela.unidades;
-            this.grupos_trib = tela.grupos;
-            this.grupos_selecionados = tela.grupos_produto;
+
+            this.grupos_selecionados = produto.grupos_produto;
           })
           .catch(showError);
       } else {
         this.produto = produto;
-        axios
-          .get(url)
-          .then(res => {
-            const tela = res.data;
-
-            this.pessoaStore.pessoas = tela.pessoas;
-            this.categoriaStore.categorias = tela.categorias;
-            this.produtoStore.marcas = tela.marcas;
-            this.produtoStore.unidades = tela.unidades;
-            this.grupos_trib = tela.grupos;
-
-            this.ativo.push("ativo");
-          })
-          .catch(showError);
       }
     },
     parseValores() {

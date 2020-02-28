@@ -33,7 +33,8 @@ module.exports = app => {
         const count = parseInt(result.count)
 
         app.db('log')
-            .select('id', 'id_usuario', 'data', 'hora', 'tela', 'tipo', 'detalhe')
+            .join('usuarios', 'usuarios.id', 'log.id')
+            .select('log.id', 'usuarios.nome as usuario', 'data', 'hora', 'tela', 'tipo', 'detalhe')
             .limit(limit).offset(page * limit - limit)
             .where(async (qb) => {
                 // pesquisa avançada
@@ -44,7 +45,6 @@ module.exports = app => {
                         qb.orWhere('log.id_usuario', '=', req.query.usuario);
                     }
                     if (req.query.tipo_acao) {
-                        console.log(req.query.tipo_acao)
                         if (req.query.tipo_acao == 1) {
                             qb.where('log.tipo', '=', 'GRAVAÇÂO');
                         } else if (req.query.tipo_acao == 2) {
@@ -87,17 +87,8 @@ module.exports = app => {
                 }
             })
             .orderBy([{ column: 'data', order: 'desc' }, { column: 'hora', order: 'desc' }])
-            .then(async logs => {
-                logs = logs.map(async log => {
-                    log.usuario = await app.dbUsers('usuarios').select('nome').where({ id: log.id_usuario }).first()
-                    log.usuario = log.usuario.nome
-
-                    return log
-                })
-
-                res.json({ data: await Promise.all(logs), count, limit })
-            })
-            .catch(e => { console.log(e.toString()); res.status(500).send(e.toString()) })
+            .then(logs => res.json({ data: logs, count, limit }))
+            .catch(e => res.status(500).send(e.toString()))
     }
 
     const get = async (req, res) => {
@@ -107,7 +98,7 @@ module.exports = app => {
             .orderBy([{ column: 'data', order: 'desc' }, { column: 'hora', order: 'desc' }])
             .then(async logs => {
                 logs = logs.map(async log => {
-                    log.usuario = await app.dbUsers('usuarios').select('img', 'nome').where({ id: log.id_usuario }).first()
+                    log.usuario = await app.db('usuarios').select('img', 'nome').where({ id: log.id_usuario }).first()
 
                     return log
                 })

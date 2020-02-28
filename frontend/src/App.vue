@@ -64,6 +64,7 @@ export default {
       const res = await axios.post(`${urlBD}/validateToken`, usuario);
 
       if (res.data) {
+        console.log(usuario);
         this.$store.commit("setUsuario", usuario);
         socket.emit("login", usuario);
 
@@ -75,7 +76,7 @@ export default {
             this.empresaStore.currentEmpresas = res.data;
             this.$store.commit(
               "setEmpresa",
-              this.empresaStore.currentEmpresas[0]
+              this.empresaStore.currentEmpresas[0].value
             );
           });
 

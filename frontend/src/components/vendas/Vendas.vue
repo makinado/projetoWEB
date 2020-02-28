@@ -1,6 +1,6 @@
 <template>
   <v-container fill-height fluid grid-list-xl>
-    <AddOrcamento />
+    <AddVenda />
     <AddTabela />
     <AddPessoa />
     <Email />
@@ -8,9 +8,9 @@
 
     <v-layout justify-center wrap>
       <v-flex md12>
-        <PageTitle main="Orçamentos / Vendas" icon="fa fa-file-text" sub="Gerenciar orçamentos" />
+        <PageTitle main="Orçamentos / Vendas" icon="fa fa-file-text" sub="Gerenciar orçamentos e vendas" />
         <v-card class="p-3">
-          <GridOrcamentos />
+          <GridVendas />
         </v-card>
       </v-flex>
     </v-layout>
@@ -25,8 +25,8 @@ import { mapState } from "vuex";
 export default {
   components: {
     PageTitle: () => import("../template/PageTitle"),
-    GridOrcamentos: () => import("./GridOrcamentos"),
-    AddOrcamento: () => import("./AddOrcamento"),
+    GridVendas: () => import("./GridVendas"),
+    AddVenda: () => import("./AddVenda"),
     AddTabela: () => import("./AddTabela"),
     AddPessoa: () => import("../pessoas/AddPessoa"),
     AddProduto: () => import("../produtos/AddProduto"),

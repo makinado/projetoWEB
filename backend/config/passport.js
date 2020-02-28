@@ -10,7 +10,7 @@ module.exports = app => {
     }
 
     const bearerStrategy = new Strategy(params, (payload, done) => {
-        app.dbUsers('usuarios')
+        app.db('usuarios')
             .where({ id: payload.id })
             .first()
             .then(user => done(null, user ? { ...payload } : false))
@@ -24,7 +24,7 @@ module.exports = app => {
         profileFields: ['id', "email"]
     },
         function (accessToken, refreshToken, profile, done) {
-            app.dbUsers('usuarios')
+            app.db('usuarios')
                 .where({ email: profile.email })
                 .first()
                 .then(user => done(null, user ? { ...payload } : false))

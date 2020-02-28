@@ -83,30 +83,18 @@ module.exports = app => {
             .catch(e => res.status(500).send(e.toString()))
     }
 
+    const getAll = async (req, res) => {
+        app.db('conta')
+            .select('id as value', 'nome as text', 'saldo_atual')
+            .then(contas => res.json(contas))
+            .catch(e => res.status(500).send(e.toString()))
+    }
+
     const getById = async (req, res) => {
         app.db('conta')
             .where({ id: req.params.id }).first()
             .then(conta => res.json(conta))
             .catch(e => res.status(500).send(e.toString()))
-    }
-
-    const getTela = async (req, res) => {
-        if (req.params.id) {
-            var conta = await app.db('conta')
-                .where({ id: req.params.id }).first()
-                .catch(e => res.status(500).send(e))
-        }
-
-        FebrabanBanks.getBanks().then(data => {
-            var banks = data.map(item => { return { value: parseInt(item.code), text: `${item.code} - ${item.name}` } })
-
-            const tela = {
-                conta,
-                banks
-            }
-
-            res.json(tela)
-        }).catch(e => console.log(e));
     }
 
     const remove = async (req, res) => {
@@ -122,5 +110,5 @@ module.exports = app => {
         }
     }
 
-    return { save, get, getById, getTela, remove }
+    return { save, get, getAll, getById, remove }
 }

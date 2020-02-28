@@ -104,37 +104,6 @@ module.exports = app => {
             .catch(e => res.status(500).send(e.toString()))
     }
 
-    const getTelaMetas = async (req, res) => {
-        if (req.params.id) {
-            const meta = await app.db('meta_empresa')
-                .where({ id: req.params.id }).first()
-                .catch(e => res.status(500).send(e.toString()))
-            const pessoas = await app.db('pessoas').select('id', 'nome').where({ vendedor: true })
-                .catch(e => res.status(500).send(e.toString()))
-
-            meta.metaAnual = await app.db('meta_empresa_valores')
-                .where({ id_meta: meta.id })
-                .catch(e => res.status(500).send(e.toString()))
-
-            const tela = {
-                meta,
-                pessoas
-            }
-
-
-            res.json(tela)
-        } else {
-            const pessoas = await app.db('pessoas').select('id', 'nome').where({ vendedor: true })
-                .catch(e => res.status(500).send(e.toString()))
-
-            const tela = {
-                pessoas
-            }
-
-            res.json(tela)
-        }
-    }
-
     const remove = async (req, res) => {
         try {
             const exclusao = await app.db('meta_empresa')
@@ -148,5 +117,5 @@ module.exports = app => {
         }
     }
 
-    return { save, get, getById, getTelaMetas, remove }
+    return { save, get, getById, remove }
 }

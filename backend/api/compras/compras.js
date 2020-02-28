@@ -20,6 +20,28 @@ module.exports = app => {
 
             existsOrError(compra.produtos, 'Informe os produtos do compra')
             existsOrError(compra.financeiro, 'Informe a(s) parcela(s) da compra')
+
+            produtos.map(prods => {
+                try {
+                    if (prods.quantidade == "0,00") throw `Quantidade do produto ${prod.sequencia} não informada`
+                    if (prods.valor_unitario == "R$ 0,00") throw `Valor unitário do produto ${prod.sequencia} não informado`
+                } catch (e) {
+                    return res.status(400).send(e.toString())
+                }
+            })
+
+            financeiro.map(financ => {
+                existsOrError(financ.data_vencimento, 'Data de vencimento da conta não informada')
+                try {
+                    if (financ.pago) {
+                        existsOrError(financ.id_conta, 'Conta para pagamento não informada')
+                        existsOrError(financ.data_baixa, 'Data do pagamento não informada')
+                        if (financ.valor_pago == "R$ 0,00") throw "Valor do pagamento não informado"
+                    }
+                } catch (e) {
+                    return res.status(400).send(e.toString())
+                }
+            })
         } catch (e) {
             return res.status(400).send(e.toString())
         }
@@ -89,13 +111,18 @@ module.exports = app => {
                             financeiro = financeiro.map(parcela => {
                                 const newFinanc = {
                                     id_empresa: compra.id_empresa,
-                                    id_movimento_origem: compra.id,
+                                    id_pessoa: compra.id_pessoa,
+                                    tipo_conta: 1,
+                                    id_movimento_origem: id[0],
                                     pago: parcela.pago,
                                     parcela: parcela.parcelas,
                                     observacao: compra.observacao,
+
                                     valor_parcela: parseNumber(parcela.valor || "0,00"),
+                                    valor_total: compra.valor_total || "0,00",
 
                                     documento_origem: parcela.documento_origem,
+                                    num_documento_origem: compra.nota_fiscal,
 
                                     data_criacao: new Date(),
                                     data_emissao: compra.data_lancamento,
@@ -142,11 +169,11 @@ module.exports = app => {
                                     cfop: produto.cfop,
                                     ncm: produto.ncm,
 
-                                    quantidade: (parseNumber(produto.quantidade || "0,00")),
-                                    valor_unitario: (parseNumber(produto.valor_unitario || "0,00")),
-                                    valor_desconto: (parseNumber(produto.valor_desconto || "0,00")),
-                                    valor_total: (parseNumber(produto.valor_total || "0,00")),
-                                    perc_custo_adicional: (parseNumber(produto.perc_custo_adicional || "0,00"))
+                                    quantidade: parseNumber(produto.quantidade || "0,00"),
+                                    valor_unitario: parseNumber(produto.valor_unitario || "0,00"),
+                                    valor_desconto: parseNumber(produto.valor_desconto || "0,00"),
+                                    valor_total: parseNumber(produto.valor_total || "0,00"),
+                                    perc_custo_adicional: parseNumber(produto.perc_custo_adicional || "0,00"),
                                 }
 
                                 movim_estoque.push({
@@ -161,16 +188,22 @@ module.exports = app => {
 
                                 return newProd
                             })
+
                             financeiro = financeiro.map(parcela => {
                                 const newFinanc = {
                                     id_empresa: compra.id_empresa,
+                                    id_pessoa: compra.id_pessoa,
+                                    tipo_conta: 1,
                                     id_movimento_origem: id[0],
                                     pago: parcela.pago,
                                     parcela: parcela.parcelas,
                                     observacao: compra.observacao,
+
                                     valor_parcela: parseNumber(parcela.valor || "0,00"),
+                                    valor_total: compra.valor_total || "0,00",
 
                                     documento_origem: parcela.documento_origem,
+                                    num_documento_origem: compra.nota_fiscal,
 
                                     data_criacao: new Date(),
                                     data_emissao: compra.data_lancamento,
@@ -233,6 +266,10 @@ module.exports = app => {
             .limit(limit).offset(page * limit - limit)
             .orderBy('compra.situacao')
             .where(async (qb) => {
+                if (req.query.empresa) {
+                    qb.where('compra.id_empresa', '=', req.query.empresa);
+                }
+
                 if (req.query.tipo == 2) {
                     // pesquisa avançada
                     if (req.query.fornecedor) {
@@ -288,96 +325,40 @@ module.exports = app => {
     }
 
     const getById = async (req, res) => {
-        compra = await app.db('compra')
-            .catch(e => {
-                res.status(500).send('Erro no servidor')
-                console.log(e.toString())
-            })
-        compra.produtos = await app.db('produto_compra')
-            .join('produtos', 'produto_compra.id_produto', 'produtos.id')
-            .select(
-                'produto_compra.id_produto as id',
-                'produto_compra.sequencia',
-                'produtos.descricao as descricao',
-                'produto_compra.ncm',
-                'produto_compra.cfop',
-                'produto_compra.quantidade',
-                'produto_compra.valor_unitario',
-                'produto_compra.valor_desconto',
-                'produto_compra.perc_custo_adicional',
-                'produto_compra.valor_total'
-            )
-            .where({ id_compra: compra.id })
-
-        res.json(compra)
-    }
-
-    const getTela = async (req, res) => {
-        if (req.params.id) {
-            var compra = await app.db('compra')
-                .where({ 'compra.id': req.params.id }).first()
-                .catch(e => res.status(500).send(e.toString()))
-
-            if (compra) {
-                compra.data_notafiscal = (new Date(compra.data_notafiscal).toISOString().substr(0, 10))
-                compra.data_lancamento = (new Date(compra.data_lancamento).toISOString().substr(0, 10))
-                compra.produtos = await app.db('produto_compra')
-                    .join('produtos', 'produto_compra.id_produto', 'produtos.id')
+        app.db('compra')
+            .where({ id: req.params.id })
+            .first()
+            .then(async compra => {
+                compra.produtos = await app.db('produto_compra as pc')
+                    .join('produtos as p', 'pc.id_produto', 'p.id')
                     .select(
-                        'produto_compra.id_produto as id',
-                        'produto_compra.sequencia',
-                        'produto_compra.ncm',
-                        'produto_compra.cfop',
-                        'produto_compra.quantidade',
-                        'produto_compra.valor_unitario',
-                        'produto_compra.valor_desconto',
-                        'produto_compra.perc_custo_adicional',
-                        'produto_compra.valor_total'
-                    )
+                        'p.id',
+                        'pc.sequencia',
+                        'p.descricao',
+                        'pc.ncm',
+                        'pc.cfop',
+                        'pc.quantidade',
+                        'pc.valor_desconto',
+                        'pc.valor_unitario',
+                        'pc.perc_custo_adicional',
+                        'pc.valor_total')
                     .where({ id_compra: compra.id })
-                compra.financeiro = await app.db('financeiro')
+                    .catch(e => res.status(500).send(e.toString()))
+                compra.financeiro = await app.db('financeiro as f')
                     .select(
-                        'pago',
-                        'data_vencimento as data',
-                        'parcela as parcelas',
-                        'documento_origem',
-                        'valor_parcela as valor'
+                        'f.id',
+                        'f.parcela',
+                        'f.valor_parcela',
+                        'f.pago',
+                        'f.observacao',
+                        'f.documento_origem',
+                        'f.data_vencimento'
                     )
                     .where({ id_movimento_origem: compra.id })
-
-                compra.financeiro = compra.financeiro.map(parcela => {
-                    parcela.data = parcela.data.toLocaleString().substr(0, 10)
-                    return parcela
-                })
-            }
-        }
-
-        const produtos = await app.db('produtos')
-            .select('id as value', 'descricao as text', 'valor_unitario', 'ncm')
-            .where({ situacao: true })
-            .then(produtos => {
-                return produtos.map(produto => {
-                    produto.text = produto.text.substr(0, 20) + (produto.text.length > 20 ? '...' : '')
-                    return produto
-                })
+                    .catch(e => res.status(500).send(e.toString()))
+                res.json(compra)
             })
             .catch(e => res.status(500).send(e.toString()))
-        const pessoas = await app.db('pessoas')
-            .select('id as value', 'nome as text', 'cpf', 'cnpj')
-            .where({ situacao: 'Ativo', fornecedor: true })
-            .catch(e => res.status(500).send(e.toString()))
-        const documentos = await app.db('documentos')
-            .select('id as value', 'nome as text')
-            .catch(e => res.status(500).send(e.toString()))
-
-        const tela = {
-            compra,
-            produtos,
-            pessoas,
-            documentos
-        }
-
-        res.json(tela)
     }
 
     const remove = async (req, res) => {
@@ -410,5 +391,5 @@ module.exports = app => {
         });
     }
 
-    return { save, get, getById, getTela, remove }
+    return { save, get, getById, remove }
 }

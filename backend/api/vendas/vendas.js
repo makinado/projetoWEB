@@ -2,7 +2,6 @@ const { formatToBRL } = require('brazilian-values')
 
 module.exports = app => {
     const { existsOrError, parseNumber, formatDate } = app.api.validation
-    const { withEstoque } = app.api.produtos.produtos
 
     const save = async (req, res) => {
         const venda = { ...req.body }
@@ -11,23 +10,28 @@ module.exports = app => {
         }
 
         try {
-            existsOrError(venda.id_empresa, 'Informe a empresa do orçamento')
-            existsOrError(venda.pessoa, 'Informe o cliente do orçamento')
+            existsOrError(venda.id_empresa, 'Informe a empresa da venda')
+            existsOrError(venda.id_pessoa, 'Informe o fornecedor da venda')
 
-            if (venda.pessoa.value)
-                venda.id_pessoa = venda.pessoa.value
-            else
-                venda.nome_pessoa = venda.pessoa
-            delete venda.pessoa
+            //validar dados da nota
+            existsOrError(venda.nota_fiscal, 'Informe o número da nota fiscal')
+            existsOrError(venda.data_notafiscal, 'Informe a data da nota fiscal')
+            existsOrError(venda.data_lancamento, 'Informe a data de lançamento')
 
-            existsOrError(venda.produtos, 'Informe os produtos do orçamento')
+            existsOrError(venda.produtos, 'Informe os produtos do venda')
+            existsOrError(venda.financeiro, 'Informe a(s) parcela(s) da venda')
         } catch (e) {
             return res.status(400).send(e.toString())
         }
 
-        venda.situacao = venda.situacao ? venda.situacao : 'PENDENTE'
+
         var produtos = venda.produtos
+        var financeiro = venda.financeiro
         delete venda.produtos
+        delete venda.financeiro
+
+        delete financeiro.menu
+        delete financeiro.edit
 
         try {
             venda.valor_frete = parseNumber(venda.valor_frete || "0,00")
@@ -37,6 +41,8 @@ module.exports = app => {
             venda.valor_produtos = parseNumber(venda.valor_produtos || "0,00")
             venda.valor_total = parseNumber(venda.valor_total || "0,00")
 
+            venda.situacao = venda.situacao ? venda.situacao : 'CONCLUÍDA'
+
             if (venda.id) {
                 return app.db.transaction(async function (trx) {
                     return app.db('venda')
@@ -44,25 +50,71 @@ module.exports = app => {
                         .where({ id: venda.id })
                         .transacting(trx)
                         .then(async function () {
-                            await app.db('produto_venda').where({ id_venda: venda.id }).delete()
+                            const movim_estoque = []
 
-                            produtos = produtos.map(produto => {
+                            await app.db('produto_venda').where({ id_venda: venda.id }).delete()
+                            await app.db('produto_movimento_estoque').where({ id_movimentacao: venda.id }).delete()
+                            // await app.db('financeiro').where({ id_movimentacao: venda.id }).delete()
+
+                            produtos = await produtos.map(produto => {
                                 const newProd = {
                                     id_venda: venda.id,
                                     id_empresa: venda.id_empresa,
                                     id_produto: produto.id,
+                                    sequencia: produto.sequencia,
+                                    cfop: produto.cfop,
+                                    ncm: produto.ncm,
 
                                     quantidade: (parseNumber(produto.quantidade || "0,00")),
-                                    valor_venda: (parseNumber(produto.valor_venda || "0,00")),
+                                    valor_unitario: (parseNumber(produto.valor_unitario || "0,00")),
                                     valor_desconto: (parseNumber(produto.valor_desconto || "0,00")),
                                     valor_total: (parseNumber(produto.valor_total || "0,00")),
+                                    perc_custo_adicional: (parseNumber(produto.perc_custo_adicional || "0,00"))
                                 }
 
+                                movim_estoque.push({
+                                    id_empresa: venda.id_empresa,
+                                    id_produto: produto.id,
+                                    tipo_movimentacao: 0,
+                                    data_movimentacao: venda.data_lancamento,
+                                    id_movimentacao: venda.id,
+                                    quantidade: parseNumber(produto.quantidade || "0,00"),
+                                    observacao: venda.observacao
+                                })
+
                                 return newProd
+                            })
+                            await app.db('financeiro').where({ id_movimento_origem: venda.id }).delete()
+
+                            financeiro = financeiro.map(parcela => {
+                                const newFinanc = {
+                                    id_empresa: venda.id_empresa,
+                                    id_movimento_origem: venda.id,
+                                    pago: parcela.pago,
+                                    parcela: parcela.parcelas,
+                                    observacao: venda.observacao,
+                                    valor_parcela: parseNumber(parcela.valor || "0,00"),
+
+                                    documento_origem: parcela.documento_origem,
+
+                                    data_criacao: new Date(),
+                                    data_emissao: venda.data_lancamento,
+                                    data_vencimento: parcela.data
+                                }
+
+                                return newFinanc
                             })
 
                             return app.db.batchInsert('produto_venda', produtos)
                                 .transacting(trx)
+                                .then(function () {
+                                    return app.db.batchInsert('produto_movimento_estoque', movim_estoque)
+                                        .transacting(trx)
+                                        .then(function () {
+                                            return app.db.batchInsert('financeiro', financeiro)
+                                                .transacting(trx)
+                                        })
+                                })
 
                         })
                         .then(trx.commit)
@@ -73,29 +125,71 @@ module.exports = app => {
                     console.log(error.toString())
                     res.status(500).send(error.toString())
                 });
+
             } else {
                 return app.db.transaction(async function (trx) {
                     return app.db('venda')
                         .insert(venda).returning('id')
                         .transacting(trx)
                         .then(function (id) {
+                            const movim_estoque = []
                             produtos = produtos.map(produto => {
                                 const newProd = {
                                     id_venda: id[0],
                                     id_empresa: venda.id_empresa,
                                     id_produto: produto.id,
+                                    sequencia: produto.sequencia,
+                                    cfop: produto.cfop,
+                                    ncm: produto.ncm,
 
                                     quantidade: (parseNumber(produto.quantidade || "0,00")),
-                                    valor_venda: (parseNumber(produto.valor_venda || "0,00")),
+                                    valor_unitario: (parseNumber(produto.valor_unitario || "0,00")),
                                     valor_desconto: (parseNumber(produto.valor_desconto || "0,00")),
                                     valor_total: (parseNumber(produto.valor_total || "0,00")),
+                                    perc_custo_adicional: (parseNumber(produto.perc_custo_adicional || "0,00"))
                                 }
 
+                                movim_estoque.push({
+                                    id_empresa: venda.id_empresa,
+                                    id_produto: produto.id,
+                                    tipo_movimentacao: 0,
+                                    data_movimentacao: venda.data_lancamento,
+                                    id_movimentacao: id[0],
+                                    quantidade: parseNumber(produto.quantidade || "0,00"),
+                                    observacao: venda.observacao
+                                })
+
                                 return newProd
+                            })
+                            financeiro = financeiro.map(parcela => {
+                                const newFinanc = {
+                                    id_empresa: venda.id_empresa,
+                                    id_movimento_origem: id[0],
+                                    pago: parcela.pago,
+                                    parcela: parcela.parcelas,
+                                    observacao: venda.observacao,
+                                    valor_parcela: parseNumber(parcela.valor || "0,00"),
+
+                                    documento_origem: parcela.documento_origem,
+
+                                    data_criacao: new Date(),
+                                    data_emissao: venda.data_lancamento,
+                                    data_vencimento: parcela.data
+                                }
+
+                                return newFinanc
                             })
 
                             return app.db.batchInsert('produto_venda', produtos)
                                 .transacting(trx)
+                                .then(function () {
+                                    return app.db.batchInsert('produto_movimento_estoque', movim_estoque)
+                                        .transacting(trx)
+                                        .then(function () {
+                                            return app.db.batchInsert('financeiro', financeiro)
+                                                .transacting(trx)
+                                        })
+                                })
 
                         })
                         .then(trx.commit)
@@ -120,64 +214,68 @@ module.exports = app => {
         const count = parseInt(result.count)
 
         app.db('venda')
-            .join('empresas', 'vendas.id_empresa', 'empresas.id')
-            .join('pessoas', 'vendas.id_pessoa', 'pessoas.id')
+            .join('empresas', 'venda.id_empresa', 'empresas.id')
+            .join('pessoas as cliente', 'venda.id_pessoa', 'cliente.id')
+            .join('pessoas as vendedor', 'venda.id_vendedor', 'vendedor.id')
             .select(
-                'vendas.id',
-                'id_empresa',
-                'id_pessoa',
-                'vendas.situacao',
-                'data_agendamento',
-                'valor_total',
+                'venda.id',
+                'venda.situacao',
+                'nota_fiscal',
+                'data_emissao',
                 'empresas.nome as empresa',
-                'pessoas.nome as pessoa'
+                'cliente.nome as cliente',
+                'vendedor.nome as vendedor'
             )
             .limit(limit).offset(page * limit - limit)
-            .orderBy('vendas.situacao')
+            .orderBy('venda.situacao')
             .where(async (qb) => {
                 if (req.query.tipo == 2) {
                     // pesquisa avançada
-                    if (req.query.cliente) {
-                        qb.where('vendas.id_pessoa', '=', req.query.cliente);
+                    if (req.query.fornecedor) {
+                        qb.where('venda.id_pessoa', '=', req.query.fornecedor);
                     } else if (req.query.id) {
-                        qb.orWhere('vendas.id', '=', req.query.id);
+                        qb.orWhere('venda.id', '=', req.query.id);
+                    } else if (req.query.documento) {
+                        qb.orWhere('venda.nota_fiscal', '=', req.query.documento);
                     }
                     if (req.query.tipo_data == 1) {
                         if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('vendas.data_contato', [req.query.data_inicial, req.query.data_final])
+                            qb.whereBetween('venda.data_notafiscal', [req.query.data_inicial, req.query.data_final])
                         }
                     } else {
                         if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('vendas.data_agendamento', [req.query.data_inicial, req.query.data_final])
-                        }
-                    }
-                    if (req.query.pendentes) {
-                        qb.where('vendas.situacao', 'PENDENTE');
-                    }
-                    if (req.query.concluidos) {
-                        qb.where('vendas.situacao', 'CONCLUÍDOS');
-                    }
-                } else {
-                    // pesquisa rapida
-                    if (req.query.cliente) {
-                        qb.where('vendas.id_pessoa', '=', req.query.cliente);
-                    } else if (req.query.id) {
-                        qb.orWhere('vendas.id', '=', req.query.id);
-                    }
-                    if (req.query.tipo_data == 1) {
-                        if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('vendas.data_contato', [req.query.data_inicial, req.query.data_final])
-                        }
-                    } else {
-                        if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('vendas.data_agendamento', [req.query.data_inicial, req.query.data_final])
+                            qb.whereBetween('venda.data_lancamento', [req.query.data_inicial, req.query.data_final])
                         }
                     }
                     if (req.query.concluidas) {
-                        qb.where('vendas.situacao', 'PENDENTE');
+                        qb.where('venda.situacao', 'CONCLUÍDA');
                     }
-                    if (req.query.concluidos) {
-                        qb.where('vendas.situacao', 'CONCLUÍDOS');
+                    if (req.query.canceladas) {
+                        qb.where('venda.situacao', 'CANCELADA');
+                    }
+                } else {
+                    // pesquisa rapida
+                    if (req.query.fornecedor) {
+                        qb.where('venda.id_pessoa', '=', req.query.fornecedor);
+                    } else if (req.query.id) {
+                        qb.orWhere('venda.id', '=', req.query.id);
+                    } else if (req.query.documento) {
+                        qb.orWhere('venda.nota_fiscal', '=', req.query.documento);
+                    }
+                    if (req.query.tipo_data == 1) {
+                        if (req.query.data_inicial && req.query.data_final) {
+                            qb.whereBetween('venda.data_notafiscal', [req.query.data_inicial, req.query.data_final])
+                        }
+                    } else {
+                        if (req.query.data_inicial && req.query.data_final) {
+                            qb.whereBetween('venda.data_lancamento', [req.query.data_inicial, req.query.data_final])
+                        }
+                    }
+                    if (req.query.concluidas) {
+                        qb.where('venda.situacao', 'CONCLUÍDA');
+                    }
+                    if (req.query.canceladas) {
+                        qb.where('venda.situacao', 'CANCELADA');
                     }
                 }
             })
@@ -186,199 +284,59 @@ module.exports = app => {
     }
 
     const getById = async (req, res) => {
-        let venda = await app.db('venda')
-            .leftJoin('pessoas', 'vendas.id_pessoa', 'pessoas.id')
-            .select('*', 'pessoas.nome as pessoa')
-            .where({ 'vendas.id': req.params.id })
-            .first()
-            .catch(e => res.status(500).send(e.toString()))
-
-        venda.data_venda = venda.data_venda.toISOString().substr(0, 10)
-        venda.data_lancamento = venda.data_lancamento.toISOString().substr(0, 10)
-
-        const pedProds = await app.db('produto_venda').where({ id_venda: venda.id })
-            .then(produtos => {
-                return produtos
+        venda = await app.db('venda')
+            .catch(e => {
+                res.status(500).send('Erro no servidor')
+                console.log(e.toString())
             })
-            .catch(e => res.status(500).send(e.toString()))
+        venda.produtos = await app.db('produto_venda')
+            .join('produtos', 'produto_venda.id_produto', 'produtos.id')
+            .select(
+                'produto_venda.id_produto as id',
+                'produto_venda.sequencia',
+                'produtos.descricao as descricao',
+                'produto_venda.ncm',
+                'produto_venda.cfop',
+                'produto_venda.quantidade',
+                'produto_venda.valor_unitario',
+                'produto_venda.valor_desconto',
+                'produto_venda.perc_custo_adicional',
+                'produto_venda.valor_total'
+            )
+            .where({ id_venda: venda.id })
 
-
-        let newPedProds = []
-        newPedProds = pedProds.map(async pedProd => {
-            let prod = await app.db('produtos').where({ id: pedProd.id_produto }).first()
-                .then(produto => {
-                    return produto
-                })
-                .catch(e => res.status(500).send(e.toString()))
-
-            let newProd = {
-                descricao: prod.descricao,
-                id: pedProd.id_produto,
-                quantidade: pedProd.quantidade,
-                desconto: pedProd.valor_desconto || 0.00,
-                valor_venda: pedProd.valor_venda,
-                valor_total: pedProd.valor_total
-            }
-
-            return newProd
-        })
-
-        const resultado = await Promise.all(newPedProds);
-
-        venda.produtos = resultado
         res.json(venda)
     }
 
-    const getTela = async (req, res) => {
-        if (req.params.id) {
-            var venda = await app.db('venda')
-                .leftJoin('pessoas', 'vendas.id_pessoa', 'pessoas.id')
-                .select(
-                    'vendas.id',
-                    'vendas.id_pessoa',
-                    'vendas.id_empresa',
-                    'vendas.situacao',
-                    'vendas.data_contato',
-                    'vendas.data_agendamento',
-                    'vendas.observacao',
-                    'vendas.id_venda_gerada',
-                    'vendas.id_tabela_preco',
-                    'vendas.valor_total',
-                    'vendas.valor_frete',
-                    'vendas.valor_seguro',
-                    'vendas.valor_desconto',
-                    'vendas.outras_despesas',
-                    'vendas.valor_produtos',
-                    'vendas.nome_pessoa',
-
-                    'pessoas.nome as nome_pessoa'
-                )
-                .where({ 'vendas.id': req.params.id }).first()
-                .catch(e => res.status(500).send(e.toString()))
-
-            venda.pessoa = venda.id_pessoa ? { value: venda.id_pessoa, text: venda.nome_pessoa } : venda.nome_pessoa
-
-            venda.data_contato = new Date(venda.data_contato).toISOString().substr(0, 10)
-            venda.data_agendamento = new Date(venda.data_agendamento).toISOString().substr(0, 10)
-
-            venda.produtos = await app.db('produto_venda')
-                .join('produtos', 'produto_venda.id_produto', 'produtos.id')
-                .select(
-                    'produto_venda.id_produto as id',
-                    'produto_venda.quantidade',
-                    'produto_venda.valor_venda',
-                    'produto_venda.valor_desconto',
-                    'produto_venda.valor_total'
-                )
-                .where({ id_venda: venda.id })
-        }
-
-        var pessoas = await app.db('pessoas')
-            .select('id as value', 'nome as text')
-            .where({ cliente: true })
-            .orderBy('nome')
-        var produtos = await Promise.all(
-            withEstoque(
-                await app.db('produtos')
-                    .leftJoin('produto_estoque', 'produto_estoque.id_produto', 'produtos.id')
-                    .select(
-                        'produtos.id as value',
-                        'produtos.descricao as text',
-                        'produtos.valor_venda',
-                    )
-                    .where({ situacao: true })
-                    .orderBy('descricao')
-            ))
-
-
-        const tela = {
-            venda,
-            pessoas,
-            produtos,
-        }
-
-        res.json(tela)
-    }
-
-    const getBySituacao = async (req, res) => {
-        if (req.params.situacao === '1') {
-            try {
-                let vendas = await app.db('venda')
-                    .join('empresas', 'vendas.id_empresa', 'empresas.id')
-                    .join('pessoas', 'vendas.id_pessoa', 'pessoas.id')
-                    .select(
-                        'vendas.id',
-                        'id_empresa',
-                        'id_pessoa',
-                        'vendas.situacao',
-                        'nota_fiscal',
-                        'data_venda',
-                        'valor_total',
-                        'empresas.nome as empresa',
-                        'pessoas.nome as pessoa'
-                    )
-                    .where('vendas.situacao', 'like', 'PENDENTE')
-                    .catch(e => {
-                        res.status(500).send('Erro no servidor')
-                        console.log(e)
-                    })
-
-                vendas = vendas.map(async venda => {
-                    venda.data_venda = venda.data_venda.toISOString().substr(0, 10)
-                    return venda
-                })
-                const resultado = await Promise.all(vendas);
-
-                res.json(resultado);
-            } catch (e) {
-                res.status(500).send(e.toString())
-            }
-        } else {
-            try {
-                let vendas = await app.db('venda')
-                    .join('empresas', 'vendas.id_empresa', 'empresas.id')
-                    .join('pessoas', 'vendas.id_pessoa', 'pessoas.id')
-                    .select(
-                        'vendas.id',
-                        'id_empresa',
-                        'id_pessoa',
-                        'vendas.situacao',
-                        'nota_fiscal',
-                        'data_venda',
-                        'valor_total',
-                        'empresas.nome as empresa',
-                        'pessoas.nome as pessoa'
-                    )
-                    .where('vendas.situacao', '=', 'CONCLUÍDO')
-                    .catch(e => {
-                        res.status(500).send('Erro no servidor')
-                        console.log(e)
-                    })
-
-                vendas = vendas.map(async venda => {
-                    venda.data_venda = venda.data_venda.toISOString().substr(0, 10)
-                    return venda
-                })
-                const resultado = await Promise.all(vendas);
-
-                res.json(resultado);
-            } catch (e) {
-                res.status(500).send(e.toString())
-            }
-        }
-    }
-
     const remove = async (req, res) => {
-        try {
-            const venda = await app.db('venda')
+        return app.db.transaction(async function (trx) {
+            return app.db('venda')
                 .where({ id: req.params.id }).delete()
-
-            existsOrError(venda, 'Orçamento não encontrado')
+                .transacting(trx)
+                .then(function () {
+                    return app.db('produto_venda')
+                        .where({ id_venda: req.params.id }).delete()
+                        .transacting(trx)
+                        .then(function () {
+                            return app.db('financeiro')
+                                .where({ id_movimento_origem: req.params.id }).delete()
+                                .transacting(trx)
+                                .then(function () {
+                                    return app.db('produto_movimento_estoque')
+                                        .where({ id_movimentacao: req.params.id }).delete()
+                                        .transacting(trx)
+                                })
+                        })
+                })
+                .then(trx.commit)
+                .catch(trx.rollback);
+        }).then(function (inserts) {
             res.status(204).send()
-        } catch (e) {
-            return res.status(500).send()
-        }
+        }).catch(function (error) {
+            console.log(error.toString())
+            res.status(500).send(error.toString())
+        });
     }
 
-    return { save, get, getById, getTela, getBySituacao, remove }
+    return { save, get, getById, remove }
 }

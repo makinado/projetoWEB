@@ -2,7 +2,7 @@
   <v-container fill-height fluid grid-list-xl>
     <v-layout wrap>
       <v-flex xs12>
-        <PageTitle main="Home" icon="fa fa-home" sub="Este é o seu dashboard" />
+        <PageTitle main="Home" icon="fa fa-home" />
       </v-flex>
 
       <v-flex sm6 xs12 md6 lg3>
@@ -111,6 +111,9 @@ import Chart from "chart.js";
 
 export default {
   name: "home",
+  computed: {
+    ...mapState("app", ["color"])
+  },
   components: {
     PageTitle: () => import("../template/PageTitle"),
     Card: () => import("../material/Card"),

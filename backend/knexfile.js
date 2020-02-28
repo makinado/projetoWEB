@@ -1,8 +1,7 @@
-
 const db = {
 	host: process.env.DB_HOST,
 	port: process.env.DB_PORT,
-	database: 'CampagWEB',
+	database: process.env.DB_NAME,
 	user: 'postgres',
 	password: process.env.DB_PASS
 }
@@ -12,6 +11,7 @@ module.exports = {
 	connection: db,
 	pool: {
 		min: 2,
-		max: 10
-	},
-};
+		max: 100
+	}
+}
+

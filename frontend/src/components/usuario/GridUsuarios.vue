@@ -190,6 +190,7 @@
             <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
           </td>
           <td>{{ data.item.id }}</td>
+          <td>{{ data.item.perfil }}</td>
           <td>{{ data.item.nome }}</td>
           <td>{{ data.item.email }}</td>
           <td>{{ data.item.contato }}</td>
@@ -290,6 +291,7 @@ export default {
       loading: true,
       fields: [
         { value: "id", text: "Código", sortable: true },
+        { value: "perfil", text: "Perfil", sortable: true },
         { value: "nome", text: "Nome", sortable: true },
         { value: "email", text: "E-mail", sortable: true },
         { value: "contato", text: "Contato" },

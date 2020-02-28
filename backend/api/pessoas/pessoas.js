@@ -21,8 +21,8 @@ module.exports = app => {
             }
             existsOrError(pessoa.nome, 'Nome inválido')
             existsOrError(pessoa.cep, 'CEP inválido')
-            if (!pessoa.cliente && !pessoa.fornecedor && !pessoa.funcionario && !pessoa.transportadora && !pessoa.vendedor) {
-                throw 'Informe cliente, fornecedor, funcionário, transportadora ou vendedor'
+            if (!pessoa.cliente && !pessoa.fornecedor && !pessoa.transportadora) {
+                throw 'Informe se a pessoa é um cliente, fornecedor ou transportadora'
             }
             var pessoaDB
             if (pessoa.cpf) {
@@ -111,9 +111,6 @@ module.exports = app => {
                     if (req.query.fornecedor) {
                         qb.where('pessoas.fornecedor', '=', true);
                     }
-                    if (req.query.vendedor) {
-                        qb.where('pessoas.vendedor', '=', true);
-                    }
                     if (req.query.funcionario) {
                         qb.where('pessoas.funcionario', '=', true);
                     }
@@ -144,9 +141,6 @@ module.exports = app => {
                     if (req.query.fornecedor) {
                         qb.where('pessoas.fornecedor', '=', true);
                     }
-                    if (req.query.vendedor) {
-                        qb.where('pessoas.vendedor', '=', true);
-                    }
                     if (req.query.funcionario) {
                         qb.where('pessoas.funcionario', '=', true);
                     }
@@ -161,6 +155,8 @@ module.exports = app => {
 
     const getById = async (req, res) => {
         app.db('pessoas')
+            .leftJoin('municipios', 'pessoas.id_cidade', 'municipios.cmun')
+            .select('*', 'municipios.uf as uf', 'municipios.xmun as cidade')
             .where({ id: req.params.id }).first()
             .then(pessoa => res.json(pessoa))
             .catch(e => res.status(500).send(e.toString()))
@@ -187,7 +183,7 @@ module.exports = app => {
     }
 
     withFinanceiro = async pessoa => {
-        pessoa.financeiro = await app.db('financeiro').select('id').where({ id_pessoa: pessoa.id }).where('data_vencimento', '<', new Date())
+        pessoa.financeiro = await app.db('financeiro').select('id').where({ id_pessoa: pessoa.id, pago: false }).where('data_vencimento', '<', new Date())
             .then(situacao => {
                 if (situacao.length === 0)
                     situacao = "OK"
@@ -236,35 +232,6 @@ module.exports = app => {
             .catch(e => res.status(500).send(e.toString()))
     }
 
-    const getTela = async (req, res) => {
-        if (req.params.id) {
-            const pessoa = await app.db('pessoas')
-                .leftJoin('municipios', 'pessoas.id_cidade', 'municipios.cmun')
-                .select('pessoas.*', 'municipios.uf as uf', 'municipios.xmun as cidade')
-                .where({ id: req.params.id }).first()
-                .catch(e => res.status(500).send(e))
-
-            const categorias = await app.db('categorias').select('id as value', 'descricao as text').where({ tipo: 1 })
-                .catch(e => res.status(500).send(e.toString()))
-
-            const tela = {
-                pessoa,
-                categorias
-            }
-
-            res.json(tela)
-        } else {
-            const categorias = await app.db('categorias').select('id as value', 'descricao as text').where({ tipo: 1 })
-                .catch(e => res.status(500).send(e.toString()))
-
-            const tela = {
-                categorias,
-            }
-
-            res.json(tela)
-        }
-    }
-
     const remove = async (req, res) => {
         try {
             const exclusao = await app.db('pessoas')
@@ -278,5 +245,5 @@ module.exports = app => {
     }
 
 
-    return { save, get, getById, getTela, getWithFinanceiro, getByCategoria, getClientes, getFornecs, getAll, remove }
+    return { save, get, getById, getWithFinanceiro, getByCategoria, getClientes, getFornecs, getAll, remove }
 }

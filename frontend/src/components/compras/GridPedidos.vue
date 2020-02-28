@@ -315,14 +315,13 @@
             <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
           </td>
           <td>{{ data.item.id }}</td>
-          <td>{{ data.item.empresa }}</td>
           <td>{{ data.item.pessoa }}</td>
           <td>
             <v-chip :color="getColor(data.item.situacao)" dark>{{ data.item.situacao }}</v-chip>
           </td>
           <td>{{ data.item.nota_fiscal }}</td>
-          <td>{{ data.item.data_pedido }}</td>
-          <td>{{ data.item.valor_total }}</td>
+          <td>{{ data.item.data_pedido | date }}</td>
+          <td>{{ data.item.valor_total | currency }}</td>
           <td>
             <v-tooltip bottom v-if="data.item.situacao === 'PENDENTE'">
               <b-button slot="activator" variant="secundary" class="mr-1" @click="concluirPedido">
@@ -475,7 +474,8 @@ export default {
     params() {
       return {
         ...this.pagination,
-        ...this.filter
+        ...this.filter,
+        ...this.empresaStore.currentEmpresa
       };
     }
   },
@@ -489,7 +489,6 @@ export default {
       itens_selecionados: [],
       fields: [
         { value: "id", text: "Código", sortable: true },
-        { value: "empresa", text: "Empresa", sortable: true },
         { value: "pessoa", text: "Fornecedor", sortable: true },
         { value: "situacao", text: "Situação", sortable: true },
         { value: "nota_fiscal", text: "Nota fiscal", sortable: true },
@@ -568,22 +567,16 @@ export default {
     async loadPedidos() {
       const url = `${urlBD}/pedidos?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
-      }&tipo=${this.filter.tipo || 1}&id=${this.filter.id ||
-        ""}&fornecedor=${this.filter.fornecedor || ""}&documento=${this.filter
-        .documento || ""}&tipo_data=${this.filter.tipo_data ||
-        ""}&data_inicial=${this.filter.data_inicial || ""}&data_final=${this
-        .filter.data_final || ""}&pendentes=${this.filter.pendentes ||
-        ""}&concluidos=${this.filter.concluidos || ""}`;
+      }&empresa=${this.empresaStore.currentEmpresa || ""}&tipo=${this.filter
+        .tipo || 1}&id=${this.filter.id || ""}&fornecedor=${this.filter
+        .fornecedor || ""}&documento=${this.filter.documento ||
+        ""}&tipo_data=${this.filter.tipo_data || ""}&data_inicial=${this.filter
+        .data_inicial || ""}&data_final=${this.filter.data_final ||
+        ""}&pendentes=${this.filter.pendentes || ""}&concluidos=${this.filter
+        .concluidos || ""}`;
 
       axios.get(url).then(res => {
-        this.comprasStore.pedidos = res.data.data.map(pedido => {
-          pedido.data_pedido = formatDate(
-            new Date(pedido.data_pedido).toISOString().substr(0, 10)
-          );
-          pedido.valor_total = formatToBRL(pedido.valor_total);
-
-          return pedido;
-        });
+        this.comprasStore.pedidos = res.data.data;
         this.count = res.data.count;
         this.pagination.rowsPerPage = res.data.limit;
       });

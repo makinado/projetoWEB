@@ -60,8 +60,8 @@ module.exports = app => {
                                     data_lancamento: new Date(),
                                     data_emissao: financ.data_emissao,
                                     id_classificacao: financ.classificacao,
-                                    id_documento: financ.documento_baixa,
-                                    num_documento: financ.num_documento_baixa,
+                                    id_documento: financ.documento_baixa || null,
+                                    num_documento: financ.num_documento_baixa || null,
                                     observacao: financ.observacao,
                                     origem: "GERADO",
                                     dc: financ.tipo_conta == 1 ? 'D' : 'C',
@@ -91,8 +91,8 @@ module.exports = app => {
                                     data_lancamento: new Date(),
                                     data_emissao: financ.data_emissao,
                                     id_classificacao: financ.classificacao,
-                                    id_documento: financ.documento_baixa,
-                                    num_documento: financ.num_documento_baixa,
+                                    id_documento: financ.documento_baixa || null,
+                                    num_documento: financ.num_documento_baixa || null,
                                     observacao: financ.observacao,
                                     origem: "GERADO",
                                     dc: financ.tipo_conta == 1 ? 'D' : 'C',
@@ -174,8 +174,6 @@ module.exports = app => {
         const result = await app.db('financeiro').count('id').first()
         const count = parseInt(result.count)
 
-        console.log()
-
         app.db('financeiro')
             .join('empresas', 'financeiro.id_empresa', 'empresas.id')
             .leftJoin('pessoas', 'financeiro.id_pessoa', 'pessoas.id')
@@ -186,98 +184,64 @@ module.exports = app => {
                 'pessoas.nome as pessoa',
                 'tipo_conta',
                 'pago',
-                'financeiro.data_vencimento',
-                'financeiro.data_baixa',
-                'financeiro.valor_parcela',
-                'financeiro.valor_pago',
-                'documentos.nome as documento_origem'
+                'data_vencimento',
+                'data_baixa',
+                'valor_parcela',
+                'valor_pago',
+                'documentos.nome as documento_origem',
+                'num_documento_origem'
             )
             .limit(limit).offset(page * limit - limit)
             .orderBy('tipo_conta', 'pago')
             .where((qb) => {
-                if (req.query.tipo == 2) {
-                    // pesquisa avançada
-                    if (req.query.pessoa) {
-                        qb.where('financeiro.id_pessoa', '=', req.query.pessoa);
-                    } else if (req.query.id) {
-                        qb.orWhere('financeiro.id', '=', req.query.id);
-                    } else if (req.query.documento) {
-                        qb.orWhere('financeiro.documento_origem', '=', req.query.documento);
+                if (req.query.empresa) {
+                    qb.where('financeiro.id_empresa', '=', req.query.empresa);
+                }
+
+                if (req.query.pessoa) {
+                    qb.where('financeiro.id_pessoa', '=', req.query.pessoa);
+                } else if (req.query.id) {
+                    qb.orWhere('financeiro.id', '=', req.query.id);
+                } else if (req.query.documento) {
+                    qb.orWhere('financeiro.documento_origem', '=', req.query.documento);
+                }
+
+                if (req.query.tipo_data == 1) {
+                    if (req.query.data_inicial && req.query.data_final) {
+                        qb.whereBetween('financeiro.data_criacao', [req.query.data_inicial, req.query.data_final])
                     }
-                    // 1 - data_criacao, 2 - data_emissao, 3 - data_vencimento, 4 - data_baixa
-                    if (req.query.tipo_data == 1) {
-                        if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('financeiro.data_criacao', [req.query.data_inicial, req.query.data_final])
-                        }
-                    } else if (req.query.tipo_data == 2) {
-                        if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('financeiro.data_emissao', [req.query.data_inicial, req.query.data_final])
-                        }
-                    } else if (req.query.tipo_data == 4) {
-                        if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('financeiro.data_baixa', [req.query.data_inicial, req.query.data_final])
-                        }
-                    } else {
-                        if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('financeiro.data_vencimento', [req.query.data_inicial, req.query.data_final])
-                        }
+                } else if (req.query.tipo_data == 2) {
+                    if (req.query.data_inicial && req.query.data_final) {
+                        qb.whereBetween('financeiro.data_emissao', [req.query.data_inicial, req.query.data_final])
                     }
-                    if (req.query.pagar) {
-                        qb.where('financeiro.tipo_conta', '=', 1);
-                    }
-                    if (req.query.receber) {
-                        qb.where('financeiro.tipo_conta', '=', 2);
-                    }
-                    if (req.query.pendentes) {
-                        qb.where('financeiro.pago', '=', false);
-                    }
-                    if (req.query.concluidos) {
-                        qb.where('financeiro.pago', '=', true);
+                } else if (req.query.tipo_data == 4) {
+                    if (req.query.data_inicial && req.query.data_final) {
+                        qb.whereBetween('financeiro.data_baixa', [req.query.data_inicial, req.query.data_final])
                     }
                 } else {
-                    // pesquisa rapida
-                    if (req.query.pessoa) {
-                        qb.where('financeiro.id_pessoa', '=', req.query.pessoa);
-                    } else if (req.query.id) {
-                        qb.orWhere('financeiro.id', '=', req.query.id);
-                    } else if (req.query.documento) {
-                        qb.orWhere('financeiro.documento_origem', '=', req.query.documento);
+                    if (req.query.data_inicial && req.query.data_final) {
+                        qb.whereBetween('financeiro.data_vencimento', [req.query.data_inicial, req.query.data_final])
                     }
-                    // 1 - data_criacao, 2 - data_emissao, 3 - data_vencimento, 4 - data_baixa
-                    if (req.query.tipo_data == 1) {
-                        if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('financeiro.data_criacao', [req.query.data_inicial, req.query.data_final])
-                        }
-                    } else if (req.query.tipo_data == 2) {
-                        if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('financeiro.data_emissao', [req.query.data_inicial, req.query.data_final])
-                        }
-                    } else if (req.query.tipo_data == 4) {
-                        if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('financeiro.data_baixa', [req.query.data_inicial, req.query.data_final])
-                        }
-                    } else {
-                        if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('financeiro.data_vencimento', [req.query.data_inicial, req.query.data_final])
-                        }
-                    }
-                    if (req.query.pagar) {
-                        qb.where('financeiro.tipo_conta', '=', 1);
-                    }
-                    if (req.query.receber) {
-                        qb.where('financeiro.tipo_conta', '=', 2);
-                    }
-                    if (req.query.pendentes) {
-                        qb.where('financeiro.pago', '=', false);
-                    }
-                    if (req.query.concluidos) {
-                        qb.where('financeiro.pago', '=', true);
-                    }
+                }
+                if (req.query.pagar) {
+                    qb.where('financeiro.tipo_conta', '=', 1);
+                }
+                if (req.query.receber) {
+                    qb.where('financeiro.tipo_conta', '=', 2);
+                }
+                if (req.query.pendentes) {
+                    qb.where('financeiro.pago', '=', false);
+                }
+                if (req.query.concluidos) {
+                    qb.where('financeiro.pago', '=', true);
                 }
             })
             .then(contas => {
                 contas = contas.map(conta => {
-                    conta.pessoa = conta.pessoa.substr(0, 20) + (conta.pessoa.length > 20 ? '...' : '');
+                    conta.pessoa = conta.pessoa ? conta.pessoa.substr(0, 20) + (conta.pessoa.length > 20 ? '...' : '') : '';
+                    conta.tipo_conta = conta.tipo_conta === 1 ? "PAGAR" : "RECEBER";
+                    conta.pago = conta.pago ? "CONCLUÍDA" : "PENDENTE";
+
                     return conta
                 })
                 res.json({ data: contas, count, limit })
@@ -287,96 +251,10 @@ module.exports = app => {
 
     const getById = async (req, res) => {
         app.db('financeiro')
-            .join('empresas', 'financeiro.id_empresa', 'empresas.id')
-            .join('pessoas', 'financeiro.id_pessoa', 'pessoas.id')
-            .leftJoin('documentos as d1', 'financeiro.documento_origem', 'd1.id')
-            .leftJoin('documentos as d2', 'financeiro.documento_baixa', 'd2.id')
-            .leftJoin('classificacao', 'financeiro.classificacao', 'classificacao.id')
-            .leftJoin('conta', 'financeiro.id_conta', 'conta.id')
-            .select(
-                'financeiro.id',
-                'empresas.nome as empresa',
-                'pessoas.nome as pessoa',
-                'financeiro.tipo_conta',
-                'financeiro.pago',
-                'd1.nome as documento_origem',
-                'financeiro.num_documento_origem',
-                'd2.nome as documento_baixa',
-                'financeiro.num_documento_baixa',
-                'classificacao.descricao as classificacao',
-                'financeiro.data_criacao',
-                'financeiro.data_vencimento',
-                'financeiro.data_baixa',
-                'financeiro.data_emissao',
-                'financeiro.parcela',
-                'financeiro.observacao',
-                'financeiro.valor_acrescimo',
-                'financeiro.valor_desconto',
-                'financeiro.valor_parcela',
-                'financeiro.valor_pago',
-                'financeiro.valor_total',
-                'conta.nome as conta'
-            )
-            .where({ 'financeiro.id': req.params.id }).first()
-            .then(financ => {
-                financ.data_criacao = new Date(financ.data_criacao).toISOString().substr(0, 10)
-                financ.data_emissao = new Date(financ.data_emissao).toISOString().substr(0, 10)
-                financ.data_vencimento = new Date(financ.data_vencimento).toISOString().substr(0, 10)
-                financ.data_baixa = new Date(financ.data_baixa).toISOString().substr(0, 10)
-
-                financ.valor_acrescimo = formatToBRL(financ.valor_acrescimo)
-                financ.valor_desconto = formatToBRL(financ.valor_desconto)
-                financ.valor_parcela = formatToBRL(financ.valor_parcela)
-                financ.valor_pago = formatToBRL(financ.valor_pago)
-                financ.valor_total = formatToBRL(financ.valor_total)
-
-                res.json(financ)
-            })
+            .where({ id: req.params.id })
+            .first()
+            .then(financ => res.json(financ))
             .catch(e => res.status(500).send(e.toString()))
-    }
-
-    const getTela = async (req, res) => {
-        if (req.params.id) {
-            var financ = await app.db('financeiro')
-                .where({ id: req.params.id }).first()
-                .catch(e => res.status(500).send(e))
-
-            if (financ) {
-                financ.data_criacao = new Date(financ.data_criacao).toISOString().substr(0, 10)
-                financ.data_emissao = new Date(financ.data_emissao).toISOString().substr(0, 10)
-                financ.data_vencimento = new Date(financ.data_vencimento).toISOString().substr(0, 10)
-                financ.data_baixa = new Date(financ.data_baixa).toISOString().substr(0, 10)
-
-                financ.valor_acrescimo = formatToBRL(financ.valor_acrescimo)
-                financ.valor_desconto = formatToBRL(financ.valor_desconto)
-                financ.valor_parcela = formatToBRL(financ.valor_parcela)
-                financ.valor_pago = formatToBRL(financ.valor_pago)
-                financ.valor_total = formatToBRL(financ.valor_total)
-            }
-
-            var classificacoes = await app.db('classificacao').select('id as value', 'descricao as text').orderBy('descricao')
-        }
-
-        var pessoas = await app.db('pessoas').select('id as value', 'nome as text', 'cliente', 'fornecedor')
-            .where(function () {
-                this.where({ cliente: true, situacao: 'Ativo' }).orWhere({ fornecedor: true, situacao: 'Ativo' })
-            })
-            .orderBy('nome')
-        var documentos = await app.db('documentos').select('id as value', 'nome as text').orderBy('nome')
-        var contas = await app.db('conta').select('id as value', 'nome as text').orderBy('nome')
-
-        const tela = {
-            financ,
-            pessoas,
-            classificacoes,
-            documentos,
-            contas
-        }
-
-        res.json(tela)
-    }
-
-    const getBySituacao = async (req, res) => {
     }
 
     const remove = async (req, res) => {
@@ -431,5 +309,5 @@ module.exports = app => {
         })
     }
 
-    return { save, save_pagamento, get, getById, getTela, getBySituacao, remove, remove_pagamento }
+    return { save, save_pagamento, get, getById, remove, remove_pagamento }
 }

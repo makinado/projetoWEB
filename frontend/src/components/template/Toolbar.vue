@@ -3,16 +3,7 @@
     <v-toolbar-side-icon @click="$store.state.drawerLeft = !$store.state.drawerLeft"></v-toolbar-side-icon>
 
     <v-flex xs12 md4 class="ml-4 mt-4">
-      <v-autocomplete
-        class="tag-input"
-        dense
-        chips
-        deletable-chips
-        :color="color"
-        label="Selecione a empresa"
-        v-model="empresaStore.currentEmpresa"
-        :items="empresaStore.currentEmpresas"
-      ></v-autocomplete>
+      <SelectEmpresa />
     </v-flex>
 
     <v-spacer></v-spacer>
@@ -90,6 +81,9 @@ export default {
   computed: {
     ...mapState("app", ["color"]),
     ...mapState(["isLoading", "notificacoes", "usuarioStore", "empresaStore"])
+  },
+  components: {
+    SelectEmpresa: () => import("../empresas/SelectEmpresa")
   },
   data() {
     return {

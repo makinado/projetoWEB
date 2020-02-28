@@ -139,6 +139,9 @@ module.exports = app => {
             .limit(limit).offset(page * limit - limit)
             .orderBy('compra_pedido.situacao')
             .where(async (qb) => {
+                if (req.query.empresa) {
+                    qb.where('compra_pedido.id_empresa', '=', req.query.empresa);
+                }
                 if (req.query.tipo == 2) {
                     // pesquisa avançada
                     if (req.query.fornecedor) {
@@ -194,83 +197,18 @@ module.exports = app => {
     }
 
     const getById = async (req, res) => {
-        let pedido = await app.db('compra_pedido')
+        app.db('compra_pedido')
             .where({ id: req.params.id })
             .first()
-            .catch(e => res.status(500).send(e.toString()))
-
-        pedido.data_pedido = pedido.data_pedido.toISOString().substr(0, 10)
-        pedido.data_lancamento = pedido.data_lancamento.toISOString().substr(0, 10)
-
-        const pedProds = await app.db('produto_pedido_compra').where({ id_pedido: pedido.id })
-            .then(produtos => {
-                return produtos
+            .then(async pedido => {
+                pedido.produtos = await app.db('produto_pedido_compra as pped')
+                    .join('produtos as p', 'pped.id_produto', 'p.id')
+                    .select('p.id', 'p.descricao', 'pped.quantidade', 'pped.valor_desconto', 'pped.valor_unitario', 'pped.valor_total')
+                    .where({ id_pedido: pedido.id })
+                    .catch(e => res.status(500).send(e.toString()))
+                res.json(pedido)
             })
             .catch(e => res.status(500).send(e.toString()))
-
-
-        let newPedProds = []
-        newPedProds = pedProds.map(async pedProd => {
-            let prod = await app.db('produtos').where({ id: pedProd.id_produto }).first()
-                .then(produto => {
-                    return produto
-                })
-                .catch(e => res.status(500).send(e.toString()))
-
-            let newProd = {
-                descricao: prod.descricao,
-                id: pedProd.id_produto,
-                quantidade: pedProd.quantidade,
-                desconto: pedProd.valor_desconto || 0.00,
-                valor_unitario: pedProd.valor_unitario,
-                valor_total: pedProd.valor_total
-            }
-
-            return newProd
-        })
-
-        const resultado = await Promise.all(newPedProds);
-
-        pedido.produtos = resultado
-        res.json(pedido)
-    }
-
-    const getTelaPedido = async (req, res) => {
-        if (req.params.id) {
-            var pedido = await app.db('compra_pedido')
-                .where({ id: req.params.id }).first()
-                .catch(e => res.status(500).send(e))
-
-            if (pedido) {
-                pedido.data_pedido = pedido.data_pedido.toISOString().substr(0, 10)
-                pedido.data_lancamento = pedido.data_lancamento.toISOString().substr(0, 10)
-
-                pedido.produtos = await app.db('produto_pedido_compra')
-                    .join('produtos', 'produto_pedido_compra.id_produto', 'produtos.id')
-                    .select(
-                        'produto_pedido_compra.id_produto as id',
-                        'produtos.descricao as descricao',
-                        'produto_pedido_compra.quantidade',
-                        'produto_pedido_compra.valor_unitario',
-                        'produto_pedido_compra.valor_desconto',
-                        'produto_pedido_compra.valor_total'
-                    )
-                    .where({ id_pedido: pedido.id })
-            }
-        }
-
-        var pessoas = await app.db('pessoas').select('id as value', 'nome as text').where({ fornecedor: true }).orderBy('nome')
-            .catch(e => res.status(500).send(e.toString()))
-        var produtos = await app.db('produtos').select('id as value', 'descricao as text', 'valor_unitario').where({ situacao: true }).orderBy('descricao')
-            .catch(e => res.status(500).send(e.toString()))
-
-        var tela = {
-            pedido,
-            pessoas,
-            produtos
-        }
-
-        res.json(tela)
     }
 
     const getBySituacao = async (req, res) => {
@@ -296,10 +234,6 @@ module.exports = app => {
                         console.log(e)
                     })
 
-                pedidos = pedidos.map(async pedido => {
-                    pedido.data_pedido = pedido.data_pedido.toISOString().substr(0, 10)
-                    return pedido
-                })
                 const resultado = await Promise.all(pedidos);
 
                 res.json(resultado);
@@ -328,10 +262,6 @@ module.exports = app => {
                         console.log(e)
                     })
 
-                pedidos = pedidos.map(async pedido => {
-                    pedido.data_pedido = pedido.data_pedido.toISOString().substr(0, 10)
-                    return pedido
-                })
                 const resultado = await Promise.all(pedidos);
 
                 res.json(resultado);
@@ -354,5 +284,5 @@ module.exports = app => {
         }
     }
 
-    return { save, get, getById, getTelaPedido, getBySituacao, remove }
+    return { save, get, getById, getBySituacao, remove }
 }

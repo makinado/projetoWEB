@@ -2,7 +2,7 @@ const schedule = require('node-schedule')
 
 module.exports = app => {
     schedule.scheduleJob('*/1 * * * *', async function () {
-        const usuariosCount = await app.dbUsers('usuarios').count('id').first()
+        const usuariosCount = await app.db('usuarios').count('id').first()
         const pessoasCount = await app.db('pessoas').count('id').first()
         const produtosCount = await app.db('produtos').count('id').first()
 

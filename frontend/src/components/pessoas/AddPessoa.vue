@@ -115,26 +115,12 @@
                               <v-checkbox
                                 :color="color"
                                 v-model="selected"
-                                label="Funcionário"
-                                value="Funcionario"
-                              ></v-checkbox>
-
-                              <v-checkbox
-                                :color="color"
-                                v-model="selected"
                                 label="Transportadora"
                                 value="Transportadora"
                               ></v-checkbox>
-
-                              <v-checkbox
-                                :color="color"
-                                v-model="selected"
-                                label="Vendedor"
-                                value="Vendedor"
-                              ></v-checkbox>
                             </v-flex>
                           </v-layout>
-                          <v-layout v-else justify-space-around align-center>
+                          <v-layout v-else justify-space-between align-center>
                             <v-checkbox
                               :color="color"
                               v-model="selected"
@@ -152,22 +138,8 @@
                             <v-checkbox
                               :color="color"
                               v-model="selected"
-                              label="Funcionário"
-                              value="Funcionario"
-                            ></v-checkbox>
-
-                            <v-checkbox
-                              :color="color"
-                              v-model="selected"
                               label="Transportadora"
                               value="Transportadora"
-                            ></v-checkbox>
-
-                            <v-checkbox
-                              :color="color"
-                              v-model="selected"
-                              label="Vendedor"
-                              value="Vendedor"
                             ></v-checkbox>
                           </v-layout>
                           <v-layout wrap>
@@ -368,7 +340,7 @@
 
 <script>
 import axios from "axios";
-import { urlBD, showError, saveLog } from "@/global";
+import { urlBD, showError, saveLog, loadCategoriasPessoas } from "@/global";
 import { mapState } from "vuex";
 
 import ViaCep from "vue-viacep";
@@ -445,7 +417,7 @@ export default {
       }
     },
     "$store.state.modalStore.categorias.visible": function() {
-      if (!this.modalStore.categorias.visible) this.loadCategorias();
+      if (!this.modalStore.categorias.visible) this.loadCategoriasPessoas();
     }
   },
   methods: {
@@ -478,69 +450,29 @@ export default {
         })
         .catch(showError);
     },
-    loadTela(pessoa) {
-      let url = `${urlBD}/pessoas/tela`;
-      if (!pessoa) {
-        axios
-          .get(url)
-          .then(res => {
-            const tela = res.data;
+    async loadTela(pessoa) {
+      loadCategoriasPessoas();
 
-            this.pessoa.situacao = "Ativo";
-
-            this.categoriaStore.categorias = tela.categorias;
-          })
-          .catch(showError);
-      } else if (pessoa.id) {
-        axios
+      if (!pessoa) return;
+      let url = `${urlBD}/pessoas`;
+      if (pessoa.id) {
+        await axios
           .get(`${url}/${pessoa.id}`)
           .then(res => {
-            const tela = res.data;
-
-            this.pessoa = tela.pessoa;
+            this.pessoa = res.data;
             this.pessoa.cliente ? this.selected.push("Cliente") : "";
             this.pessoa.fornecedor ? this.selected.push("Fornecedor") : "";
-            this.pessoa.funcionario ? this.selected.push("Funcionario") : "";
             this.pessoa.transportadora
               ? this.selected.push("Transportadora")
               : "";
-            this.pessoa.cliente ? this.selected.push("Vendedor") : "";
-
-            this.categoriaStore.categorias = tela.categorias;
           })
           .catch(showError);
       } else {
         this.pessoa = pessoa;
         this.pessoa.cliente ? this.selected.push("Cliente") : "";
         this.pessoa.fornecedor ? this.selected.push("Fornecedor") : "";
-        this.pessoa.funcionario ? this.selected.push("Funcionario") : "";
         this.pessoa.transportadora ? this.selected.push("Transportadora") : "";
-        this.pessoa.cliente ? this.selected.push("Vendedor") : "";
-        axios
-          .get(url)
-          .then(res => {
-            const tela = res.data;
-
-            this.categoriaStore.categorias = tela.categorias;
-          })
-          .catch(showError);
       }
-    },
-    loadCategorias() {
-      this.categoriaStore.categorias = [];
-
-      let url = `${urlBD}/categorias/pessoas`;
-
-      axios
-        .get(url)
-        .then(res => {
-          this.categoriaStore.categorias = res.data;
-          this.categoriaStore.categorias.map(categoria => {
-            categoria.value = categoria.id;
-            categoria.text = categoria.descricao;
-          });
-        })
-        .catch(showError);
     },
     save() {
       if (!this.$refs.form.validate()) return;
@@ -567,15 +499,9 @@ export default {
       this.selected.includes("Fornecedor")
         ? (this.pessoa.fornecedor = true)
         : (this.pessoa.fornecedor = false);
-      this.selected.includes("Funcionario")
-        ? (this.pessoa.funcionario = true)
-        : (this.pessoa.funcionario = false);
       this.selected.includes("Transportadora")
         ? (this.pessoa.transportadora = true)
         : (this.pessoa.transportadora = false);
-      this.selected.includes("Vendedor")
-        ? (this.pessoa.vendedor = true)
-        : (this.pessoa.vendedor = false);
 
       axios[method](url, this.pessoa)
         .then(() => {

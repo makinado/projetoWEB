@@ -40,14 +40,14 @@ module.exports = app => {
 
     const get = async (req, res) => {
         app.db('documentos')
-            .then(documentos => {
-                documentos = documentos.map(doc => {
-                    doc.perc_custo = formatToBRL(doc.perc_custo).replace('R$ ', "") + " %"
+            .then(docs => res.json(docs))
+            .catch(e => res.status(500).send(e.toString()))
+    }
 
-                    return doc
-                })
-                res.json(documentos)
-            })
+    const getAll = async (req, res) => {
+        app.db('documentos')
+            .select('id as value', 'nome as text')
+            .then(docs => res.json(docs))
             .catch(e => res.status(500).send(e.toString()))
     }
 
@@ -71,5 +71,5 @@ module.exports = app => {
         }
     }
 
-    return { save, get, getById, remove }
+    return { save, get, getAll, getById, remove }
 }

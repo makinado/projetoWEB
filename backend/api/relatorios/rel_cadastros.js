@@ -51,6 +51,9 @@ module.exports = app => {
                     if (req.query.cadastros.includes('transportadora')) {
                         qb.orWhere('pessoas.transportadora', '=', true);
                     }
+                    if (req.query.categoria) {
+                        qb.where('pessoas.categoria', '=', req.query.categoria)
+                    }
                     if (req.query.data_inicial && req.query.data_final) {
                         if (req.query.data_type == 'data_criado') {
                             qb.whereBetween('pessoas.data_criado', [req.query.data_inicial, req.query.data_final])
@@ -86,11 +89,29 @@ module.exports = app => {
             // usuarios.usuariosCount = await app.dbUsers('usuarios').count('id').first()
 
         } else if (req.query.cadastros.includes('produto')) {
-            produtos = await app.db('produtos')
-                .leftJoin('categorias', 'produtos.categoria', 'categorias.id')
-                .select('produtos.*', 'pessoas.nome as fornecedor', 'categorias.descricao as categoria')
+            produtos = await app.db('produtos as p')
+                .leftJoin('categorias', 'p.categoria', 'categorias.id')
+                .leftJoin('marcas', 'p.marca', 'marcas.id')
+                .leftJoin('unidades', 'p.unidade', 'unidades.id')
+                .select(
+                    'p.id',
+                    'p.descricao',
+                    app.db.raw('to_char(valor_unitario)'),
+                    'categorias.descricao as categoria',
+                    'marcas.nome as marca',
+                    'unidades.sigla as unidade'
+                )
                 .orderBy(req.query.ordem == 'nome' ? 'descricao' : req.query.ordem || "descricao")
                 .where((qb) => {
+                    if (req.query.categoria) {
+                        qb.where('produtos.categoria', '=', req.query.categoria)
+                    }
+                    if (req.query.marca) {
+                        qb.where('produtos.marca', '=', req.query.marca)
+                    }
+                    if (req.query.unidade) {
+                        qb.where('produtos.unidade', '=', req.query.unidade)
+                    }
                     if (req.query.data_inicial && req.query.data_final) {
                         if (req.query.data_type == 'data_criado') {
                             qb.whereBetween('produtos.data_criado', [req.query.data_inicial, req.query.data_final])
@@ -101,8 +122,6 @@ module.exports = app => {
                 })
             // produtos.produtosCount = await app.db('produtos').count('id').first()
         }
-
-        console.log(produtos)
 
         res.json({ pessoas, usuarios, produtos })
     }

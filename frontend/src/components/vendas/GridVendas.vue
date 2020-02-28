@@ -142,16 +142,16 @@
                 color="secondary"
                 @click.prevent="modalStore.tabelas.visible = true"
               >Tabelas de preço</v-btn>
-              <span>Gerenciar formas de pagamento</span>
+              <span>Gerenciar tabelas de preço</span>
             </v-tooltip>
             <v-tooltip bottom>
               <v-btn
                 slot="activator"
                 class="v-btn-common"
                 :color="color"
-                @click.prevent="[vendaStore.venda = null, modalStore.vendas.visible = true, modalStore.vendas.title = 'Adicionar orçamento / venda']"
+                @click.prevent="[vendaStore.venda = null, modalStore.vendas.vendas.visible = true, modalStore.vendas.title = 'Adicionar orçamento / venda']"
               >Adicionar</v-btn>
-              <span>Adicionar empresa</span>
+              <span>Adicionar orçamento/venda</span>
             </v-tooltip>
           </v-layout>
         </v-flex>
@@ -293,82 +293,84 @@
             color="secondary"
             @click.prevent="modalStore.tabelas.visible = true"
           >Tabelas de preço</v-btn>
-          <span>Gerenciar formas de pagamento</span>
+          <span>Gerenciar tabelas de preço</span>
         </v-tooltip>
         <v-tooltip bottom>
           <v-btn
             slot="activator"
             class="v-btn-common"
             :color="color"
-            @click.prevent="[vendaStore.venda = null, modalStore.vendas.visible = true, modalStore.vendas.title = 'Adicionar orçamento / venda']"
+            @click.prevent="[vendaStore.venda = null, modalStore.vendas.vendas.visible = true, modalStore.vendas.title = 'Adicionar orçamento / venda']"
           >Adicionar</v-btn>
-          <span>Adicionar empresa</span>
+          <span>Adicionar orçamento/venda</span>
         </v-tooltip>
       </v-layout>
     </v-container>
-    <v-data-table
-      class="elevation-5"
-      :items="vendaStore.vendas"
-      :headers="fields"
-      :pagination.sync="pagination"
-      :rows-per-page-items="[5, 10, 20, 50, 100]"
-      rows-per-page-text="Registros por página"
-      no-results-text="Nenhum registro encontrado"
-      no-data-text="Nenhum orçamento realizado"
-      select-all
-      v-model="vendas_selecionados"
-    >
-      <template v-slot:progress>
-        <v-progress-linear color="blue" :indeterminate="true" height="3"></v-progress-linear>
-      </template>
-      <template slot="items" slot-scope="data">
-        <td>
-          <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
-        </td>
-        <td>{{ data.item.id }}</td>
-        <td>{{ data.item.empresa }}</td>
-        <td>{{ data.item.pessoa }}</td>
-        <td>
-          <v-chip :color="getColor(data.item.situacao)" dark>{{ data.item.situacao }}</v-chip>
-        </td>
-        <td>{{ data.item.data_agendamento }}</td>
-        <td>{{ data.item.valor_total }}</td>
-        <td>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[vendaStore.venda = data.item, modalStore.vendas.visible = true, modalStore.vendas.title = 'Alterar orçamento / venda']"
-              class="mr-1"
-            >
-              <i class="fa fa-lg fa-pencil"></i>
-            </b-button>
-            <span>Editar orçamento</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[modalStore.vendas.vendas.deleteVenda = true,vendaStore.venda = data.item]"
-              class="mr-1"
-            >
-              <i class="fa fa-lg fa-trash"></i>
-            </b-button>
-            <span>Excluir orçamento</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[modalStore.complementos.impressao = true]"
-            >
-              <i class="fa fa-lg fa-print"></i>
-            </b-button>
-            <span>Exportar orçamento</span>
-          </v-tooltip>
-        </td>
-      </template>
-    </v-data-table>
+
+    <Card :color="color" title="Ações rápidas" :actions="globalActions">
+      <v-data-table
+        :items="vendaStore.vendas"
+        :headers="fields"
+        :pagination.sync="pagination"
+        :rows-per-page-items="[5, 10, 20, 50, 100]"
+        rows-per-page-text="Registros por página"
+        no-results-text="Nenhum registro encontrado"
+        no-data-text="Nenhum orçamento / venda realizado"
+        select-all
+        v-model="itens_selecionados"
+      >
+        <template v-slot:progress>
+          <v-progress-linear color="blue" :indeterminate="true" height="3"></v-progress-linear>
+        </template>
+        <template slot="items" slot-scope="data">
+          <td>
+            <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
+          </td>
+          <td>{{ data.item.id }}</td>
+          <td>{{ data.item.cliente }}</td>
+          <td>{{ data.item.pessoa }}</td>
+          <td>
+            <v-chip :color="getColor(data.item.situacao)" dark>{{ data.item.situacao }}</v-chip>
+          </td>
+          <td>{{ data.item.data_emissao | date }}</td>
+          <td>{{ data.item.valor_total |currency }}</td>
+          <td>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[vendaStore.venda = data.item, modalStore.vendas.vendas.visible = true, modalStore.vendas.title = 'Alterar orçamento / venda']"
+                class="mr-1"
+              >
+                <i class="fa fa-lg fa-pencil"></i>
+              </b-button>
+              <span>Editar orçamento</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[modalStore.vendas.vendas.deleteVenda = true,vendaStore.venda = data.item]"
+                class="mr-1"
+              >
+                <i class="fa fa-lg fa-trash"></i>
+              </b-button>
+              <span>Excluir orçamento</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[modalStore.complementos.impressao = true]"
+              >
+                <i class="fa fa-lg fa-print"></i>
+              </b-button>
+              <span>Exportar orçamento</span>
+            </v-tooltip>
+          </td>
+        </template>
+      </v-data-table>
+    </Card>
 
     <v-dialog
       v-model="modalStore.vendas.vendas.deleteVenda"
@@ -404,6 +406,9 @@ import { formatToBRL } from "brazilian-values";
 
 export default {
   name: "Gridvendas",
+  components: {
+    Card: () => import("../material/Card")
+  },
   computed: {
     ...mapState("app", ["color"]),
     ...mapState([
@@ -411,7 +416,8 @@ export default {
       "modalStore",
       "categoriaStore",
       "pessoaStore",
-      "usuarioStore"
+      "usuarioStore",
+      "empresaStore"
     ]),
     computedDateFormatted1() {
       return formatDate(this.filter.data_inicial);
@@ -422,24 +428,18 @@ export default {
     params() {
       return {
         ...this.pagination,
-        ...this.filter
+        ...this.filter,
+        ...this.empresaStore.currentEmpresa
       };
     }
   },
   watch: {
-    vendas_selecionados: function() {
-      if (this.vendas_selecionados.length > 0) {
-        this.modalStore.complementos.funcoes.visible = true;
-      } else {
-        this.modalStore.complementos.funcoes.visible = false;
-      }
-    },
     params() {
-      this.loadvendas();
+      this.loadVendas();
     },
-    "$store.state.modalStore.vendas.visible": function() {
-      if (!this.modalStore.vendas.visible) {
-        this.loadvendas();
+    "$store.state.modalStore.vendas.vendas.visible": function() {
+      if (!this.modalStore.vendas.vendas.visible) {
+        this.loadVendas();
       }
     }
   },
@@ -447,13 +447,13 @@ export default {
     return {
       valid: true,
       loading: true,
-      vendas_selecionados: [],
+      itens_selecionados: [],
       fields: [
         { value: "id", text: "Código", sortable: true },
-        { value: "empresa", text: "Empresa", sortable: true },
-        { value: "pessoa", text: "Cliente", sortable: true },
+        { value: "cliente", text: "Cliente", sortable: true },
+        { value: "vendedor", text: "Vendedor", sortable: true },
         { value: "situacao", text: "Situação", sortable: true },
-        { value: "data_agendamento", text: "Data agendendamento" },
+        { value: "data_emissao", text: "Data emissão" },
         { value: "valor_total", text: "Valor total" },
         { value: "actions", text: "Ações" }
       ],
@@ -469,7 +469,26 @@ export default {
       concluir: false,
       menu1: false,
       menu2: false,
-      pesquisa: false
+      pesquisa: false,
+      globalActions: [
+        {
+          icon: "fa fa-lg fa-print",
+          tooltip: "Imprimir selecionados",
+          method: "print"
+        },
+        {
+          icon: "fa fa-lg fa-trash",
+          tooltip: "Excluir selecionados",
+          method: "remove",
+          store: "venda"
+        },
+        {
+          icon: "fa fa-lg fa-refresh",
+          tooltip: "Recarregar itens",
+          method: "loadVendas",
+          required: true
+        }
+      ]
     };
   },
   methods: {
@@ -478,24 +497,18 @@ export default {
       else if (situacao === "CANCELADO") return "red";
       else return "blue";
     },
-    async loadvendas() {
+    async loadVendas() {
       const url = `${urlBD}/vendas?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
-      }&tipo=${this.filter.tipo || 1}&id=${this.filter.id || ""}&cliente=${this
-        .filter.cliente || ""}&tipo_data=${this.filter.tipo_data ||
-        ""}&data_inicial=${this.filter.data_inicial || ""}&data_final=${this
-        .filter.data_final || ""}&pendentes=${this.filter.pendentes ||
-        ""}&concluidos=${this.filter.concluidos || ""}`;
+      }&empresa=${this.empresaStore.currentEmpresa || ""}&tipo=${this.filter
+        .tipo || 1}&id=${this.filter.id || ""}&cliente=${this.filter.cliente ||
+        ""}&tipo_data=${this.filter.tipo_data || ""}&data_inicial=${this.filter
+        .data_inicial || ""}&data_final=${this.filter.data_final ||
+        ""}&pendentes=${this.filter.pendentes || ""}&concluidos=${this.filter
+        .concluidos || ""}`;
 
       axios.get(url).then(res => {
-        this.vendaStore.vendas = res.data.data.map(venda => {
-          venda.data_agendamento = formatDate(
-            new Date(venda.data_agendamento).toISOString().substr(0, 10)
-          );
-          venda.valor_total = formatToBRL(venda.valor_total);
-
-          return venda;
-        });
+        this.vendaStore.vendas = res.data.data;
         this.count = res.data.count;
         this.pagination.rowsPerPage = res.data.limit;
       });
@@ -524,7 +537,7 @@ export default {
           .then(() => {
             this.$toasted.global.defaultSuccess();
             this.modalStore.vendas.deleteVenda = false;
-            this.vendas_selecionados = [];
+            this.itens_selecionados = [];
 
             this.loadPedidos();
 

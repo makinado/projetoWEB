@@ -84,9 +84,9 @@ const routes = [{
     component: () => import('@/components/pessoas/Comissoes')
 
 }, {
-    name: 'Orçamentos',
-    path: '/orcamentos',
-    component: () => import('@/components/vendas/Orcamentos')
+    name: 'Orçamentos/Vendas',
+    path: '/vendas',
+    component: () => import('@/components/vendas/Vendas')
 }, {
     name: 'PDV',
     path: '/pdv',

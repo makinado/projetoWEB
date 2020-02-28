@@ -24,7 +24,7 @@ module.exports = app => {
             equalsOrError(usuario.senha, usuario.confirmaSenha,
                 'Senhas não conferem')
 
-            const usuarioFromDB = await app.dbUsers('usuarios')
+            const usuarioFromDB = await app.db('usuarios')
                 .where({ email: usuario.email }).first()
             if (!usuario.id) {
                 notExistsOrError(usuarioFromDB, 'Usuário já cadastrado')
@@ -43,7 +43,7 @@ module.exports = app => {
         delete usuario.empresas
 
         if (usuario.id) {
-            return app.dbUsers('usuarios')
+            return app.db('usuarios')
                 .update(usuario)
                 .where({ id: usuario.id })
                 .then(async function () {
@@ -63,7 +63,7 @@ module.exports = app => {
                 .then(_ => res.status(204).send())
                 .catch(e => res.status(500).send(e.toString()))
         } else {
-            return app.dbUsers('usuarios')
+            return app.db('usuarios')
                 .insert(usuario).returning('id')
                 .then(async function (id) {
                     if (empresas) {
@@ -96,11 +96,12 @@ module.exports = app => {
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 10
 
-        const result = await app.dbUsers('usuarios').count('id').first()
+        const result = await app.db('usuarios').count('id').first()
         const count = parseInt(result.count)
 
-        app.dbUsers('usuarios')
-            .select('id', 'nome', 'email', 'contato')
+        app.db('usuarios')
+            .join('perfil', 'usuarios.id_perfil', 'perfil.id')
+            .select('usuarios.id', 'nome', 'perfil.descricao as perfil', 'email', 'contato')
             .limit(limit).offset(page * limit - limit)
             .orderBy('nome')
             .where((qb) => {
@@ -137,24 +138,28 @@ module.exports = app => {
     }
 
     const getAll = async (req, res) => {
-        app.dbUsers('usuarios')
+        app.db('usuarios')
             .select('id', 'nome', 'email', 'contato')
             .then(usuarios => res.json(usuarios))
             .catch(e => res.status(500).send(e.toString()))
     }
 
     const getById = async (req, res) => {
-        app.dbUsers('usuarios')
+        app.db('usuarios')
             .select('id', 'nome', 'email', 'contato', 'id_perfil')
             .where({ id: req.params.id })
             .first()
-            .then(usuario => res.json(usuario))
+            .then(async usuario => {
+                usuario.empresas = await app.db('usuario_empresas')
+                    .select('id_empresa').where({ id_usuario: usuario.id }).then(empresas => empresas.map(e => e.id_empresa))
+                res.json(usuario)
+            })
             .catch(e => res.status(500).send(e.toString()))
     }
 
     const remove = async (req, res) => {
         try {
-            const rowsUpdated = await app.dbUsers('usuarios')
+            const rowsUpdated = await app.db('usuarios')
                 .where({ id: req.params.id }).delete()
             existsOrError(rowsUpdated, 'Usuário não encontrado')
 
@@ -170,7 +175,7 @@ module.exports = app => {
         try {
             existsOrError(email, 'E-mail não informado')
 
-            var usuarioBD = await app.dbUsers('usuarios')
+            var usuarioBD = await app.db('usuarios')
                 .where({ email: email }).first()
             existsOrError(usuarioBD, 'Nenhum usuário encontrado com esse e-mail')
         } catch (e) {
@@ -227,30 +232,5 @@ module.exports = app => {
         }
     }
 
-    const getTela = async (req, res) => {
-        if (req.params.id) {
-            var usuario = await app.dbUsers('usuarios')
-                .select('id', 'nome', 'email', 'contato', 'img', 'id_perfil')
-                .where({ id: req.params.id }).first()
-                .catch(e => res.status(500).send(e))
-
-            usuario.empresas =
-                await app.db('usuario_empresas')
-                    .join('empresas', 'usuario_empresas.id_empresa', 'empresas.id')
-                    .select('usuario_empresas.id_empresa as value', 'empresas.nome as text')
-                    .where({ id_usuario: usuario.id })
-        }
-        const empresas = await app.db('empresas').select('id as value', 'nome as text')
-        const perfis = await app.db('perfil').select('id as value', 'descricao as text')
-
-        const tela = {
-            usuario,
-            empresas,
-            perfis
-        }
-
-        res.json(tela)
-    }
-
-    return { save, get, getAll, getById, getTela, getEmpresas, remove, recoverPassword }
+    return { save, get, getAll, getById, getEmpresas, remove, recoverPassword }
 }

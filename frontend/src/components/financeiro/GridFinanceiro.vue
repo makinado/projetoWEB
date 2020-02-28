@@ -374,8 +374,6 @@
             <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
           </td>
           <td>{{ data.item.id }}</td>
-
-          <td>{{ data.item.empresa }}</td>
           <td>{{ data.item.pessoa }}</td>
           <td>
             <v-chip :color="getColor(data.item.tipo_conta)" dark>{{ data.item.tipo_conta }}</v-chip>
@@ -384,16 +382,17 @@
             <v-chip :color="getColor(data.item.pago)" dark>{{ data.item.pago }}</v-chip>
           </td>
           <td>{{ data.item.documento_origem }}</td>
-          <td>{{ data.item.data_vencimento }}</td>
-          <td>{{ data.item.data_baixa == '01/01/1970' ? "" : data.item.data_baixa }}</td>
-          <td>{{ data.item.valor_parcela }}</td>
+          <td>{{ data.item.num_documento_origem }}</td>
+          <td>{{ data.item.data_vencimento | date }}</td>
+          <td>{{ data.item.data_baixa | date }}</td>
+          <td>{{ data.item.valor_parcela | currency }}</td>
           <td>
             <v-tooltip bottom v-if="data.item.pago == 'PENDENTE'">
               <b-button
                 slot="activator"
                 variant="secundary"
                 class="mr-1"
-                @click.prevent="concluirConta"
+                @click.prevent="[financeiroStore.financ = data.item, concluirConta()]"
               >
                 <i class="fa fa-lg fa-check"></i>
               </b-button>
@@ -404,7 +403,7 @@
                 slot="activator"
                 variant="secundary"
                 class="mr-1"
-                @click.prevent="cancelarConta"
+                @click.prevent="[financeiroStore.financ = data.item, cancelarConta()]"
               >
                 <i class="fa fa-lg fa-times"></i>
               </b-button>
@@ -442,16 +441,6 @@
                 <i class="fa fa-lg fa-trash"></i>
               </b-button>
               <span>Excluir conta</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <b-button
-                slot="activator"
-                variant="secundary"
-                @click.prevent="[modalStore.complementos.impressao.visible = true]"
-              >
-                <i class="fa fa-lg fa-print"></i>
-              </b-button>
-              <span>Exportar conta</span>
             </v-tooltip>
           </td>
         </template>
@@ -528,6 +517,7 @@ export default {
     ...mapState("app", ["color"]),
     ...mapState([
       "financeiroStore",
+      "empresaStore",
       "usuarioStore",
       "modalStore",
       "pessoaStore"
@@ -541,7 +531,8 @@ export default {
     params() {
       return {
         ...this.pagination,
-        ...this.filter
+        ...this.filter,
+        ...this.empresaStore.currentEmpresa
       };
     }
   },
@@ -557,11 +548,11 @@ export default {
       itens_selecionados: [],
       fields: [
         { value: "id", text: "Código", sortable: true },
-        { value: "empresa", text: "Empresa", sortable: true },
         { value: "pessoa", text: "Pessoa", sortable: true },
         { value: "tipo_conta", text: "Tipo", sortable: true },
         { value: "pago", text: "Situação", sortable: true },
         { value: "documento_origem", text: "Documento", sortable: false },
+        { value: "num_documento_origem", text: "Número doc", sortable: false },
         { value: "data_vencimento", text: "Data vencimento", sortable: true },
         { value: "data_baixa", text: "Data baixa", sortable: true },
         { value: "valor_parcela", text: "Valor da parcela", sortable: true },
@@ -628,6 +619,13 @@ export default {
       if (this.itens_selecionados.find(item => item.pago == "PENDENTE"))
         this.globalActions[1].disabled = true;
       else this.globalActions[1].disabled = false;
+
+      if (
+        this.itens_selecionados.find(item => item.tipo_conta == "PAGAR") &&
+        this.itens_selecionados.find(item => item.tipo_conta == "RECEBER")
+      )
+        this.globalActions[0].disabled = true;
+      else this.globalActions[0].disabled = false;
     },
     params() {
       this.loadFinanceiro();
@@ -665,29 +663,17 @@ export default {
     async loadFinanceiro() {
       const url = `${urlBD}/financeiro?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
-      }&tipo=${this.filter.tipo || 1}&id=${this.filter.id || ""}&pessoa=${this
-        .filter.pessoa || ""}&documento=${this.filter.documento ||
-        ""}&tipo_data=${this.filter.tipo_data || ""}&data_inicial=${this.filter
-        .data_inicial || ""}&data_final=${this.filter.data_final ||
-        ""}&pendentes=${this.filter.pendentes || ""}&concluidos=${this.filter
-        .concluidos || ""}&pagar=${this.filter.pagar || ""}&receber=${this
-        .filter.receber || ""}`;
+      }&empresa=${this.empresaStore.currentEmpresa || ""}&tipo=${this.filter
+        .tipo || 1}&id=${this.filter.id || ""}&pessoa=${this.filter.pessoa ||
+        ""}&documento=${this.filter.documento || ""}&tipo_data=${this.filter
+        .tipo_data || ""}&data_inicial=${this.filter.data_inicial ||
+        ""}&data_final=${this.filter.data_final || ""}&pendentes=${this.filter
+        .pendentes || ""}&concluidos=${this.filter.concluidos ||
+        ""}&pagar=${this.filter.pagar || ""}&receber=${this.filter.receber ||
+        ""}`;
 
       axios.get(url).then(res => {
-        this.financeiroStore.financs = res.data.data.map(conta => {
-          conta.data_vencimento = formatDate(
-            new Date(conta.data_vencimento).toISOString().substr(0, 10)
-          );
-          conta.data_baixa = formatDate(
-            new Date(conta.data_baixa).toISOString().substr(0, 10)
-          );
-          conta.valor_parcela = formatToBRL(conta.valor_parcela);
-          conta.valor_pago = formatToBRL(conta.valor_pago);
-          conta.tipo_conta = conta.tipo_conta === 1 ? "PAGAR" : "RECEBER";
-          conta.pago = conta.pago ? "CONCLUÍDA" : "PENDENTE";
-
-          return conta;
-        });
+        this.financeiroStore.financs = res.data.data;
         this.count = res.data.count;
         this.pagination.rowsPerPage = res.data.limit;
       });

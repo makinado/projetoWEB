@@ -10,7 +10,7 @@ module.exports = app => {
             if (!usuario.email || !usuario.senha) {
                 return res.status(400).send('Usuário ou senha não informados')
             }
-            var usuarioBD = await app.dbUsers('usuarios')
+            var usuarioBD = await app.db('usuarios')
                 .where({ email: usuario.email })
                 .first()
 
@@ -18,7 +18,7 @@ module.exports = app => {
             const isMatch = bcrypt.compareSync(usuario.senha, usuarioBD.senha)
             if (!isMatch) return res.status(400).send('Senha inválida')
         } else {
-            var usuarioBD = await app.dbUsers('usuarios')
+            var usuarioBD = await app.db('usuarios')
                 .where({ email: usuario.email })
                 .first()
         }
@@ -32,7 +32,6 @@ module.exports = app => {
             contato: usuarioBD.contato,
             id_perfil: usuarioBD.id_perfil,
             img: usuarioBD.img,
-            id_base: null,
             iat: now,
             exp: now + (60 * 60 * 4)
         }

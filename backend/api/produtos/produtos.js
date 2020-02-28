@@ -193,7 +193,7 @@ module.exports = app => {
     withEstoque = produtos => {
         const produtosWithEstoque = produtos.map(async produto => {
             produto.qtdEstoque = await app.db('produto_estoque').sum('quantidade').where({ id_produto: produto.id || produto.value })
-                .then(estoque => estoque[0].sum)
+                .then(estoque => Number(estoque[0].sum))
 
             return produto
         })
@@ -206,53 +206,13 @@ module.exports = app => {
             .where({ id: req.params.id }).first()
             .then(async produto => {
                 produto.qtdEstoque = await app.db('produto_estoque').sum('quantidade').where({ id_produto: produto.id })
-                    .then(estoque => {
-                        estoque = estoque[0].sum
-                        return estoque
-                    })
-                    .catch(e => res.status(500).send(e.toString()))
-                res.json(produto);
+                    .then(estoque => Number(estoque[0].sum))
+                produto.grupos_tributacao = await app.db('produto_grupos_tributacao')
+                    .select('id_grupo').where({ id_produto: produto.id }).then(grupos => grupos.map(e => e.id_grupo))
+
+                res.json(produto)
             })
-            .catch(e => res.status(500).send(e))
-    }
-
-    const getTelaProduto = async (req, res) => {
-        if (req.params.id) {
-            var produto = await app.db('produtos')
-                .where({ id: req.params.id }).first()
-                .catch(e => res.status(500).send(e))
-            if (produto) {
-                produto.qtdEstoque = await app.db('produto_estoque').sum('quantidade').where({ id_produto: produto.id })
-                    .then(estoque => {
-                        estoque = estoque[0].sum
-                        return estoque
-                    })
-                    .catch(e => res.status(500).send(e.toString()))
-            }
-            var grupos_produto = await app.db('produto_grupos_tributacao')
-                .join('grupos_tributacao', 'produto_grupos_tributacao.id_grupo', 'grupos_tributacao.id')
-                .select('id_grupo as id', 'id_produto', 'grupos_tributacao.descricao as descricao', 'grupos_tributacao.uf as uf', 'grupos_tributacao.cfop as cfop')
-                .where({ id_produto: produto.id })
-        }
-
-        const categorias = await app.db('categorias').select('id as value', 'descricao as text').where({ tipo: 2 })
-        const unidades = await app.db('unidades').select('id as value', 'descricao as text')
-        const marcas = await app.db('marcas').select('id as value', 'nome as text')
-        const pessoas = await app.db('pessoas').select('id as value', 'nome as text', 'cpf', 'cnpj').where({ fornecedor: true })
-        const grupos = await app.db('grupos_tributacao').select('id', 'descricao', 'uf', 'cfop')
-
-
-        const tela = {
-            produto,
-            categorias,
-            unidades,
-            marcas,
-            pessoas,
-            grupos,
-            grupos_produto
-        }
-
-        res.json(tela)
+            .catch(e => { console.log(e); res.status(500).send(e) })
     }
 
     const getByCategoria = async (req, res) => {
@@ -291,5 +251,5 @@ module.exports = app => {
         }
     }
 
-    return { save, get, getById, getWithEstoque, getTelaProduto, getByCategoria, remove, withEstoque }
+    return { save, get, getById, getWithEstoque, getByCategoria, remove, withEstoque }
 }

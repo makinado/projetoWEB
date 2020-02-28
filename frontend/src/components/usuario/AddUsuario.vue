@@ -170,7 +170,7 @@
 </template>
 
 <script>
-import { urlBD, showError, formatDate, saveLog } from "@/global";
+import { urlBD, showError, formatDate, saveLog, loadEmpresas } from "@/global";
 import axios from "axios";
 import { mapState } from "vuex";
 
@@ -206,11 +206,11 @@ export default {
       ],
       senhaRules: [
         v => !!v || "Senha é obrigatória",
-        v => (!!v && v.length >= 4) || "Senha deve ter no mínimo 4 caracteres"
+        v => (!!v && v.length >= 6) || "Senha deve ter no mínimo 6 caracteres"
       ],
       confirmaSenhaRules: [
         v => !!v || "Confirmação de senha é obrigatória",
-        v => (!!v && v.length >= 4) || "Senha deve ter no mínimo 4 caracteres",
+        v => (!!v && v.length >= 6) || "Senha deve ter no mínimo 6 caracteres",
         v => (!!v && v === this.usuario.senha) || "Senhas não conferem"
       ],
       empresaRules: [v => (!!v && v.length > 0) || "Empresa é obrigatória"]
@@ -242,27 +242,16 @@ export default {
 
       this.tabIndex = "tab-1";
     },
-    loadTela(usuario) {
-      let url = `${urlBD}/usuarios/tela`;
-      if (!usuario) {
-        axios
-          .get(url)
-          .then(res => {
-            const tela = res.data;
+    async loadTela(usuario) {
+      loadEmpresas();
 
-            this.empresaStore.empresas = tela.empresas;
-            this.usuarioStore.perfis = tela.perfis;
-          })
-          .catch(showError);
-      } else if (usuario.id) {
-        axios
+      if (!usuario) return;
+      let url = `${urlBD}/usuarios`;
+      if (usuario.id) {
+        await axios
           .get(`${url}/${usuario.id}`)
           .then(res => {
-            const tela = res.data;
-
-            this.usuario = tela.usuario;
-            this.empresaStore.empresas = tela.empresas;
-            this.usuarioStore.perfis = tela.perfis;
+            this.usuario = res.data;
 
             this.imageName = this.usuario.img || "";
           })
@@ -305,7 +294,6 @@ export default {
       const method = this.usuario.id ? "put" : "post";
       const id = this.usuario.id ? this.usuario.id : "";
       const urlUsuario = `${urlBD}/usuarios/${id}`;
-      const urlUsuarioEmpresas = `${urlBD}/usuarioEmpresas`;
 
       this.usuario.empresas = this.usuario.empresas.map(empresa => {
         empresa = empresa.value ? empresa.value : empresa;

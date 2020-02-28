@@ -87,12 +87,6 @@ module.exports = app => {
     app.post('/recoverPassword', app.api.auth.usuarios.recoverPassword)
 
 
-    app.route('/usuarios/tela')
-        .all(app.config.passport.authenticate())
-        .get(app.api.auth.usuarios.getTela)
-    app.route('/usuarios/tela/:id')
-        .all(app.config.passport.authenticate())
-        .get(app.api.auth.usuarios.getTela)
     app.route('/usuarios')
         .all(app.config.passport.authenticate())
         .post(app.api.auth.usuarios.save)
@@ -130,12 +124,6 @@ module.exports = app => {
     app.route('/pessoas/todos')
         .all(app.config.passport.authenticate())
         .get(app.api.pessoas.pessoas.getAll)
-    app.route('/pessoas/tela')
-        .all(app.config.passport.authenticate())
-        .get(app.api.pessoas.pessoas.getTela)
-    app.route('/pessoas/tela/:id')
-        .all(app.config.passport.authenticate())
-        .get(app.api.pessoas.pessoas.getTela)
     app.route('/pessoas')
         .all(app.config.passport.authenticate())
         .post(app.api.pessoas.pessoas.save)
@@ -172,12 +160,6 @@ module.exports = app => {
         .delete(app.api.categorias.remove)
 
 
-    app.route('/produtos/TelaProduto')
-        .all(app.config.passport.authenticate())
-        .get(app.api.produtos.produtos.getTelaProduto)
-    app.route('/produtos/TelaProduto/:id')
-        .all(app.config.passport.authenticate())
-        .get(app.api.produtos.produtos.getTelaProduto)
     app.route('/produtos')
         .all(app.config.passport.authenticate())
         .post(app.api.produtos.produtos.save)
@@ -229,9 +211,6 @@ module.exports = app => {
         .get(app.api.movimentacoes.movimEstoque.get)
 
 
-    app.route('/movimConta/tela/:id')
-        .all(app.config.passport.authenticate())
-        .get(app.api.movimentacoes.movimConta.getTela)
     app.route('/movimConta/:id')
         .all(app.config.passport.authenticate())
         .post(app.api.movimentacoes.movimConta.save)
@@ -243,12 +222,6 @@ module.exports = app => {
 
 
 
-    app.route('/telaGrupoTrib')
-        .all(app.config.passport.authenticate())
-        .get(app.api.produtos.grupoTributario.getTela)
-    app.route('/telaGrupoTrib/:id')
-        .all(app.config.passport.authenticate())
-        .get(app.api.produtos.grupoTributario.getTela)
     app.route('/grupoTrib')
         .all(app.config.passport.authenticate())
         .post(app.api.produtos.grupoTributario.save)
@@ -260,7 +233,9 @@ module.exports = app => {
         .delete(app.api.produtos.grupoTributario.remove)
 
 
-
+    app.route('/empresas/todas')
+        .all(app.config.passport.authenticate())
+        .get(app.api.empresas.empresas.getAll)
     app.route('/empresas')
         .all(app.config.passport.authenticate())
         .post(app.api.empresas.empresas.save)
@@ -284,12 +259,6 @@ module.exports = app => {
 
 
 
-    app.route('/empresaMetas/TelaMetas')
-        .all(app.config.passport.authenticate())
-        .get(app.api.empresas.empresaMetas.getTelaMetas)
-    app.route('/empresaMetas/TelaMetas/:id')
-        .all(app.config.passport.authenticate())
-        .get(app.api.empresas.empresaMetas.getTelaMetas)
     app.route('/empresaMetas')
         .all(app.config.passport.authenticate())
         .post(app.api.empresas.empresaMetas.save)
@@ -331,12 +300,6 @@ module.exports = app => {
         .all(app.config.passport.authenticate())
         .post(app.api.email.testarEmail)
 
-    app.route('/pedidos/TelaPedido')
-        .all(app.config.passport.authenticate())
-        .get(app.api.compras.pedidos.getTelaPedido)
-    app.route('/pedidos/TelaPedido/:id')
-        .all(app.config.passport.authenticate())
-        .get(app.api.compras.pedidos.getTelaPedido)
     app.route('/pedidos')
         .all(app.config.passport.authenticate())
         .post(app.api.compras.pedidos.save)
@@ -372,12 +335,6 @@ module.exports = app => {
     app.route('/compras/gerarDANFe')
         .all(app.config.passport.authenticate())
         .post(app.api.compras.importacoes.gerarDANFe)
-    app.route('/compras/Tela')
-        .all(app.config.passport.authenticate())
-        .get(app.api.compras.compras.getTela)
-    app.route('/compras/Tela/:id')
-        .all(app.config.passport.authenticate())
-        .get(app.api.compras.compras.getTela)
     app.route('/compras')
         .all(app.config.passport.authenticate())
         .post(app.api.compras.compras.save)
@@ -390,12 +347,6 @@ module.exports = app => {
 
 
 
-    app.route('/financeiro/Tela')
-        .all(app.config.passport.authenticate())
-        .get(app.api.financeiro.financeiro.getTela)
-    app.route('/financeiro/Tela/:id')
-        .all(app.config.passport.authenticate())
-        .get(app.api.financeiro.financeiro.getTela)
     app.route('/financeiro')
         .all(app.config.passport.authenticate())
         .post(app.api.financeiro.financeiro.save)
@@ -405,9 +356,6 @@ module.exports = app => {
         .put(app.api.financeiro.financeiro.save)
         .get(app.api.financeiro.financeiro.getById)
         .delete(app.api.financeiro.financeiro.remove)
-    app.route('/financeiroBySituacao/:situacao')
-        .all(app.config.passport.authenticate())
-        .get(app.api.financeiro.financeiro.getBySituacao)
     app.route('/financeiro/pagamento')
         .all(app.config.passport.authenticate())
         .post(app.api.financeiro.financeiro.save_pagamento)
@@ -416,8 +364,8 @@ module.exports = app => {
         .delete(app.api.financeiro.financeiro.remove_pagamento)
 
 
-    app.route('/financeiro/boletos/:banco')
-        .all(app.config.passport.authenticate())
+    app.route('/boletos')
+        // .all(app.config.passport.authenticate())
         .get(app.api.financeiro.boletos.getBoleto)
 
 
@@ -445,12 +393,9 @@ module.exports = app => {
         .delete(app.api.financeiro.documentos.remove)
 
 
-    app.route('/conta/tela')
+    app.route('/conta/todos')
         .all(app.config.passport.authenticate())
-        .get(app.api.financeiro.conta.getTela)
-    app.route('/conta/tela/:id')
-        .all(app.config.passport.authenticate())
-        .get(app.api.financeiro.conta.getTela)
+        .get(app.api.financeiro.conta.getAll)
     app.route('/conta')
         .all(app.config.passport.authenticate())
         .post(app.api.financeiro.conta.save)
@@ -463,12 +408,6 @@ module.exports = app => {
 
 
 
-    app.route('/vendas/tela')
-        .all(app.config.passport.authenticate())
-        .get(app.api.vendas.vendas.getTela)
-    app.route('/vendas/tela/:id')
-        .all(app.config.passport.authenticate())
-        .get(app.api.vendas.vendas.getTela)
     app.route('/vendas')
         .all(app.config.passport.authenticate())
         .post(app.api.vendas.vendas.save)

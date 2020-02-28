@@ -317,15 +317,14 @@
             <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
           </td>
           <td>{{ data.item.id }}</td>
-          <td>{{ data.item.empresa }}</td>
           <td>{{ data.item.pessoa }}</td>
           <td>
             <v-chip :color="getColor(data.item.situacao)" dark>{{ data.item.situacao }}</v-chip>
           </td>
           <td>{{ data.item.nota_fiscal }}</td>
-          <td>{{ data.item.data_notafiscal }}</td>
-          <td>{{ data.item.data_lancamento }}</td>
-          <td>{{ data.item.valor_total }}</td>
+          <td>{{ data.item.data_notafiscal | date}}</td>
+          <td>{{ data.item.data_lancamento | date }}</td>
+          <td>{{ data.item.valor_total | currency }}</td>
           <td>
             <v-tooltip v-if="!data.item.importado" bottom>
               <b-button
@@ -415,7 +414,7 @@ export default {
   name: "GridImportacoes",
   computed: {
     ...mapState("app", ["color"]),
-    ...mapState(["comprasStore", "modalStore", "pessoaStore", "usuarioStore"]),
+    ...mapState(["comprasStore", "empresaStore", "modalStore", "pessoaStore", "usuarioStore"]),
     computedDateFormatted1() {
       return formatDate(this.filter.data_inicial);
     },
@@ -425,7 +424,8 @@ export default {
     params() {
       return {
         ...this.pagination,
-        ...this.filter
+        ...this.filter,
+        ...this.empresaStore.currentEmpresa
       };
     }
   },
@@ -455,7 +455,6 @@ export default {
       loading: true,
       fields: [
         { value: "id", text: "Código", sortable: true },
-        { value: "empresa", text: "Empresa", sortable: true },
         { value: "pessoa", text: "Pessoa", sortable: true },
         { value: "situacao", text: "Situação", sortable: true },
         { value: "nota_fiscal", text: "Nota fiscal", sortable: true },
@@ -522,25 +521,16 @@ export default {
     async loadCompras() {
       const url = `${urlBD}/compras?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
-      }&tipo=${this.filter.tipo || 1}&id=${this.filter.id ||
-        ""}&fornecedor=${this.filter.fornecedor || ""}&documento=${this.filter
-        .documento || ""}&tipo_data=${this.filter.tipo_data ||
-        ""}&data_inicial=${this.filter.data_inicial || ""}&data_final=${this
-        .filter.data_final || ""}&concluidas=${this.filter.concluidas ||
-        ""}&canceladas=${this.filter.canceladas || ""}`;
+      }&empresa=${this.empresaStore.currentEmpresa || ""}&tipo=${this.filter
+        .tipo || 1}&id=${this.filter.id || ""}&fornecedor=${this.filter
+        .fornecedor || ""}&documento=${this.filter.documento ||
+        ""}&tipo_data=${this.filter.tipo_data || ""}&data_inicial=${this.filter
+        .data_inicial || ""}&data_final=${this.filter.data_final ||
+        ""}&concluidas=${this.filter.concluidas || ""}&canceladas=${this.filter
+        .canceladas || ""}`;
 
       axios.get(url).then(res => {
-        this.comprasStore.compras = res.data.data.map(compra => {
-          compra.data_notafiscal = formatDate(
-            new Date(compra.data_notafiscal).toISOString().substr(0, 10)
-          );
-          compra.data_lancamento = formatDate(
-            new Date(compra.data_lancamento).toISOString().substr(0, 10)
-          );
-          compra.valor_total = formatToBRL(compra.valor_total);
-
-          return compra;
-        });
+        this.comprasStore.compras = res.data.data;
         this.count = res.data.count;
         this.pagination.rowsPerPage = res.data.limit;
       });

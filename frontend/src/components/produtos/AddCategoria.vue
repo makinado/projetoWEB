@@ -45,7 +45,7 @@
                   </b-button>
                   <b-button
                     variant="secundary"
-                    @click.prevent="[modalStore.categorias.deleteCategoria = true, categoriaStore.categoria = data.item]"
+                    @click.prevent="[confirmaExclusao = true, categoriaStore.categoria = data.item]"
                     class="mr-1"
                   >
                     <i class="fa fa-lg fa-trash"></i>
@@ -66,8 +66,9 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
     <v-dialog
-      v-model="modalStore.categorias.deleteCategoria"
+      v-model="confirmaExclusao"
       persistent
       max-width="500px"
       v-if="categoriaStore.categoria"
@@ -82,7 +83,7 @@
           <v-btn
             color="blue darken-1"
             flat
-            @click="modalStore.categorias.deleteCategoria = false"
+            @click="confirmaExclusao = false"
           >Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
@@ -114,6 +115,7 @@ export default {
         totalItems: 0
       },
       valid: true,
+      confirmaExclusao: false,
       descRules: [
         v => !!v || "Descrição é obrigatória",
         v =>
@@ -130,7 +132,7 @@ export default {
       if (this.modalStore.categorias.visible) this.reset();
       this.loadCategorias();
     },
-    "$store.state.modalStore.categorias.deleteCategoria": function() {
+    "$store.state.confirmaExclusao": function() {
       this.reset();
     }
   },
@@ -204,7 +206,7 @@ export default {
         .delete(urlCategorias)
         .then(() => {
           this.$toasted.global.defaultSuccess();
-          this.modalStore.categorias.deleteCategoria = false;
+          this.confirmaExclusao = false;
 
           saveLog(
             new Date(),

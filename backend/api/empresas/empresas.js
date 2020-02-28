@@ -146,6 +146,13 @@ module.exports = app => {
             .catch(e => res.status(500).send(e.toString()))
     }
 
+    const getAll = async (req, res) => {
+        app.db('empresas')
+            .select('id as value', 'nome as text')
+            .then(empresas => res.json(empresas))
+            .catch(e => res.status(500).send(e.toString()))
+    }
+
     const getById = async (req, res) => {
         app.db('empresas')
             .leftJoin('municipios', 'empresas.id_cidade', 'municipios.cmun')
@@ -181,5 +188,5 @@ module.exports = app => {
         }
     }
 
-    return { save, get, getById, getEmails, remove }
+    return { save, get, getAll, getById, getEmails, remove }
 }

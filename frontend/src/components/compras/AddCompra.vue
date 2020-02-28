@@ -30,6 +30,7 @@
                 <v-autocomplete
                   class="tag-input"
                   chips
+                  deletable-chips
                   dense
                   :color="color"
                   label="Fornecedor*"
@@ -173,7 +174,7 @@
                             <v-flex xs12>
                               <v-textarea
                                 :color="color"
-                                label="Observação"
+                                label="Alguma observação?"
                                 box
                                 v-model="compra.observacao"
                               ></v-textarea>
@@ -437,6 +438,8 @@
             :rows-per-page-items="[5, 10, 20]"
             rows-per-page-text="Parcelas por página"
             no-data-text="Nenhuma parcela adicionada"
+            :expand="expand"
+            item-key="parcelas"
           >
             <template slot="items" slot-scope="data">
               <td>{{ data.item.parcelas }}</td>
@@ -464,7 +467,7 @@
                     <template v-slot:activator="{ on }">
                       <v-text-field
                         :color="color"
-                        v-model="data.item.data"
+                        v-model="data.item.data_vencimento"
                         prepend-icon="event"
                         readonly
                         v-on="on"
@@ -473,7 +476,7 @@
                     <v-date-picker
                       :color="color"
                       v-model="data.item.dataNotFormated"
-                      @input="[data.item.menu = false, data.item.data = formatDate(data.item.dataNotFormated)]"
+                      @input="[data.item.menu = false, data.item.data_vencimento = formatDate(data.item.dataNotFormated)]"
                       locale="pt-br"
                     ></v-date-picker>
                   </v-menu>
@@ -489,6 +492,8 @@
                     :items="financeiroStore.documentos"
                     v-model="data.item.documento_origem"
                     placeholder="Selecione"
+                    prepend-icon="fa fa-lg fa-plus-circle"
+                    @click:prepend="[modalStore.documentos.visible = true]"
                     no-data-text="Nenhum resultado"
                     auto-select-first
                   ></v-autocomplete>
@@ -499,10 +504,22 @@
                   v-model="data.item.pago"
                   :color="color"
                   hide-details
-                  @click.native="calcTotalFinanc()"
+                  @click.native="[!data.expanded && data.item.pago ? [data.expanded = true, loadPagamento(data.item)] : limpaPagamento(data), calcTotalFinanc()]"
                 ></v-switch>
               </td>
               <td>
+                <v-tooltip bottom>
+                  <b-button
+                    v-if="data.item.pago"
+                    slot="activator"
+                    variant="secundary"
+                    class="mr-1"
+                    @click="data.expanded = !data.expanded"
+                  >
+                    <i class="fa fa-lg fa-pencil"></i>
+                  </b-button>
+                  <span>Editar dados do pagamento</span>
+                </v-tooltip>
                 <v-tooltip bottom>
                   <b-button
                     slot="activator"
@@ -515,6 +532,113 @@
                   <span>Excluir parcela</span>
                 </v-tooltip>
               </td>
+            </template>
+            <template slot="expand" slot-scope="data">
+              <v-card v-if="data.expanded" flat color="bege">
+                <v-card-title>
+                  <span class="headline">Preencha os dados do pagamento desta parcela</span>
+                </v-card-title>
+                <v-card-text>
+                  <v-layout row wrap>
+                    <v-flex xs12 md2>
+                      <v-autocomplete
+                        clearable
+                        dense
+                        :color="color"
+                        label="Conta*"
+                        v-model="data.item.id_conta"
+                        :items="financeiroStore.contas"
+                        no-data-text="Nenhum caixa encontrado"
+                        prepend-icon="fa fa-lg fa-plus-circle"
+                        @click:prepend="[financeiroStore.caixa = null, modalStore.financeiro.caixa.visible = true]"
+                        @change="loadSaldoConta(data.item)"
+                      ></v-autocomplete>
+                    </v-flex>
+                    <v-flex xs12 md2>
+                      <v-text-field
+                        label="Saldo em conta"
+                        placeholder="Selecione a conta para carregar"
+                        readonly
+                        v-model="data.item.saldo_atual"
+                      ></v-text-field>
+                    </v-flex>
+                  </v-layout>
+                  <v-layout row wrap>
+                    <v-flex xs12 md2>
+                      <v-menu
+                        v-model="data.item.menu1"
+                        :close-on-content-click="false"
+                        :nudge-right="40"
+                        transition="scale-transition"
+                        offset-y
+                        full-width
+                        max-width="290px"
+                        min-width="290px"
+                      >
+                        <template v-slot:activator="{ on }">
+                          <v-text-field
+                            :color="color"
+                            v-model="data.item.data_baixa"
+                            prepend-icon="event"
+                            label="Data do pagamento*"
+                            readonly
+                            v-on="on"
+                          ></v-text-field>
+                        </template>
+                        <v-date-picker
+                          :color="color"
+                          v-model="data.item.dataNotFormated"
+                          @input="[data.item.menu1 = false, data.item.data_baixa = formatDate(data.item.dataNotFormated)]"
+                          locale="pt-br"
+                        ></v-date-picker>
+                      </v-menu>
+                    </v-flex>
+                    <v-flex xs12 md2>
+                      <v-autocomplete
+                        dense
+                        :color="color"
+                        label="Forma de pagamento"
+                        v-model="data.item.documento_baixa"
+                        :items="financeiroStore.documentos"
+                        no-data-text="Nenhum documento encontrado"
+                        prepend-icon="fa fa-lg fa-plus-circle"
+                        @click:prepend="[financeiroStore.documento = null, modalStore.documentos.visible = true]"
+                      ></v-autocomplete>
+                    </v-flex>
+                    <v-flex xs12 md2>
+                      <v-text-field
+                        :color="color"
+                        v-model="data.item.num_documento_baixa"
+                        label="Número documento"
+                      ></v-text-field>
+                    </v-flex>
+                    <v-flex xs12 md2>
+                      <v-text-field
+                        v-model="data.item.valor_acrescimo"
+                        :color="color"
+                        label="Valor acréscimo"
+                        v-money="money"
+                      ></v-text-field>
+                    </v-flex>
+                    <v-flex xs12 md2>
+                      <v-text-field
+                        v-model="data.item.valor_desconto"
+                        :color="color"
+                        label="Valor desconto"
+                        v-money="money"
+                      ></v-text-field>
+                    </v-flex>
+                    <v-flex xs12 md2>
+                      <v-text-field
+                        v-model="data.item.valor_pago"
+                        :color="color"
+                        label="Valor pago"
+                        v-money="money"
+                      ></v-text-field>
+                    </v-flex>
+                  </v-layout>
+                </v-card-text>
+              </v-card>
             </template>
             <template slot="footer">
               <td>
@@ -542,7 +666,17 @@
 
 <script>
 import { VMoney } from "v-money";
-import { urlBD, showError, parseNumber, formatDate } from "@/global";
+import {
+  urlBD,
+  showError,
+  parseNumber,
+  formatDate,
+  saveLog,
+  loadFornecs,
+  loadProdutos,
+  loadDocumentos,
+  loadContas
+} from "@/global";
 import axios from "axios";
 import { mapState } from "vuex";
 import { formatToBRL } from "brazilian-values";
@@ -561,11 +695,21 @@ export default {
       "empresaStore",
       "usuarioStore"
     ]),
-    computedDateFormatted() {
-      return formatDate(this.compra.data_notafiscal);
+    computedDateFormatted: {
+      get() {
+        return formatDate(this.compra.data_notafiscal);
+      },
+      set(value) {
+        this.compra.data_notafiscal = formatDate(value);
+      }
     },
-    computedDateFormatted1() {
-      return formatDate(this.compra.data_lancamento);
+    computedDateFormatted1: {
+      get() {
+        return formatDate(this.compra.data_lancamento);
+      },
+      set(value) {
+        this.compra.data_lancamento = formatDate(value);
+      }
     }
   },
   data() {
@@ -610,7 +754,7 @@ export default {
       fieldsFinanceiro: [
         { value: "parcelas", text: "Parcelas" },
         { value: "valor", text: "Valor" },
-        { value: "data", text: "Data de pagamento" },
+        { value: "data", text: "Data de vencimento" },
         { value: "documento_origem", text: "Documento" },
         { value: "pago", text: "Pago?" },
         { value: "actions", text: "Ações" }
@@ -663,10 +807,22 @@ export default {
     };
   },
   watch: {
-    "$store.state.modalStore.compras.compras.add": function() {
+    "$store.state.modalStore.compras.compras.add"() {
       if (this.modalStore.compras.compras.add) {
         this.limpaTela();
       }
+    },
+    "$store.state.modalStore.documentos.visible"() {
+      if (!this.modalStore.documentos.visible) loadDocumentos();
+    },
+    "$store.state.modalStore.contas.visible"() {
+      if (!this.modalStore.contas.visible) loadContas();
+    },
+    "$store.state.modalStore.produtos.visible"() {
+      if (!this.modalStore.produtos.visible) loadProdutos();
+    },
+    "$store.state.modalStore.pessoas.visible"() {
+      if (!this.modalStore.pessoas.visible) loadFornecs();
     }
   },
   methods: {
@@ -675,11 +831,16 @@ export default {
         return "green";
       else return "red";
     },
-    formatDate(date) {
-      if (!date) return null;
+    loadSaldoConta(item) {
+      if (!item.id_conta) {
+        item.saldo_atual = "";
+        return;
+      }
 
-      const [year, month, day] = date.split("-");
-      return `${day}/${month}/${year}`;
+      item.saldo_atual = formatToBRL(
+        this.financeiroStore.contas.find(conta => conta.value == item.id_conta)
+          .saldo_atual || 0
+      );
     },
     async limpaTela() {
       this.reset();
@@ -699,7 +860,7 @@ export default {
         let data;
         let documento_origem;
         if (this.financeiro.length > 0) {
-          data = this.financeiro[this.financeiro.length - 1].data;
+          data = this.financeiro[this.financeiro.length - 1].data_vencimento;
           const [day, month, year] = data.split("/");
 
           data = new Date(year, month, day).toISOString().substr(0, 10);
@@ -714,7 +875,7 @@ export default {
           parcelas:
             this.financeiro.length + 1 + "/" + (this.financeiro.length + 1),
           data,
-          data: formatDate(data),
+          data_vencimento: formatDate(data),
           documento_origem
         };
         this.financeiro.push(parcela);
@@ -737,6 +898,17 @@ export default {
 
       this.calcTotalFinanc().then(() => (this.disable = true));
     },
+    loadPagamento(item) {
+      item.data_baixa = formatDate(new Date().toISOString().substr(0, 10));
+      item.valor_pago = item.valor;
+    },
+    limpaPagamento(data) {
+      data.expanded = false;
+      data.item.data_baixa = "";
+      data.item.documento_baixa = "";
+      data.item.num_documento_baixa = "";
+      data.item.observacao = "";
+    },
     async deleteParcela(parcela) {
       if (parcela) {
         this.financeiro = this.financeiro.filter(item => {
@@ -747,9 +919,9 @@ export default {
       this.calcTotalFinanc();
     },
     async reset() {
+      this.compra = {};
       this.produto = {};
       this.produtos_compra = [];
-      this.compra = {};
       this.totais = {};
       this.totaisFinanc = {};
       this.financeiro = [];
@@ -791,36 +963,18 @@ export default {
       });
     },
     async loadTela(compra) {
-      let url = `${urlBD}/compras/Tela`;
+      loadFornecs();
+      loadProdutos();
+      loadDocumentos();
+      loadContas();
 
-      if (!compra) {
-        axios
-          .get(url)
-          .then(res => {
-            const tela = res.data;
-
-            this.pessoaStore.pessoas = tela.pessoas;
-            this.financeiroStore.documentos = tela.documentos;
-            this.produtoStore.produtos = tela.produtos.map(produto => {
-              produto.valor_unitario = formatToBRL(produto.valor_unitario);
-              return produto;
-            });
-          })
-          .catch(showError);
-      } else if (compra.id) {
+      if (!compra) return;
+      let url = `${urlBD}/compras`;
+      if (compra.id) {
         axios
           .get(`${url}/${compra.id}`)
           .then(res => {
-            const tela = res.data;
-
-            this.compra = tela.compra;
-
-            this.pessoaStore.pessoas = tela.pessoas;
-            this.financeiroStore.documentos = tela.documentos;
-            this.produtoStore.produtos = tela.produtos.map(produto => {
-              produto.valor_unitario = formatToBRL(produto.valor_unitario);
-              return produto;
-            });
+            this.compra = res.data;
             this.parseValores();
             this.calcTotal();
             this.calcTotalFinanc();
@@ -847,7 +1001,7 @@ export default {
       });
       this.calcTotal();
     },
-    async calcTotal(item) {
+    calcTotal(item) {
       if (item) {
         this.produtos_compra = this.produtos_compra.filter(produto => {
           if (produto.sequencia === item.sequencia) {
@@ -928,6 +1082,13 @@ export default {
       };
     },
     parseValores() {
+      this.compra.data_notafiscal = new Date(this.compra.data_notafiscal)
+        .toISOString()
+        .substr(0, 10);
+      this.compra.data_lancamento = new Date(this.compra.data_lancamento)
+        .toISOString()
+        .substr(0, 10);
+
       this.compra.valor_frete = formatToBRL(this.compra.valor_frete);
       this.compra.valor_seguro = formatToBRL(this.compra.valor_seguro);
       this.compra.valor_desconto = formatToBRL(this.compra.valor_desconto);
@@ -935,9 +1096,6 @@ export default {
       this.compra.valor_produtos = formatToBRL(this.compra.valor_produtos);
       this.compra.valor_total = formatToBRL(this.compra.valor_total);
 
-      this.$refs.cfop.$el.getElementsByTagName(
-        "input"
-      )[0].value = this.compra.cfop;
       this.$refs.valor_frete.$el.getElementsByTagName(
         "input"
       )[0].value = this.compra.valor_frete;
@@ -957,11 +1115,8 @@ export default {
         "input"
       )[0].value = this.compra.valor_total;
 
-      this.produtos_compra = this.compra.produtos;
-      this.financeiro = this.compra.financeiro;
-
       let i = 0;
-      this.produtos_compra = this.produtos_compra.map(produto => {
+      this.produtos_compra = this.compra.produtos.map(produto => {
         produto.valor_unitario = formatToBRL(produto.valor_unitario);
         produto.valor_desconto = formatToBRL(produto.valor_desconto);
         produto.quantidade = formatToBRL(produto.quantidade).replace("R$", "");
@@ -974,10 +1129,21 @@ export default {
       });
       delete this.compra.produtos;
 
-      this.financeiro = this.financeiro.map(parcela => {
-        parcela.valor = formatToBRL(parcela.valor);
-        parcela.dataNotFormated = parcela.data;
-        parcela.data = formatDate(parcela.data);
+      this.financeiro = this.compra.financeiro.map(parcela => {
+        parcela.parcelas = parcela.parcela;
+        parcela.valor = formatToBRL(parcela.valor_parcela);
+        parcela.data_vencimento = formatDate(
+          new Date(parcela.data_vencimento).toISOString().substr(0, 10)
+        );
+        parcela.pago = parcela.pago;
+        parcela.data_baixa = parcela.data_baixa
+          ? formatDate(new Date(parcela.data_baixa).toISOString().substr(0, 10))
+          : "";
+        parcela.documento_baixa = parcela.documento_baixa || "";
+        parcela.num_documento_baixa = parcela.num_documento_baixa || "";
+        parcela.valor_acrescimo = parcela.valor_acrescimo || "R$ 0,00";
+        parcela.valor_desconto = parcela.valor_desconto || "R$ 0,00";
+        parcela.valor_pago = parcela.valor_pago || "R$ 0,00";
 
         return parcela;
       });
@@ -993,8 +1159,9 @@ export default {
       const url = `${urlBD}/compras/${id}`;
 
       if (!this.compra.id_empresa) {
-        this.compra.id_empresa = this.empresaStore.currentEmpresa.value;
+        this.compra.id_empresa = this.empresaStore.currentEmpresa;
       }
+
       this.compra.produtos = this.produtos_compra;
       this.compra.financeiro = this.financeiro;
       this.compra.importado = false;

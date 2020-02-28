@@ -10,10 +10,8 @@ const consign = require('consign')
 const mongoose = require('mongoose')
 
 const db = require('./config/db')
-const dbUsers = require('./config/dbUsers')
 
 app.db = db
-app.dbUsers = dbUsers
 app.mongoose = mongoose
 app.use(compression())
 

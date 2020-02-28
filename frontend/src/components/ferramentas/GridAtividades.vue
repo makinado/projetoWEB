@@ -183,7 +183,7 @@
               label="Procurar por usuário"
               :color="color"
               dense
-              :items="usuarioStore.usuarios"
+              :items="usuarioStore.currentUsuarios"
               v-model="filter.usuario"
               clearable
             />
@@ -372,52 +372,59 @@
             label="Procurar por usuário"
             :color="color"
             dense
-            :items="usuarioStore.usuarios"
+            :items="usuarioStore.currentUsuarios"
             v-model="filter.usuario"
             clearable
           />
         </v-layout>
       </v-flex>
     </v-container>
-    <v-data-table
-      class="elevation-5"
-      :items="atividadeStore.atividades"
-      :headers="fields"
-      :pagination.sync="pagination"
-      :rows-per-page-items="[5, 10, 20, 50, 100]"
-      rows-per-page-text="Registros por página"
-      no-results-text="Nenhum registro encontrado"
-      no-data-text="Nenhuma atividade encontrada"
-      :total-items="count"
-    >
-      <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
-      <template slot="items" slot-scope="data">
-        <td>{{ data.item.id }}</td>
-        <td>{{ data.item.usuario }}</td>
-        <td>
-          <v-chip :color="getColor(data.item.tipo)" dark>{{ data.item.tipo }}</v-chip>
-        </td>
-        <td>{{ data.item.data }}</td>
-        <td>{{ data.item.hora }}</td>
-        <td>
-          <v-chip :color="getColor()" dark>{{ data.item.tela }}</v-chip>
-        </td>
-        <td>{{ data.item.detalhe }}</td>
-        <td>
-          <v-tooltip bottom>
-            <b-button
-              slot="activator"
-              variant="secundary"
-              @click.prevent="[modalStore.atividades.deleteAtividade = true]"
-              class="mr-1"
-            >
-              <i class="fa fa-lg fa-trash"></i>
-            </b-button>
-            <span>Excluir atividade</span>
-          </v-tooltip>
-        </td>
-      </template>
-    </v-data-table>
+
+    <Card :color="color" title="Ações rápidas" :actions="globalActions">
+      <v-data-table
+        :items="atividadeStore.atividades"
+        :headers="fields"
+        :pagination.sync="pagination"
+        :rows-per-page-items="[5, 10, 20, 50, 100]"
+        rows-per-page-text="Registros por página"
+        no-results-text="Nenhum registro encontrado"
+        no-data-text="Nenhuma atividade encontrada"
+        :total-items="count"
+        select-all
+        v-model="itens_selecionados"
+      >
+        <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
+        <template slot="items" slot-scope="data">
+          <td>
+            <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
+          </td>
+          <td>{{ data.item.id }}</td>
+          <td>{{ data.item.usuario }}</td>
+          <td>
+            <v-chip :color="getColor(data.item.tipo)" dark>{{ data.item.tipo }}</v-chip>
+          </td>
+          <td>{{ data.item.data }}</td>
+          <td>{{ data.item.hora }}</td>
+          <td>
+            <v-chip :color="getColor()" dark>{{ data.item.tela }}</v-chip>
+          </td>
+          <td>{{ data.item.detalhe }}</td>
+          <td>
+            <v-tooltip bottom>
+              <b-button
+                slot="activator"
+                variant="secundary"
+                @click.prevent="[modalStore.atividades.deleteAtividade = true]"
+                class="mr-1"
+              >
+                <i class="fa fa-lg fa-trash"></i>
+              </b-button>
+              <span>Excluir atividade</span>
+            </v-tooltip>
+          </td>
+        </template>
+      </v-data-table>
+    </Card>
   </div>
 </template>
 
@@ -449,8 +456,12 @@ export default {
       };
     }
   },
+  components: {
+    Card: () => import("../material/Card")
+  },
   data() {
     return {
+      itens_selecionados: [],
       valid: true,
       fields: [
         { value: "id", text: "Código", sortable: true },
@@ -476,7 +487,21 @@ export default {
       menu2: false,
       menu3: false,
       menu4: false,
-      pesquisa: false
+      pesquisa: false,
+      globalActions: [
+        {
+          icon: "fa fa-lg fa-trash",
+          tooltip: "Excluir selecionados",
+          method: "remove",
+          store: "atividade"
+        },
+        {
+          icon: "fa fa-lg fa-refresh",
+          tooltip: "Recarregar itens",
+          method: "loadAtividades",
+          required: true
+        }
+      ]
     };
   },
   watch: {

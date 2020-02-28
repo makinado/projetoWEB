@@ -435,7 +435,7 @@ export default {
           {
             title: "Orçamentos/Vendas",
             icon: "fa fa-file-text",
-            link: "/orcamentos",
+            link: "/vendas",
             visible: false
           },
           {

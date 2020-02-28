@@ -4,6 +4,7 @@ module.exports = (io, app) => {
     function addUser(userList, user) {
         let newList = Object.assign({}, userList)
         newList[user.nome] = user
+
         return newList
     }
 
@@ -18,6 +19,7 @@ module.exports = (io, app) => {
 
     io.on('connection', (socket) => {
         const emitOnlineUsers = () => {
+            console.log(onlineUsers)
             io.emit('online users', onlineUsers)
         }
 
@@ -30,6 +32,7 @@ module.exports = (io, app) => {
         })
 
         socket.on('logout', () => {
+            // usuario fez logout do sistema
             if ("user" in socket) {
                 onlineUsers = removeUser(onlineUsers, socket.user.nome)
 
@@ -39,6 +42,7 @@ module.exports = (io, app) => {
         })
 
         socket.on('disconnect', () => {
+            // usuario fechou o browser
             if ("user" in socket) {
                 onlineUsers = removeUser(onlineUsers, socket.user.nome)
 
@@ -58,7 +62,7 @@ module.exports = (io, app) => {
                         return {
                             user: {
                                 id: msg.id_usuario_origem,
-                                nome: await app.dbUsers('usuarios').select('nome').where({ id: msg.id_usuario_origem }).first().then(usuario => usuario.nome)
+                                nome: await app.db('usuarios').select('nome').where({ id: msg.id_usuario_origem }).first().then(usuario => usuario ? usuario.nome : "")
                             },
                             id_chat: msg.id_chat,
                             content: msg.mensagem,
@@ -80,7 +84,7 @@ module.exports = (io, app) => {
                         return {
                             user: {
                                 id: msg.id_usuario_origem,
-                                nome: await app.dbUsers('usuarios').select('nome').where({ id: msg.id_usuario_origem }).first().then(usuario => usuario.nome)
+                                nome: await app.db('usuarios').select('nome').where({ id: msg.id_usuario_origem }).first().then(usuario => usuario.nome)
                             },
                             id_chat: msg.id_chat,
                             content: msg.mensagem,

@@ -31,7 +31,8 @@ export default {
     AddCompra: () => import("./AddCompra"),
     DownloadXML: () => import("./DownloadXML"),
     AddPessoa: () => import("../pessoas/AddPessoa"),
-    AddProduto: () => import("../produtos/AddProduto")
+    AddProduto: () => import("../produtos/AddProduto"),
+    AddDocumento: () => import("../financeiro/AddDocumentos"),
   }
 };
 </script>

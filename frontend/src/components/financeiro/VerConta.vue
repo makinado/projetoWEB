@@ -53,7 +53,9 @@
               </v-flex>
             </v-layout>
             <v-card-title>
-              <span class="headline">Visualizar detalhes do pagamento</span>
+              <span
+                class="headline"
+              >Visualizar detalhes do {{ conta.tipo_conta == 'RECEBER'? 'recebimento' : 'pagamento'}}</span>
             </v-card-title>
             <v-layout row wrap>
               <v-flex xs12 md4>
@@ -75,13 +77,14 @@
                 <v-text-field readonly label="Valor de desconto" v-model="conta.valor_desconto"></v-text-field>
               </v-flex>
               <v-flex xs12 md3>
-                <v-text-field readonly label="Valor pago" v-model="conta.valor_pago"></v-text-field>
+                <v-text-field readonly label="Valor" v-model="conta.valor_pago"></v-text-field>
               </v-flex>
             </v-layout>
           </v-form>
         </v-container>
       </v-card-text>
       <v-card-actions>
+        <v-btn color="blue darken-1" flat @click>Imprimir</v-btn>
         <v-spacer></v-spacer>
         <v-btn
           color="blue darken-1"

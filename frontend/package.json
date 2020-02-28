@@ -21,6 +21,7 @@
     "core-js": "^2.6.5",
     "dotenv": "^8.2.0",
     "export-to-csv": "^0.2.1",
+    "firebase": "^7.9.1",
     "font-awesome": "4.7.0",
     "formatar-valores": "0.0.6",
     "jspdf": "^1.5.3",

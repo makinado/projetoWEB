@@ -1,36 +1,39 @@
 <template>
-  <v-container fill-height fluid grid-list-xl>
+  <v-container fluid grid-list-xl>
     <v-layout justify-center wrap>
-      <v-flex md12>
+      <v-flex xs12>
         <PageTitle main="Agenda" icon="fa fa-calendar" sub="Gerencie seus agendamentos" />
       </v-flex>
-      <v-flex sm4 xs12 class="text-sm-left text-xs-center">
-        <v-btn class="v-btn-common" :color="color" @click="$refs.calendar.prev()">
-          <v-icon dark left>keyboard_arrow_left</v-icon>Ant
-        </v-btn>
-        <v-btn class="v-btn-common" :color="color" @click="$refs.calendar.next()">
-          Prox
-          <v-icon right dark>keyboard_arrow_right</v-icon>
-        </v-btn>
-      </v-flex>
-      <v-flex sm4 xs12 class="text-xs-center">
-        <v-autocomplete
-          class="tag-input"
-          label="Tipo"
-          dense
-          chips
-          v-model="type"
-          :color="color"
-          :items="options"
-        ></v-autocomplete>
-      </v-flex>
-      <v-flex sm4 xs12 class="text-sm-right text-xs-center">
-        <v-btn
-          class="v-btn-common"
-          :color="color"
-          @click="[modalStore.eventos.visible = true, this.eventoStore.evento = null]"
-        >Adicionar evento</v-btn>
-      </v-flex>
+
+      <v-layout row wrap>
+        <v-flex xs12 md4>
+          <v-btn class="v-btn-common" :color="color" @click="$refs.calendar.prev()">
+            <v-icon dark left>keyboard_arrow_left</v-icon>Ant
+          </v-btn>
+          <v-btn class="v-btn-common" :color="color" @click="$refs.calendar.next()">
+            Prox
+            <v-icon right dark>keyboard_arrow_right</v-icon>
+          </v-btn>
+        </v-flex>
+        <v-flex xs12 md4>
+          <v-autocomplete
+            class="tag-input"
+            label="Tipo"
+            dense
+            chips
+            v-model="type"
+            :color="color"
+            :items="options"
+          ></v-autocomplete>
+        </v-flex>
+        <v-flex xs12 md4 class="text-xs-right">
+          <v-btn
+            class="v-btn-common"
+            :color="color"
+            @click="[modalStore.eventos.visible = true, this.eventoStore.evento = null]"
+          >Adicionar evento</v-btn>
+        </v-flex>
+      </v-layout>
 
       <v-flex xs12>
         <v-sheet height="550">
@@ -43,6 +46,7 @@
             :color="color"
             :now="today"
             :value="today"
+            @change="updateCalendar"
           >
             <template slot="day" slot-scope="{ date }">
               <template v-for="evento in eventsMap[date]">
@@ -271,8 +275,9 @@ export default {
         })
         .catch(showError);
     },
-    setToday() {
-      this.focus = this.today;
+    updateCalendar() {
+      // this.currentMes =
+      console.log(this.$refs.calendar);
     }
   },
   mounted() {

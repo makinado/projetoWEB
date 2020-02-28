@@ -45,7 +45,7 @@
                   </b-button>
                   <b-button
                     variant="secundary"
-                    @click.prevent="[modalStore.marcas.deleteMarca = true, produtoStore.marca = data.item]"
+                    @click.prevent="[confirmaExlusao = true, produtoStore.marca = data.item]"
                     class="mr-1"
                   >
                     <i class="fa fa-lg fa-trash"></i>
@@ -67,7 +67,7 @@
       </v-card>
     </v-dialog>
     <v-dialog
-      v-model="modalStore.marcas.deleteMarca"
+      v-model="confirmaExlusao"
       persistent
       max-width="500px"
       v-if="produtoStore.marca"
@@ -79,7 +79,7 @@
         <v-card-text>Excluir {{ produtoStore.marca.nome }} ?</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" flat @click="modalStore.marcas.deleteMarca = false">Fechar</v-btn>
+          <v-btn color="blue darken-1" flat @click="confirmaExlusao = false">Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
       </v-card>
@@ -114,6 +114,7 @@ export default {
         totalItems: 0
       },
       valid: true,
+      confirmaExlusao: false,
       nameRules: [
         v => !!v || "Nome é obrigatório",
         v => (!!v && v.length >= 3) || "Nome deve ter no mínimo 3 caracteres"
@@ -124,7 +125,7 @@ export default {
     "$store.state.modalStore.marcas.visible": function() {
       this.reset();
     },
-    "$store.state.modalStore.marcas.deleteMarca": function() {
+    "$store.state.confirmaExlusao": function() {
       this.reset();
     }
   },
@@ -194,7 +195,7 @@ export default {
         .delete(urlmarcas, this.marca)
         .then(() => {
           this.$toasted.global.defaultSuccess();
-          this.modalStore.marcas.deleteMarca = false;
+          this.confirmaExlusao = false;
 
           saveLog(
             new Date(),

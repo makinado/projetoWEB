@@ -82,7 +82,7 @@
                 <v-autocomplete
                   dense
                   :color="color"
-                  label="Documento do pagamento"
+                  label="Forma de pagamento"
                   v-model="pagamento.documento_baixa"
                   :items="financeiroStore.documentos"
                   no-data-text="Nenhum documento encontrado"
@@ -148,7 +148,15 @@
 import { VMoney } from "v-money";
 
 import axios from "axios";
-import { urlBD, showError, parseNumber, formatDate, saveLog } from "@/global";
+import {
+  urlBD,
+  showError,
+  parseNumber,
+  formatDate,
+  saveLog,
+  loadContas,
+  loadDocumentos
+} from "@/global";
 import { mapState } from "vuex";
 import { formatToBRL } from "brazilian-values";
 
@@ -175,12 +183,12 @@ export default {
     },
     "$store.state.modalStore.financeiro.conta.visible": function() {
       if (!this.modalStore.financeiro.conta.visible) {
-        // loadContas();
+        loadContas();
       }
     },
     "$store.state.modalStore.documentos.visible": function() {
       if (!this.modalStore.documentos.visible) {
-        // loadDocumentos();
+        loadDocumentos();
       }
     }
   },
@@ -236,55 +244,44 @@ export default {
         : "";
     },
     async loadTela(financ) {
-      let url = `${urlBD}/financeiro/Tela`;
+      loadContas();
+      loadDocumentos();
 
-      axios
-        .get(url)
-        .then(res => {
-          const tela = res.data;
+      if (!financ) return;
+      if (!Array.isArray(financ)) {
+        this.pagamento.id = financ.id;
+        this.pagamento.valor_pago = financ.valor_parcela;
+        this.pagamento.tipo_conta = financ.tipo_conta == "RECEBER" ? 2 : 1;
+        this.$refs.valor_pago.$el.getElementsByTagName(
+          "input"
+        )[0].value = this.pagamento.valor_pago;
+      } else {
+        this.financs = financ;
 
-          if (!Array.isArray(financ)) {
-            this.pagamento.id = financ.id;
-            this.pagamento.valor_pago = financ.valor_parcela;
-            this.pagamento.tipo_conta = financ.tipo_conta == "RECEBER" ? 2 : 1;
-            this.$refs.valor_pago.$el.getElementsByTagName(
-              "input"
-            )[0].value = this.pagamento.valor_pago;
-          } else {
-            this.financs = financ;
+        this.financs.map(item => {
+          this.valor += parseNumber(item.valor_parcela);
+          this.tipo_conta = item.tipo_conta == "RECEBER" ? 2 : 1;
+          return item;
+        });
 
-            this.financs.map(item => {
-              this.valor += parseNumber(item.valor_parcela);
-              this.tipo_conta = item.tipo_conta == "RECEBER" ? 2 : 1;
-              return item;
-            });
+        this.valor = formatToBRL(this.valor);
 
-            this.valor = formatToBRL(this.valor);
-
-            this.pagamento.tipo_conta = this.tipo_conta;
-            this.pagamento.valor_pago = this.valor;
-            this.$refs.valor_pago.$el.getElementsByTagName(
-              "input"
-            )[0].value = this.pagamento.valor_pago;
-          }
-
-          this.financeiroStore.documentos = tela.documentos;
-          this.financeiroStore.contas = tela.contas;
-        })
-        .catch(showError);
+        this.pagamento.tipo_conta = this.tipo_conta;
+        this.pagamento.valor_pago = this.valor;
+        this.$refs.valor_pago.$el.getElementsByTagName(
+          "input"
+        )[0].value = this.pagamento.valor_pago;
+      }
     },
-    async loadSaldoConta() {
+    loadSaldoConta() {
       const id = this.pagamento.id_conta;
 
       if (!id) return;
-      const url = `${urlBD}/conta/${id}`;
 
-      axios
-        .get(url)
-        .then(res => {
-          this.saldo = formatToBRL(res.data.saldo_atual);
-        })
-        .catch(showError);
+      this.saldo = formatToBRL(
+        this.financeiroStore.contas.find(conta => conta.value == id)
+          .saldo_atual || "0,00"
+      );
     },
     async save() {
       if (!this.$refs.form.validate()) return;

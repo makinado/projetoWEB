@@ -1,145 +1,179 @@
 <template>
-  <v-container fill-height fluid grid-list-xl>
-    <v-layout justify-center wrap>
-      <v-flex md12>
+  <v-container fluid grid-list-xl>
+    <v-layout wrap>
+      <v-flex xs12>
         <PageTitle
           main="Relatório de cadastros"
           icon="fa fa-archive"
-          sub="Emita relatórios dos cadastros"
+          sub="Gerencie os cadastros do sistema"
         />
-        <v-card class="p-3">
-          <v-card-title class="headline">Selecione as opções para emissão do relatório</v-card-title>
-          <v-card-text>
-            <v-form ref="form" v-model="valid">
-              <v-layout row wrap>
-                <v-flex xs12 md6>
-                  <v-autocomplete
-                    class="tag-input"
-                    multiple
-                    dense
-                    chips
-                    deletable-chips
+      </v-flex>
+      <v-flex xs12>
+        <Card :color="color" title="Selecione as opções para a emissão do relatório">
+          <v-form ref="form" v-model="valid">
+            <v-layout row wrap>
+              <v-flex xs12 md4>
+                <v-autocomplete
+                  class="tag-input"
+                  multiple
+                  dense
+                  chips
+                  deletable-chips
+                  :color="color"
+                  label="Selecione os cadastros"
+                  v-model="filter.cadastros"
+                  :items="cadastros"
+                  :rules="cadRules"
+                  :menu-props="{ maxHeight: '500' }"
+                  @change="loadCategorias"
+                ></v-autocomplete>
+              </v-flex>
+              <v-flex xs12 md2>
+                <v-autocomplete
+                  class="tag-input"
+                  dense
+                  chips
+                  deletable-chips
+                  :color="color"
+                  label="Categoria"
+                  v-model="filter.categoria"
+                  :items="categoriaStore.categorias"
+                  no-data-text="Filtro de categoria não permitido"
+                ></v-autocomplete>
+              </v-flex>
+              <v-flex xs12 md2>
+                <v-autocomplete
+                  class="tag-input"
+                  dense
+                  chips
+                  deletable-chips
+                  :color="color"
+                  label="Marca"
+                  v-model="filter.marca"
+                  :items="produtoStore.marcas"
+                  no-data-text="Filtro de marca não permitido"
+                ></v-autocomplete>
+              </v-flex>
+              <v-flex xs12 md2>
+                <v-autocomplete
+                  class="tag-input"
+                  dense
+                  chips
+                  deletable-chips
+                  :color="color"
+                  label="Unidade"
+                  v-model="filter.unidade"
+                  :items="produtoStore.unidades"
+                  no-data-text="Filtro de unidade não permitido"
+                ></v-autocomplete>
+              </v-flex>
+              <v-flex xs12 md2>
+                <v-autocomplete
+                  class="tag-input"
+                  dense
+                  chips
+                  deletable-chips
+                  :color="color"
+                  label="Ordenar por"
+                  v-model="filter.ordem"
+                  :items="ordens"
+                ></v-autocomplete>
+              </v-flex>
+            </v-layout>
+            <v-layout row wrap>
+              <v-flex xs12 md2>
+                <v-radio-group v-model="filter.data_type" :mandatory="false">
+                  <v-radio label="Data de inclusão" :color="color" value="data_criado"></v-radio>
+                  <v-radio label="Data de alteração" :color="color" value="data_atualizado"></v-radio>
+                </v-radio-group>
+              </v-flex>
+              <v-flex xs12 md2>
+                <v-menu
+                  v-model="menu"
+                  :close-on-content-click="false"
+                  :nudge-right="40"
+                  transition="scale-transition"
+                  offset-y
+                  full-width
+                  max-width="290px"
+                  min-width="290px"
+                >
+                  <template v-slot:activator="{ on }">
+                    <v-text-field
+                      :color="color"
+                      v-model="computedDateFormatted"
+                      label="Data inicial"
+                      prepend-icon="event"
+                      readonly
+                      v-on="on"
+                    ></v-text-field>
+                  </template>
+                  <v-date-picker
                     :color="color"
-                    label="Selecione os cadastros"
-                    v-model="filter.cadastros"
-                    :items="cadastros"
-                    :rules="cadRules"
-                    :menu-props="{ maxHeight: '500' }"
-                  ></v-autocomplete>
-                </v-flex>
-                <v-flex xs12 md2>
-                  <v-autocomplete
-                    class="tag-input"
-                    dense
-                    chips
-                    deletable-chips
+                    v-model="filter.data_inicial"
+                    @input="menu = false"
+                    locale="pt-br"
+                  ></v-date-picker>
+                </v-menu>
+              </v-flex>
+              <v-flex xs12 md2>
+                <v-menu
+                  v-model="menu1"
+                  :close-on-content-click="false"
+                  :nudge-right="40"
+                  transition="scale-transition"
+                  offset-y
+                  full-width
+                  max-width="290px"
+                  min-width="290px"
+                >
+                  <template v-slot:activator="{ on }">
+                    <v-text-field
+                      :color="color"
+                      v-model="computedDateFormatted1"
+                      label="Data final"
+                      prepend-icon="event"
+                      readonly
+                      v-on="on"
+                    ></v-text-field>
+                  </template>
+                  <v-date-picker
                     :color="color"
-                    label="Ordenar por"
-                    v-model="filter.ordem"
-                    :items="ordens"
-                  ></v-autocomplete>
-                </v-flex>
-              </v-layout>
-              <v-layout row wrap>
-                <v-flex xs12 md2>
-                  <v-radio-group v-model="filter.data_type" :mandatory="false">
-                    <v-radio label="Data de inclusão" :color="color" value="data_criado"></v-radio>
-                    <v-radio label="Data de alteração" :color="color" value="data_atualizado"></v-radio>
-                  </v-radio-group>
-                </v-flex>
-                <v-flex xs12 md2>
-                  <v-menu
-                    v-model="menu"
-                    :close-on-content-click="false"
-                    :nudge-right="40"
-                    transition="scale-transition"
-                    offset-y
-                    full-width
-                    max-width="290px"
-                    min-width="290px"
-                  >
-                    <template v-slot:activator="{ on }">
-                      <v-text-field
-                        :color="color"
-                        v-model="computedDateFormatted"
-                        label="Data inicial"
-                        prepend-icon="event"
-                        readonly
-                        v-on="on"
-                      ></v-text-field>
-                    </template>
-                    <v-date-picker
-                      :color="color"
-                      v-model="filter.data_inicial"
-                      @input="menu = false"
-                      locale="pt-br"
-                    ></v-date-picker>
-                  </v-menu>
-                </v-flex>
-                <v-flex xs12 md2>
-                  <v-menu
-                    v-model="menu1"
-                    :close-on-content-click="false"
-                    :nudge-right="40"
-                    transition="scale-transition"
-                    offset-y
-                    full-width
-                    max-width="290px"
-                    min-width="290px"
-                  >
-                    <template v-slot:activator="{ on }">
-                      <v-text-field
-                        :color="color"
-                        v-model="computedDateFormatted1"
-                        label="Data final"
-                        prepend-icon="event"
-                        readonly
-                        v-on="on"
-                      ></v-text-field>
-                    </template>
-                    <v-date-picker
-                      :color="color"
-                      v-model="filter.data_final"
-                      @input="menu1 = false"
-                      locale="pt-br"
-                    ></v-date-picker>
-                  </v-menu>
-                </v-flex>
-                <v-flex xs12 md4>
-                  <v-tooltip bottom>
-                    <v-btn
-                      slot="activator"
-                      class="v-btn-common"
-                      :color="color"
-                      @click="emit('pdf')"
-                      :loading="isLoading"
-                    >confirmar pdf</v-btn>
-                    <span>Confirma as opções e emite o relatório em PDF</span>
-                  </v-tooltip>
-                  <v-tooltip bottom>
-                    <v-btn
-                      slot="activator"
-                      class="v-btn-common"
-                      color="warning"
-                      @click="emit('csv')"
-                      :loading="isLoading"
-                    >confirmar csv</v-btn>
-                    <span>Confirma as opções e emite o relatório em CSV</span>
-                  </v-tooltip>
-                  <v-tooltip bottom>
-                    <v-btn
-                      slot="activator"
-                      class="v-btn-common"
-                      color="danger"
-                      @click="reset"
-                    >limpar</v-btn>
-                    <span>Limpa as opções selecionadas</span>
-                  </v-tooltip>
-                </v-flex>
-              </v-layout>
-            </v-form>
-          </v-card-text>
-        </v-card>
+                    v-model="filter.data_final"
+                    @input="menu1 = false"
+                    locale="pt-br"
+                  ></v-date-picker>
+                </v-menu>
+              </v-flex>
+              <v-flex xs12 md4>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    class="v-btn-common"
+                    :color="color"
+                    @click="emit('pdf')"
+                    :loading="isLoading"
+                  >confirmar pdf</v-btn>
+                  <span>Confirma as opções e emite o relatório em PDF</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    class="v-btn-common"
+                    color="warning"
+                    @click="emit('csv')"
+                    :loading="isLoading"
+                  >confirmar csv</v-btn>
+                  <span>Confirma as opções e emite o relatório em CSV</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn slot="activator" class="v-btn-common" color="danger" @click="reset">limpar</v-btn>
+                  <span>Limpa as opções selecionadas</span>
+                </v-tooltip>
+              </v-flex>
+            </v-layout>
+          </v-form>
+        </Card>
       </v-flex>
     </v-layout>
   </v-container>
@@ -152,7 +186,10 @@ import {
   showError,
   parseNumber,
   formatDate,
-  loadEmpresas
+  loadCategoriasPessoas,
+  loadCategoriasProdutos,
+  loadMarcas,
+  loadUnidades
 } from "@/global";
 import axios from "axios";
 
@@ -161,11 +198,17 @@ import { ExportToCsv } from "export-to-csv";
 export default {
   name: "cadastros",
   components: {
-    PageTitle: () => import("@/components/template/PageTitle")
+    PageTitle: () => import("@/components/template/PageTitle"),
+    Card: () => import("../material/Card")
   },
   computed: {
     ...mapState("app", ["color"]),
-    ...mapState(["usuarioStore", "empresaStore"]),
+    ...mapState([
+      "usuarioStore",
+      "empresaStore",
+      "produtoStore",
+      "categoriaStore"
+    ]),
     computedDateFormatted() {
       return formatDate(this.filter.data_inicial);
     },
@@ -174,7 +217,7 @@ export default {
     }
   },
   watch: {
-    "filter.cadastros": function() {
+    "filter.cadastros"() {
       if (
         this.filter.cadastros.includes("cliente") ||
         this.filter.cadastros.includes("fornecedor") ||
@@ -279,6 +322,7 @@ export default {
         { value: "logradouro", text: "Endereço" }
       ],
       valid: true,
+      categoriaVisible: true,
       menu: false,
       menu1: false,
       isLoading: false,
@@ -296,54 +340,39 @@ export default {
 
       this.$refs.form ? this.$refs.form.reset() : "";
     },
-    addHeadersFooters(doc) {
-      const pageCount = doc.internal.getNumberOfPages();
-
-      doc.setFont("helvetica", "italic");
-
-      for (var i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-
-        //cabeçalho
-        doc.setFontSize(8);
-        doc.text(
-          this.empresaStore.currentEmpresa.text || "ERRO NA EMPRESA",
-          40,
-          35
-        );
-        doc.setFontSize(12);
-        doc.text(
-          "Relatório de cadastros",
-          doc.internal.pageSize.width / 2 - 60,
-          20
-        );
-        doc.setFontSize(8);
-        const date = new Date();
-        doc.text(
-          date.toLocaleDateString() + " - " + date.toLocaleTimeString(),
-          doc.internal.pageSize.width - 120,
-          35
-        );
-
-        //rodapé
-        doc.text(this.usuarioStore.currentUsuario.nome, 40, 580);
-        doc.text(
-          String(i) + " de " + String(pageCount),
-          doc.internal.pageSize.width - 70,
-          580
-        );
+    loadCategorias() {
+      if (
+        this.filter.cadastros.includes("cliente") ||
+        this.filter.cadastros.includes("fornecedor") ||
+        this.filter.cadastros.includes("vendedor") ||
+        this.filter.cadastros.includes("funcionario") ||
+        this.filter.cadastros.includes("transportadora")
+      ) {
+        loadCategoriasPessoas();
+      } else {
+        this.categoriaStore.categorias = [];
+        if (this.filter.cadastros.includes("produto")) {
+          loadCategoriasProdutos();
+          loadMarcas();
+          loadUnidades();
+        } else {
+          this.categoriaStore.categorias = [];
+          this.produtoStore.marcas = [];
+          this.produtoStore.unidades = [];
+        }
       }
     },
+
     emit(type) {
       if (!this.$refs.form.validate() || !type) return;
 
       this.isLoading = true;
 
-      const url = `${urlBD}/rel_cadastros?ordem=${this.filter.ordem ||
-        ""}&cadastros=${this.filter.cadastros || ""}&data_type=${
-        this.filter.data_type
-      }&data_inicial=${this.filter.data_inicial || ""}&data_final=${this.filter
-        .data_final || ""}`;
+      const url = `${urlBD}/rel_cadastros?categoria=${this.filter.categoria ||
+        ""}&marca=${this.filter.marca || ""}&unidade=${this.filter.unidade ||
+        ""}&ordem=${this.filter.ordem || ""}&cadastros=${this.filter
+        .cadastros || ""}&data_type=${this.filter.data_type}&data_inicial=${this
+        .filter.data_inicial || ""}&data_final=${this.filter.data_final || ""}`;
 
       axios
         .post(url)
@@ -409,6 +438,45 @@ export default {
         return this;
       };
 
+      const addHeadersFooters = doc => {
+        const pageCount = doc.internal.getNumberOfPages();
+
+        doc.setFont("helvetica", "italic");
+
+        for (var i = 1; i <= pageCount; i++) {
+          doc.setPage(i);
+
+          //cabeçalho
+          doc.setFontSize(8);
+          doc.text(
+            this.empresaStore.currentEmpresa.text || "ERRO NA EMPRESA",
+            40,
+            35
+          );
+          doc.setFontSize(12);
+          doc.text(
+            "Relatório de cadastros",
+            doc.internal.pageSize.width / 2 - 60,
+            20
+          );
+          doc.setFontSize(8);
+          const date = new Date();
+          doc.text(
+            date.toLocaleDateString() + " - " + date.toLocaleTimeString(),
+            doc.internal.pageSize.width - 120,
+            35
+          );
+
+          //rodapé
+          doc.text(this.usuarioStore.currentUsuario.nome, 40, 580);
+          doc.text(
+            String(i) + " de " + String(pageCount),
+            doc.internal.pageSize.width - 70,
+            580
+          );
+        }
+      };
+
       var doc = new jsPDF("landscape", "pt", "a4"),
         pessoas_columns = [
           { title: "Código", dataKey: "id" },
@@ -430,6 +498,8 @@ export default {
           { title: "Código", dataKey: "id" },
           { title: "Descrição", dataKey: "descricao" },
           { title: "Categoria", dataKey: "categoria" },
+          { title: "Marca", dataKey: "marca" },
+          { title: "Unidade", dataKey: "unidade" },
           { title: "Valor unitário", dataKey: "valor_unitario" },
           { title: "Valor venda", dataKey: "valor_venda" },
           { title: "Valor custo", dataKey: "valor_custo_medio" }
@@ -461,7 +531,7 @@ export default {
         });
       }
 
-      this.addHeadersFooters(doc);
+      addHeadersFooters(doc);
       doc.save(
         "RelatorioDeCadastros_" +
           new Date()
@@ -510,13 +580,6 @@ export default {
         csvExporter.generateCsv(data.produtos);
       }
     }
-  },
-  mounted() {
-    loadEmpresas().then(_ => {
-      if (this.empresaStore.empresas.length === 1) {
-        this.filter.empresa = this.empresaStore.empresas[0].value;
-      }
-    });
   }
 };
 </script>

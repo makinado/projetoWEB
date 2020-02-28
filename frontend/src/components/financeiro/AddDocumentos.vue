@@ -63,7 +63,7 @@
                   </b-button>
                   <b-button
                     variant="secundary"
-                    @click.prevent="[modalStore.documentos.deleteDoc = true, financeiroStore.documento = data.item]"
+                    @click.prevent="[confirmaExlusao = true, financeiroStore.documento = data.item]"
                     class="mr-1"
                   >
                     <i class="fa fa-lg fa-trash"></i>
@@ -85,7 +85,7 @@
       </v-card>
     </v-dialog>
     <v-dialog
-      v-model="modalStore.documentos.deleteDoc"
+      v-model="confirmaExlusao"
       persistent
       max-width="500px"
       v-if="financeiroStore.documento"
@@ -97,7 +97,7 @@
         <v-card-text>Excluir {{ financeiroStore.documento.nome }} ?</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" flat @click="modalStore.documentos.deleteDoc = false">Fechar</v-btn>
+          <v-btn color="blue darken-1" flat @click="confirmaExlusao = false">Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
       </v-card>
@@ -109,8 +109,10 @@
 import { VMoney } from "v-money";
 
 import axios from "axios";
-import { urlBD, showError, formatDate } from "@/global";
+import { urlBD, showError, formatDate, saveLog } from "@/global";
 import { mapState } from "vuex";
+
+import { formatToBRL } from "brazilian-values";
 
 export default {
   directives: { money: VMoney },
@@ -119,7 +121,7 @@ export default {
     ...mapState("app", ["color"]),
     ...mapState(["financeiroStore", "usuarioStore", "modalStore"])
   },
-  data: function() {
+  data() {
     return {
       documento: {},
       fields: [
@@ -132,11 +134,12 @@ export default {
       pagination: {
         descending: false,
         page: 1,
-        rowsPerPage: 10, // -1 for All,
+        rowsPerPage: 20, // -1 for All,
         sortBy: "nome",
         totalItems: 0
       },
       valid: true,
+      confirmaExlusao: false,
       nameRules: [
         v => !!v || "Nome é obrigatório",
         v => (!!v && v.length >= 3) || "Nome deve ter no mínimo 3 caracteres"
@@ -153,7 +156,7 @@ export default {
     "$store.state.modalStore.documentos.visible": function() {
       this.reset();
     },
-    "$store.state.modalStore.documentos.deleteDoc": function() {
+    "$store.state.confirmaExlusao": function() {
       this.reset();
     }
   },
@@ -185,16 +188,15 @@ export default {
       }
     },
     loadDocumentos() {
-      console.log("load documentos");
       const url = `${urlBD}/documentos`;
       axios
         .get(url)
         .then(res => {
-          this.financeiroStore.documentos = res.data;
-          this.totalRows = this.financeiroStore.documentos.length;
-          this.financeiroStore.documentos.map(documento => {
-            documento.value = documento.id;
-            documento.text = documento.nome;
+          this.financeiroStore.documentos = res.data.map(item => {
+            item.perc_custo =
+              formatToBRL(item.perc_custo).replace("R$ ", "") + " %";
+
+            return item;
           });
         })
         .catch(showError);
@@ -206,24 +208,17 @@ export default {
       const id = this.documento.id ? this.documento.id : "";
       const urldocumentos = `${urlBD}/documentos/${id}`;
 
-      let data = new Date();
-      const hora = `${data.getHours()}:${data.getMinutes()}:${data.getSeconds()}`;
-      const log = {
-        id_usuario: this.usuarioStore.currentUsuario.id,
-        data: formatDate(data.toISOString().substr(0, 10)),
-        hora,
-        tipo: method === "post" ? "GRAVAÇÂO" : "ALTERAÇÃO",
-        tela: "DOCUMENTOS",
-        detalhe:
-          method === "post"
-            ? `documento adicionado: ${this.documento.nome}`
-            : `documento alterado: ${this.documento.id}-${this.documento.nome}`
-      };
-
       axios[method](urldocumentos, this.documento)
         .then(() => {
           this.$toasted.global.defaultSuccess();
-          axios.post(`${urlBD}/log`, log).catch(showError);
+          saveLog(
+            new Date(),
+            method === "post" ? "GRAVAÇÂO" : "ALTERAÇÃO",
+            "DOCUMENTOS",
+            method === "post"
+              ? `documento adicionado: ${this.documento.nome}`
+              : `documento alterado: ${this.documento.id}-${this.documento.nome}`
+          );
 
           this.reset();
         })
@@ -233,24 +228,18 @@ export default {
       const id = this.financeiroStore.documento.id;
       const urldocumentos = `${urlBD}/documentos/${id}`;
 
-      let data = new Date();
-      const hora = `${data.getHours()}:${data.getMinutes()}:${data.getSeconds()}`;
-      const log = {
-        id_usuario: this.usuarioStore.currentUsuario.id,
-        data: formatDate(data.toISOString().substr(0, 10)),
-        hora,
-        tipo: "EXCLUSÃO",
-        tela: "DOCUMENTOS",
-        detalhe: `documento excluído: ${this.documento.id}-${this.documento.nome}`
-      };
-
       axios
         .delete(urldocumentos, this.documento)
         .then(() => {
           this.$toasted.global.defaultSuccess();
-          axios.post(`${urlBD}/log`, log).catch(showError);
+          this.confirmaExlusao = false;
 
-          this.modalStore.documentos.deleteDoc = false;
+          saveLog(
+            new Date(),
+            "EXCLUSÃO",
+            "DOCUMENTOS",
+            `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu o documento ${item.nome}`
+          );
         })
         .catch(showError);
     }
