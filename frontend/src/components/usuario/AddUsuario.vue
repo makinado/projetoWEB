@@ -170,7 +170,7 @@
 </template>
 
 <script>
-import { urlBD, showError, formatDate, saveLog, loadEmpresas } from "@/global";
+import { urlBD, showError, formatDate, saveLog } from "@/global";
 import axios from "axios";
 import { mapState } from "vuex";
 
@@ -243,7 +243,7 @@ export default {
       this.tabIndex = "tab-1";
     },
     async loadTela(usuario) {
-      loadEmpresas();
+      this.$store.dispatch("loadEmpresas");
 
       if (!usuario) return;
       let url = `${urlBD}/usuarios`;

@@ -166,7 +166,7 @@
 <script>
 import { mapState } from "vuex";
 import axios from "axios";
-import { urlBD, showError, loadUsuarios } from "@/global";
+import { urlBD, showError } from "@/global";
 export default {
   name: "Chat",
   components: {
@@ -232,7 +232,7 @@ export default {
       this.$refs.supp_form ? this.$refs.supp_form.reset() : "";
     },
     loadUsuariosChat() {
-      loadUsuarios();
+      this.$store.dispatch("loadUsuarios");
       this.usuarios = this.usuarioStore.currentUsuarios.map(u => {
         if (u.value == this.usuarioStore.currentUsuario.id) {
           u.disabled = true;
@@ -245,7 +245,7 @@ export default {
     joinPrivate() {
       if (!this.message.receiver) return;
 
-      socket.emit("join private", {
+      this.$socket.emit("join private", {
         receiver: {
           id: this.message.receiver.id,
           nome: this.message.receiver.nome,
@@ -261,7 +261,7 @@ export default {
     },
     join() {
       if (!this.message.id_chat) return;
-      socket.emit("join", this.message.id_chat);
+      this.$socket.emit("join", this.message.id_chat);
       this.scrollToEnd();
     },
     sendPrivateMessage() {
@@ -283,7 +283,7 @@ export default {
         id_chat: this.message.id_chat
       };
       this.messages.push(new_message);
-      socket.emit("private chat message", new_message);
+      this.$socket.emit("private chat message", new_message);
       this.message.content = "";
       this.scrollToEnd();
     },
@@ -301,7 +301,7 @@ export default {
         id_chat: this.message.id_chat
       };
       this.messages.push(new_message);
-      socket.emit("chat message", new_message);
+      this.$socket.emit("chat message", new_message);
       this.message.content = "";
       this.scrollToEnd();
     },
@@ -340,26 +340,23 @@ export default {
     this.reset();
     this.loadUsuariosChat();
   },
-  created() {
-    socket.on("chat message", msg => {
+  sockets: {
+    chatMessage(msg) {
       this.messages.push(msg);
       this.notify();
-    });
-
-    socket.on("private chat message", msg => {
+    },
+    privateChatMessage(msg) {
       this.messages.push(msg);
       this.notify();
-    });
-
-    socket.on("online users", data => {
+    },
+    onlineUsers(data) {
       this.usuarioStore.usuariosOnline = data;
 
       this.loadUsuariosChat();
-    });
-
-    socket.on("join", msgs => {
+    },
+    join() {
       this.messages = msgs;
-    });
+    }
   }
 };
 </script>

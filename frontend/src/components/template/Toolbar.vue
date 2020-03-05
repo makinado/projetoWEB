@@ -75,7 +75,7 @@
 
 <script>
 import { mapState } from "vuex";
-import { usuarioKey, loadAtividades } from "@/global";
+import { usuarioKey } from "@/global";
 
 export default {
   computed: {
@@ -105,7 +105,7 @@ export default {
     },
     clickDrawerRight() {
       this.$store.state.drawerRight = !this.$store.state.drawerRight;
-      if (this.$store.state.drawerRight) loadAtividades();
+      if (this.$store.state.drawerRight) this.$store.dispatch("loadAtividades");
     },
     navigate(path, newTab) {
       if (newTab) {

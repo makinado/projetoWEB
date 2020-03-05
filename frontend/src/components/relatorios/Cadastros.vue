@@ -186,8 +186,6 @@ import {
   showError,
   parseNumber,
   formatDate,
-  loadCategoriasPessoas,
-  loadCategoriasProdutos,
   loadMarcas,
   loadUnidades
 } from "@/global";
@@ -348,13 +346,13 @@ export default {
         this.filter.cadastros.includes("funcionario") ||
         this.filter.cadastros.includes("transportadora")
       ) {
-        loadCategoriasPessoas();
+        this.$store.dispatch("loadCategoriasPessoas");
       } else {
         this.categoriaStore.categorias = [];
         if (this.filter.cadastros.includes("produto")) {
-          loadCategoriasProdutos();
-          loadMarcas();
-          loadUnidades();
+          this.$store.dispatch("loadCategoriasProdutos");
+          this.$store.dispatch("loadMarcas");
+          this.$store.dispatch("loadUnidades");
         } else {
           this.categoriaStore.categorias = [];
           this.produtoStore.marcas = [];

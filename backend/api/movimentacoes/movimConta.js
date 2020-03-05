@@ -30,25 +30,6 @@ module.exports = app => {
             .catch(e => res.status(500).send(e))
     }
 
-    const getTela = async (req, res) => {
-        if (req.params.id) {
-            var contas = await app.db('conta')
-                .join('empresas', 'conta.id_empresa', 'empresas.id')
-                .select('conta.id', 'conta.nome as conta', 'empresas.nome as empresa', 'saldo_atual')
-                .where({ 'conta.id': req.params.id })
-        }
-        var documentos = await app.db('documentos').select('id as value', 'nome as text').orderBy('nome')
-        var classificacoes = await app.db('classificacao').select('id as value', 'descricao as text', 'tipo').orderBy('descricao')
-
-        const tela = {
-            contas,
-            documentos,
-            classificacoes
-        }
-
-        res.json(tela)
-    }
-
     const getById = async (req, res) => {
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 10
@@ -92,5 +73,5 @@ module.exports = app => {
         }
     }
 
-    return { save, get, getById, getTela, remove }
+    return { save, get, getById, remove }
 }

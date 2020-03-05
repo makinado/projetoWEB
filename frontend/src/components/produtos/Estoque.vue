@@ -36,17 +36,6 @@
                                   no-data-text="Nenhum resultado"
                                   dense
                                   :color="color"
-                                  label="Empresa"
-                                  v-model="movim.id_empresa"
-                                  :items="empresaStore.empresas"
-                                  :rules="empresaRules"
-                                ></v-autocomplete>
-                              </v-flex>
-                              <v-flex xs12 md4>
-                                <v-autocomplete
-                                  no-data-text="Nenhum resultado"
-                                  dense
-                                  :color="color"
                                   label="Tipo de movimentação"
                                   v-model="movim.tipo_movimentacao"
                                   :items="tipoMovimItems"
@@ -321,14 +310,7 @@ import { VMoney } from "v-money";
 import { formatToBRL } from "brazilian-values";
 
 import axios from "axios";
-import {
-  urlBD,
-  showError,
-  moneyToNumber,
-  formatDate,
-  saveLog,
-  loadEmpresas
-} from "@/global";
+import { urlBD, showError, moneyToNumber, formatDate, saveLog } from "@/global";
 import { mapState } from "vuex";
 
 export default {
@@ -430,11 +412,6 @@ export default {
     async limpaTela() {
       this.reset();
       this.loadEstoque(this.produtoStore.produto);
-      loadEmpresas().then(_ => {
-        if (this.empresaStore.empresas.length === 1) {
-          this.movim.id_empresa = this.empresaStore.empresas[0].value;
-        }
-      });
     },
     async reset() {
       this.produto = {};
@@ -521,6 +498,9 @@ export default {
 
       let urlEstoque = `${urlBD}/movimEstoque/${this.produto.id}`;
       this.movim.id_produto = this.produtoStore.produto.id;
+
+      if (!this.movim.id_empresa)
+        this.movim.id_empresa = this.empresaStore.currentEmpresa;
 
       axios
         .post(urlEstoque, this.movim)

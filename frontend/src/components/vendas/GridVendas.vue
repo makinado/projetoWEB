@@ -129,7 +129,7 @@
               :color="color"
               v-model="filter.cliente"
               dense
-              :items="pessoaStore.pessoas"
+              :items="pessoaStore.clientes"
               clearable
             ></v-autocomplete>
           </v-layout>
@@ -280,7 +280,7 @@
           :color="color"
           v-model="filter.cliente"
           dense
-          :items="pessoaStore.pessoas"
+          :items="pessoaStore.clientes"
           clearable
         ></v-autocomplete>
 
@@ -327,13 +327,14 @@
             <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
           </td>
           <td>{{ data.item.id }}</td>
-          <td>{{ data.item.cliente }}</td>
-          <td>{{ data.item.pessoa }}</td>
           <td>
-            <v-chip :color="getColor(data.item.situacao)" dark>{{ data.item.situacao }}</v-chip>
+            <v-chip :color="getColor(data.item.tipo)" dark>{{ data.item.tipo }}</v-chip>
           </td>
+          <td>{{ data.item.cliente }}</td>
+          <td>{{ data.item.vendedor }}</td>
+          <td>{{ data.item.documento_fiscal }}</td>
           <td>{{ data.item.data_emissao | date }}</td>
-          <td>{{ data.item.valor_total |currency }}</td>
+          <td>{{ data.item.valor_total | currency }}</td>
           <td>
             <v-tooltip bottom>
               <b-button
@@ -350,7 +351,7 @@
               <b-button
                 slot="activator"
                 variant="secundary"
-                @click.prevent="[modalStore.vendas.vendas.deleteVenda = true,vendaStore.venda = data.item]"
+                @click.prevent="[confirmaExclusao = true,vendaStore.venda = data.item]"
                 class="mr-1"
               >
                 <i class="fa fa-lg fa-trash"></i>
@@ -373,7 +374,7 @@
     </Card>
 
     <v-dialog
-      v-model="modalStore.vendas.vendas.deleteVenda"
+      v-model="confirmaExclusao"
       persistent
       max-width="500px"
       v-if="vendaStore.venda"
@@ -388,7 +389,7 @@
           <v-btn
             color="blue darken-1"
             flat
-            @click="modalStore.vendas.vendas.deleteVenda = false"
+            @click="confirmaExclusao = false"
           >Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
@@ -399,7 +400,7 @@
 
 <script>
 import axios from "axios";
-import { urlBD, showError, formatDate, loadClientes } from "@/global";
+import { urlBD, showError, formatDate } from "@/global";
 import { mapState } from "vuex";
 
 import { formatToBRL } from "brazilian-values";
@@ -447,12 +448,14 @@ export default {
     return {
       valid: true,
       loading: true,
+      confirmaExclusao: false,
       itens_selecionados: [],
       fields: [
         { value: "id", text: "Código", sortable: true },
+        { value: "tipo", text: "Tipo", sortable: true },
         { value: "cliente", text: "Cliente", sortable: true },
         { value: "vendedor", text: "Vendedor", sortable: true },
-        { value: "situacao", text: "Situação", sortable: true },
+        { value: "documento_fiscal", text: "Documento fiscal", sortable: true },
         { value: "data_emissao", text: "Data emissão" },
         { value: "valor_total", text: "Valor total" },
         { value: "actions", text: "Ações" }
@@ -492,9 +495,11 @@ export default {
     };
   },
   methods: {
-    getColor(situacao) {
-      if (situacao === "CONCLUÍDO") return "green";
-      else if (situacao === "CANCELADO") return "red";
+    getColor(item) {
+      if (item == "CONCLUÍDO") return "green";
+      else if (item == "CANCELADO") return "red";
+      else if (item == "VENDA") return "green";
+      else if (item == "ORÇAMENTO") return "blue";
       else return "blue";
     },
     async loadVendas() {
@@ -539,7 +544,7 @@ export default {
             this.modalStore.vendas.deleteVenda = false;
             this.itens_selecionados = [];
 
-            this.loadPedidos();
+            this.loadVendas();
 
             saveLog(
               new Date(),
@@ -553,7 +558,7 @@ export default {
     }
   },
   mounted() {
-    loadClientes();
+    this.$store.dispatch("loadClientes");
   }
 };
 </script>

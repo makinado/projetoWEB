@@ -66,7 +66,7 @@ export default {
       if (res.data) {
         console.log(usuario);
         this.$store.commit("setUsuario", usuario);
-        socket.emit("login", usuario);
+        this.$socket.emit("login", usuario);
 
         axios
           .get(

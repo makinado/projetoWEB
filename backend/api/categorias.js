@@ -54,6 +54,7 @@ module.exports = app => {
     const getPessoa = async (req, res) => {
         try {
             const categoria = await app.db('categorias')
+                .select('id', 'descricao', 'id as value', 'descricao as text')
                 .where({ tipo: 1 })
                 .catch(e => res.status(500).send(e.toString()))
 
@@ -66,6 +67,7 @@ module.exports = app => {
     const getProduto = async (req, res) => {
         try {
             const categoria = await app.db('categorias')
+                .select('id', 'descricao', 'id as value', 'descricao as text')
                 .where({ tipo: 2 })
                 .catch(e => res.status(500).send(e.toString()))
 

@@ -139,7 +139,7 @@ module.exports = app => {
 
     const getAll = async (req, res) => {
         app.db('usuarios')
-            .select('id', 'nome', 'email', 'contato')
+            .select('id as value', 'nome as text')
             .then(usuarios => res.json(usuarios))
             .catch(e => res.status(500).send(e.toString()))
     }

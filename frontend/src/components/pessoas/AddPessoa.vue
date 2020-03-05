@@ -340,8 +340,8 @@
 
 <script>
 import axios from "axios";
-import { urlBD, showError, saveLog, loadCategoriasPessoas } from "@/global";
-import { mapState } from "vuex";
+import { urlBD, showError, saveLog } from "@/global";
+import { mapState, mapActions } from "vuex";
 
 import ViaCep from "vue-viacep";
 
@@ -451,7 +451,7 @@ export default {
         .catch(showError);
     },
     async loadTela(pessoa) {
-      loadCategoriasPessoas();
+      this.$store.dispatch("loadCategoriasPessoas");
 
       if (!pessoa) return;
       let url = `${urlBD}/pessoas`;

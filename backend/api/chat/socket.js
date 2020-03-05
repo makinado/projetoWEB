@@ -19,8 +19,7 @@ module.exports = (io, app) => {
 
     io.on('connection', (socket) => {
         const emitOnlineUsers = () => {
-            console.log(onlineUsers)
-            io.emit('online users', onlineUsers)
+            io.emit('onlineUsers', onlineUsers)
         }
 
         socket.on('login', user => {
@@ -74,7 +73,7 @@ module.exports = (io, app) => {
                 })
         })
 
-        socket.on('join private', (data) => {
+        socket.on('joinPrivate', (data) => {
             app.db('chat')
                 .select('id_usuario_origem', 'id_chat', 'mensagem', 'data')
                 .where({ id_usuario_destino: data.sender.id, id_usuario_origem: data.receiver.id })
@@ -96,7 +95,7 @@ module.exports = (io, app) => {
                 })
         })
 
-        socket.on('private chat message', async msg => {
+        socket.on('privateChatMessage', async msg => {
             const userReceiver = onlineUsers[msg.receiver.nome]
 
             const msg_bd = {
@@ -108,14 +107,14 @@ module.exports = (io, app) => {
             }
 
             await app.db('chat').insert(msg_bd)
-                .then(() => socket.to(userReceiver.socketId).broadcast.emit('private chat message', msg))
+                .then(() => socket.to(userReceiver.socketId).broadcast.emit('privateChatMessage', msg))
                 .catch(e => {
                     msg.content = e.message
-                    socket.emit('private chat message', msg)
+                    socket.emit('privateChatMessage', msg)
                 })
         })
 
-        socket.on('chat message', async msg => {
+        socket.on('chatMessage', async msg => {
             const msg_bd = {
                 id_usuario_origem: msg.user.id,
                 id_usuario_destino: msg.user.id_dest,
@@ -125,10 +124,10 @@ module.exports = (io, app) => {
             }
 
             await app.db('chat').insert(msg_bd)
-                .then(() => socket.to(msg.id_chat).broadcast.emit('chat message', msg))
+                .then(() => socket.to(msg.id_chat).broadcast.emit('chatMessage', msg))
                 .catch(e => {
                     msg.content = e.message
-                    socket.emit('chat message', msg)
+                    socket.emit('chatMessage', msg)
                 })
         });
     });

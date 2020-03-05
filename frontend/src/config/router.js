@@ -101,19 +101,19 @@ const routes = [{
     component: () => import('@/components/ajuda/MaterialApoio')
 }, {
     name: 'Relatório de cadastros',
-    path: "/cadastros",
+    path: "/rel_cadastros",
     component: () => import('@/components/relatorios/Cadastros')
 }, {
     name: 'Relatório de compras',
-    path: "/compras",
+    path: "/rel_compras",
     component: () => import('@/components/relatorios/Compras')
 }, {
     name: 'Relatório de vendas',
-    path: "/vendas",
+    path: "/rel_vendas",
     component: () => import('@/components/relatorios/Vendas')
 }, {
     name: 'Relatório de estoque',
-    path: "/estoque",
+    path: "/rel_estoque",
     component: () => import('@/components/relatorios/Estoque')
 }, {
     name: 'Relatório financeiro',
@@ -121,7 +121,7 @@ const routes = [{
     component: () => import('@/components/relatorios/Financeiro')
 }, {
     name: 'Relatório estatístico',
-    path: "/estat",
+    path: "/rel_estat",
     component: () => import('@/components/relatorios/Estatisticas')
 }, {
     name: 'Page not Found',

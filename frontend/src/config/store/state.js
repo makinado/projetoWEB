@@ -6,8 +6,8 @@ export default {
   TemplateVisible: false,
   isLoading: false,
   dialogLoading: false,
-  atividades: [],
   notificacoes: [],
+  sockets: [],
   empresaStore: {
     currentEmpresa: null,
     currentEmpresas: [],
@@ -33,6 +33,10 @@ export default {
   pessoaStore: {
     pessoa: null,
     pessoas: [],
+
+    clientes: [],
+    fornecedores: [],
+    transportadoras: [],
 
     metas: [],
     meta: null,
@@ -92,6 +96,8 @@ export default {
 
     conta: null,
     contas: [],
+
+    bancos: [],
 
     movimento_conta: [],
     movim: null,

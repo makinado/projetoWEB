@@ -3,10 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "lint": "eslint",
-    "serve": "node index.js",
     "start": "nodemon",
-    "test": "mocha './tests/testPessoas.js'"
+    "production": "pm2 start index.js --name campag-backend"
   },
   "engines": {
     "node": "8"

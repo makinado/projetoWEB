@@ -148,15 +148,7 @@
 import { VMoney } from "v-money";
 
 import axios from "axios";
-import {
-  urlBD,
-  showError,
-  parseNumber,
-  formatDate,
-  saveLog,
-  loadContas,
-  loadDocumentos
-} from "@/global";
+import { urlBD, showError, parseNumber, formatDate, saveLog } from "@/global";
 import { mapState } from "vuex";
 import { formatToBRL } from "brazilian-values";
 
@@ -244,8 +236,8 @@ export default {
         : "";
     },
     async loadTela(financ) {
-      loadContas();
-      loadDocumentos();
+      this.$store.dispatch("loadContas");
+      this.$store.dispatch("loadDocumentos");
 
       if (!financ) return;
       if (!Array.isArray(financ)) {

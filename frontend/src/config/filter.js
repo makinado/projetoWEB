@@ -11,13 +11,13 @@ Vue.filter('currency', value => {
 Vue.filter('decimal', value => {
     if (!value) return "0,00"
 
-    return "" + value.toLocaleString()
+    return formatToBRL(value).replace('R$', '')
 })
 
 Vue.filter('percent', value => {
     if (!value) return "0,00 %"
 
-    return value.toLocaleString() + ' %'
+    return formatToBRL(value).replace('R$', '') + " %"
 })
 
 Vue.filter('date', value => {

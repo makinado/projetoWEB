@@ -18,30 +18,31 @@ module.exports = app => {
             existsOrError(compra.data_notafiscal, 'Informe a data da nota fiscal')
             existsOrError(compra.data_lancamento, 'Informe a data de lançamento')
 
-            existsOrError(compra.produtos, 'Informe os produtos do compra')
+            existsOrError(compra.produtos, 'Informe os produtos da compra')
             existsOrError(compra.financeiro, 'Informe a(s) parcela(s) da compra')
 
-            produtos.map(prods => {
-                try {
-                    if (prods.quantidade == "0,00") throw `Quantidade do produto ${prod.sequencia} não informada`
-                    if (prods.valor_unitario == "R$ 0,00") throw `Valor unitário do produto ${prod.sequencia} não informado`
-                } catch (e) {
-                    return res.status(400).send(e.toString())
+            var teste_produto = null
+            for (let i = 0; i < compra.produtos.length; i++) {
+                if (compra.produtos[i].quantidade == "0,00" || compra.produtos[i].valor_compra == "R$ 0,00") {
+                    teste_produto = compra.produtos[i];
+                    break;
                 }
-            })
+            }
+            if (teste_produto) {
+                return res.status(400).send(`Produto ${teste_produto.sequencia} com quantidade ou valor de compra zerado, verifique.`)
+            }
 
-            financeiro.map(financ => {
-                existsOrError(financ.data_vencimento, 'Data de vencimento da conta não informada')
-                try {
-                    if (financ.pago) {
-                        existsOrError(financ.id_conta, 'Conta para pagamento não informada')
-                        existsOrError(financ.data_baixa, 'Data do pagamento não informada')
-                        if (financ.valor_pago == "R$ 0,00") throw "Valor do pagamento não informado"
-                    }
-                } catch (e) {
-                    return res.status(400).send(e.toString())
+            var teste_financeiro = null
+            for (let i = 0; i < compra.financeiro.length; i++) {
+                if (compra.financeiro[i].pago &&
+                    (!compra.financeiro[i].id_conta || !compra.financeiro[i].data_baixa || compra.financeiro[i].valor_pago == "R$ 0,00")) {
+                    teste_financeiro = compra.financeiro[i];
+                    break;
                 }
-            })
+            }
+            if (teste_financeiro) {
+                return res.status(400).send(`Parcela ${teste_financeiro.parcelas} com dados de pagamento incorretos, verifique`)
+            }
         } catch (e) {
             return res.status(400).send(e.toString())
         }
@@ -72,12 +73,10 @@ module.exports = app => {
                         .where({ id: compra.id })
                         .transacting(trx)
                         .then(async function () {
-                            const movim_estoque = []
-
                             await app.db('produto_compra').where({ id_compra: compra.id }).delete()
                             await app.db('produto_movimento_estoque').where({ id_movimentacao: compra.id }).delete()
-                            // await app.db('financeiro').where({ id_movimentacao: compra.id }).delete()
 
+                            const movim_estoque = []
                             produtos = await produtos.map(produto => {
                                 const newProd = {
                                     id_compra: compra.id,
@@ -107,7 +106,9 @@ module.exports = app => {
                                 return newProd
                             })
                             await app.db('financeiro').where({ id_movimento_origem: compra.id }).delete()
+                            await app.db('conta_movimento').where({ id_movimento_origem: compra.id }).delete()
 
+                            const movim_conta = []
                             financeiro = financeiro.map(parcela => {
                                 const newFinanc = {
                                     id_empresa: compra.id_empresa,
@@ -118,8 +119,9 @@ module.exports = app => {
                                     parcela: parcela.parcelas,
                                     observacao: compra.observacao,
 
-                                    valor_parcela: parseNumber(parcela.valor || "0,00"),
-                                    valor_total: compra.valor_total || "0,00",
+                                    valor_parcela: parseNumber(parcela.valor_parcela || "0,00"),
+                                    valor_pago: parseNumber(parcela.valor_pago || "0,00"),
+                                    valor_total: compra.valor_total,
 
                                     documento_origem: parcela.documento_origem,
                                     num_documento_origem: compra.nota_fiscal,
@@ -128,6 +130,20 @@ module.exports = app => {
                                     data_emissao: compra.data_lancamento,
                                     data_vencimento: parcela.data
                                 }
+                                if (newFinanc.pago)
+                                    movim_conta.push({
+                                        id_empresa: compra.id_empresa,
+                                        id_conta: parcela.id_conta,
+                                        id_movimento_origem: compra.id,
+                                        data_lancamento: new Date(),
+                                        data_emissao: compra.data_lancamento,
+                                        id_documento: parcela.documento_origem,
+                                        num_documento: compra.nota_fiscal,
+                                        observacao: compra.observacao,
+                                        origem: "GERADO",
+                                        dc: 'D',
+                                        valor: parcela.valor_pago
+                                    })
 
                                 return newFinanc
                             })
@@ -140,6 +156,10 @@ module.exports = app => {
                                         .then(function () {
                                             return app.db.batchInsert('financeiro', financeiro)
                                                 .transacting(trx)
+                                                .then(function () {
+                                                    return app.db.batchInsert('conta_movimento', movim_conta)
+                                                        .transacting(trx)
+                                                })
                                         })
                                 })
 
@@ -189,6 +209,7 @@ module.exports = app => {
                                 return newProd
                             })
 
+                            const movim_conta = []
                             financeiro = financeiro.map(parcela => {
                                 const newFinanc = {
                                     id_empresa: compra.id_empresa,
@@ -199,7 +220,8 @@ module.exports = app => {
                                     parcela: parcela.parcelas,
                                     observacao: compra.observacao,
 
-                                    valor_parcela: parseNumber(parcela.valor || "0,00"),
+                                    valor_parcela: parseNumber(parcela.valor_parcela || "0,00"),
+                                    valor_pago: parseNumber(parcela.valor_pago || "0,00"),
                                     valor_total: compra.valor_total || "0,00",
 
                                     documento_origem: parcela.documento_origem,
@@ -209,6 +231,20 @@ module.exports = app => {
                                     data_emissao: compra.data_lancamento,
                                     data_vencimento: parcela.data
                                 }
+                                if (newFinanc.pago)
+                                    movim_conta.push({
+                                        id_empresa: compra.id_empresa,
+                                        id_conta: parcela.id_conta,
+                                        id_movimento_origem: compra.id,
+                                        data_lancamento: new Date(),
+                                        data_emissao: compra.data_lancamento,
+                                        id_documento: parcela.documento_origem,
+                                        num_documento: compra.nota_fiscal,
+                                        observacao: compra.observacao,
+                                        origem: "GERADO",
+                                        dc: 'D',
+                                        valor: parseNumber(parcela.valor_pago)
+                                    })
 
                                 return newFinanc
                             })
@@ -221,6 +257,10 @@ module.exports = app => {
                                         .then(function () {
                                             return app.db.batchInsert('financeiro', financeiro)
                                                 .transacting(trx)
+                                                .then(function () {
+                                                    return app.db.batchInsert('conta_movimento', movim_conta)
+                                                        .transacting(trx)
+                                                })
                                         })
                                 })
 
@@ -347,7 +387,7 @@ module.exports = app => {
                 compra.financeiro = await app.db('financeiro as f')
                     .select(
                         'f.id',
-                        'f.parcela',
+                        'f.parcela as parcelas',
                         'f.valor_parcela',
                         'f.pago',
                         'f.observacao',
@@ -371,15 +411,22 @@ module.exports = app => {
                         .where({ id_compra: req.params.id }).delete()
                         .transacting(trx)
                         .then(function () {
-                            return app.db('financeiro')
-                                .where({ id_movimento_origem: req.params.id }).delete()
+                            return app.db('produto_movimento_estoque')
+                                .where({ id_movimentacao: req.params.id }).delete()
                                 .transacting(trx)
                                 .then(function () {
-                                    return app.db('produto_movimento_estoque')
-                                        .where({ id_movimentacao: req.params.id }).delete()
+                                    return app.db('financeiro')
+                                        .where({ id_movimento_origem: req.params.id }).delete()
                                         .transacting(trx)
+                                        .then(function () {
+                                            return app.db('conta_movimento')
+                                                .where({ id_movimento_origem: req.params.id }).delete()
+                                                .transacting(trx)
+                                        })
+
                                 })
                         })
+
                 })
                 .then(trx.commit)
                 .catch(trx.rollback);

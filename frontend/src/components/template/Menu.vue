@@ -163,6 +163,33 @@
               </v-list-tile>
             </v-list-group>
 
+            <v-list-group :key="fiscais.title" no-action>
+              <template slot="activator">
+                <v-list-tile>
+                  <v-list-tile-action>
+                    <v-icon>{{ fiscais.icon }}</v-icon>
+                  </v-list-tile-action>
+                  <v-list-tile-content>
+                    <v-list-tile-title>{{ fiscais.title }}</v-list-tile-title>
+                  </v-list-tile-content>
+                </v-list-tile>
+              </template>
+
+              <v-list-tile
+                v-for="item in fiscais.items"
+                :key="item.title"
+                :to="item.link"
+                :active-class="color"
+              >
+                <v-list-tile-action>
+                  <v-icon>{{ item.icon }}</v-icon>
+                </v-list-tile-action>
+                <v-list-tile-content>
+                  <v-list-tile-title>{{ item.title }}</v-list-tile-title>
+                </v-list-tile-content>
+              </v-list-tile>
+            </v-list-group>
+
             <v-list-group :key="relatorios.title" no-action>
               <template slot="activator">
                 <v-list-tile>
@@ -293,7 +320,7 @@
 
         <v-divider />
 
-        <v-list-tile avatar v-for="(item, index) in atividades" :key="index">
+        <v-list-tile avatar v-for="(item, index) in atividadeStore.atividades" :key="index">
           <v-list-tile-avatar color="white">
             <v-img v-if="item.usuario.img" :src="`${urlBD}/${item.usuario.img}`" height="40" />
             <v-icon v-else class="text-light">fa fa-user fa-lg</v-icon>
@@ -323,18 +350,6 @@
         </v-list-tile>
       </v-layout>
     </v-navigation-drawer>
-
-    <v-dialog v-model="confirmar" lazy max-width="500">
-      <v-card>
-        <v-img height="200px" :src="`${urlBD}/uploads/img/ConfirmaPDV.jfif`"></v-img>
-        <v-card-title class="align-end fill-height">Iniciar módulo de frente de caixa?</v-card-title>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" flat @click="confirmar = false">Cancelar</v-btn>
-          <v-btn color="blue darken-1" flat @click>Confirmar</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 
@@ -347,7 +362,7 @@ import { urlBD, showError } from "@/global";
 export default {
   computed: {
     ...mapState("app", ["image", "color"]),
-    ...mapState(["usuarioStore", "atividades"])
+    ...mapState(["usuarioStore", "atividadeStore"])
   },
   data() {
     return {
@@ -464,6 +479,36 @@ export default {
           }
         ]
       },
+      fiscais: {
+        title: "Fiscal",
+        icon: "fa fa-file-text-o",
+        items: [
+          {
+            title: "NF-e",
+            icon: "fa fa-file-o",
+            link: "/",
+            visible: false
+          },
+          {
+            title: "NFC-e",
+            icon: "fa fa-files-o",
+            link: "/",
+            visible: false
+          },
+          {
+            title: "SAT-e",
+            icon: "fa fa-signal",
+            link: "/",
+            visible: false
+          },
+          {
+            title: "MDF-e",
+            icon: "fa fa-truck",
+            link: "/",
+            visible: false
+          }
+        ]
+      },
       relatorios: {
         title: "Relatórios",
         icon: "fa fa-line-chart",
@@ -471,25 +516,25 @@ export default {
           {
             title: "Cadastros",
             icon: "fa fa-archive ",
-            link: "/cadastros",
+            link: "/rel_cadastros",
             visible: false
           },
           {
             title: "Compras",
             icon: "fa fa-cart-arrow-down",
-            link: "/compras",
+            link: "/rel_compras",
             visible: false
           },
           {
             title: "Vendas",
             icon: "fa fa-shopping-cart",
-            link: "/vendas",
+            link: "/rel_vendas",
             visible: false
           },
           {
             title: "Estoque",
             icon: "fa fa-th",
-            link: "/estoque",
+            link: "/rel_estoque",
             visible: false
           },
           {
@@ -501,7 +546,7 @@ export default {
           {
             title: "Estatísticas",
             icon: "fa fa-line-chart",
-            link: "/estat",
+            link: "/rel_estat",
             visible: false
           }
         ]

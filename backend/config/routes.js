@@ -121,7 +121,10 @@ module.exports = app => {
     app.route('/pessoas/fornecedores')
         .all(app.config.passport.authenticate())
         .get(app.api.pessoas.pessoas.getFornecs)
-    app.route('/pessoas/todos')
+    app.route('/pessoas/transportadoras')
+        .all(app.config.passport.authenticate())
+        .get(app.api.pessoas.pessoas.getTransps)
+    app.route('/pessoas/todas')
         .all(app.config.passport.authenticate())
         .get(app.api.pessoas.pessoas.getAll)
     app.route('/pessoas')
@@ -160,23 +163,23 @@ module.exports = app => {
         .delete(app.api.categorias.remove)
 
 
+    app.route('/produtos/todos')
+        .all(app.config.passport.authenticate())
+        .get(app.api.produtos.produtos.getAll)
     app.route('/produtos')
         .all(app.config.passport.authenticate())
         .post(app.api.produtos.produtos.save)
         .get(app.api.produtos.produtos.get)
-    app.route('/produtos/estoque')
-        .all(app.config.passport.authenticate())
-        .get(app.api.produtos.produtos.getWithEstoque)
     app.route('/produtos/:id')
         .all(app.config.passport.authenticate())
         .put(app.api.produtos.produtos.save)
         .get(app.api.produtos.produtos.getById)
         .delete(app.api.produtos.produtos.remove)
-    app.route('/produtosPorCategoria/:id_categoria')
+
+
+    app.route('/marcas/todas')
         .all(app.config.passport.authenticate())
-        .get(app.api.produtos.produtos.getByCategoria)
-
-
+        .get(app.api.produtos.produtoMarcas.getAll)
     app.route('/marcas')
         .all(app.config.passport.authenticate())
         .post(app.api.produtos.produtoMarcas.save)
@@ -184,8 +187,10 @@ module.exports = app => {
     app.route('/marcas/:id')
         .all(app.config.passport.authenticate())
         .put(app.api.produtos.produtoMarcas.save)
-        .get(app.api.produtos.produtoMarcas.getById)
         .delete(app.api.produtos.produtoMarcas.remove)
+    app.route('/unidades/todas')
+        .all(app.config.passport.authenticate())
+        .get(app.api.produtos.produtoUnidade.getAll)
     app.route('/unidades')
         .all(app.config.passport.authenticate())
         .post(app.api.produtos.produtoUnidade.save)
@@ -382,6 +387,9 @@ module.exports = app => {
         .get(app.api.financeiro.classificacoes.getById)
         .delete(app.api.financeiro.classificacoes.remove)
 
+    app.route('/documentos/todos')
+        .all(app.config.passport.authenticate())
+        .get(app.api.financeiro.documentos.getAll)
     app.route('/documentos')
         .all(app.config.passport.authenticate())
         .post(app.api.financeiro.documentos.save)
@@ -393,9 +401,12 @@ module.exports = app => {
         .delete(app.api.financeiro.documentos.remove)
 
 
-    app.route('/conta/todos')
+    app.route('/conta/todas')
         .all(app.config.passport.authenticate())
         .get(app.api.financeiro.conta.getAll)
+    app.route('/conta/bancos')
+        .all(app.config.passport.authenticate())
+        .get(app.api.financeiro.conta.getBancos)
     app.route('/conta')
         .all(app.config.passport.authenticate())
         .post(app.api.financeiro.conta.save)
@@ -419,6 +430,9 @@ module.exports = app => {
         .delete(app.api.vendas.vendas.remove)
 
 
+    app.route('/tabelas/todas')
+        .all(app.config.passport.authenticate())
+        .get(app.api.vendas.tabelas.getAll)
     app.route('/tabelas')
         .all(app.config.passport.authenticate())
         .post(app.api.vendas.tabelas.save)

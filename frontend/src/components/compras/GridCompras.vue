@@ -132,7 +132,7 @@
               :color="color"
               v-model="filter.fornecedor"
               dense
-              :items="pessoaStore.pessoas"
+              :items="pessoaStore.fornecedores"
               clearable
             ></v-autocomplete>
           </v-layout>
@@ -278,7 +278,7 @@
           :color="color"
           v-model="filter.fornecedor"
           dense
-          :items="pessoaStore.pessoas"
+          :items="pessoaStore.fornecedores"
           clearable
         ></v-autocomplete>
 
@@ -405,7 +405,7 @@
 
 <script>
 import axios from "axios";
-import { urlBD, showError, formatDate, loadFornecs, saveLog } from "@/global";
+import { urlBD, showError, formatDate, saveLog } from "@/global";
 import { mapState } from "vuex";
 
 import { formatToBRL } from "brazilian-values";
@@ -580,7 +580,7 @@ export default {
     }
   },
   mounted() {
-    loadFornecs();
+    this.$store.dispatch('loadFornecs')
   }
 };
 </script>

@@ -97,6 +97,21 @@ module.exports = app => {
             .catch(e => res.status(500).send(e.toString()))
     }
 
+    const getBancos = async (req, res) => {
+        FebrabanBanks.getBanks().then(data => {
+            data = data.map(banco => {
+                delete Object.assign(banco, { ['value']: Number(banco['code']) })['code'];
+                delete Object.assign(banco, { ['text']: banco['name'] })['name'];
+
+                return banco
+            })
+
+            res.json(data)
+
+        }).catch(e => res.status(500).send(e.toString()))
+
+    }
+
     const remove = async (req, res) => {
         try {
             const conta = await app.db('conta')
@@ -110,5 +125,5 @@ module.exports = app => {
         }
     }
 
-    return { save, get, getAll, getById, remove }
+    return { save, get, getAll, getById, getBancos, remove }
 }

@@ -96,7 +96,7 @@
                     </v-layout>
                     <v-divider class="mb-4" />
                   </v-flex>
-                  <v-flex xs12 v-show="!showForgotPassword">
+                  <v-flex xs12 v-show="!showForgotPassword && showSignup">
                     <v-layout align-center justify-center>
                       <v-btn color="#4267B2" dark large @click="socialLogin('facebook')">
                         <v-icon class="mr-2">fa fa-facebook</v-icon>
@@ -171,7 +171,7 @@ export default {
     afterSignIn(usuario) {
       this.$store.commit("setUsuario", usuario);
       localStorage.setItem(usuarioKey, JSON.stringify(usuario));
-      socket.emit("login", usuario);
+      this.$socket.emit("login", usuario);
 
       axios.get(`${urlBD}/usuarioEmpresas/${usuario.id}`).then(res => {
         this.empresaStore.currentEmpresas = res.data;
@@ -209,10 +209,7 @@ export default {
         .then(data => {
           console.log(data.user);
         })
-        .catch(e => {
-          if (e.code == "auth/weak-password")
-            return showError("Senha muito fraca");
-        })
+        .catch(showError)
         .then(() => (this.isLoading = false));
 
       // this.usuario.id_perfil = 1;

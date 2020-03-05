@@ -42,6 +42,13 @@ module.exports = app => {
             .catch(e => res.status(500).send(e.toString()))
     }
 
+    const getAll = async (req, res) => {
+        app.db('unidades')
+            .select('id as value', 'descricao as text')
+            .then(unidades => res.json(unidades))
+            .catch(e => res.status(500).send(e.toString()))
+    }
+
     const remove = async (req, res) => {
         try {
             const exclusao = await app.db('unidades')
@@ -54,5 +61,5 @@ module.exports = app => {
         }
     }
 
-    return { save, get, remove }
+    return { save, get, getAll, remove }
 }

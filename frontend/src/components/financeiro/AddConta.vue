@@ -41,8 +41,8 @@
                   dense
                   :color="color"
                   label="Selecione o banco*"
-                  v-model="conta.banco"
-                  :items="banks"
+                  v-model="banco"
+                  :items="financeiroStore.bancos"
                   return-object
                 ></v-autocomplete>
               </v-flex>
@@ -75,7 +75,12 @@
 
 <script>
 import axios from "axios";
-import { urlBD, showError, formatDate, loadEmpresas, saveLog } from "@/global";
+import {
+  urlBD,
+  showError,
+  formatDate,
+  saveLog
+} from "@/global";
 import { mapState } from "vuex";
 import { formatToBRL } from "brazilian-values";
 
@@ -100,6 +105,7 @@ export default {
   data() {
     return {
       conta: {},
+      banco: {},
       banks: [],
       isBank: false,
       valid: true,
@@ -114,43 +120,28 @@ export default {
     async limpaTela() {
       this.reset();
       this.loadTela(this.financeiroStore.conta);
-      loadEmpresas().then(_ => {
-        if (this.empresaStore.empresas.length === 1) {
-          this.conta.id_empresa = this.empresaStore.empresas[0].value;
-        }
-      });
     },
     async reset() {
       this.conta = {};
+      this.banco = {};
       this.isBank = false;
       this.$refs.form ? this.$refs.form.reset() : "";
     },
     async loadTela(conta) {
-      let url = `${urlBD}/conta/tela`;
-      if (!conta) {
-        axios
-          .get(`${url}`)
-          .then(res => {
-            const tela = res.data;
+      this.$store.dispatch("loadEmpresas");
+      this.$store.dispatch("loadBancos");
 
-            this.banks = tela.banks;
-          })
-          .catch(showError);
-      } else if (conta.id) {
+      if (!conta) return;
+      let url = `${urlBD}/conta`;
+      if (conta.id) {
         axios
           .get(`${url}/${conta.id}`)
           .then(res => {
-            const tela = res.data;
-
-            this.conta = tela.conta;
-            this.banks = tela.banks;
+            this.conta = res.data;
 
             if (this.conta.cod_banco) {
               this.isBank = true;
-              this.conta.banco = {
-                value: this.conta.cod_banco,
-                text: this.conta.nome_banco
-              };
+              this.banco = this.conta.cod_banco;
             }
           })
           .catch(showError);
@@ -164,9 +155,8 @@ export default {
       const url = `${urlBD}/conta/${id}`;
 
       if (this.isBank) {
-        this.conta.cod_banco = this.conta.banco.value;
-        this.conta.nome_banco = this.conta.banco.text.split("-")[1];
-        delete this.conta.banco;
+        this.conta.cod_banco = this.banco.value;
+        this.conta.nome_banco = this.banco.text.split("-")[1];
       }
 
       axios[method](url, this.conta)

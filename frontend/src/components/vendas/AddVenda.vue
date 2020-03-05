@@ -38,31 +38,21 @@
                 ></v-autocomplete>
               </v-flex>
               <v-flex xs12 md3>
-                <v-combobox
+                <v-autocomplete
                   class="tag-input"
                   dense
                   :color="color"
                   chips
                   deletable-chips
                   label="Cliente*"
-                  :items="pessoaStore.pessoas"
+                  :items="pessoaStore.clientes"
+                  no-data-text="Nenhum cliente cadastrado"
                   prepend-icon="fa fa-lg fa-plus-circle"
                   @click:prepend="[pessoaStore.pessoa = null, modalStore.pessoas.visible = true, modalStore.pessoas.title = 'Adicionar pessoa']"
                   v-model="venda.id_pessoa"
-                  :search-input.sync="clienteFilter"
                   @change="loadCliente"
                   :rules="clienteRules"
-                >
-                  <template v-slot:no-data>
-                    <v-list-tile>
-                      <v-list-tile-title>
-                        Nenhum resultado para "
-                        <strong>{{ clienteFilter }}</strong>". Pressione
-                        <kbd>Enter</kbd> para continuar.
-                      </v-list-tile-title>
-                    </v-list-tile>
-                  </template>
-                </v-combobox>
+                ></v-autocomplete>
               </v-flex>
               <v-spacer></v-spacer>
               <v-flex xs12 md4>
@@ -77,10 +67,6 @@
                     <span>Volta a tela ao seu estado inicial</span>
                   </v-tooltip>
                   <v-tooltip bottom>
-                    <v-btn slot="activator" class="v-btn-common" color="info">Confirmar venda</v-btn>
-                    <span>Finaliza o orçamento e gera a venda</span>
-                  </v-tooltip>
-                  <v-tooltip bottom>
                     <v-btn
                       slot="activator"
                       class="v-btn-common"
@@ -88,7 +74,7 @@
                       :color="color"
                       @click="save"
                     >Salvar</v-btn>
-                    <span>Finaliza o orçamento</span>
+                    <span>Finaliza o orçamento/venda</span>
                   </v-tooltip>
                 </v-layout>
               </v-flex>
@@ -172,7 +158,7 @@
                                 ></v-date-picker>
                               </v-menu>
                             </v-flex>
-                            <v-flex xs12>
+                            <v-flex xs12 md6>
                               <v-autocomplete
                                 class="tag-input"
                                 chips
@@ -186,7 +172,7 @@
                                 :rules="vendedorRules"
                               ></v-autocomplete>
                             </v-flex>
-                            <v-flex xs12>
+                            <v-flex xs12 md6>
                               <v-autocomplete
                                 class="tag-input"
                                 chips
@@ -197,13 +183,26 @@
                                 prepend-icon="fa fa-lg fa-plus-circle"
                                 @click:prepend="[usuarioStore.usuario = null, modalStore.usuarios.visible = true]"
                                 v-model="venda.id_representante"
-                                :rules="vendedorRules"
+                              ></v-autocomplete>
+                            </v-flex>
+                            <v-flex xs12>
+                              <v-autocomplete
+                                class="tag-input"
+                                chips
+                                dense
+                                :color="color"
+                                label="Transportadora"
+                                no-data-text="Nenhuma transportadora cadastrada"
+                                :items="pessoaStore.transportadoras"
+                                prepend-icon="fa fa-lg fa-plus-circle"
+                                @click:prepend="[pessoaStore.transportadoras = null, modalStore.pessoas.visible = true]"
+                                v-model="venda.id_transportadora"
                               ></v-autocomplete>
                             </v-flex>
                             <v-flex xs12>
                               <v-textarea
                                 :color="color"
-                                label="Observação"
+                                label="Alguma observação?"
                                 box
                                 v-model="venda.observacao"
                               ></v-textarea>
@@ -365,7 +364,9 @@
             </v-flex>
             <v-layout align-end>
               <span>Edite valores e quantidades do produto diretamente na tabela</span>
+
               <v-spacer></v-spacer>
+
               <v-flex xs12 md2 class="p-0">
                 <v-tooltip bottom>
                   <v-autocomplete
@@ -374,7 +375,7 @@
                     deletable-chips
                     dense
                     chips
-                    v-model="venda.id_tabela_preco"
+                    v-model="venda.tabela_preco"
                     label="Tabela de preços"
                     :items="vendaStore.tabelas"
                     no-data-text="Nenhuma tabela cadastrada ou nenhuma empresa selecionada"
@@ -423,7 +424,7 @@
                   ></v-autocomplete>
                 </v-flex>
               </td>
-              <td>{{ data.item.qtdEstoque || "0,00"}}</td>
+              <td>{{ data.item.qtdEstoque | decimal}}</td>
               <td>
                 <v-flex xs12 md6>
                   <v-text-field
@@ -439,11 +440,13 @@
                 <v-flex xs12 md6>
                   <v-text-field
                     ref="qtde"
+                    v-if="disable"
                     class="mt-2"
                     v-model="data.item.valor_venda"
                     v-money="money"
                     @blur="[calcTotal(data.item)]"
                   ></v-text-field>
+                  <span v-else>{{ data.item.valor_venda | currency }}</span>
                 </v-flex>
               </td>
               <td>
@@ -451,10 +454,12 @@
                   <v-text-field
                     ref="qtde"
                     class="mt-2"
+                    v-if="disable"
                     v-model="data.item.valor_desconto"
                     v-money="money"
                     @blur="[calcTotal(data.item)]"
                   ></v-text-field>
+                  <span v-else>{{ data.item.valor_desconto | currency }}</span>
                 </v-flex>
               </td>
               <td>{{ data.item.valor_total || 'R$ 0,00'}}</td>
@@ -509,7 +514,7 @@
                   :color="color"
                   @click="addParcela()"
                 >Adicionar parcela</v-btn>
-                <span>Adicionar nova parcela à compra</span>
+                <span>Adicionar nova parcela à venda</span>
               </v-tooltip>
             </v-layout>
           </v-container>
@@ -530,11 +535,11 @@
               <td>
                 <v-text-field
                   v-if="disable"
-                  v-model.number="data.item.valor"
+                  v-model.number="data.item.valor_parcela"
                   v-money="money"
                   @blur="[data.item.edit = true, attGridParc()]"
                 ></v-text-field>
-                <span v-else>{{ data.item.valor || "R$ 0,00"}}</span>
+                <span v-else>{{ data.item.valor_parcela | currency }}</span>
               </td>
               <td>
                 <v-flex xs8>
@@ -580,6 +585,7 @@
                     @click:prepend="[modalStore.documentos.visible = true]"
                     no-data-text="Nenhum resultado"
                     auto-select-first
+                    :disabled="data.item.pago"
                   ></v-autocomplete>
                 </v-flex>
               </td>
@@ -588,7 +594,10 @@
                   v-model="data.item.pago"
                   :color="color"
                   hide-details
-                  @click.native="[!data.expanded && data.item.pago ? [data.expanded = true, loadPagamento(data.item)] : limpaPagamento(data), calcTotalFinanc()]"
+                  @click.native="[
+                    !data.expanded && data.item.pago ? 
+                      [data.expanded = true, loadPagamento(data.item)] : limpaPagamento(data), calcTotalFinanc()
+                  ]"
                 ></v-switch>
               </td>
               <td>
@@ -598,7 +607,7 @@
                     slot="activator"
                     variant="secundary"
                     class="mr-1"
-                    @click="data.expanded = !data.expanded"
+                    @click="[data.expanded = !data.expanded, data.expanded ? loadPagamento(data.item) : null]"
                   >
                     <i class="fa fa-lg fa-pencil"></i>
                   </b-button>
@@ -641,7 +650,7 @@
                     <v-flex xs12 md2>
                       <v-text-field
                         label="Saldo em conta"
-                        placeholder="Selecione a conta para carregar"
+                        placeholder="Selecione a conta para carregar o saldo"
                         readonly
                         v-model="data.item.saldo_atual"
                       ></v-text-field>
@@ -716,7 +725,7 @@
                       <v-text-field
                         v-model="data.item.valor_pago"
                         :color="color"
-                        label="Valor pago"
+                        label="Valor pago*"
                         v-money="money"
                       ></v-text-field>
                     </v-flex>
@@ -756,10 +765,7 @@ import {
   moneyToNumber,
   parseNumber,
   formatDate,
-  loadProdutos,
-  loadClientes,
-  loadTabelas,
-  loadUsuarios
+  saveLog
 } from "@/global";
 import axios from "axios";
 import { mapState } from "vuex";
@@ -775,6 +781,7 @@ export default {
       "usuarioStore",
       "produtoStore",
       "pessoaStore",
+      "financeiroStore",
       "empresaStore",
       "modalStore"
     ]),
@@ -783,7 +790,7 @@ export default {
         return formatDate(this.venda.data_contato);
       },
       set(value) {
-        this.venda.data_contato = formatDate(value);
+        this.venda.data_contato = value;
       }
     },
     computedDateFormatted1: {
@@ -791,7 +798,7 @@ export default {
         return formatDate(this.venda.data_agendamento);
       },
       set(value) {
-        this.venda.data_agendamento = formatDate(value);
+        this.venda.data_agendamento = value;
       }
     }
   },
@@ -803,17 +810,18 @@ export default {
     },
     "$store.state.modalStore.produtos.visible": function() {
       if (!this.modalStore.produtos.visible) {
-        loadProdutos();
+        this.$store.dispatch("loadProdutos");
       }
     },
     "$store.state.modalStore.pessoas.visible": function() {
       if (!this.modalStore.pessoas.visible) {
-        loadClientes();
+        this.$store.dispatch("loadClientes");
+        this.$store.dispatch("loadTransps");
       }
     },
     "$store.state.modalStore.tabelas.visible": function() {
       if (!this.modalStore.tabelas.visible) {
-        loadTabelas();
+        this.$store.dispatch("loadTabelas");
       }
     }
   },
@@ -830,6 +838,7 @@ export default {
       valid1: true,
       isLoading: false,
       expand: false,
+      disable: true,
       money: {
         decimal: ",",
         thousands: ".",
@@ -894,16 +903,22 @@ export default {
     };
   },
   methods: {
+    formatDate(date) {
+      if (!date) return null;
+
+      const [year, month, day] = date.split("-");
+      return `${day}/${month}/${year}`;
+    },
     getColor(valor) {
       if (!this.venda.valor_total || valor === this.venda.valor_total)
         return "green";
       else return "red";
     },
-    async limpaTela() {
+    limpaTela() {
       this.reset();
       this.loadTela(this.vendaStore.venda);
     },
-    async addProduto(addProd) {
+    addProduto(addProd) {
       if (!addProd) {
         const produto = {
           sequencia: this.produtos_venda.length
@@ -912,10 +927,70 @@ export default {
         this.produtos_venda.push(produto);
       }
     },
-    async reset() {
+    addParcela(addParc) {
+      if (!addParc) {
+        let data;
+        let documento_origem;
+        if (this.financeiro.length > 0) {
+          data = this.financeiro[this.financeiro.length - 1].data_vencimento;
+          const [day, month, year] = data.split("/");
+
+          data = new Date(year, month, day).toISOString().substr(0, 10);
+          documento_origem = this.financeiro[this.financeiro.length - 1]
+            .documento_origem;
+        } else {
+          data = new Date().toISOString().substr(0, 10);
+        }
+
+        const parcela = {
+          edit: false,
+          parcelas:
+            this.financeiro.length + 1 + "/" + (this.financeiro.length + 1),
+          data,
+          data_vencimento: formatDate(data),
+          documento_origem
+        };
+        this.financeiro.push(parcela);
+      }
+      this.attGridParc();
+    },
+    attGridParc() {
+      // gambiarra necessária para forçar o campo valor a se atualizar
+      this.disable = false;
+      const valor = formatToBRL(
+        parseNumber(this.venda.valor_total || "0,00") / this.financeiro.length
+      );
+
+      this.financeiro.forEach(item => {
+        const parcelaAtual = item.parcelas.split("/");
+        item.parcelas = parcelaAtual[0] + "/" + this.financeiro.length;
+
+        if (!item.edit) item.valor_parcela = valor;
+      });
+
+      this.calcTotalFinanc().then(() => (this.disable = true));
+    },
+    deleteItem(item) {
+      this.produtos_venda = this.produtos_venda.filter(produto => {
+        return produto.sequencia !== item.sequencia;
+      });
+      this.calcTotal();
+    },
+    deleteParcela(parcela) {
+      if (parcela) {
+        this.financeiro = this.financeiro.filter(item => {
+          return item.parcelas !== parcela.parcelas;
+        });
+      }
+
+      this.calcTotalFinanc();
+    },
+    reset() {
       this.produto = {};
       this.produtos_venda = [];
       this.venda = {};
+
+      this.venda.id_vendedor = this.usuarioStore.currentUsuario.id;
 
       this.cliente = {};
       this.totais = {};
@@ -945,10 +1020,13 @@ export default {
         : "";
     },
     async loadTela(venda) {
-      loadClientes();
-      loadUsuarios();
-      loadProdutos();
-      loadTabelas();
+      this.$store.dispatch("loadClientes");
+      this.$store.dispatch("loadTransps");
+      this.$store.dispatch("loadUsuarios");
+      this.$store.dispatch("loadProdutos");
+      this.$store.dispatch("loadTabelas");
+      this.$store.dispatch("loadDocumentos");
+      this.$store.dispatch("loadContas");
 
       if (!venda) return;
       let url = `${urlBD}/vendas`;
@@ -960,12 +1038,44 @@ export default {
 
             this.parseValores();
             this.calcTotal();
-            this.venda.id_pessoa.value ? this.loadCliente() : undefined;
+            this.calcTotalFinanc();
+            this.venda.id_pessoa ? this.loadCliente() : null;
           })
           .catch(showError);
       }
     },
+    loadDados(item) {
+      const produtoFilter = this.produtoStore.produtos.find(produto => {
+        return produto.value === item.id;
+      });
+
+      this.produtos_venda = this.produtos_venda.map(produto => {
+        if (produto.sequencia === item.sequencia) {
+          produto.valor_venda = produtoFilter.valor_venda;
+          produto.qtdEstoque = produtoFilter.qtdEstoque;
+        }
+        return produto;
+      });
+    },
+    loadSaldoConta(item) {
+      if (!item.id_conta) {
+        item.saldo_atual = "";
+        return;
+      }
+
+      item.saldo_atual = formatToBRL(
+        this.financeiroStore.contas.find(conta => conta.value == item.id_conta)
+          .saldo_atual || 0
+      );
+    },
     parseValores() {
+      this.venda.data_contato = new Date(this.venda.data_contato)
+        .toISOString()
+        .substr(0, 10);
+      this.venda.data_agendamento = new Date(this.venda.data_agendamento)
+        .toISOString()
+        .substr(0, 10);
+
       this.venda.valor_frete = formatToBRL(this.venda.valor_frete);
       this.venda.valor_seguro = formatToBRL(this.venda.valor_seguro);
       this.venda.valor_desconto = formatToBRL(this.venda.valor_desconto);
@@ -993,7 +1103,6 @@ export default {
       )[0].value = this.venda.valor_total;
 
       this.produtos_venda = this.venda.produtos;
-      this.financeiro = this.venda.financeiro;
 
       let i = 0;
       this.produtos_venda = this.produtos_venda.map(produto => {
@@ -1006,12 +1115,15 @@ export default {
         return produto;
       });
       delete this.venda.produtos;
+
+      this.financeiro = this.venda.financeiro;
+      delete this.venda.financeiro;
     },
-    async loadCliente() {
+    loadCliente() {
       if (!this.venda) return;
 
-      if (this.venda.id_pessoa && this.venda.id_pessoa.value) {
-        const url = `${urlBD}/pessoasComFinanceiro/${this.venda.id_pessoa.value}`;
+      if (this.venda.id_pessoa) {
+        const url = `${urlBD}/pessoasComFinanceiro/${this.venda.id_pessoa}`;
         axios.get(url).then(res => {
           this.cliente = res.data;
           this.cliente.cpf_cnpj = res.data.cpf ? res.data.cpf : res.data.cnpj;
@@ -1021,83 +1133,28 @@ export default {
         this.cliente = {};
       }
     },
-    async loadDados(item) {
-      if (!item.id) return;
-
-      const produtoFilter = this.produtoStore.produtos.find(produto => {
-        return produto.value === item.id;
-      });
-
-      this.produtos_venda = this.produtos_venda.map(produto => {
-        if (produto.sequencia === item.sequencia) {
-          produto.valor_venda = produtoFilter.valor_venda;
-          produto.qtdEstoque = produtoFilter.qtdEstoque;
-        }
-        return produto;
-      });
-
-      this.$refs.qtde.focus();
-    },
-    async deleteItem(item) {
-      this.produtos_venda = this.produtos_venda.filter(produto => {
-        return produto.sequencia !== item.sequencia;
-      });
-      this.calcTotal();
-    },
-    async calcTotal(item, flag = true) {
-      if (item) {
-        this.produtos_venda = this.produtos_venda.filter(produto => {
-          if (produto.sequencia === item.sequencia) {
-            const percentual = this.venda.id_tabela_preco
-              ? this.venda.id_tabela_preco.percentual
-              : "0,00";
-
-            produto.valor_total =
-              parseNumber(produto.quantidade || "0,00") *
-                parseNumber(produto.valor_venda || "0,00") -
-              parseNumber(produto.valor_desconto || "0,00");
-
-            if (percentual != "0,00") {
-              produto.valor_total =
-                produto.valor_total -
-                (parseNumber(percentual) * produto.valor_total) / 100;
-            }
-            produto.valor_total = formatToBRL(produto.valor_total);
-          }
-
-          return produto;
-        });
-      }
-
-      if (flag) {
-        let quantidade = 0,
-          valor_venda = 0,
-          valor_desconto = 0,
-          valor_total = 0;
-
-        this.produtos_venda.forEach(produto => {
-          quantidade += parseNumber(produto.quantidade || "0,00");
-          valor_venda += parseNumber(produto.valor_venda || "0,00");
-          valor_desconto += parseNumber(produto.valor_desconto || "0,00");
-          valor_total += parseNumber(produto.valor_total || "0,00");
-        });
-        this.totais = {
-          quantidade: formatToBRL(quantidade).replace("R$", ""),
-          valor_venda: formatToBRL(valor_venda),
-          valor_desconto: formatToBRL(valor_desconto),
-          valor_total: formatToBRL(valor_total)
-        };
-
-        this.calcTotalizadores();
-      }
-    },
-    async aplicarTabela() {
+    aplicarTabela() {
+      this.disable = false;
       this.produtos_venda.forEach(item => {
-        this.calcTotal(item, false);
+        this.loadDados(item);
+
+        if (!this.venda.tabela_preco) {
+          item.valor_desconto = formatToBRL(0);
+        } else {
+          const desconto =
+            (parseNumber(this.venda.tabela_preco.percentual) / 100) *
+            parseNumber(item.valor_venda);
+          item.valor_venda = formatToBRL(
+            parseNumber(item.valor_venda) - desconto
+          );
+          item.valor_desconto = formatToBRL(desconto);
+        }
+
+        this.calcTotal(item);
       });
-      this.calcTotal();
+      this.calcTotal().then(() => (this.disable = true));
     },
-    async calcTotalizadores() {
+    calcTotalizadores() {
       const {
         valor_frete,
         valor_seguro,
@@ -1123,6 +1180,97 @@ export default {
         "input"
       )[0].value = this.venda.valor_total;
     },
+    async calcTotal(item) {
+      if (item) {
+        this.produtos_venda = this.produtos_venda.filter(produto => {
+          if (produto.sequencia === item.sequencia) {
+            produto.valor_total = formatToBRL(
+              parseNumber(produto.quantidade || "0,00", ",") *
+                parseNumber(produto.valor_venda || "0,00", ",") -
+                parseNumber(produto.valor_desconto || "0,00", ",")
+            );
+          }
+          return produto;
+        });
+      }
+
+      let quantidade = 0,
+        valor_venda = 0,
+        valor_desconto = 0,
+        valor_total = 0;
+
+      this.produtos_venda.forEach(produto => {
+        quantidade += parseNumber(produto.quantidade || "0,00", ",");
+        valor_venda += parseNumber(produto.valor_venda || "0,00", ",");
+        valor_desconto += parseNumber(produto.valor_desconto || "0,00", ",");
+        valor_total += parseNumber(produto.valor_total || "0,00", ",");
+      });
+      this.totais = {
+        quantidade: formatToBRL(quantidade).replace("R$", ""),
+        valor_venda: formatToBRL(valor_venda),
+        valor_desconto: formatToBRL(valor_desconto),
+        valor_total: formatToBRL(valor_total)
+      };
+
+      this.calcTotalizadores();
+    },
+    calcTotalizadores() {
+      const {
+        valor_frete,
+        valor_seguro,
+        valor_desconto,
+        outras_despesas
+      } = this.venda;
+
+      // valor dos produtos
+      this.venda.valor_produtos = this.totais.valor_total;
+      const valor_produtos = this.venda.valor_produtos;
+      this.$refs.valor_produtos.$el.getElementsByTagName("input")[0].value =
+        this.venda.valor_produtos || "";
+
+      // valor total da nota
+      this.venda.valor_total = formatToBRL(
+        parseNumber(valor_produtos || "0,00", ",") +
+          parseNumber(valor_frete, ",") +
+          parseNumber(valor_seguro, ",") +
+          parseNumber(outras_despesas, ",") -
+          parseNumber(valor_desconto, ",")
+      );
+      this.$refs.valor_total.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.venda.valor_total;
+    },
+    loadPagamento(item) {
+      item.data_baixa = formatDate(new Date().toISOString().substr(0, 10));
+      item.valor_pago = item.valor_parcela;
+    },
+    limpaPagamento(data) {
+      data.expanded = false;
+      data.item.data_baixa = "";
+      data.item.documento_baixa = "";
+      data.item.num_documento_baixa = "";
+      data.item.observacao = "";
+    },
+    async calcTotalFinanc() {
+      let valor = 0,
+        data = 0,
+        pago = 0;
+
+      this.financeiro.forEach(parcela => {
+        valor += parseNumber(parcela.valor_parcela || "0,00");
+        data += 1;
+        pago += parcela.pago ? parseNumber(parcela.valor_parcela || "0,00") : 0;
+      });
+
+      this.totaisFinanc = {
+        valor: formatToBRL(valor),
+        data: data === 1 ? `${data} mês` : `${data} meses`,
+        pago:
+          pago === 0
+            ? "Nenhuma parcela paga"
+            : `Total pago - ${formatToBRL(pago)}`
+      };
+    },
     save() {
       if (!this.$refs.form.validate() || !this.$refs.form1.validate()) return;
 
@@ -1133,31 +1281,25 @@ export default {
       const url = `${urlBD}/vendas/${id}`;
 
       if (!this.venda.id_empresa) {
-        this.venda.id_empresa = this.empresaStore.currentEmpresa.value;
+        this.venda.id_empresa = this.empresaStore.currentEmpresa;
       }
 
       this.venda.produtos = this.produtos_venda;
+      this.venda.financeiro = this.financeiro;
 
       axios[method](url, this.venda)
         .then(() => {
           this.$toasted.global.defaultSuccess();
           this.modalStore.vendas.vendas.visible = false;
 
-          let data = new Date();
-          const hora = `${data.getHours()}:${data.getMinutes()}:${data.getSeconds()}`;
-          const log = {
-            id_usuario: this.usuarioStore.currentUsuario.id,
-            data: formatDate(data.toISOString().substr(0, 10)),
-            hora,
-            tipo: method === "post" ? "GRAVAÇÂO" : "ALTERAÇÃO",
-            tela: "ORÇAMENTOS/ADICIONAR",
-            detalhe:
-              method === "post"
-                ? `Orçamento adicionado: /Data de lançamento: ${this.venda.data_lancamento}`
-                : `Orçamento alterado: Código: ${this.venda.id}/de lançamento: ${this.venda.data_lancamento}`
-          };
-
-          axios.post(`${urlBD}/log`, log).catch(showError);
+          saveLog(
+            new Date(),
+            method === "post" ? "GRAVAÇÃO" : "ALTERAÇÃO",
+            "ORÇAMENTOS/VENDAS",
+            `Usuário ${this.usuarioStore.currentUsuario.nome} ${
+              method === "post" ? "ADICIONOU" : "ALTEROU"
+            } uma venda ao cliente ${this.venda.id_pessoa}`
+          );
         })
         .catch(e => showError(e));
 

@@ -14,16 +14,41 @@ module.exports = app => {
             existsOrError(venda.id_pessoa, 'Informe o fornecedor da venda')
 
             //validar dados da nota
-            existsOrError(venda.nota_fiscal, 'Informe o número da nota fiscal')
-            existsOrError(venda.data_notafiscal, 'Informe a data da nota fiscal')
-            existsOrError(venda.data_lancamento, 'Informe a data de lançamento')
+            existsOrError(venda.data_contato, 'Informe a data de contato')
+            existsOrError(venda.data_agendamento, 'Informe a data de agendamento')
 
-            existsOrError(venda.produtos, 'Informe os produtos do venda')
+            existsOrError(venda.produtos, 'Informe os produtos da venda')
             existsOrError(venda.financeiro, 'Informe a(s) parcela(s) da venda')
+
+            var teste_produto = null
+            for (let i = 0; i < venda.produtos.length; i++) {
+                if (venda.produtos[i].quantidade == "0,00" || venda.produtos[i].valor_venda == "R$ 0,00") {
+                    teste_produto = venda.produtos[i];
+                    break;
+                }
+            }
+            if (teste_produto) {
+                return res.status(400).send(`Produto ${teste_produto.sequencia} com quantidade ou valor de venda zerado, verifique.`)
+            }
+
+            var teste_financeiro = null
+            for (let i = 0; i < venda.financeiro.length; i++) {
+                if (venda.financeiro[i].pago &&
+                    (!venda.financeiro[i].id_conta || !venda.financeiro[i].data_baixa || venda.financeiro[i].valor_pago == "R$ 0,00")) {
+                    teste_financeiro = venda.financeiro[i];
+                    break;
+                }
+            }
+            if (teste_financeiro) {
+                return res.status(400).send(`Parcela ${teste_financeiro.parcelas} com dados de pagamento incorretos, verifique`)
+            }
         } catch (e) {
             return res.status(400).send(e.toString())
         }
 
+        if (venda.tabela_preco)
+            venda.tabela_preco = venda.tabela_preco.value
+        venda.data_criacao = new Date()
 
         var produtos = venda.produtos
         var financeiro = venda.financeiro
@@ -41,7 +66,7 @@ module.exports = app => {
             venda.valor_produtos = parseNumber(venda.valor_produtos || "0,00")
             venda.valor_total = parseNumber(venda.valor_total || "0,00")
 
-            venda.situacao = venda.situacao ? venda.situacao : 'CONCLUÍDA'
+            // venda.situacao = venda.situacao ? venda.situacao : 'CONCLUÍDA'
 
             if (venda.id) {
                 return app.db.transaction(async function (trx) {
@@ -50,32 +75,27 @@ module.exports = app => {
                         .where({ id: venda.id })
                         .transacting(trx)
                         .then(async function () {
-                            const movim_estoque = []
-
                             await app.db('produto_venda').where({ id_venda: venda.id }).delete()
                             await app.db('produto_movimento_estoque').where({ id_movimentacao: venda.id }).delete()
-                            // await app.db('financeiro').where({ id_movimentacao: venda.id }).delete()
 
+                            const movim_estoque = []
                             produtos = await produtos.map(produto => {
                                 const newProd = {
                                     id_venda: venda.id,
                                     id_empresa: venda.id_empresa,
                                     id_produto: produto.id,
                                     sequencia: produto.sequencia,
-                                    cfop: produto.cfop,
-                                    ncm: produto.ncm,
 
                                     quantidade: (parseNumber(produto.quantidade || "0,00")),
-                                    valor_unitario: (parseNumber(produto.valor_unitario || "0,00")),
+                                    valor_venda: (parseNumber(produto.valor_venda || "0,00")),
                                     valor_desconto: (parseNumber(produto.valor_desconto || "0,00")),
                                     valor_total: (parseNumber(produto.valor_total || "0,00")),
-                                    perc_custo_adicional: (parseNumber(produto.perc_custo_adicional || "0,00"))
                                 }
 
                                 movim_estoque.push({
                                     id_empresa: venda.id_empresa,
                                     id_produto: produto.id,
-                                    tipo_movimentacao: 0,
+                                    tipo_movimentacao: 1,
                                     data_movimentacao: venda.data_lancamento,
                                     id_movimentacao: venda.id,
                                     quantidade: parseNumber(produto.quantidade || "0,00"),
@@ -85,22 +105,44 @@ module.exports = app => {
                                 return newProd
                             })
                             await app.db('financeiro').where({ id_movimento_origem: venda.id }).delete()
+                            await app.db('conta_movimento').where({ id_movimento_origem: venda.id }).delete()
 
+                            const movim_conta = []
                             financeiro = financeiro.map(parcela => {
                                 const newFinanc = {
                                     id_empresa: venda.id_empresa,
-                                    id_movimento_origem: venda.id,
+                                    id_pessoa: venda.id_pessoa,
+                                    tipo_conta: 2,
+                                    id_movimento_origem: id[0],
                                     pago: parcela.pago,
                                     parcela: parcela.parcelas,
                                     observacao: venda.observacao,
-                                    valor_parcela: parseNumber(parcela.valor || "0,00"),
+
+                                    valor_parcela: parseNumber(parcela.valor_parcela || "0,00"),
+                                    valor_pago: parseNumber(parcela.valor_pago || "0,00"),
+                                    valor_total: venda.valor_total,
 
                                     documento_origem: parcela.documento_origem,
+                                    num_documento_origem: venda.nota_fiscal,
 
                                     data_criacao: new Date(),
-                                    data_emissao: venda.data_lancamento,
+                                    data_emissao: venda.data_emissao,
                                     data_vencimento: parcela.data
                                 }
+                                if (newFinanc.pago)
+                                    movim_conta.push({
+                                        id_empresa: venda.id_empresa,
+                                        id_conta: parcela.id_conta,
+                                        id_movimento_origem: venda.id,
+                                        data_lancamento: new Date(),
+                                        data_emissao: venda.data_emissao,
+                                        id_documento: parcela.documento_origem,
+                                        num_documento: venda.nota_fiscal,
+                                        observacao: venda.observacao,
+                                        origem: "GERADO",
+                                        dc: 'C',
+                                        valor: parcela.valor_pago
+                                    })
 
                                 return newFinanc
                             })
@@ -113,6 +155,10 @@ module.exports = app => {
                                         .then(function () {
                                             return app.db.batchInsert('financeiro', financeiro)
                                                 .transacting(trx)
+                                                .then(function () {
+                                                    return app.db.batchInsert('conta_movimento', movim_conta)
+                                                        .transacting(trx)
+                                                })
                                         })
                                 })
 
@@ -139,20 +185,17 @@ module.exports = app => {
                                     id_empresa: venda.id_empresa,
                                     id_produto: produto.id,
                                     sequencia: produto.sequencia,
-                                    cfop: produto.cfop,
-                                    ncm: produto.ncm,
 
-                                    quantidade: (parseNumber(produto.quantidade || "0,00")),
-                                    valor_unitario: (parseNumber(produto.valor_unitario || "0,00")),
-                                    valor_desconto: (parseNumber(produto.valor_desconto || "0,00")),
-                                    valor_total: (parseNumber(produto.valor_total || "0,00")),
-                                    perc_custo_adicional: (parseNumber(produto.perc_custo_adicional || "0,00"))
+                                    quantidade: parseNumber(produto.quantidade || "0,00"),
+                                    valor_venda: parseNumber(produto.valor_venda || "0,00"),
+                                    valor_desconto: parseNumber(produto.valor_desconto || "0,00"),
+                                    valor_total: parseNumber(produto.valor_total || "0,00"),
                                 }
 
                                 movim_estoque.push({
                                     id_empresa: venda.id_empresa,
                                     id_produto: produto.id,
-                                    tipo_movimentacao: 0,
+                                    tipo_movimentacao: 1,
                                     data_movimentacao: venda.data_lancamento,
                                     id_movimentacao: id[0],
                                     quantidade: parseNumber(produto.quantidade || "0,00"),
@@ -161,21 +204,43 @@ module.exports = app => {
 
                                 return newProd
                             })
+
+                            const movim_conta = []
                             financeiro = financeiro.map(parcela => {
                                 const newFinanc = {
                                     id_empresa: venda.id_empresa,
+                                    id_pessoa: venda.id_pessoa,
+                                    tipo_conta: 2,
                                     id_movimento_origem: id[0],
                                     pago: parcela.pago,
                                     parcela: parcela.parcelas,
                                     observacao: venda.observacao,
-                                    valor_parcela: parseNumber(parcela.valor || "0,00"),
+
+                                    valor_parcela: parseNumber(parcela.valor_parcela || "0,00"),
+                                    valor_pago: parseNumber(parcela.valor_pago || "0,00"),
+                                    valor_total: venda.valor_total || "0,00",
 
                                     documento_origem: parcela.documento_origem,
+                                    num_documento_origem: venda.nota_fiscal,
 
                                     data_criacao: new Date(),
-                                    data_emissao: venda.data_lancamento,
+                                    data_emissao: venda.data_emissao,
                                     data_vencimento: parcela.data
                                 }
+                                if (newFinanc.pago)
+                                    movim_conta.push({
+                                        id_empresa: venda.id_empresa,
+                                        id_conta: parcela.id_conta,
+                                        id_movimento_origem: venda.id,
+                                        data_lancamento: new Date(),
+                                        data_emissao: venda.data_emissao,
+                                        id_documento: parcela.documento_origem,
+                                        num_documento: venda.nota_fiscal,
+                                        observacao: venda.observacao,
+                                        origem: "GERADO",
+                                        dc: 'C',
+                                        valor: parseNumber(parcela.valor_pago)
+                                    })
 
                                 return newFinanc
                             })
@@ -188,6 +253,10 @@ module.exports = app => {
                                         .then(function () {
                                             return app.db.batchInsert('financeiro', financeiro)
                                                 .transacting(trx)
+                                                .then(function () {
+                                                    return app.db.batchInsert('conta_movimento', movim_conta)
+                                                        .transacting(trx)
+                                                })
                                         })
                                 })
 
@@ -216,19 +285,24 @@ module.exports = app => {
         app.db('venda')
             .join('empresas', 'venda.id_empresa', 'empresas.id')
             .join('pessoas as cliente', 'venda.id_pessoa', 'cliente.id')
-            .join('pessoas as vendedor', 'venda.id_vendedor', 'vendedor.id')
+            .join('usuarios as vendedor', 'venda.id_vendedor', 'vendedor.id')
             .select(
                 'venda.id',
+                'id_empresa',
+                'id_pessoa',
                 'venda.situacao',
-                'nota_fiscal',
-                'data_emissao',
+                'valor_total',
                 'empresas.nome as empresa',
                 'cliente.nome as cliente',
-                'vendedor.nome as vendedor'
+                'vendedor.nome as vendedor',
             )
             .limit(limit).offset(page * limit - limit)
             .orderBy('venda.situacao')
             .where(async (qb) => {
+                if (req.query.empresa) {
+                    qb.where('venda.id_empresa', '=', req.query.empresa);
+                }
+
                 if (req.query.tipo == 2) {
                     // pesquisa avançada
                     if (req.query.fornecedor) {
@@ -279,33 +353,42 @@ module.exports = app => {
                     }
                 }
             })
-            .then(pedido => res.json({ data: pedido, count, limit }))
+            .then(pedido => res.json({ data: pedido.map(item => item.tipo == 1 ? { ...item, tipo: "ORÇAMENTO" } : { ...item, tipo: "VENDA" }), count, limit }))
             .catch(e => res.status(500).send(e.toString()))
     }
 
     const getById = async (req, res) => {
-        venda = await app.db('venda')
-            .catch(e => {
-                res.status(500).send('Erro no servidor')
-                console.log(e.toString())
+        app.db('venda')
+            .where({ id: req.params.id })
+            .first()
+            .then(async venda => {
+                venda.produtos = await app.db('produto_venda as pc')
+                    .join('produtos as p', 'pc.id_produto', 'p.id')
+                    .select(
+                        'p.id',
+                        'pc.sequencia',
+                        'p.descricao',
+                        'pc.quantidade',
+                        'pc.valor_desconto',
+                        'pc.valor_venda',
+                        'pc.valor_total')
+                    .where({ id_venda: venda.id })
+                    .catch(e => res.status(500).send(e.toString()))
+                venda.financeiro = await app.db('financeiro as f')
+                    .select(
+                        'f.id',
+                        'f.parcela as parcelas',
+                        'f.valor_parcela',
+                        'f.pago',
+                        'f.observacao',
+                        'f.documento_origem',
+                        'f.data_vencimento'
+                    )
+                    .where({ id_movimento_origem: venda.id })
+                    .catch(e => res.status(500).send(e.toString()))
+                res.json(venda)
             })
-        venda.produtos = await app.db('produto_venda')
-            .join('produtos', 'produto_venda.id_produto', 'produtos.id')
-            .select(
-                'produto_venda.id_produto as id',
-                'produto_venda.sequencia',
-                'produtos.descricao as descricao',
-                'produto_venda.ncm',
-                'produto_venda.cfop',
-                'produto_venda.quantidade',
-                'produto_venda.valor_unitario',
-                'produto_venda.valor_desconto',
-                'produto_venda.perc_custo_adicional',
-                'produto_venda.valor_total'
-            )
-            .where({ id_venda: venda.id })
-
-        res.json(venda)
+            .catch(e => res.status(500).send(e.toString()))
     }
 
     const remove = async (req, res) => {
@@ -318,15 +401,22 @@ module.exports = app => {
                         .where({ id_venda: req.params.id }).delete()
                         .transacting(trx)
                         .then(function () {
-                            return app.db('financeiro')
-                                .where({ id_movimento_origem: req.params.id }).delete()
+                            return app.db('produto_movimento_estoque')
+                                .where({ id_movimentacao: req.params.id }).delete()
                                 .transacting(trx)
                                 .then(function () {
-                                    return app.db('produto_movimento_estoque')
-                                        .where({ id_movimentacao: req.params.id }).delete()
+                                    return app.db('financeiro')
+                                        .where({ id_movimento_origem: req.params.id }).delete()
                                         .transacting(trx)
+                                        .then(function () {
+                                            return app.db('conta_movimento')
+                                                .where({ id_movimento_origem: req.params.id }).delete()
+                                                .transacting(trx)
+                                        })
+
                                 })
                         })
+
                 })
                 .then(trx.commit)
                 .catch(trx.rollback);

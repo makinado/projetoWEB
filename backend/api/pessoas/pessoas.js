@@ -200,7 +200,7 @@ module.exports = app => {
 
     const getAll = async (req, res) => {
         app.db('pessoas')
-            .select('id', 'nome', 'cpf', 'cnpj')
+            .select('id as value', 'nome as text', 'cpf', 'cnpj')
             .orderBy('nome')
             .then(pessoas => res.json(pessoas))
             .catch(e => res.status(500).send(e.toString()))
@@ -226,7 +226,17 @@ module.exports = app => {
 
     const getFornecs = async (req, res) => {
         app.db('pessoas')
-            .select('id', 'nome').where({ fornecedor: true })
+            .select('id as value', 'nome as text')
+            .where({ fornecedor: true })
+            .orderBy('nome')
+            .then(pessoas => res.json(pessoas))
+            .catch(e => res.status(500).send(e.toString()))
+    }
+
+    const getTransps = async (req, res) => {
+        app.db('pessoas')
+            .select('id as value', 'nome as text')
+            .where({ transportadora: true })
             .orderBy('nome')
             .then(pessoas => res.json(pessoas))
             .catch(e => res.status(500).send(e.toString()))
@@ -245,5 +255,5 @@ module.exports = app => {
     }
 
 
-    return { save, get, getById, getWithFinanceiro, getByCategoria, getClientes, getFornecs, getAll, remove }
+    return { save, get, getById, getWithFinanceiro, getByCategoria, getClientes, getFornecs, getTransps, getAll, remove }
 }

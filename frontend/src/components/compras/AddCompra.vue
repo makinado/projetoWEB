@@ -34,7 +34,7 @@
                   dense
                   :color="color"
                   label="Fornecedor*"
-                  :items="pessoaStore.pessoas"
+                  :items="pessoaStore.fornecedores"
                   prepend-icon="fa fa-lg fa-plus-circle"
                   @click:prepend="[pessoaStore.pessoa = null, modalStore.pessoas.visible = true]"
                   v-model="compra.id_pessoa"
@@ -373,7 +373,7 @@
                   ></v-text-field>
                 </v-flex>
               </td>
-              <td>{{ data.item.valor_total || 'R$ 0,00'}}</td>
+              <td>{{ data.item.valor_total | currency}}</td>
               <td>
                 <v-tooltip bottom>
                   <b-button
@@ -396,13 +396,13 @@
                 <v-layout row>{{ totais.quantidade || '0,00' }}</v-layout>
               </td>
               <td>
-                <v-layout row>{{ totais.valor_unitario || 'R$ 0,00' }}</v-layout>
+                <v-layout row>{{ totais.valor_unitario | currency }}</v-layout>
               </td>
               <td colspan="2">
-                <v-layout row>{{ totais.valor_desconto || 'R$ 0,00' }}</v-layout>
+                <v-layout row>{{ totais.valor_desconto | currency }}</v-layout>
               </td>
               <td colspan="2">
-                <v-layout row>{{ totais.valor_total || 'R$ 0,00' }}</v-layout>
+                <v-layout row>{{ totais.valor_total | currency }}</v-layout>
               </td>
             </template>
           </v-data-table>
@@ -446,11 +446,11 @@
               <td>
                 <v-text-field
                   v-if="disable"
-                  v-model.number="data.item.valor"
+                  v-model.number="data.item.valor_parcela"
                   v-money="money"
                   @blur="[data.item.edit = true, attGridParc()]"
                 ></v-text-field>
-                <span v-else>{{ data.item.valor || "R$ 0,00"}}</span>
+                <span v-else>{{ data.item.valor_parcela || "R$ 0,00"}}</span>
               </td>
               <td>
                 <v-flex xs8>
@@ -557,7 +557,7 @@
                     <v-flex xs12 md2>
                       <v-text-field
                         label="Saldo em conta"
-                        placeholder="Selecione a conta para carregar"
+                        placeholder="Selecione a conta para carregar o saldo"
                         readonly
                         v-model="data.item.saldo_atual"
                       ></v-text-field>
@@ -650,7 +650,7 @@
                     slot="activator"
                     :color="getColor(totaisFinanc.valor)"
                     dark
-                  >{{ totaisFinanc.valor || 'R$ 0,00' }}</v-chip>
+                  >{{ totaisFinanc.valor | currency }}</v-chip>
                   <span>Esse valor deve corresponder ao valor total da compra</span>
                 </v-tooltip>
               </td>
@@ -666,17 +666,7 @@
 
 <script>
 import { VMoney } from "v-money";
-import {
-  urlBD,
-  showError,
-  parseNumber,
-  formatDate,
-  saveLog,
-  loadFornecs,
-  loadProdutos,
-  loadDocumentos,
-  loadContas
-} from "@/global";
+import { urlBD, showError, parseNumber, formatDate, saveLog } from "@/global";
 import axios from "axios";
 import { mapState } from "vuex";
 import { formatToBRL } from "brazilian-values";
@@ -813,19 +803,27 @@ export default {
       }
     },
     "$store.state.modalStore.documentos.visible"() {
-      if (!this.modalStore.documentos.visible) loadDocumentos();
+      if (!this.modalStore.documentos.visible)
+        this.$store.dispatch("loadDocumentos");
     },
     "$store.state.modalStore.contas.visible"() {
-      if (!this.modalStore.contas.visible) loadContas();
+      if (!this.modalStore.contas.visible) this.$store.dispatch("loadContas");
     },
     "$store.state.modalStore.produtos.visible"() {
-      if (!this.modalStore.produtos.visible) loadProdutos();
+      if (!this.modalStore.produtos.visible)
+        this.$store.dispatch("loadProdutos");
     },
     "$store.state.modalStore.pessoas.visible"() {
-      if (!this.modalStore.pessoas.visible) loadFornecs();
+      if (!this.modalStore.pessoas.visible) this.$store.dispatch("loadFornecs");
     }
   },
   methods: {
+    formatDate(date) {
+      if (!date) return null;
+
+      const [year, month, day] = date.split("-");
+      return `${day}/${month}/${year}`;
+    },
     getColor(valor) {
       if (!this.compra.valor_total || valor === this.compra.valor_total)
         return "green";
@@ -842,11 +840,11 @@ export default {
           .saldo_atual || 0
       );
     },
-    async limpaTela() {
+    limpaTela() {
       this.reset();
       this.loadTela(this.comprasStore.compra);
     },
-    async addProduto(addProd) {
+    addProduto(addProd) {
       if (!addProd) {
         const produto = {
           sequencia: this.produtos_compra.length
@@ -855,7 +853,7 @@ export default {
         this.produtos_compra.push(produto);
       }
     },
-    async addParcela(addParc) {
+    addParcela(addParc) {
       if (!addParc) {
         let data;
         let documento_origem;
@@ -882,7 +880,7 @@ export default {
       }
       this.attGridParc();
     },
-    async attGridParc() {
+    attGridParc() {
       // gambiarra necessária para forçar o campo valor a se atualizar
       this.disable = false;
       const valor = formatToBRL(
@@ -893,14 +891,14 @@ export default {
         const parcelaAtual = item.parcelas.split("/");
         item.parcelas = parcelaAtual[0] + "/" + this.financeiro.length;
 
-        if (!item.edit) item.valor = valor;
+        if (!item.edit) item.valor_parcela = valor;
       });
 
       this.calcTotalFinanc().then(() => (this.disable = true));
     },
     loadPagamento(item) {
       item.data_baixa = formatDate(new Date().toISOString().substr(0, 10));
-      item.valor_pago = item.valor;
+      item.valor_pago = item.valor_parcela;
     },
     limpaPagamento(data) {
       data.expanded = false;
@@ -909,15 +907,7 @@ export default {
       data.item.num_documento_baixa = "";
       data.item.observacao = "";
     },
-    async deleteParcela(parcela) {
-      if (parcela) {
-        this.financeiro = this.financeiro.filter(item => {
-          return item.parcelas !== parcela.parcelas;
-        });
-      }
 
-      this.calcTotalFinanc();
-    },
     async reset() {
       this.compra = {};
       this.produto = {};
@@ -963,10 +953,10 @@ export default {
       });
     },
     async loadTela(compra) {
-      loadFornecs();
-      loadProdutos();
-      loadDocumentos();
-      loadContas();
+      this.$store.dispatch("loadFornecs");
+      this.$store.dispatch("loadProdutos");
+      this.$store.dispatch("loadDocumentos");
+      this.$store.dispatch("loadContas");
 
       if (!compra) return;
       let url = `${urlBD}/compras`;
@@ -982,7 +972,7 @@ export default {
           .catch(showError);
       }
     },
-    async loadDados(item) {
+    loadDados(item) {
       const produtoFilter = this.produtoStore.produtos.find(produto => {
         return produto.value === item.id;
       });
@@ -995,11 +985,20 @@ export default {
         return produto;
       });
     },
-    async deleteItem(item) {
+    deleteItem(item) {
       this.produtos_compra = this.produtos_compra.filter(produto => {
         return produto.sequencia !== item.sequencia;
       });
       this.calcTotal();
+    },
+    deleteParcela(parcela) {
+      if (parcela) {
+        this.financeiro = this.financeiro.filter(item => {
+          return item.parcelas !== parcela.parcelas;
+        });
+      }
+
+      this.calcTotalFinanc();
     },
     calcTotal(item) {
       if (item) {
@@ -1035,7 +1034,7 @@ export default {
 
       this.calcTotalizadores();
     },
-    async calcTotalizadores() {
+    calcTotalizadores() {
       const {
         valor_frete,
         valor_seguro,
@@ -1067,9 +1066,9 @@ export default {
         pago = 0;
 
       this.financeiro.forEach(parcela => {
-        valor += parseNumber(parcela.valor || "0,00");
+        valor += parseNumber(parcela.valor_parcela || "0,00");
         data += 1;
-        pago += parcela.pago ? parseNumber(parcela.valor || "0,00") : 0;
+        pago += parcela.pago ? parseNumber(parcela.valor_parcela || "0,00") : 0;
       });
 
       this.totaisFinanc = {
@@ -1130,7 +1129,7 @@ export default {
       delete this.compra.produtos;
 
       this.financeiro = this.compra.financeiro.map(parcela => {
-        parcela.parcelas = parcela.parcela;
+        parcela.parcelas = parcela.parcelas;
         parcela.valor = formatToBRL(parcela.valor_parcela);
         parcela.data_vencimento = formatDate(
           new Date(parcela.data_vencimento).toISOString().substr(0, 10)

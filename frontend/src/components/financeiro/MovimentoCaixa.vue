@@ -350,7 +350,12 @@
 
 <script>
 import axios from "axios";
-import { urlBD, showError, formatDate, loadEmpresas, saveLog } from "@/global";
+import {
+  urlBD,
+  showError,
+  formatDate,
+  saveLog
+} from "@/global";
 import { mapState } from "vuex";
 
 import { VMoney } from "v-money";
@@ -368,17 +373,37 @@ export default {
       "classificacaoStore",
       "modalStore"
     ]),
-    computedDateFormatted() {
-      return formatDate(this.movim.data_lancamento);
+    computedDateFormatted: {
+      get() {
+        return formatDate(this.movim.data_lancamento);
+      },
+      set(value) {
+        this.movim.data_lancamento = value;
+      }
     },
-    computedDateFormatted1() {
-      return formatDate(this.movim.data_emissao);
+    computedDateFormatted1: {
+      get() {
+        return formatDate(this.movim.data_emissao);
+      },
+      set(value) {
+        this.movim.data_emissao = value;
+      }
     },
-    computedDateFormatted2() {
-      return formatDate(this.date1);
+    computedDateFormatted2: {
+      get() {
+        return formatDate(this.date1);
+      },
+      set(value) {
+        this.date1 = value;
+      }
     },
-    computedDateFormatted3() {
-      return formatDate(this.date2);
+    computedDateFormatted3: {
+      get() {
+        return formatDate(this.date2);
+      },
+      set(value) {
+        this.date2 = value;
+      }
     }
   },
 
@@ -454,12 +479,8 @@ export default {
     },
     async limpaTela() {
       this.reset();
-      this.loadTela(this.financeiroStore.conta);
-      loadEmpresas().then(_ => {
-        if (this.empresaStore.empresas.length === 1) {
-          this.movim.id_empresa = this.empresaStore.empresas[0].value;
-        }
-      });
+      this.$store.dispatch("loadDocumentos");
+      this.$store.dispatch("loadEmpresas");
     },
     async reset() {
       this.movim = {};
@@ -477,22 +498,6 @@ export default {
       this.movimContaItens = [];
 
       this.loadMovim();
-    },
-    async loadTela(conta) {
-      let url = `${urlBD}/movimConta/tela/${conta.id}`;
-      axios
-        .get(url)
-        .then(res => {
-          const tela = res.data;
-
-          this.financeiroStore.documentos = tela.documentos;
-          this.classificacaoStore.classificacoes = tela.classificacoes;
-          this.financeiroStore.movimento_conta = tela.contas.map(item => {
-            item.saldo_atual = formatToBRL(item.saldo_atual);
-            return item;
-          });
-        })
-        .catch(showError);
     },
     async loadMovim() {
       if (this.financeiroStore.conta) {

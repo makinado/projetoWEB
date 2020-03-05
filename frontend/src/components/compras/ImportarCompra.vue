@@ -416,14 +416,7 @@
 <script>
 import { VMoney } from "v-money";
 
-import {
-  urlBD,
-  urlUsuarios,
-  showError,
-  parseNumber,
-  loadProdutos,
-  loadPessoas
-} from "@/global";
+import { urlBD, urlUsuarios, showError, parseNumber } from "@/global";
 import axios from "axios";
 import { mapState } from "vuex";
 import { formatToBRL, formatToCNPJ } from "brazilian-values";
@@ -876,7 +869,7 @@ export default {
       });
 
       await Promise.all(requests).then(arrayOfResponses => {
-        loadPessoas().then(() => this.upload());
+        this.$store.dispatch("loadPessoas").then(() => this.upload());
       });
 
       this.isLoadingCad = false;
@@ -914,7 +907,7 @@ export default {
       });
 
       await Promise.all(requests).then(arrayOfResponses => {
-        loadProdutos().then(() => this.upload());
+        this.$store.dispatch("loadProdutos").then(() => this.upload());
       });
       this.isLoadingCad = false;
     },

@@ -380,16 +380,7 @@
 <script>
 import { VMoney } from "v-money";
 import axios from "axios";
-import {
-  urlBD,
-  showError,
-  moneyToNumber,
-  formatDate,
-  loadCategoriasProdutos,
-  loadUnidades,
-  loadMarcas,
-  saveLog
-} from "@/global";
+import { urlBD, showError, moneyToNumber, formatDate, saveLog } from "@/global";
 import { mapState } from "vuex";
 
 import { formatToBRL } from "brazilian-values";
@@ -431,9 +422,9 @@ export default {
     },
     pesquisa: function() {
       if (this.pesquisa) {
-        loadCategoriasProdutos();
-        loadUnidades();
-        loadMarcas();
+        this.$store.dispatch("loadCategoriasProdutos");
+        this.$store.dispatch("loadMarcas");
+        this.$store.dispatch("loadUnidades");
       }
     }
   },
@@ -495,7 +486,7 @@ export default {
       return window.innerWidth / 2 - 150;
     },
     async loadProdutos() {
-      const url = `${urlBD}/produtos/estoque?page=${
+      const url = `${urlBD}/produtos?page=${
         this.pagination.page
       }&limit=${this.pagination.rowsPerPage}&tipo=${this.filter.tipo ||
         1}&id=${this.filter.id || ""}&descricao=${this.filter.descricao ||
@@ -505,7 +496,7 @@ export default {
         ""}`;
 
       axios.get(url).then(res => {
-        this.produtoStore.produtos = res.data.data
+        this.produtoStore.produtos = res.data.data;
         this.count = res.data.count;
         this.pagination.rowsPerPage = res.data.limit;
       });

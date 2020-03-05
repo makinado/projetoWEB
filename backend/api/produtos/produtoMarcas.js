@@ -40,12 +40,11 @@ module.exports = app => {
             .catch(e => res.status(500).send(e.toString()))
     }
 
-    const getById = async (req, res) => {
+    const getAll = async (req, res) => {
         app.db('marcas')
-            .where({ id: req.params.id })
-            .first()
-            .then(marca => res.json(marca))
-            .catch(e => res.status(500).send(e.toString() ))
+            .select('id as value', 'nome as text')
+            .then(marcas => res.json(marcas))
+            .catch(e => res.status(500).send(e.toString()))
     }
 
     const remove = async (req, res) => {
@@ -60,5 +59,5 @@ module.exports = app => {
         }
     }
 
-    return { save, get, getById, remove }
+    return { save, get, getAll, remove }
 }

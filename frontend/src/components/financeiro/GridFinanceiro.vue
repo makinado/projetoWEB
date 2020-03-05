@@ -506,7 +506,7 @@
 
 <script>
 import axios from "axios";
-import { urlBD, showError, formatDate, loadPessoas, saveLog } from "@/global";
+import { urlBD, showError, formatDate, saveLog } from "@/global";
 import { mapState } from "vuex";
 
 import { formatToBRL } from "brazilian-values";
@@ -771,7 +771,7 @@ export default {
     }
   },
   mounted() {
-    loadPessoas();
+    this.$store.dispatch("loadPessoas");
     this.concluir = true;
     this.cancelar = true;
   }

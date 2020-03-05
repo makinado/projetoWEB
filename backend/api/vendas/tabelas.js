@@ -47,7 +47,21 @@ module.exports = app => {
             .then(tabelas => {
                 tabelas = tabelas.map(tab => {
                     tab.tipo = tab.tipo === 1 ? 'ACRÉSCIMO' : 'DESCONTO'
-                    tab.percentual = formatToBRL(tab.percentual).replace('R$ ', "") + " %"
+                    tab.percentual = formatToBRL(tab.percentual).replace('R$', "") + " %"
+                    return tab
+                })
+                res.json(tabelas)
+            })
+            .catch(e => res.status(500).send(e.toString()))
+    }
+
+    const getAll = async (req, res) => {
+        app.db('tabela_preco')
+            .select('id as value', 'descricao as text', 'percentual')
+            .then(tabelas => {
+                tabelas = tabelas.map(tab => {
+                    tab.percentual = formatToBRL(tab.percentual).replace('R$', "") + " %"
+                    tab.text += ' | ' + tab.percentual
                     return tab
                 })
                 res.json(tabelas)
@@ -75,5 +89,5 @@ module.exports = app => {
         }
     }
 
-    return { save, get, getById, remove }
+    return { save, get, getAll, getById, remove }
 }

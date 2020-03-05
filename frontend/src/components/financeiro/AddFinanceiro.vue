@@ -509,17 +509,7 @@
 
 <script>
 import { VMoney } from "v-money";
-import {
-  urlBD,
-  showError,
-  parseNumber,
-  formatDate,
-  loadPessoas,
-  loadDocumentos,
-  loadContas,
-  loadClassificacoes,
-  saveLog
-} from "@/global";
+import { urlBD, showError, parseNumber, formatDate, saveLog } from "@/global";
 import axios from "axios";
 import { mapState } from "vuex";
 import { formatToBRL, isCPF } from "brazilian-values";
@@ -608,22 +598,17 @@ export default {
     },
     "$store.state.modalStore.pessoas.visible": function() {
       if (!this.modalStore.pessoas.visible) {
-        loadPessoas();
-      }
-    },
-    "$store.state.modalStore.classificacoes.visible": function() {
-      if (!this.modalStore.classificacoes.visible) {
-        loadClassificacoes();
+        this.$store.dispatch("loadPessoas");
       }
     },
     "$store.state.modalStore.financeiro.conta.visible": function() {
       if (!this.modalStore.financeiro.conta.visible) {
-        loadContas();
+        this.$store.dispatch("loadContas");
       }
     },
     "$store.state.modalStore.documentos.visible": function() {
       if (!this.modalStore.documentos.visible) {
-        loadDocumentos();
+        this.$store.dispatch("loadDocumentos");
       }
     }
   },
@@ -718,9 +703,9 @@ export default {
       data.item.observacao = "";
     },
     loadTela(financ) {
-      loadPessoas();
-      loadDocumentos();
-      loadContas();
+      this.$store.dispatch("loadPessoas");
+      this.$store.dispatch("loadDocumentos");
+      this.$store.dispatch("loadContas");
 
       if (!financ) return;
       let url = `${urlBD}/financeiro`;

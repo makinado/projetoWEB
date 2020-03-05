@@ -430,7 +430,7 @@
 
 <script>
 import axios from "axios";
-import { urlBD, showError, formatDate, loadUsuarios } from "@/global";
+import { urlBD, showError, formatDate } from "@/global";
 import { mapState } from "vuex";
 
 export default {
@@ -546,7 +546,7 @@ export default {
     async remove() {}
   },
   mounted() {
-    loadUsuarios();
+    this.$store.dispatch("loadUsuarios");
   }
 };
 </script>

@@ -103,17 +103,6 @@
           <v-layout justify-center wrap>
             <v-tooltip bottom>
               <v-btn
-                @click.left.exact="navigate('/metasVend',false)"
-                @click.ctrl="navigate('/metasVend',true)"
-                slot="activator"
-                class="v-btn-common"
-                @click.prevent
-                color="danger"
-              >Metas</v-btn>
-              <span>Metas de vendedores</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <v-btn
                 slot="activator"
                 class="v-btn-common"
                 @click.prevent="[modalStore.categorias.visible = true, modalStore.categorias.title = 'Adicionar categoria de pessoa']"
@@ -228,27 +217,6 @@
 
         <v-tooltip bottom>
           <v-btn
-            @click.left.exact="navigate('/comissoes',false)"
-            @click.ctrl="navigate('/comissoes',true)"
-            slot="activator"
-            class="v-btn-common"
-            @click.prevent
-            color="warning"
-          >Comissões</v-btn>
-          <span>Comissões de vendedores</span>
-        </v-tooltip>
-        <v-tooltip bottom>
-          <v-btn
-            @click.left.exact="navigate('/metasVend',false)"
-            @click.ctrl="navigate('/metasVend',true)"
-            slot="activator"
-            class="v-btn-common"
-            color="danger"
-          >Metas</v-btn>
-          <span>Metas de vendedores</span>
-        </v-tooltip>
-        <v-tooltip bottom>
-          <v-btn
             slot="activator"
             class="v-btn-common"
             @click.prevent="[modalStore.categorias.visible = true, modalStore.categorias.title = 'Adicionar categoria de pessoa']"
@@ -356,13 +324,7 @@
 <script>
 import axios from "axios";
 
-import {
-  urlBD,
-  showError,
-  formatDate,
-  loadCategoriasPessoas,
-  saveLog
-} from "@/global";
+import { urlBD, showError, formatDate, saveLog } from "@/global";
 import { mapState } from "vuex";
 
 export default {
@@ -389,14 +351,14 @@ export default {
     params() {
       this.loadPessoas();
     },
-    "$store.state.modalStore.pessoas.visible": function() {
+    "$store.state.modalStore.pessoas.visible"() {
       if (!this.modalStore.pessoas.visible) {
         this.loadPessoas();
       }
     },
-    pesquisa: function() {
+    pesquisa() {
       if (this.pesquisa) {
-        loadCategoriasPessoas();
+        this.$store.dispatch("loadCategoriasPessoas");
       }
     }
   },

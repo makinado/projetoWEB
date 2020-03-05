@@ -60,7 +60,7 @@
                                 dense
                                 color="primary"
                                 label="Fornecedor"
-                                :items="pessoaStore.pessoas"
+                                :items="pessoaStore.fornecedores"
                                 prepend-icon="fa fa-lg fa-plus-circle"
                                 @click:prepend="[modalStore.pessoas.visible = true, pessoaStore.pessoa = null, categoriaStore.loadCategorias = 'Produto']"
                                 v-model="produto.fornecedor"
@@ -380,10 +380,6 @@ import {
   parseNumber,
   moneyToNumber,
   saveLog,
-  loadCategoriasProdutos,
-  loadMarcas,
-  loadUnidades,
-  loadFornecs
 } from "@/global";
 
 export default {
@@ -646,10 +642,10 @@ export default {
         .catch(showError);
     },
     async loadTela(produto) {
-      loadFornecs();
-      loadCategoriasProdutos();
-      loadMarcas();
-      loadUnidades();
+      this.$store.dispatch('loadFornecs')
+      this.$store.dispatch('loadCategoriasProdutos')
+      this.$store.dispatch('loadMarcas')
+      this.$store.dispatch('loadUnidades')
 
       if (!produto) return;
       let url = `${urlBD}/produtos`;

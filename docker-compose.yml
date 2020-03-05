@@ -1,17 +1,29 @@
 version: '3'
 services:
-    db: 
+    db:
         image: postgres:10
+        restart: always
+        command: CREATE DATABASE campagWEB;
+        environment:
+          POSTGRES_DB: campagWEB
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+    
+    adminer:
+        image: adminer
+        restart: always
+        ports:
+          - 8080:8080
     backend: 
-        image: node:10
+        image: node:8.1
         volumes: 
             - ./backend:/backend
         ports: 
             - 3000:3000
-        command: bash -c "cd /backend && npm i && node index.js"
+        command: cd /backend && npm install && node index.js
     frontend:
         image: nginx:1.13
         volumes:
-            - ./frontend/dist:/usr/share/nginx/html/
+            - ./frontend:/usr/share/nginx/html/
         ports: 
             - 80:80

@@ -1,3 +1,4 @@
+const { formatToBRL } = require('brazilian-values')
 module.exports = app => {
     const { existsOrError, notExistsOrError, parseNumber } = app.api.validation
     const { vinculaProduto } = app.api.compras.importacoes
@@ -113,14 +114,6 @@ module.exports = app => {
     }
 
     const get = async (req, res) => {
-        app.db('produtos')
-            .select('id', 'descricao', 'valor_unitario', 'valor_venda')
-            .orderBy('descricao')
-            .then(produtos => res.json(produtos))
-            .catch(e => res.status(500).send(e.toString()))
-    }
-
-    const getWithEstoque = async (req, res) => {
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 10
 
@@ -193,7 +186,7 @@ module.exports = app => {
     withEstoque = produtos => {
         const produtosWithEstoque = produtos.map(async produto => {
             produto.qtdEstoque = await app.db('produto_estoque').sum('quantidade').where({ id_produto: produto.id || produto.value })
-                .then(estoque => Number(estoque[0].sum))
+                .then(estoque => estoque[0].sum)
 
             return produto
         })
@@ -215,28 +208,19 @@ module.exports = app => {
             .catch(e => { console.log(e); res.status(500).send(e) })
     }
 
-    const getByCategoria = async (req, res) => {
-        let produtos = await app.db('produtos')
-            .select('id', 'descricao', 'valor_unitario', 'valor_venda')
-            .where({ categoria: req.params.id_categoria })
-            .catch(e => {
-                res.status(500).send('Erro no servidor')
-                console.log(e)
-            })
+    const getAll = async (req, res) => {
+        app.db('produtos')
+            .select('id as value', 'descricao as text', 'valor_unitario', 'valor_venda')
+            .then(async produtos => {
+                produtos = produtos.map(produto => {
+                    produto.valor_unitario = formatToBRL(produto.valor_unitario)
+                    produto.valor_venda = formatToBRL(produto.valor_venda)
 
-        produtos = produtos.map(async produto => {
-            produto.qtdEstoque = await app.db('produto_estoque').sum('quantidade').where({ id_produto: produto.id })
-                .then(estoque => {
-                    estoque = estoque[0].sum
-                    return estoque
+                    return produto
                 })
-                .catch(e => res.status(500).send(e.toString()))
-            return produto
-        })
-
-        const resultado = await Promise.all(produtos);
-
-        res.json(resultado);
+                res.json(await Promise.all(withEstoque(produtos)))
+            })
+            .catch(e => res.status(500).send(e.toString()))
     }
 
     const remove = async (req, res) => {
@@ -251,5 +235,5 @@ module.exports = app => {
         }
     }
 
-    return { save, get, getById, getWithEstoque, getByCategoria, remove, withEstoque }
+    return { save, get, getById, getAll, remove, withEstoque }
 }

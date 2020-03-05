@@ -34,7 +34,7 @@
                   :color="color"
                   label="Fornecedor*"
                   chips
-                  :items="pessoaStore.pessoas"
+                  :items="pessoaStore.fornecedores"
                   prepend-icon="fa fa-lg fa-plus-circle"
                   @click:prepend="[pessoaStore.pessoa = null, modalStore.pessoas.visible = true, modalStore.pessoas.title = 'Adicionar pessoa']"
                   v-model="pedido.id_pessoa"
@@ -272,6 +272,7 @@
                   <v-autocomplete
                     class="tag-input"
                     chips
+                    deletable-chips
                     v-model="data.item.id"
                     label="Selecione"
                     :items="produtoStore.produtos"
@@ -360,15 +361,7 @@ import { formatToBRL, formatToNumber } from "brazilian-values";
 import VueScrollTo from "vue-scrollto";
 
 import axios from "axios";
-import {
-  urlBD,
-  showError,
-  formatDate,
-  parseNumber,
-  saveLog,
-  loadFornecs,
-  loadProdutos
-} from "@/global";
+import { urlBD, showError, formatDate, parseNumber, saveLog } from "@/global";
 import { mapState } from "vuex";
 
 export default {
@@ -457,6 +450,11 @@ export default {
       if (this.modalStore.compras.pedidos.visible) {
         this.limpaTela();
       }
+    },
+    "$store.state.modalStore.produtos.visible": function() {
+      if (!this.modalStore.produtos.visible) {
+        this.$store.dispatch("loadProdutos");
+      }
     }
   },
   methods: {
@@ -502,8 +500,8 @@ export default {
         : "";
     },
     async loadTela(pedido) {
-      loadFornecs();
-      loadProdutos();
+      this.$store.dispatch("loadFornecs");
+      this.$store.dispatch("loadProdutos");
 
       if (!pedido) return;
       let url = `${urlBD}/pedidos`;
@@ -566,7 +564,8 @@ export default {
       delete this.pedido.produtos;
     },
     async loadDados(item) {
-      const produtoFilter = this.produtos.filter(produto => {
+      if (!item) return;
+      const produtoFilter = this.produtoStore.produtos.filter(produto => {
         return produto.value === item.id;
       });
 
