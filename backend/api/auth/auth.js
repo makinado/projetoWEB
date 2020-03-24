@@ -11,6 +11,8 @@ module.exports = app => {
                 return res.status(400).send('Usuário ou senha não informados')
             }
             var usuarioBD = await app.db('usuarios')
+                .join('acesso', 'usuarios.id', 'acesso.id_usuario')
+                .select('id', 'nome', 'email', 'senha', 'contato', 'img', 'acesso.*')
                 .where({ email: usuario.email })
                 .first()
 
@@ -25,13 +27,10 @@ module.exports = app => {
 
         const now = Math.floor(Date.now() / 1000)
 
+        delete usuarioBD.senha
+
         const payload = {
-            id: usuarioBD.id,
-            nome: usuarioBD.nome,
-            email: usuarioBD.email,
-            contato: usuarioBD.contato,
-            id_perfil: usuarioBD.id_perfil,
-            img: usuarioBD.img,
+            ...usuarioBD,
             iat: now,
             exp: now + (60 * 60 * 4)
         }
@@ -40,6 +39,36 @@ module.exports = app => {
             ...payload,
             token: usuario.token ? usuario.token : jwt.encode(payload, process.env.AUTH_SECRET)
         })
+    }
+
+    const signup = async (req, res) => {
+        const usuario = { ...req.body }
+
+        // todo
+        // criar nova base para o usuario master
+        // criar a empresa na base
+        // criar o usuario na base
+        // alimentar a tabela usuario_empresas
+
+        return res.status(500).send('FAZER SINGUP')
+
+        // app.db('usuarios')
+        //     .insert(usuario).returning('id')
+        //     .then(async function (id) {
+        //         if (empresas) {
+        //             empresas = await empresas.map(empresa => {
+        //                 const usuario_empresas = {
+        //                     id_usuario: id[0],
+        //                     id_empresa: empresa
+        //                 }
+        //                 return usuario_empresas
+        //             })
+        //             return app.db.batchInsert('usuario_empresas', empresas)
+        //         }
+
+        //     })
+        //     .then(_ => res.status(204).send())
+        //     .catch(e => res.status(500).send(e.toString()))
     }
 
     const validateToken = async (req, res) => {
@@ -58,5 +87,5 @@ module.exports = app => {
         res.send(false)
     }
 
-    return { signin, validateToken }
+    return { signin, signup, validateToken }
 }

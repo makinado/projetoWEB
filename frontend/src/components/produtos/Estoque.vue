@@ -409,11 +409,11 @@ export default {
       if (tipo === "ENTRADA") return "green";
       else return "red";
     },
-    async limpaTela() {
+    limpaTela() {
       this.reset();
       this.loadEstoque(this.produtoStore.produto);
     },
-    async reset() {
+    reset() {
       this.produto = {};
       this.movim = {};
       this.produtoStore.estoque = [];
@@ -425,7 +425,7 @@ export default {
       this.$refs.formEstoque ? this.$refs.formEstoque.reset() : "";
       this.resetMovim();
     },
-    async resetEstoque() {
+    resetEstoque() {
       this.produto = {};
       this.estoque = {};
 
@@ -433,18 +433,18 @@ export default {
         ? (this.$refs.quant.$el.getElementsByTagName("input")[0].value = 0)
         : "";
     },
-    async resetMovim() {
+    resetMovim() {
       this.date1 = "";
       this.date2 = "";
       this.movimEstoqueItens = [];
 
       this.loadMovimEstoque();
     },
-    async loadEstoque(produto) {
+    loadEstoque(produto) {
       if (produto) {
-        const urlEstoque = `${urlBD}/estoque/${produto.id}`;
+        const url = `${urlBD}/estoque/${produto.id}`;
         axios
-          .get(urlEstoque)
+          .get(url)
           .then(res => {
             this.produtoStore.estoque = res.data.map(estoque => {
               estoque.valor_custo = formatToBRL(estoque.valor_custo);
@@ -464,7 +464,7 @@ export default {
           .catch(showError);
       }
     },
-    async loadMovimEstoque() {
+    loadMovimEstoque() {
       if (this.produtoStore.produto) {
         this.movimEstoque.dataIni = this.date1;
         this.movimEstoque.dataFim = this.date2;
@@ -493,17 +493,17 @@ export default {
         showError("Nenhum produto selecionado");
       }
     },
-    async save() {
+    save() {
       if (!this.$refs.formEstoque.validate()) return;
 
-      let urlEstoque = `${urlBD}/movimEstoque/${this.produto.id}`;
+      let url = `${urlBD}/movimEstoque/${this.produto.id}`;
       this.movim.id_produto = this.produtoStore.produto.id;
 
       if (!this.movim.id_empresa)
         this.movim.id_empresa = this.empresaStore.currentEmpresa;
 
       axios
-        .post(urlEstoque, this.movim)
+        .post(url, this.movim)
         .then(res => {
           this.$toasted.global.defaultSuccess();
           this.produto.estoque_total = moneyToNumber(formatToBRL(res.data));
@@ -523,7 +523,7 @@ export default {
         })
         .catch(showError);
     },
-    async remove() {
+    remove() {
       const url = `${urlBD}/movimEstoque/${this.modalStore.produtos.estoque.movim.id}`;
 
       axios

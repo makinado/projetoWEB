@@ -1,7 +1,7 @@
 const { formatToBRL } = require('brazilian-values')
 
 module.exports = app => {
-    const { existsOrError, parseNumber, formatDate } = app.api.validation
+    const { existsOrError, parseNumber } = app.api.validation
 
     const save = async (req, res) => {
         const compra = { ...req.body }
@@ -53,9 +53,6 @@ module.exports = app => {
         delete compra.produtos
         delete compra.financeiro
 
-        delete financeiro.menu
-        delete financeiro.edit
-
         try {
             compra.valor_frete = parseNumber(compra.valor_frete || "0,00")
             compra.valor_seguro = parseNumber(compra.valor_seguro || "0,00")
@@ -73,8 +70,8 @@ module.exports = app => {
                         .where({ id: compra.id })
                         .transacting(trx)
                         .then(async function () {
-                            await app.db('produto_compra').where({ id_compra: compra.id }).delete()
-                            await app.db('produto_movimento_estoque').where({ id_movimentacao: compra.id }).delete()
+                            await app.db('produto_compra').where({ id_compra: compra.id }).delete().transacting(trx)
+                            await app.db('produto_movimento_estoque').where({ id_movimentacao: compra.id }).delete().transacting(trx)
 
                             const movim_estoque = []
                             produtos = await produtos.map(produto => {
@@ -105,8 +102,8 @@ module.exports = app => {
 
                                 return newProd
                             })
-                            await app.db('financeiro').where({ id_movimento_origem: compra.id }).delete()
-                            await app.db('conta_movimento').where({ id_movimento_origem: compra.id }).delete()
+                            await app.db('financeiro').where({ id_movimento_origem: compra.id }).delete().transacting(trx)
+                            await app.db('conta_movimento').where({ id_movimento_origem: compra.id }).delete().transacting(trx)
 
                             const movim_conta = []
                             financeiro = financeiro.map(parcela => {
@@ -114,7 +111,7 @@ module.exports = app => {
                                     id_empresa: compra.id_empresa,
                                     id_pessoa: compra.id_pessoa,
                                     tipo_conta: 1,
-                                    id_movimento_origem: id[0],
+                                    id_movimento_origem: compra.id,
                                     pago: parcela.pago,
                                     parcela: parcela.parcelas,
                                     observacao: compra.observacao,
@@ -126,9 +123,14 @@ module.exports = app => {
                                     documento_origem: parcela.documento_origem,
                                     num_documento_origem: compra.nota_fiscal,
 
+                                    documento_baixa: parcela.documento_baixa,
+                                    num_documento_baixa: parcela.num_documento_baixa,
+                                    id_conta: parcela.id_conta,
+
                                     data_criacao: new Date(),
-                                    data_emissao: compra.data_lancamento,
-                                    data_vencimento: parcela.data
+                                    data_emissao: compra.data_notafiscal,
+                                    data_vencimento: parcela.data_vencimento,
+                                    data_baixa: parcela.data_baixa
                                 }
                                 if (newFinanc.pago)
                                     movim_conta.push({
@@ -136,13 +138,13 @@ module.exports = app => {
                                         id_conta: parcela.id_conta,
                                         id_movimento_origem: compra.id,
                                         data_lancamento: new Date(),
-                                        data_emissao: compra.data_lancamento,
+                                        data_emissao: compra.data_notafiscal,
                                         id_documento: parcela.documento_origem,
                                         num_documento: compra.nota_fiscal,
                                         observacao: compra.observacao,
                                         origem: "GERADO",
                                         dc: 'D',
-                                        valor: parcela.valor_pago
+                                        valor: parseNumber(parcela.valor_pago)
                                     })
 
                                 return newFinanc
@@ -227,17 +229,22 @@ module.exports = app => {
                                     documento_origem: parcela.documento_origem,
                                     num_documento_origem: compra.nota_fiscal,
 
+                                    documento_baixa: parcela.documento_baixa,
+                                    num_documento_baixa: parcela.num_documento_baixa,
+                                    id_conta: parcela.id_conta,
+
                                     data_criacao: new Date(),
-                                    data_emissao: compra.data_lancamento,
-                                    data_vencimento: parcela.data
+                                    data_emissao: compra.data_notafiscal,
+                                    data_vencimento: parcela.data_vencimento,
+                                    data_baixa: parcela.data_baixa
                                 }
                                 if (newFinanc.pago)
                                     movim_conta.push({
                                         id_empresa: compra.id_empresa,
                                         id_conta: parcela.id_conta,
-                                        id_movimento_origem: compra.id,
+                                        id_movimento_origem: id[0],
                                         data_lancamento: new Date(),
-                                        data_emissao: compra.data_lancamento,
+                                        data_emissao: compra.data_notafiscal,
                                         id_documento: parcela.documento_origem,
                                         num_documento: compra.nota_fiscal,
                                         observacao: compra.observacao,
@@ -392,7 +399,14 @@ module.exports = app => {
                         'f.pago',
                         'f.observacao',
                         'f.documento_origem',
-                        'f.data_vencimento'
+                        'f.data_vencimento',
+                        'f.id_conta',
+                        'f.data_baixa',
+                        'f.documento_baixa',
+                        'f.num_documento_baixa',
+                        'f.valor_acrescimo',
+                        'f.valor_desconto',
+                        'f.valor_pago',
                     )
                     .where({ id_movimento_origem: compra.id })
                     .catch(e => res.status(500).send(e.toString()))

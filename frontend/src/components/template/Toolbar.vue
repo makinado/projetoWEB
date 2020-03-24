@@ -20,15 +20,10 @@
     >
       <v-badge slot="activator" color="danger" left overlap>
         <v-span v-if="notificacoes.lenght > 0" slot="badge" dark small>{{ notificacoes.lenght }}</v-span>
-        <v-btn icon>
+        <v-btn icon @click="notify">
           <v-icon>fa fa-lg fa-bell</v-icon>
         </v-btn>
       </v-badge>
-      <v-list>
-        <v-list-tile v-for="(item, index) in notificacoes" :key="index" @click>
-          <v-list-tile-title>{{ item.title }}</v-list-tile-title>
-        </v-list-tile>
-      </v-list>
     </v-menu>
 
     <v-menu
@@ -115,9 +110,19 @@ export default {
         this.$router.push({ path: path });
       }
     },
+    notify() {
+      // https://developer.mozilla.org/en-US/docs/Web/API/Notification/Notification#Parameters
+      this.$notification.show(
+        "Hello World",
+        {
+          body: "This is an example!"
+        },
+        {}
+      );
+    },
     logout() {
       localStorage.removeItem(usuarioKey);
-      socket.emit("logout", this.usuarioStore.currentUsuario);
+      this.$socket.emit("logout", this.usuarioStore.currentUsuario);
       this.$store.commit("setUsuario", null);
 
       this.$router.push({ path: "/auth" });

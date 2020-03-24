@@ -8,21 +8,29 @@
     transition="dialog-bottom-transition"
   >
     <v-card v-if="modalStore.compras.pedidos.visible">
-      <v-toolbar dark :color="color" class="m-0 p-0">
-        <v-btn icon @click="modalStore.compras.pedidos.visible = false">
+      <v-toolbar fixed dark :color="color">
+        <v-toolbar-side-icon @click="modalStore.compras.pedidos.visible = false">
           <v-icon>close</v-icon>
-        </v-btn>
+        </v-toolbar-side-icon>
         <v-toolbar-title
-          class="headline text-white font-weight-light"
+          class="headline white--text font-weight-light"
         >{{ modalStore.compras.pedidos.title }}</v-toolbar-title>
+
         <v-spacer></v-spacer>
-        <v-btn icon @click>
+
+        <v-btn class="mr-3" icon @click="limpaTela">
+          <v-icon>fa fa-2x fa-eraser</v-icon>
+        </v-btn>
+        <v-btn class="mr-3" icon @click="save">
+          <v-icon>fa fa-2x fa-check</v-icon>
+        </v-btn>
+        <v-btn class="mr-3" icon>
           <v-icon>fa fa-2x fa-cog</v-icon>
         </v-btn>
       </v-toolbar>
 
       <v-card-text>
-        <v-container fluid grid-list-xl>
+        <v-container fluid grid-list-xl class="my-5">
           <v-form v-model="valid" ref="form">
             <v-text-field v-model="pedido.id" v-show="false"></v-text-field>
             <v-text-field v-model="pedido.id_empresa" v-show="false"></v-text-field>
@@ -41,30 +49,6 @@
                   no-data-text="Nenhum fornecedor cadastrado"
                   :rules="fornecRules"
                 ></v-autocomplete>
-              </v-flex>
-              <v-spacer></v-spacer>
-              <v-flex xs12 md4>
-                <v-layout wrap justify-end class="mt-1">
-                  <v-tooltip bottom>
-                    <v-btn
-                      slot="activator"
-                      class="v-btn-common"
-                      color="danger"
-                      @click="limpaTela"
-                    >Limpar</v-btn>
-                    <span>Volta a tela ao seu estado inicial</span>
-                  </v-tooltip>
-                  <v-tooltip bottom>
-                    <v-btn
-                      slot="activator"
-                      class="v-btn-common"
-                      :loading="isLoading"
-                      :color="color"
-                      @click="save"
-                    >Salvar</v-btn>
-                    <span>Finaliza o pedido</span>
-                  </v-tooltip>
-                </v-layout>
               </v-flex>
             </v-layout>
           </v-form>
@@ -234,12 +218,13 @@
                 </v-flex>
               </v-layout>
             </v-form>
+
             <v-flex xs12 class="mt-4">
               <v-layout justify-center>
-                <v-icon class="mt-2 mr-2">fa fa-2x fa-archive</v-icon>
+                <v-icon class="my-4 mr-1">fa fa-2x fa-archive</v-icon>
                 <h2>Produtos</h2>
               </v-layout>
-              <hr />
+              <v-divider></v-divider>
             </v-flex>
             <v-layout align-end>
               <span>Edite valores e quantidades do produto diretamente na tabela</span>
@@ -319,14 +304,14 @@
               <td>{{ data.item.valor_total || "R$ 0,00"}}</td>
               <td>
                 <v-tooltip bottom>
-                  <b-button
+                  <v-btn
                     slot="activator"
-                    variant="secundary"
+                    icon
                     class="mr-1"
                     @click="deleteItem(data.item)"
                   >
                     <i class="fa fa-lg fa-trash"></i>
-                  </b-button>
+                  </v-btn>
                   <span>Excluir produto</span>
                 </v-tooltip>
               </td>
@@ -358,7 +343,6 @@
 <script>
 import { VMoney } from "v-money";
 import { formatToBRL, formatToNumber } from "brazilian-values";
-import VueScrollTo from "vue-scrollto";
 
 import axios from "axios";
 import { urlBD, showError, formatDate, parseNumber, saveLog } from "@/global";

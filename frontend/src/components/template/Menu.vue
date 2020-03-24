@@ -51,7 +51,7 @@
               </v-list-tile-content>
             </v-list-tile>
 
-            <v-list-group v-if="perfil.cadastros" :key="cadastros.title" no-action>
+            <v-list-group :key="cadastros.title" no-action>
               <template slot="activator">
                 <v-list-tile>
                   <v-list-tile-action>
@@ -67,8 +67,8 @@
                 v-for="item in cadastros.items"
                 :key="item.title"
                 :to="item.link"
-                v-if="item.visible"
                 :active-class="color"
+                v-if="usuarioStore.currentUsuario[item.nome + '_read']"
               >
                 <v-list-tile-action>
                   <v-icon>{{ item.icon }}</v-icon>
@@ -79,7 +79,7 @@
               </v-list-tile>
             </v-list-group>
 
-            <v-list-group v-if="perfil.compras" :key="compras.title" no-action>
+            <v-list-group :key="compras.title" no-action>
               <template slot="activator">
                 <v-list-tile>
                   <v-list-tile-action>
@@ -95,8 +95,8 @@
                 v-for="item in compras.items"
                 :key="item.title"
                 :to="item.link"
-                v-if="item.visible"
                 :active-class="color"
+                v-if="usuarioStore.currentUsuario[item.nome + '_read']"
               >
                 <v-list-tile-action>
                   <v-icon>{{ item.icon }}</v-icon>
@@ -107,7 +107,7 @@
               </v-list-tile>
             </v-list-group>
 
-            <v-list-group v-if="perfil.vendas" :key="vendas.title" no-action>
+            <v-list-group :key="vendas.title" no-action>
               <template slot="activator">
                 <v-list-tile>
                   <v-list-tile-action>
@@ -123,8 +123,8 @@
                 v-for="item in vendas.items"
                 :key="item.title"
                 :to="item.link"
-                v-if="item.visible"
                 :active-class="color"
+                v-if="usuarioStore.currentUsuario[item.nome + '_read']"
               >
                 <v-list-tile-action>
                   <v-icon>{{ item.icon }}</v-icon>
@@ -135,7 +135,7 @@
               </v-list-tile>
             </v-list-group>
 
-            <v-list-group v-if="perfil.financeiro" :key="financeiro.title" no-action>
+            <v-list-group :key="financeiro.title" no-action>
               <template slot="activator">
                 <v-list-tile>
                   <v-list-tile-action>
@@ -151,8 +151,8 @@
                 v-for="item in financeiro.items"
                 :key="item.title"
                 :to="item.link"
-                v-if="item.visible"
                 :active-class="color"
+                v-if="usuarioStore.currentUsuario[item.nome + '_read']"
               >
                 <v-list-tile-action>
                   <v-icon>{{ item.icon }}</v-icon>
@@ -180,6 +180,7 @@
                 :key="item.title"
                 :to="item.link"
                 :active-class="color"
+                v-if="usuarioStore.currentUsuario[item.nome + '_read']"
               >
                 <v-list-tile-action>
                   <v-icon>{{ item.icon }}</v-icon>
@@ -206,8 +207,8 @@
                 v-for="item in relatorios.items"
                 :key="item.title"
                 :to="item.link"
-                v-if="item.visible"
                 :active-class="color"
+                v-if="usuarioStore.currentUsuario[item.nome]"
               >
                 <v-list-tile-action>
                   <v-icon>{{ item.icon }}</v-icon>
@@ -235,6 +236,7 @@
                 :key="item.title"
                 :to="item.link"
                 :active-class="color"
+                v-if="usuarioStore.currentUsuario[item.nome]"
               >
                 <v-list-tile-action>
                   <v-icon>{{ item.icon }}</v-icon>
@@ -272,7 +274,12 @@
               </v-list-tile>
             </v-list-group>
 
-            <v-list-tile :active-class="color" no-action to="/config">
+            <v-list-tile
+              v-if="usuarioStore.currentUsuario['configuracoes']"
+              :active-class="color"
+              no-action
+              to="/config"
+            >
               <v-list-tile-action>
                 <v-icon>{{ config.icon }}</v-icon>
               </v-list-tile-action>
@@ -370,7 +377,6 @@ export default {
       logo: `${urlBD}/uploads/img/vue-logo.png`,
       urlBD: urlBD,
       sidebarOverlayGradiant: "rgba(27, 27, 27, 0.74),rgba(27, 27, 27, 0.74)",
-      perfil: {},
       data: "",
       home: { title: "Home", icon: "fa fa-home", link: "/" },
       ferramentas: {
@@ -380,11 +386,13 @@ export default {
         items: [
           {
             title: "Agenda",
+            nome: "agenda",
             icon: "fa fa-calendar",
             link: "/agenda"
           },
           {
             title: "Atividades",
+            nome: "atividades",
             icon: "fa fa-align-left",
             link: "/atividades"
           }
@@ -392,6 +400,7 @@ export default {
       },
       config: {
         title: "Configurações",
+        nome: "configuracoes",
         icon: "fa fa-cog",
         link: "/config"
       },
@@ -401,24 +410,28 @@ export default {
         items: [
           {
             title: "Empresas",
+            nome: "empresa",
             icon: "fa fa-building",
             link: "/empresas",
             visible: false
           },
           {
             title: "Usuários",
+            nome: "usuario",
             icon: "fa fa-user-o",
             link: "/usuarios",
             visible: false
           },
           {
             title: "Pessoas",
+            nome: "pessoa",
             icon: "fa fa-users",
             link: "/pessoas",
             visible: false
           },
           {
             title: "Produtos",
+            nome: "produto",
             icon: "fa fa-archive",
             link: "/produtos",
             visible: false
@@ -431,12 +444,14 @@ export default {
         items: [
           {
             title: "Pedidos",
+            nome: "pedidos",
             icon: "fa fa-file-o",
             link: "/pedidos",
             visible: false
           },
           {
             title: "Compras",
+            nome: "compras",
             icon: "fa fa-arrow-circle-down",
             link: "/importacoes",
             visible: false
@@ -449,12 +464,14 @@ export default {
         items: [
           {
             title: "Orçamentos/Vendas",
+            nome: "vendas",
             icon: "fa fa-file-text",
             link: "/vendas",
             visible: false
           },
           {
             title: "PDV",
+            nome: "pdv",
             icon: "fa fa-tv",
             link: "/pdv",
             visible: false
@@ -467,12 +484,14 @@ export default {
         items: [
           {
             title: "Financeiro",
+            nome: "financeiro",
             icon: "fa fa-usd",
             link: "/financeiro",
             visible: false
           },
           {
             title: "Contas",
+            nome: "contas",
             icon: "fa fa-bank",
             link: "/conta",
             visible: false
@@ -485,24 +504,21 @@ export default {
         items: [
           {
             title: "NF-e",
+            nome: "nfe",
             icon: "fa fa-file-o",
             link: "/",
             visible: false
           },
           {
             title: "NFC-e",
+            nome: "nfce",
             icon: "fa fa-files-o",
             link: "/",
             visible: false
           },
           {
-            title: "SAT-e",
-            icon: "fa fa-signal",
-            link: "/",
-            visible: false
-          },
-          {
             title: "MDF-e",
+            nome: "mdfe",
             icon: "fa fa-truck",
             link: "/",
             visible: false
@@ -515,36 +531,42 @@ export default {
         items: [
           {
             title: "Cadastros",
+            nome: "rel_cadastros",
             icon: "fa fa-archive ",
             link: "/rel_cadastros",
             visible: false
           },
           {
             title: "Compras",
+            nome: "rel_compras",
             icon: "fa fa-cart-arrow-down",
             link: "/rel_compras",
             visible: false
           },
           {
             title: "Vendas",
+            nome: "rel_vendas",
             icon: "fa fa-shopping-cart",
             link: "/rel_vendas",
             visible: false
           },
           {
             title: "Estoque",
+            nome: "rel_estoque",
             icon: "fa fa-th",
             link: "/rel_estoque",
             visible: false
           },
           {
             title: "Financeiro",
+            nome: "rel_financeiro",
             icon: "fa fa-usd",
             link: "/rel_financeiro",
             visible: false
           },
           {
             title: "Estatísticas",
+            nome: "rel_estat",
             icon: "fa fa-line-chart",
             link: "/rel_estat",
             visible: false
@@ -614,80 +636,9 @@ export default {
         " de " +
         now.getFullYear() +
         ".";
-    },
-    loadPerfil() {
-      axios
-        .get(`${urlBD}/perfis/${this.usuarioStore.currentUsuario.id_perfil}`)
-        .then(res => {
-          this.perfil = res.data;
-          this.prepareMenu();
-        })
-        .catch(showError);
-    },
-    prepareMenu() {
-      this.perfil.empresas
-        ? (this.cadastros.items[0].visible = true)
-        : (this.cadastros.items[0].visible = false);
-      this.perfil.usuarios
-        ? (this.cadastros.items[1].visible = true)
-        : (this.cadastros.items[1].visible = false);
-      this.perfil.pessoas
-        ? (this.cadastros.items[2].visible = true)
-        : (this.cadastros.items[2].visible = false);
-      this.perfil.produtos
-        ? (this.cadastros.items[3].visible = true)
-        : (this.cadastros.items[3].visible = false);
-
-      this.perfil.pedidos
-        ? (this.compras.items[0].visible = true)
-        : (this.compras.items[0].visible = false);
-      this.perfil.nfe
-        ? (this.compras.items[1].visible = true)
-        : (this.compras.items[1].visible = false);
-
-      this.perfil.orcamentos
-        ? (this.vendas.items[0].visible = true)
-        : (this.vendas.items[0].visible = false);
-      this.perfil.pdv
-        ? (this.vendas.items[1].visible = true)
-        : (this.vendas.items[1].visible = false);
-
-      this.perfil.financeiro
-        ? (this.financeiro.items[0].visible = true)
-        : (this.financeiro.items[0].visible = false);
-      this.perfil.caixa
-        ? (this.financeiro.items[1].visible = true)
-        : (this.financeiro.items[1].visible = false);
-
-      this.perfil.financeiro
-        ? (this.financeiro.items[0].visible = true)
-        : (this.financeiro.items[0].visible = false);
-      this.perfil.caixa
-        ? (this.financeiro.items[1].visible = true)
-        : (this.financeiro.items[1].visible = false);
-
-      this.perfil.rel_cadastros
-        ? (this.relatorios.items[0].visible = true)
-        : (this.relatorios.items[0].visible = false);
-      this.perfil.rel_compras
-        ? (this.relatorios.items[1].visible = true)
-        : (this.relatorios.items[1].visible = false);
-      this.perfil.rel_vendas
-        ? (this.relatorios.items[2].visible = true)
-        : (this.relatorios.items[2].visible = false);
-      this.perfil.rel_financeiro
-        ? (this.relatorios.items[3].visible = true)
-        : (this.relatorios.items[3].visible = false);
-      this.perfil.rel_estoque
-        ? (this.relatorios.items[4].visible = true)
-        : (this.relatorios.items[4].visible = false);
-      this.perfil.rel_estat
-        ? (this.relatorios.items[5].visible = true)
-        : (this.relatorios.items[5].visible = false);
     }
   },
   created() {
-    this.loadPerfil();
     this.getData();
   }
 };

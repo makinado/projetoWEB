@@ -15,7 +15,6 @@
               max-width="600"
               offset-x
               transition="slide-y-transition"
-              @keyup.enter
               v-model="pesquisa"
             >
               <v-btn slot="activator" :color="color" icon>
@@ -83,7 +82,6 @@
           max-width="600"
           offset-x
           transition="slide-y-transition"
-          @keyup.enter
           v-model="pesquisa"
         >
           <v-btn slot="activator" :color="color" icon>
@@ -165,46 +163,46 @@
           <td>{{ data.item.saldo_atual || "R$ 0,00" }}</td>
           <td>
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[financeiroStore.conta = data.item, modalStore.financeiro.movimento.visible = true]"
                 class="mr-1"
               >
                 <i class="fa fa-lg fa-eye"></i>
-              </b-button>
+              </v-btn>
               <span>Ver movimento</span>
             </v-tooltip>
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[financeiroStore.conta = data.item, modalStore.financeiro.conta.visible = true,modalStore.financeiro.conta.title = 'Alterar conta']"
                 class="mr-1"
               >
                 <i class="fa fa-lg fa-pencil"></i>
-              </b-button>
+              </v-btn>
               <span>Editar conta</span>
             </v-tooltip>
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[confirmaExclusao = true, financeiroStore.conta = data.item]"
                 class="mr-1"
               >
                 <i class="fa fa-lg fa-trash"></i>
-              </b-button>
+              </v-btn>
               <span>Excluir conta</span>
             </v-tooltip>
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[modalStore.complementos.impressao = true]"
               >
                 <i class="fa fa-lg fa-print"></i>
-              </b-button>
+              </v-btn>
               <span>Exportar conta</span>
             </v-tooltip>
           </td>

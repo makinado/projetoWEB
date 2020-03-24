@@ -15,7 +15,6 @@
               max-width="500"
               offset-x
               transition="slide-y-transition"
-              @keyup.enter
               v-model="pesquisa"
             >
               <v-btn slot="activator" :color="color" icon>
@@ -132,7 +131,6 @@
           max-width="500"
           offset-x
           transition="slide-y-transition"
-          @keyup.enter
           v-model="pesquisa"
         >
           <v-btn slot="activator" :color="color" icon>
@@ -261,37 +259,37 @@
           <td>{{ data.item.contato }}</td>
           <td>
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[pessoaStore.pessoa = data.item, modalStore.pessoas.visible = true,modalStore.pessoas.title = 'Alterar pessoa']"
                 class="mr-1"
               >
                 <i class="fa fa-lg fa-pencil"></i>
-              </b-button>
+              </v-btn>
               <span>Editar pessoa</span>
             </v-tooltip>
 
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[confirmaExclusao = true, pessoaStore.pessoa = data.item]"
                 class="mr-1"
               >
                 <i class="fa fa-lg fa-trash"></i>
-              </b-button>
+              </v-btn>
               <span>Excluir pessoa</span>
             </v-tooltip>
 
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[modalStore.email.visible = true, modalStore.email.para = data.item.email]"
               >
                 <i class="fa fa-lg fa-envelope"></i>
-              </b-button>
+              </v-btn>
               <span>Enviar e-mail</span>
             </v-tooltip>
           </td>

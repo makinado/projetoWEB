@@ -28,18 +28,7 @@
                         <v-container grid-list-xl>
                           <v-form ref="form" v-model="valid">
                             <v-layout wrap>
-                              <v-flex xs12 md6>
-                                <v-autocomplete
-                                  no-data-text="Nenhum resultado"
-                                  dense
-                                  color="primary"
-                                  label="Empresa*"
-                                  v-model="movim.id_empresa"
-                                  :items="empresaStore.empresas"
-                                  :rules="empresaRules"
-                                ></v-autocomplete>
-                              </v-flex>
-                              <v-flex xs12 md6>
+                              <v-flex xs12 md3>
                                 <v-text-field
                                   ref="valor"
                                   color="primary"
@@ -90,7 +79,7 @@
                                   v-model="movim.num_documento"
                                 ></v-text-field>
                               </v-flex>
-                              <v-flex xs12 md6>
+                              <v-flex xs12 md4>
                                 <v-menu
                                   v-model="menu"
                                   :close-on-content-click="false"
@@ -122,7 +111,7 @@
                                   ></v-date-picker>
                                 </v-menu>
                               </v-flex>
-                              <v-flex xs12 md6>
+                              <v-flex xs12 md4>
                                 <v-menu
                                   v-model="menu1"
                                   :close-on-content-click="false"
@@ -165,23 +154,6 @@
                             </v-layout>
                           </v-form>
                         </v-container>
-
-                        <span class="mb-4">Saldo de conta por empresa</span>
-                        <v-data-table
-                          class="elevation-5"
-                          :items="financeiroStore.movimento_conta"
-                          :headers="fields"
-                          rows-per-page-text="Registros por página"
-                          no-data-text="Nenhuma conta cadastrada"
-                          :rows-per-page-items="[5, 10, 20]"
-                          :pagination.sync="pagination"
-                        >
-                          <template slot="items" slot-scope="data">
-                            <td>{{ data.item.empresa }}</td>
-                            <td>{{ data.item.conta }}</td>
-                            <td>{{ data.item.saldo_atual || "R$ 0,00" }}</td>
-                          </template>
-                        </v-data-table>
                       </v-card-text>
                     </v-card>
                   </v-tab-item>
@@ -285,15 +257,15 @@
                                   <td>{{ data.item.valor }}</td>
                                   <td>
                                     <v-tooltip bottom>
-                                      <b-button
+                                      <v-btn
                                         slot="activator"
-                                        variant="secundary"
+                                        icon
                                         @click.prevent="[modalStore.financeiro.deleteMovimento = true, financeiroStore.movim = data.item]"
                                         class="mr-1"
                                         :disabled="(data.item.tipoStr === 'Entrada' || data.item.tipoStr === 'Saída') || (data.item.origem === 'Implantação de saldo' && movimContaItens.length > 1)"
                                       >
                                         <i class="fa fa-lg fa-trash"></i>
-                                      </b-button>
+                                      </v-btn>
                                       <span>Excluir movimentação</span>
                                     </v-tooltip>
                                   </td>
@@ -350,12 +322,7 @@
 
 <script>
 import axios from "axios";
-import {
-  urlBD,
-  showError,
-  formatDate,
-  saveLog
-} from "@/global";
+import { urlBD, showError, formatDate, saveLog } from "@/global";
 import { mapState } from "vuex";
 
 import { VMoney } from "v-money";
@@ -477,12 +444,12 @@ export default {
       if (tipo === "C") return "green";
       else return "red";
     },
-    async limpaTela() {
+    limpaTela() {
       this.reset();
       this.$store.dispatch("loadDocumentos");
       this.$store.dispatch("loadEmpresas");
     },
-    async reset() {
+    reset() {
       this.movim = {};
       this.isBank = false;
       this.tabIndex = "tab-1";
@@ -492,14 +459,14 @@ export default {
         ? (this.$refs.valor.$el.getElementsByTagName("input")[0].value = 0)
         : "";
     },
-    async resetMovim() {
+    resetMovim() {
       this.date1 = "";
       this.date2 = "";
       this.movimContaItens = [];
 
       this.loadMovim();
     },
-    async loadMovim() {
+    loadMovim() {
       if (this.financeiroStore.conta) {
         this.movimConta.dataIni = this.date1;
         this.movimConta.dataFim = this.date2;
@@ -527,19 +494,22 @@ export default {
         showError("Nenhuma conta selecionada");
       }
     },
-    async getTipoClass(id) {
+    getTipoClass(id) {
       const clas = this.classificacaoStore.classificacoes.find(
         item => item.value === id
       );
 
       if (clas) this.movim.dc = clas.tipo === 1 ? "C" : "D";
     },
-    async save() {
+    save() {
       if (!this.$refs.form.validate()) return;
 
       let url = `${urlBD}/movimConta/${this.financeiroStore.conta.id}`;
       this.movim.id_conta = this.financeiroStore.conta.id;
       this.movim.origem = "DIGITADO";
+
+      if (!this.movim.id_empresa)
+        this.movim.id_empresa = this.empresaStore.currentEmpresa;
 
       axios
         .post(url, this.movim)
@@ -549,19 +519,15 @@ export default {
           saveLog(
             new Date(),
             "GRAVAÇÃO",
-            "MOVIMENTO DE ESTOQUE",
-            `Usuário ${
-              this.usuarioStore.currentUsuario.nome
-            } ${"ADICIONOU"} uma movimentação ao produto ${
-              this.financeiroStore.conta.nome
-            }`
+            "MOVIMENTO DE CAIXA",
+            `Usuário ${this.usuarioStore.currentUsuario.nome} fez uma movimentação no caixa ${this.financeiroStore.conta.nome}`
           );
 
           this.limpaTela();
         })
         .catch(showError);
     },
-    async remove() {
+    remove() {
       const url = `${urlBD}/movimConta/${this.financeiroStore.movim.id}`;
 
       axios

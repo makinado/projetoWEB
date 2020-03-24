@@ -50,6 +50,47 @@ h2.title{
     margin-bottom: $margin-general * 2;
 }
 
+.text-truncate-0 {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  width: 100px;
+  display: block;
+  margin-top: 15px;
+  overflow: hidden
+}
+.text-truncate-1 {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  width: 150px;
+  display: block;
+  margin-top: 15px;
+  overflow: hidden
+}
+.text-truncate-2 {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  width: 200px;
+  display: block;
+  margin-top: 15px;
+  overflow: hidden
+}
+.text-truncate-3 {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  width: 250px;
+  display: block;
+  margin-top: 15px;
+  overflow: hidden
+}
+.text-truncate-4 {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  width: 300px;
+  display: block;
+  margin-top: 15px;
+  overflow: hidden
+}
+
 .description,
 .card-description,
 .footer-big p{

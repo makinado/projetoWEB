@@ -10,18 +10,13 @@
       >
         <slot v-if="!title && !text" name="header" />
         <span v-else>
-          <v-layout class="p-2">
-            <h4 class="title font-weight-light mb-2" v-text="title" />
+          <v-layout class="p-2" align-center>
+            <h4 class="title font-weight-light ml-2" v-text="title" />
             <p class="category font-weight-thin" v-text="text" />
             <v-spacer></v-spacer>
             <span v-if="actions" v-for="a in actions">
               <v-tooltip v-if="!a.disabled" bottom>
-                <v-btn
-                  slot="activator"
-                  class="p-1"
-                  icon
-                  @click="handleClick(a.method, a.store, a.required)"
-                >
+                <v-btn slot="activator" class="p-1" icon @click="handleClick(a)">
                   <v-icon>{{ a.icon }}</v-icon>
                 </v-btn>
                 <span>{{ a.tooltip }}</span>
@@ -184,29 +179,33 @@ export default {
       set(value) {
         this.vendaStore.venda = value;
       }
+    },
+    pdv: {
+      get() {
+        return this.vendaStore.pdv;
+      },
+      set(value) {
+        this.vendaStore.pdv = value;
+      }
     }
   },
   methods: {
-    handleClick(method, store, required) {
-      // console.log(method, store);
-      // return;
-
+    handleClick(action) {
       // required significa que posso chamar o método do componente pai diretamente
-      // sem verificar a store antes
-      if (required) {
-        return this.$parent[method]().then(() =>
+      if (action.required) {
+        if (action.param) return this.$parent[action.method](action.param);
+        return this.$parent[action.method]().then(() =>
           this.$toasted.global.defaultSuccess()
         );
       }
 
       if (this.$parent.itens_selecionados.length == 0)
         return showError("Nenhum item selecionado");
+      if (!this.$parent[action.method] || !action.store)
+        return showError("Método ou item não definidos");
 
-      if (!this.$parent[method] || !store) return showError("Erro inesperado");
-
-      this[store] = this.$parent.itens_selecionados;
-      // console.log(this.financeiroStore.financ);
-      this.$parent[method]();
+      this[action.store] = this.$parent.itens_selecionados;
+      this.$parent[action.method]();
     }
   }
 };

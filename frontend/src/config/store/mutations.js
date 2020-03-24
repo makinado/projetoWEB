@@ -1,6 +1,8 @@
 // https://vuex.vuejs.org/en/mutations.html
 
 import axios from 'axios'
+import { formatToBRL } from 'brazilian-values'
+import { showSuccess } from '@/global'
 
 export default {
   setUsuario(state, usuario) {
@@ -66,4 +68,36 @@ export default {
   setTabelas(state, tabelas) {
     state.vendaStore.tabelas = tabelas
   },
+  setPDVProduto(state, produto) {
+    state.vendaStore.pdv.pdvProduto = produto
+  },
+  setVendas(state, vendas) {
+    state.vendaStore.vendas = vendas
+  },
+  setPDVProdutos(state, produtos) {
+    state.vendaStore.pdv.produtos = produtos.map(p => {
+      return {
+        sequencia: p.sequencia,
+        produto: { value: p.id, text: p.descricao },
+        quantidade: formatToBRL(p.quantidade).replace('R$', ''),
+        valor_venda: formatToBRL(p.valor_venda),
+        valor_desconto: formatToBRL(p.valor_desconto),
+        valor_total: formatToBRL(p.valor_total)
+      }
+    })
+  },
+  pushPDVProduto(state, produto) {
+    if (!produto.sequencia) {
+      if (state.vendaStore.pdv.produtos.length == 0)
+        produto.sequencia = 0
+      else {
+        produto.sequencia = state.vendaStore.pdv.produtos.slice(-1)[0].sequencia + 1
+      }
+    }
+    state.vendaStore.pdv.produtos.push(produto)
+    showSuccess('Produto adicionado com sucesso!')
+  },
+  setTotaisPDV(state, totais) {
+    state.vendaStore.pdv.totais = totais
+  }
 }

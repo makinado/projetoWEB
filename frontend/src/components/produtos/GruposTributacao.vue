@@ -21,20 +21,20 @@
                 <td>{{ data.item.uf }}</td>
                 <td>{{ data.item.cfop }}</td>
                 <td>
-                  <b-button
-                    variant="secundary"
+                  <v-btn
+                    icon
                     @click.prevent="[produtoStore.grupo_trib = data.item, modalStore.grupo_trib.addGrupo = true]"
                     class="mr-1"
                   >
                     <i class="fa fa-lg fa-pencil"></i>
-                  </b-button>
-                  <b-button
-                    variant="secundary"
+                  </v-btn>
+                  <v-btn
+                    icon
                     @click.prevent="[produtoStore.grupo_trib = data.item, modalStore.grupo_trib.deleteGrupo = true]"
                     class="mr-1"
                   >
                     <i class="fa fa-lg fa-trash"></i>
-                  </b-button>
+                  </v-btn>
                 </td>
               </template>
             </v-data-table>

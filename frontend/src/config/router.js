@@ -90,7 +90,7 @@ const routes = [{
 }, {
     name: 'PDV',
     path: '/pdv',
-    component: () => import('@/components/vendas/PDV')
+    component: () => import('@/components/vendas/pdv/PDV')
 }, {
     name: 'Dúvidas',
     path: "/duvidas",

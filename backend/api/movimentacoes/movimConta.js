@@ -10,13 +10,15 @@ module.exports = app => {
             existsOrError(movim.valor, 'Informe a valor da movimentação')
             if (movim.valor === 'R$ 0,00') throw 'valor inválido'
             existsOrError(movim.dc, 'Informe o tipo da movimentação')
-            existsOrError(movim.data_lancamento, 'Informe a data de lançamento da movimentação')
 
         } catch (e) {
             return res.status(400).send(e.toString())
         }
 
+        delete movim.saldo_atual
         movim.valor = parseNumber(movim.valor)
+        if (!movim.data_lancamento)
+            movim.data_lancamento = new Date()
 
         app.db('conta_movimento')
             .insert(movim)

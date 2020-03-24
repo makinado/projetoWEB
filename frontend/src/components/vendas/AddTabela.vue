@@ -69,16 +69,16 @@
                 <td>{{ data.item.descricao }}</td>
                 <td>{{ data.item.percentual }}</td>
                 <td>
-                  <b-button variant="secundary" @click.prevent="loadTabela(data.item)" class="mr-1">
+                  <v-btn icon @click.prevent="loadTabela(data.item)" class="mr-1">
                     <i class="fa fa-lg fa-pencil"></i>
-                  </b-button>
-                  <b-button
-                    variant="secundary"
+                  </v-btn>
+                  <v-btn
+                    icon
                     @click.prevent="[modalStore.tabelas.deleteDoc = true, vendaStore.tabela = data.item]"
                     class="mr-1"
                   >
                     <i class="fa fa-lg fa-trash"></i>
-                  </b-button>
+                  </v-btn>
                 </td>
               </template>
             </v-data-table>

@@ -16,10 +16,11 @@ module.exports = app => {
         const usuario = { ...req.body }
 
         try {
-            existsOrError(usuario.id_perfil, 'Perfil do usuário não informado')
             existsOrError(usuario.nome, 'Nome não informado')
             existsOrError(usuario.email, 'E-mail não informado')
             existsOrError(usuario.senha, 'Senha não informada')
+            existsOrError(usuario.acessos, 'Permissões não informadas')
+            existsOrError(usuario.empresas, 'Empresas que o usuário acessará não informadas')
             existsOrError(usuario.confirmaSenha, 'Confirmação de Senha inválida')
             equalsOrError(usuario.senha, usuario.confirmaSenha,
                 'Senhas não conferem')
@@ -40,33 +41,52 @@ module.exports = app => {
         delete usuario.token
 
         var empresas = usuario.empresas
+        var acessos = usuario.acessos
         delete usuario.empresas
+        delete usuario.acessos
 
         if (usuario.id) {
-            return app.db('usuarios')
-                .update(usuario)
-                .where({ id: usuario.id })
-                .then(async function () {
-                    if (empresas) {
-                        await app.db('usuario_empresas').where({ id_usuario: usuario.id }).delete()
-                        empresas = await empresas.map(empresa => {
-                            const usuario_empresas = {
-                                id_usuario: usuario.id,
-                                id_empresa: empresa
-                            }
+            return app.db.transaction(async function (trx) {
+                return app.db('usuarios')
+                    .update(usuario)
+                    .where({ id: usuario.id })
+                    .transacting(trx)
+                    .then(async function () {
+                        if (empresas) {
+                            await app.db('usuario_empresas').where({ id_usuario: usuario.id }).delete().transacting(trx)
+                            await app.db('acesso').where({ id_usuario: usuario.id }).delete().transacting(trx)
 
-                            return usuario_empresas
-                        })
-                        return app.db.batchInsert('usuario_empresas', empresas)
-                    }
-                })
-                .then(_ => res.status(204).send())
-                .catch(e => res.status(500).send(e.toString()))
+                            acessos.id_usuario = usuario.id
+                            empresas = await empresas.map(empresa => {
+                                const usuario_empresas = {
+                                    id_usuario: usuario.id,
+                                    id_empresa: empresa
+                                }
+
+                                return usuario_empresas
+                            })
+                            return app.db('acesso').insert(acessos)
+                                .transacting(trx)
+                                .then(() => {
+                                    return app.db.batchInsert('usuario_empresas', empresas)
+                                        .transacting(trx)
+                                })
+                        }
+                    })
+                    .then(trx.commit).catch(trx.rollback);
+            }).then(function (inserts) {
+                res.status(204).send()
+            }).catch(function (error) {
+                console.log(error.toString())
+                res.status(500).send(error.toString())
+            });
         } else {
-            return app.db('usuarios')
-                .insert(usuario).returning('id')
-                .then(async function (id) {
-                    if (empresas) {
+            return app.db.transaction(async function (trx) {
+                return app.db('usuarios')
+                    .insert(usuario).returning('id')
+                    .transacting(trx)
+                    .then(async function (id) {
+                        acessos.id_usuario = id[0]
                         empresas = await empresas.map(empresa => {
                             const usuario_empresas = {
                                 id_usuario: id[0],
@@ -74,12 +94,21 @@ module.exports = app => {
                             }
                             return usuario_empresas
                         })
-                        return app.db.batchInsert('usuario_empresas', empresas)
-                    }
 
-                })
-                .then(_ => res.status(204).send())
-                .catch(e => res.status(500).send(e.toString()))
+                        return app.db('acesso').insert(acessos)
+                            .transacting(trx)
+                            .then(() => {
+                                return app.db.batchInsert('usuario_empresas', empresas)
+                                    .transacting(trx)
+                            })
+                    })
+                    .then(trx.commit).catch(trx.rollback);
+            }).then(function (inserts) {
+                res.status(204).send()
+            }).catch(function (error) {
+                console.log(error.toString())
+                res.status(500).send(error.toString())
+            });
         }
     }
 
@@ -100,8 +129,7 @@ module.exports = app => {
         const count = parseInt(result.count)
 
         app.db('usuarios')
-            .join('perfil', 'usuarios.id_perfil', 'perfil.id')
-            .select('usuarios.id', 'nome', 'perfil.descricao as perfil', 'email', 'contato')
+            .select('usuarios.id', 'nome', 'email', 'contato')
             .limit(limit).offset(page * limit - limit)
             .orderBy('nome')
             .where((qb) => {
@@ -134,7 +162,7 @@ module.exports = app => {
                 }
             })
             .then(usuarios => res.json({ data: usuarios, count, limit }))
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => res.status(500).send(e))
     }
 
     const getAll = async (req, res) => {
@@ -146,27 +174,38 @@ module.exports = app => {
 
     const getById = async (req, res) => {
         app.db('usuarios')
-            .select('id', 'nome', 'email', 'contato', 'id_perfil')
+            .select('id', 'nome', 'email', 'contato')
             .where({ id: req.params.id })
             .first()
             .then(async usuario => {
                 usuario.empresas = await app.db('usuario_empresas')
                     .select('id_empresa').where({ id_usuario: usuario.id }).then(empresas => empresas.map(e => e.id_empresa))
+                usuario.acessos = await app.db('acesso').where({ id_usuario: usuario.id }).first()
                 res.json(usuario)
             })
             .catch(e => res.status(500).send(e.toString()))
     }
 
     const remove = async (req, res) => {
-        try {
-            const rowsUpdated = await app.db('usuarios')
+        app.db.transaction(async function (trx) {
+            return app.db('usuarios')
                 .where({ id: req.params.id }).delete()
-            existsOrError(rowsUpdated, 'Usuário não encontrado')
-
+                .transacting(trx)
+                .then(function () {
+                    return app.db('acesso')
+                        .where({ id_usuario: req.params.id }).delete()
+                        .transacting(trx)
+                })
+                .then(trx.commit)
+                .catch(trx.rollback);
+        }).then(function (inserts) {
             res.status(204).send()
-        } catch (e) {
-            res.status(400).send(e.toString())
-        }
+        }).catch(function (error) {
+            console.log(error.toString())
+            res.status(500).send(error.toString())
+        });
+
+
     }
 
     const recoverPassword = async (req, res) => {
@@ -190,7 +229,6 @@ module.exports = app => {
             id: usuarioBD.id,
             nome: usuarioBD.nome,
             email: usuarioBD.email,
-            id_perfil: usuarioBD.id_perfil,
             iat: now,
             exp: now + 3600000
         }

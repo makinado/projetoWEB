@@ -15,7 +15,6 @@
               max-width="600"
               offset-x
               transition="slide-y-transition"
-              @keyup.enter
               v-model="pesquisa"
             >
               <v-btn slot="activator" :color="color" icon>
@@ -166,7 +165,6 @@
           max-width="600"
           offset-x
           transition="slide-y-transition"
-          @keyup.enter
           v-model="pesquisa"
         >
           <v-btn slot="activator" :color="color" icon>
@@ -333,39 +331,39 @@
           <td>{{ data.item.cliente }}</td>
           <td>{{ data.item.vendedor }}</td>
           <td>{{ data.item.documento_fiscal }}</td>
-          <td>{{ data.item.data_emissao | date }}</td>
+          <td>{{ data.item.data_emissao| date }}</td>
           <td>{{ data.item.valor_total | currency }}</td>
           <td>
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[vendaStore.venda = data.item, modalStore.vendas.vendas.visible = true, modalStore.vendas.title = 'Alterar orçamento / venda']"
                 class="mr-1"
               >
                 <i class="fa fa-lg fa-pencil"></i>
-              </b-button>
+              </v-btn>
               <span>Editar orçamento</span>
             </v-tooltip>
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[confirmaExclusao = true,vendaStore.venda = data.item]"
                 class="mr-1"
               >
                 <i class="fa fa-lg fa-trash"></i>
-              </b-button>
+              </v-btn>
               <span>Excluir orçamento</span>
             </v-tooltip>
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[modalStore.complementos.impressao = true]"
               >
                 <i class="fa fa-lg fa-print"></i>
-              </b-button>
+              </v-btn>
               <span>Exportar orçamento</span>
             </v-tooltip>
           </td>
@@ -400,7 +398,7 @@
 
 <script>
 import axios from "axios";
-import { urlBD, showError, formatDate } from "@/global";
+import { urlBD, showError, formatDate, saveLog } from "@/global";
 import { mapState } from "vuex";
 
 import { formatToBRL } from "brazilian-values";
@@ -541,7 +539,7 @@ export default {
           .delete(url)
           .then(() => {
             this.$toasted.global.defaultSuccess();
-            this.modalStore.vendas.deleteVenda = false;
+            this.confirmaExclusao = false;
             this.itens_selecionados = [];
 
             this.loadVendas();
@@ -549,8 +547,8 @@ export default {
             saveLog(
               new Date(),
               "EXCLUSÃO",
-              "PEDIDOS",
-              `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu o pedido ${item.id} no valor de ${item.valor_total}`
+              "VENDAS",
+              `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu a venda ${item.id} no valor de ${item.valor_total}`
             );
           })
           .catch(showError);

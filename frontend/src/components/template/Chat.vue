@@ -79,7 +79,8 @@
                       label="Selecione um usuário"
                       v-model="message.receiver"
                       :items="usuarios"
-                      item-value="email"
+                      item-value="id"
+                      item-text="nome"
                       return-object
                       @change="joinPrivate"
                       :rules="usuarioRules"
@@ -87,7 +88,7 @@
                       <template slot="item" slot-scope="data">
                         <v-avatar v-if="data.item.online" class="mr-4" color="success" size="15"></v-avatar>
                         <v-avatar v-else class="mr-4" color="danger" size="15"></v-avatar>
-                        {{ data.item.text }}
+                        {{ data.item.nome }}
                       </template>
                     </v-autocomplete>
                   </v-flex>
@@ -184,6 +185,7 @@ export default {
   watch: {
     menu() {
       if (this.menu) {
+        this.$notification.requestPermission();
         this.loadUsuariosChat();
       }
     },
@@ -233,12 +235,14 @@ export default {
     },
     loadUsuariosChat() {
       this.$store.dispatch("loadUsuarios");
+
       this.usuarios = this.usuarioStore.currentUsuarios.map(u => {
-        if (u.value == this.usuarioStore.currentUsuario.id) {
-          u.disabled = true;
-        }
+        return { id: u.value, nome: u.text };
+      });
+
+      this.usuarios.map(u => {
+        if (u.id == this.usuarioStore.currentUsuario.id) u.disabled = true;
         if (u.nome in this.usuarioStore.usuariosOnline) u.online = true;
-        else u.online = false;
         return u;
       });
     },
@@ -248,21 +252,17 @@ export default {
       this.$socket.emit("join private", {
         receiver: {
           id: this.message.receiver.id,
-          nome: this.message.receiver.nome,
-          email: this.message.receiver.email
+          nome: this.message.receiver.nome
         },
         sender: {
           id: this.usuarioStore.currentUsuario.id,
-          nome: this.usuarioStore.currentUsuario.nome,
-          email: this.usuarioStore.currentUsuario.email
+          nome: this.usuarioStore.currentUsuario.nome
         }
       });
-      this.scrollToEnd();
     },
     join() {
       if (!this.message.id_chat) return;
       this.$socket.emit("join", this.message.id_chat);
-      this.scrollToEnd();
     },
     sendPrivateMessage() {
       if (!this.message.content || this.$refs.team_form.validate()) return;
@@ -270,18 +270,17 @@ export default {
       const new_message = {
         user: {
           id: this.usuarioStore.currentUsuario.id,
-          nome: this.usuarioStore.currentUsuario.nome,
-          email: this.usuarioStore.currentUsuario.email
+          nome: this.usuarioStore.currentUsuario.nome
         },
         receiver: {
           id: this.message.receiver.id,
-          nome: this.message.receiver.nome,
-          email: this.message.receiver.email
+          nome: this.message.receiver.nome
         },
         content: this.message.content,
         data: new Date().toLocaleString().substr(0, 18),
         id_chat: this.message.id_chat
       };
+
       this.messages.push(new_message);
       this.$socket.emit("private chat message", new_message);
       this.message.content = "";
@@ -325,15 +324,17 @@ export default {
         audio.play();
       }
     },
-    notify() {
-      if (!this.menu) {
-        this.new_messages = ++this.new_messages;
-        this.playSound(
-          "http://soundbible.com/mp3/Elevator Ding-SoundBible.com-685385892.mp3"
-        );
-      } else {
-        this.scrollToEnd();
-      }
+    notify(msg) {
+      this.new_messages = ++this.new_messages;
+      if (this.menu) this.scrollToEnd();
+
+      this.$notification.show(
+        msg.user.nome,
+        {
+          body: msg.content
+        },
+        {}
+      );
     }
   },
   mounted() {
@@ -343,19 +344,20 @@ export default {
   sockets: {
     chatMessage(msg) {
       this.messages.push(msg);
-      this.notify();
+      this.notify(msg);
     },
     privateChatMessage(msg) {
       this.messages.push(msg);
-      this.notify();
+      this.notify(msg);
     },
     onlineUsers(data) {
       this.usuarioStore.usuariosOnline = data;
 
       this.loadUsuariosChat();
     },
-    join() {
+    join(msgs) {
       this.messages = msgs;
+      this.scrollToEnd();
     }
   }
 };

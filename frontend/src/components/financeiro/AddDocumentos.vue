@@ -54,20 +54,20 @@
                 <td>{{ data.item.nome_nfce }}</td>
                 <td>{{ data.item.perc_custo }}</td>
                 <td>
-                  <b-button
-                    variant="secundary"
+                  <v-btn
+                    icon
                     @click.prevent="loadDocumento(data.item)"
                     class="mr-1"
                   >
                     <i class="fa fa-lg fa-pencil"></i>
-                  </b-button>
-                  <b-button
-                    variant="secundary"
+                  </v-btn>
+                  <v-btn
+                    icon
                     @click.prevent="[confirmaExlusao = true, financeiroStore.documento = data.item]"
                     class="mr-1"
                   >
                     <i class="fa fa-lg fa-trash"></i>
-                  </b-button>
+                  </v-btn>
                 </td>
               </template>
             </v-data-table>
@@ -233,12 +233,13 @@ export default {
         .then(() => {
           this.$toasted.global.defaultSuccess();
           this.confirmaExlusao = false;
+          this.reset()
 
           saveLog(
             new Date(),
             "EXCLUSÃO",
             "DOCUMENTOS",
-            `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu o documento ${item.nome}`
+            `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu o documento ${this.financeiroStore.documento.nome}`
           );
         })
         .catch(showError);

@@ -56,17 +56,14 @@ export default {
 
       if (!usuario) {
         this.validatingToken = false;
-        if (this.$route.params.token)
-          return this.$router.push({ path: "/reset" });
-        else return this.$router.push({ path: "/auth" });
+        return this.$router.push({ path: "/auth" });
       }
 
       const res = await axios.post(`${urlBD}/validateToken`, usuario);
 
       if (res.data) {
-        console.log(usuario);
         this.$store.commit("setUsuario", usuario);
-        this.$socket.emit("login", usuario);
+        this.$socket.emit("login", { id: usuario.id, nome: usuario.nome });
 
         axios
           .get(
@@ -79,13 +76,6 @@ export default {
               this.empresaStore.currentEmpresas[0].value
             );
           });
-
-        axios
-          .get(`${urlBD}/perfis/${usuario.id_perfil}`)
-          .then(res => {
-            this.$store.commit("setPerfil", res.data);
-          })
-          .catch(showError);
       } else {
         localStorage.removeItem(usuarioKey);
         this.$router.push({ path: "/auth" });

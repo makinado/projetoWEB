@@ -71,7 +71,7 @@
                       <v-btn
                         flat
                         color="secondary"
-                        @click="[modalStore.eventos.deleteEvento = true, eventoStore.evento = evento]"
+                        @click="[confirmaExclusao = true, eventoStore.evento = evento]"
                       >Excluir</v-btn>
                       <v-btn
                         flat
@@ -108,7 +108,7 @@
                       <v-btn
                         flat
                         color="secondary"
-                        @click="[modalStore.eventos.deleteEvento = true, eventoStore.evento = evento]"
+                        @click="[confirmaExclusao = true, eventoStore.evento = evento]"
                       >Excluir</v-btn>
                       <v-btn
                         flat
@@ -147,7 +147,7 @@
                       <v-btn
                         flat
                         color="secondary"
-                        @click="[modalStore.eventos.deleteEvento = true, eventoStore.evento = evento]"
+                        @click="[confirmaExclusao = true, eventoStore.evento = evento]"
                       >Excluir</v-btn>
                       <v-btn
                         flat
@@ -164,12 +164,7 @@
       </v-flex>
 
       <AddEvento />
-      <v-dialog
-        v-model="modalStore.eventos.deleteEvento"
-        persistent
-        max-width="500px"
-        v-if="eventoStore.evento"
-      >
+      <v-dialog v-model="confirmaExclusao" persistent max-width="500px" v-if="eventoStore.evento">
         <v-card>
           <v-card-title>
             <span class="headline">Excluir evento</span>
@@ -177,11 +172,7 @@
           <v-card-text>Excluir {{ eventoStore.evento.descricao }} ?</v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn
-              color="blue darken-1"
-              flat
-              @click="modalStore.eventos.deleteEvento = false"
-            >Fechar</v-btn>
+            <v-btn color="blue darken-1" flat @click="confirmaExclusao = false">Fechar</v-btn>
             <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
           </v-card-actions>
         </v-card>
@@ -212,18 +203,12 @@ export default {
       return map;
     }
   },
-  watch: {
-    "$store.state.modalStore.eventos.deleteEvento": function() {
-      if (!this.modalStore.eventos.deleteEvento) {
-        this.loadEventos();
-      }
-    }
-  },
-  data: function() {
+  data() {
     return {
       type: "month",
       start: "01-01-2017",
       end: "31-12-2025",
+      confirmaExclusao: false,
       options: [
         { text: "Dia", value: "day" },
         { text: "4 Dias", value: "4day" },
@@ -271,7 +256,7 @@ export default {
         .delete(url)
         .then(() => {
           this.$toasted.global.defaultSuccess();
-          this.modalStore.eventos.deleteEvento = false;
+          this.confirmaExclusao = false;
         })
         .catch(showError);
     },

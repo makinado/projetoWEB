@@ -92,7 +92,7 @@ module.exports = app => {
 
     const getById = async (req, res) => {
         app.db('conta')
-            .where({ id: req.params.id }).first()
+            .where({ 'conta.id': req.params.id }).first()
             .then(conta => res.json(conta))
             .catch(e => res.status(500).send(e.toString()))
     }

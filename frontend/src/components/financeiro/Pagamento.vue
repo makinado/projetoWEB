@@ -4,13 +4,13 @@
       <v-card-title v-if="!Array.isArray(financeiroStore.financ)">
         <span
           class="headline"
-        >Realizar {{ financeiroStore.financ.tipo_conta == 'RECEBER' ? 'recebimento' : 'pagamento' }} no valor de {{ financeiroStore.financ.valor_parcela }}</span>
+        >Realizar {{ financeiroStore.financ.tipo_conta == 'RECEBER' ? 'recebimento' : 'pagamento' }} no valor de {{ financeiroStore.financ.valor_parcela | currency }}</span>
       </v-card-title>
       <v-card-title v-else>
         <v-flex xs12>
           <span
             class="headline"
-          >Realizar {{ tipo_conta == 1 ? 'pagamento' : 'recebimento' }} no valor de {{ valor }}</span>
+          >Realizar {{ tipo_conta == 1 ? 'pagamento' : 'recebimento' }} no valor de {{ valor | currency }}</span>
         </v-flex>
         <v-flex xs12>
           <font color="red">
@@ -240,29 +240,22 @@ export default {
       this.$store.dispatch("loadDocumentos");
 
       if (!financ) return;
+
       if (!Array.isArray(financ)) {
         this.pagamento.id = financ.id;
         this.pagamento.valor_pago = financ.valor_parcela;
         this.pagamento.tipo_conta = financ.tipo_conta == "RECEBER" ? 2 : 1;
-        this.$refs.valor_pago.$el.getElementsByTagName(
-          "input"
-        )[0].value = this.pagamento.valor_pago;
       } else {
         this.financs = financ;
 
         this.financs.map(item => {
-          this.valor += parseNumber(item.valor_parcela);
+          this.valor += parseNumber(item.valor_parcela, ".");
           this.tipo_conta = item.tipo_conta == "RECEBER" ? 2 : 1;
           return item;
         });
 
-        this.valor = formatToBRL(this.valor);
-
         this.pagamento.tipo_conta = this.tipo_conta;
-        this.pagamento.valor_pago = this.valor;
-        this.$refs.valor_pago.$el.getElementsByTagName(
-          "input"
-        )[0].value = this.pagamento.valor_pago;
+        this.pagamento.valor_pago = formatToBRL(this.valor);
       }
     },
     loadSaldoConta() {
@@ -280,7 +273,7 @@ export default {
       const url = `${urlBD}/financeiro/pagamento/`;
 
       if (!this.pagamento.id_empresa) {
-        this.pagamento.id_empresa = this.empresaStore.currentEmpresa.value;
+        this.pagamento.id_empresa = this.empresaStore.currentEmpresa;
       }
 
       if (!this.pagamento.id) {
@@ -288,7 +281,7 @@ export default {
           return {
             id: item.id,
             ...this.pagamento,
-            valor_pago: item.valor_parcela
+            valor_pago: formatToBRL(item.valor_parcela)
           };
         });
       } else {

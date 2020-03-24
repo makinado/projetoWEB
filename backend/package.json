@@ -3,13 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "nodemon",
+    "start": "node index.js",
+    "dev": "nodemon",
     "production": "pm2 start index.js --name campag-backend"
   },
   "engines": {
     "node": "8"
   },
   "dependencies": {
+    "accesscontrol": "^2.2.1",
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "1.18.3",
     "brazilian-values": "^0.5.1",

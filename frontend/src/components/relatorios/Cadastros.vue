@@ -9,7 +9,11 @@
         />
       </v-flex>
       <v-flex xs12>
-        <Card :color="color" title="Selecione as opções para a emissão do relatório">
+        <Card
+          :color="color"
+          title="Selecione as opções para a emissão do relatório"
+          :actions="globalActions"
+        >
           <v-form ref="form" v-model="valid">
             <v-layout row wrap>
               <v-flex xs12 md4>
@@ -144,32 +148,6 @@
                     locale="pt-br"
                   ></v-date-picker>
                 </v-menu>
-              </v-flex>
-              <v-flex xs12 md4>
-                <v-tooltip bottom>
-                  <v-btn
-                    slot="activator"
-                    class="v-btn-common"
-                    :color="color"
-                    @click="emit('pdf')"
-                    :loading="isLoading"
-                  >confirmar pdf</v-btn>
-                  <span>Confirma as opções e emite o relatório em PDF</span>
-                </v-tooltip>
-                <v-tooltip bottom>
-                  <v-btn
-                    slot="activator"
-                    class="v-btn-common"
-                    color="warning"
-                    @click="emit('csv')"
-                    :loading="isLoading"
-                  >confirmar csv</v-btn>
-                  <span>Confirma as opções e emite o relatório em CSV</span>
-                </v-tooltip>
-                <v-tooltip bottom>
-                  <v-btn slot="activator" class="v-btn-common" color="danger" @click="reset">limpar</v-btn>
-                  <span>Limpa as opções selecionadas</span>
-                </v-tooltip>
               </v-flex>
             </v-layout>
           </v-form>
@@ -319,6 +297,28 @@ export default {
         { value: "uf", text: "UF" },
         { value: "logradouro", text: "Endereço" }
       ],
+      globalActions: [
+        {
+          icon: "fa fa-2x fa-eraser",
+          tooltip: "Limpar",
+          method: "reset",
+          required: true
+        },
+        {
+          icon: "fa fa-2x fa-file-pdf-o",
+          tooltip: "Confirmar relatório em PDF",
+          method: "emit",
+          param: 'pdf',
+          required: true
+        },
+        {
+          icon: "fa fa-2x fa-file-excel-o",
+          tooltip: "Confirmar relatório em Excel",
+          method: "emit",
+          param: 'excel',
+          required: true
+        }
+      ],
       valid: true,
       categoriaVisible: true,
       menu: false,
@@ -333,7 +333,7 @@ export default {
     };
   },
   methods: {
-    reset() {
+    async reset() {
       this.filter = {};
 
       this.$refs.form ? this.$refs.form.reset() : "";
@@ -361,7 +361,7 @@ export default {
       }
     },
 
-    emit(type) {
+    async emit(type) {
       if (!this.$refs.form.validate() || !type) return;
 
       this.isLoading = true;

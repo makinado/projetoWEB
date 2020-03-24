@@ -36,20 +36,20 @@
                 <td>{{ data.item.id }}</td>
                 <td>{{ data.item.descricao }}</td>
                 <td>
-                  <b-button
-                    variant="secundary"
+                  <v-btn
+                    icon
                     @click.prevent="[categoria = data.item, modalStore.categorias.visible = true, modalStore.categorias.title = modalStore.categorias.title.replace('Adicionar','Alterar')]"
                     class="mr-1"
                   >
                     <i class="fa fa-lg fa-pencil"></i>
-                  </b-button>
-                  <b-button
-                    variant="secundary"
+                  </v-btn>
+                  <v-btn
+                    icon
                     @click.prevent="[confirmaExclusao = true, categoriaStore.categoria = data.item]"
                     class="mr-1"
                   >
                     <i class="fa fa-lg fa-trash"></i>
-                  </b-button>
+                  </v-btn>
                 </td>
               </template>
             </v-data-table>

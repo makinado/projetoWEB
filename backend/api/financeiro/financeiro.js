@@ -140,19 +140,20 @@ module.exports = app => {
         pagamento.forEach(financ => {
             return app.db.transaction(async function (trx) {
                 return app.db('financeiro')
-                    .update(financ)
+                    .update(financ).returning('*')
                     .where({ id: financ.id })
-                    .then(async () => {
+                    .transacting(trx)
+                    .then(async (financ_updated) => {
                         const movim_conta = {
                             id_empresa: financ.id_empresa,
                             id_conta: financ.id_conta,
                             id_movimento_origem: financ.id,
                             data_lancamento: new Date(),
-                            data_emissao: financ.data_emissao,
-                            id_classificacao: financ.classificacao,
+                            data_emissao: financ_updated.data_emissao,
+                            id_classificacao: financ_updated.classificacao,
                             id_documento: financ.documento_baixa,
                             num_documento: financ.num_documento_baixa,
-                            observacao: financ.observacao,
+                            observacao: financ_updated.observacao,
                             origem: "GERADO",
                             dc: financ.tipo_conta == 1 ? 'D' : 'C',
                             valor: financ.valor_pago
@@ -238,7 +239,6 @@ module.exports = app => {
             })
             .then(contas => {
                 contas = contas.map(conta => {
-                    conta.pessoa = conta.pessoa ? conta.pessoa.substr(0, 20) + (conta.pessoa.length > 20 ? '...' : '') : '';
                     conta.tipo_conta = conta.tipo_conta === 1 ? "PAGAR" : "RECEBER";
                     conta.pago = conta.pago ? "CONCLUÍDA" : "PENDENTE";
 

@@ -7,19 +7,29 @@
     transition="dialog-bottom-transition"
   >
     <v-card v-if="modalStore.vendas.vendas.visible">
-      <v-toolbar dark :color="color" class="m-0 p-0">
-        <v-btn icon @click="modalStore.vendas.vendas.visible = false">
+      <v-toolbar fixed dark :color="color">
+        <v-toolbar-side-icon @click="modalStore.vendas.vendas.visible = false">
           <v-icon>close</v-icon>
-        </v-btn>
-        <v-toolbar-title class="headline text-white font-weight-light">{{ modalStore.vendas.title }}</v-toolbar-title>
+        </v-toolbar-side-icon>
+        <v-toolbar-title
+          class="headline white--text font-weight-light"
+        >{{ modalStore.vendas.title }}</v-toolbar-title>
+
         <v-spacer></v-spacer>
-        <v-btn icon @click>
+
+        <v-btn class="mr-3" icon @click="limpaTela">
+          <v-icon>fa fa-2x fa-eraser</v-icon>
+        </v-btn>
+        <v-btn class="mr-3" icon @click="save">
+          <v-icon>fa fa-2x fa-check</v-icon>
+        </v-btn>
+        <v-btn class="mr-3" icon>
           <v-icon>fa fa-2x fa-cog</v-icon>
         </v-btn>
       </v-toolbar>
 
       <v-card-text>
-        <v-container fluid grid-list-xl>
+        <v-container fluid grid-list-xl class="my-5">
           <v-form v-model="valid" ref="form">
             <v-text-field label="id" v-model="venda.id" v-show="false"></v-text-field>
             <v-text-field v-model="venda.id_empresa" v-show="false"></v-text-field>
@@ -35,7 +45,12 @@
                   v-model="venda.tipo"
                   deletable-chips
                   :rules="tipoRules"
-                ></v-autocomplete>
+                >
+                  <v-tooltip slot="prepend" bottom>
+                    <v-icon slot="activator">fa fa-lg fa-question-circle</v-icon>
+                    <span>Orçamentos não lançam estoque e financeiro</span>
+                  </v-tooltip>
+                </v-autocomplete>
               </v-flex>
               <v-flex xs12 md3>
                 <v-autocomplete
@@ -53,30 +68,6 @@
                   @change="loadCliente"
                   :rules="clienteRules"
                 ></v-autocomplete>
-              </v-flex>
-              <v-spacer></v-spacer>
-              <v-flex xs12 md4>
-                <v-layout wrap justify-end class="mt-1">
-                  <v-tooltip bottom>
-                    <v-btn
-                      slot="activator"
-                      class="v-btn-common"
-                      color="danger"
-                      @click="limpaTela"
-                    >Limpar</v-btn>
-                    <span>Volta a tela ao seu estado inicial</span>
-                  </v-tooltip>
-                  <v-tooltip bottom>
-                    <v-btn
-                      slot="activator"
-                      class="v-btn-common"
-                      :loading="isLoading"
-                      :color="color"
-                      @click="save"
-                    >Salvar</v-btn>
-                    <span>Finaliza o orçamento/venda</span>
-                  </v-tooltip>
-                </v-layout>
               </v-flex>
             </v-layout>
           </v-form>
@@ -357,10 +348,10 @@
 
             <v-flex xs12 class="mt-4">
               <v-layout justify-center>
-                <v-icon class="mt-2 mr-2">fa fa-2x fa-archive</v-icon>
+                <v-icon class="my-4 mr-1">fa fa-2x fa-archive</v-icon>
                 <h2>Produtos</h2>
               </v-layout>
-              <hr />
+              <v-divider></v-divider>
             </v-flex>
             <v-layout align-end>
               <span>Edite valores e quantidades do produto diretamente na tabela</span>
@@ -392,7 +383,7 @@
                   slot="activator"
                   class="v-btn-common"
                   :color="color"
-                  @click="addProduto()"
+                  @click="addProduto"
                 >Adicionar produto</v-btn>
                 <span>Adicionar novo produto à venda</span>
               </v-tooltip>
@@ -465,14 +456,9 @@
               <td>{{ data.item.valor_total || 'R$ 0,00'}}</td>
               <td>
                 <v-tooltip bottom>
-                  <b-button
-                    slot="activator"
-                    variant="secundary"
-                    class="mr-1"
-                    @click="deleteItem(data.item)"
-                  >
+                  <v-btn slot="activator" icon class="mr-1" @click="deleteItem(data.item)">
                     <i class="fa fa-lg fa-trash"></i>
-                  </b-button>
+                  </v-btn>
                   <span>Excluir produto</span>
                 </v-tooltip>
               </td>
@@ -496,261 +482,11 @@
             </template>
           </v-data-table>
 
-          <v-container fluid>
-            <v-flex xs12>
-              <v-layout justify-center>
-                <v-icon class="mt-2 mr-2">fa fa-2x fa-usd</v-icon>
-                <h2>Financeiro</h2>
-              </v-layout>
-              <hr />
-            </v-flex>
-            <v-layout align-end>
-              <span>Edite valores diretamente na tabela</span>
-              <v-spacer></v-spacer>
-              <v-tooltip bottom>
-                <v-btn
-                  slot="activator"
-                  class="v-btn-common"
-                  :color="color"
-                  @click="addParcela()"
-                >Adicionar parcela</v-btn>
-                <span>Adicionar nova parcela à venda</span>
-              </v-tooltip>
-            </v-layout>
-          </v-container>
-
-          <v-data-table
-            class="elevation-5 mb-3"
-            :items="financeiro"
-            :headers="fieldsFinanceiro"
-            :pagination.sync="paginationFinanc"
-            :rows-per-page-items="[5, 10, 20]"
-            rows-per-page-text="Parcelas por página"
-            no-data-text="Nenhuma parcela adicionada"
-            :expand="expand"
-            item-key="parcelas"
-          >
-            <template slot="items" slot-scope="data">
-              <td>{{ data.item.parcelas }}</td>
-              <td>
-                <v-text-field
-                  v-if="disable"
-                  v-model.number="data.item.valor_parcela"
-                  v-money="money"
-                  @blur="[data.item.edit = true, attGridParc()]"
-                ></v-text-field>
-                <span v-else>{{ data.item.valor_parcela | currency }}</span>
-              </td>
-              <td>
-                <v-flex xs8>
-                  <v-menu
-                    v-model="data.item.menu"
-                    :close-on-content-click="false"
-                    :nudge-right="40"
-                    transition="scale-transition"
-                    offset-y
-                    full-width
-                    max-width="290px"
-                    min-width="290px"
-                  >
-                    <template v-slot:activator="{ on }">
-                      <v-text-field
-                        :color="color"
-                        v-model="data.item.data_vencimento"
-                        prepend-icon="event"
-                        readonly
-                        v-on="on"
-                      ></v-text-field>
-                    </template>
-                    <v-date-picker
-                      :color="color"
-                      v-model="data.item.dataNotFormated"
-                      @input="[data.item.menu = false, data.item.data_vencimento = formatDate(data.item.dataNotFormated)]"
-                      locale="pt-br"
-                    ></v-date-picker>
-                  </v-menu>
-                </v-flex>
-              </td>
-              <td>
-                <v-flex xs8>
-                  <v-autocomplete
-                    class="tag-input"
-                    chips
-                    dense
-                    :color="color"
-                    :items="financeiroStore.documentos"
-                    v-model="data.item.documento_origem"
-                    placeholder="Selecione"
-                    prepend-icon="fa fa-lg fa-plus-circle"
-                    @click:prepend="[modalStore.documentos.visible = true]"
-                    no-data-text="Nenhum resultado"
-                    auto-select-first
-                    :disabled="data.item.pago"
-                  ></v-autocomplete>
-                </v-flex>
-              </td>
-              <td>
-                <v-switch
-                  v-model="data.item.pago"
-                  :color="color"
-                  hide-details
-                  @click.native="[
-                    !data.expanded && data.item.pago ? 
-                      [data.expanded = true, loadPagamento(data.item)] : limpaPagamento(data), calcTotalFinanc()
-                  ]"
-                ></v-switch>
-              </td>
-              <td>
-                <v-tooltip bottom>
-                  <b-button
-                    v-if="data.item.pago"
-                    slot="activator"
-                    variant="secundary"
-                    class="mr-1"
-                    @click="[data.expanded = !data.expanded, data.expanded ? loadPagamento(data.item) : null]"
-                  >
-                    <i class="fa fa-lg fa-pencil"></i>
-                  </b-button>
-                  <span>Editar dados do pagamento</span>
-                </v-tooltip>
-                <v-tooltip bottom>
-                  <b-button
-                    slot="activator"
-                    variant="secundary"
-                    class="mr-1"
-                    @click="deleteParcela(data.item)"
-                  >
-                    <i class="fa fa-lg fa-trash"></i>
-                  </b-button>
-                  <span>Excluir parcela</span>
-                </v-tooltip>
-              </td>
-            </template>
-            <template slot="expand" slot-scope="data">
-              <v-card v-if="data.expanded" flat color="bege">
-                <v-card-title>
-                  <span class="headline">Preencha os dados do pagamento desta parcela</span>
-                </v-card-title>
-                <v-card-text>
-                  <v-layout row wrap>
-                    <v-flex xs12 md2>
-                      <v-autocomplete
-                        clearable
-                        dense
-                        :color="color"
-                        label="Conta*"
-                        v-model="data.item.id_conta"
-                        :items="financeiroStore.contas"
-                        no-data-text="Nenhum caixa encontrado"
-                        prepend-icon="fa fa-lg fa-plus-circle"
-                        @click:prepend="[financeiroStore.caixa = null, modalStore.financeiro.caixa.visible = true]"
-                        @change="loadSaldoConta(data.item)"
-                      ></v-autocomplete>
-                    </v-flex>
-                    <v-flex xs12 md2>
-                      <v-text-field
-                        label="Saldo em conta"
-                        placeholder="Selecione a conta para carregar o saldo"
-                        readonly
-                        v-model="data.item.saldo_atual"
-                      ></v-text-field>
-                    </v-flex>
-                  </v-layout>
-                  <v-layout row wrap>
-                    <v-flex xs12 md2>
-                      <v-menu
-                        v-model="data.item.menu1"
-                        :close-on-content-click="false"
-                        :nudge-right="40"
-                        transition="scale-transition"
-                        offset-y
-                        full-width
-                        max-width="290px"
-                        min-width="290px"
-                      >
-                        <template v-slot:activator="{ on }">
-                          <v-text-field
-                            :color="color"
-                            v-model="data.item.data_baixa"
-                            prepend-icon="event"
-                            label="Data do pagamento*"
-                            readonly
-                            v-on="on"
-                          ></v-text-field>
-                        </template>
-                        <v-date-picker
-                          :color="color"
-                          v-model="data.item.dataNotFormated"
-                          @input="[data.item.menu1 = false, data.item.data_baixa = formatDate(data.item.dataNotFormated)]"
-                          locale="pt-br"
-                        ></v-date-picker>
-                      </v-menu>
-                    </v-flex>
-                    <v-flex xs12 md2>
-                      <v-autocomplete
-                        dense
-                        :color="color"
-                        label="Forma de pagamento"
-                        v-model="data.item.documento_baixa"
-                        :items="financeiroStore.documentos"
-                        no-data-text="Nenhum documento encontrado"
-                        prepend-icon="fa fa-lg fa-plus-circle"
-                        @click:prepend="[financeiroStore.documento = null, modalStore.documentos.visible = true]"
-                      ></v-autocomplete>
-                    </v-flex>
-                    <v-flex xs12 md2>
-                      <v-text-field
-                        :color="color"
-                        v-model="data.item.num_documento_baixa"
-                        label="Número documento"
-                      ></v-text-field>
-                    </v-flex>
-                    <v-flex xs12 md2>
-                      <v-text-field
-                        v-model="data.item.valor_acrescimo"
-                        :color="color"
-                        label="Valor acréscimo"
-                        v-money="money"
-                      ></v-text-field>
-                    </v-flex>
-                    <v-flex xs12 md2>
-                      <v-text-field
-                        v-model="data.item.valor_desconto"
-                        :color="color"
-                        label="Valor desconto"
-                        v-money="money"
-                      ></v-text-field>
-                    </v-flex>
-                    <v-flex xs12 md2>
-                      <v-text-field
-                        v-model="data.item.valor_pago"
-                        :color="color"
-                        label="Valor pago*"
-                        v-money="money"
-                      ></v-text-field>
-                    </v-flex>
-                  </v-layout>
-                </v-card-text>
-              </v-card>
-            </template>
-            <template slot="footer">
-              <td>
-                <h5>TOTAIS</h5>
-              </td>
-              <td>
-                <v-tooltip bottom>
-                  <v-chip
-                    slot="activator"
-                    :color="getColor(totaisFinanc.valor)"
-                    dark
-                  >{{ totaisFinanc.valor || 'R$ 0,00' }}</v-chip>
-                  <span>Esse valor deve corresponder ao valor total da compra</span>
-                </v-tooltip>
-              </td>
-              <td colspan="2">{{ totaisFinanc.data || '0 meses' }}</td>
-              <td colspan="2">{{ totaisFinanc.pago || 'Nenhuma parcela paga' }}</td>
-            </template>
-          </v-data-table>
+          <FinanceiroVue
+            v-if="venda.tipo == 2"
+            :component="venda"
+            :showTotais="modalStore.vendas.title.includes('Alterar') ? false : true"
+          />
         </v-container>
       </v-card-text>
     </v-card>
@@ -825,11 +561,11 @@ export default {
       }
     }
   },
+  components: { FinanceiroVue: () => import("../material/Financeiro") },
   data() {
     return {
       venda: {},
       produtos_venda: [],
-      financeiro: [],
       cliente: {},
       clienteFilter: null,
       menu: false,
@@ -856,14 +592,6 @@ export default {
         thousands: ".",
         precision: 2
       },
-      fieldsFinanceiro: [
-        { value: "parcelas", text: "Parcelas" },
-        { value: "valor", text: "Valor" },
-        { value: "data", text: "Data de vencimento" },
-        { value: "documento_origem", text: "Documento" },
-        { value: "pago", text: "Pago?" },
-        { value: "actions", text: "Ações" }
-      ],
       fieldsProdutos: [
         { value: "sequencia", text: "Item" },
         { value: "produto", text: "Produto" },
@@ -881,20 +609,12 @@ export default {
         sortBy: "sequencia",
         totalItems: 0
       },
-      paginationFinanc: {
-        descending: false,
-        page: 1,
-        rowsPerPage: 5, // -1 for All,
-        sortBy: "parcelas",
-        totalItems: 0
-      },
       totais: [
         { value: "quantidade" },
         { value: "valor_venda" },
         { value: "valor_desconto" },
         { value: "valor_total" }
       ],
-      totaisFinanc: [{ value: "valor" }, { value: "data" }, { value: "pago" }],
       empRules: [v => !!v || "Empresa é obrigatória"],
       clienteRules: [v => !!v || "Cliente é obrigatório"],
       vendedorRules: [v => !!v || "Vendedor é obrigatório"],
@@ -903,72 +623,27 @@ export default {
     };
   },
   methods: {
+    getColor(status) {
+      if (status === "OK") return "green";
+      else if (status === "Venda impossibilitada") return "red";
+      else return "yellow darken";
+    },
     formatDate(date) {
       if (!date) return null;
 
       const [year, month, day] = date.split("-");
       return `${day}/${month}/${year}`;
     },
-    getColor(valor) {
-      if (!this.venda.valor_total || valor === this.venda.valor_total)
-        return "green";
-      else return "red";
-    },
     limpaTela() {
       this.reset();
       this.loadTela(this.vendaStore.venda);
     },
-    addProduto(addProd) {
-      if (!addProd) {
-        const produto = {
-          sequencia: this.produtos_venda.length
-        };
-
-        this.produtos_venda.push(produto);
-      }
-    },
-    addParcela(addParc) {
-      if (!addParc) {
-        let data;
-        let documento_origem;
-        if (this.financeiro.length > 0) {
-          data = this.financeiro[this.financeiro.length - 1].data_vencimento;
-          const [day, month, year] = data.split("/");
-
-          data = new Date(year, month, day).toISOString().substr(0, 10);
-          documento_origem = this.financeiro[this.financeiro.length - 1]
-            .documento_origem;
-        } else {
-          data = new Date().toISOString().substr(0, 10);
-        }
-
-        const parcela = {
-          edit: false,
-          parcelas:
-            this.financeiro.length + 1 + "/" + (this.financeiro.length + 1),
-          data,
-          data_vencimento: formatDate(data),
-          documento_origem
-        };
-        this.financeiro.push(parcela);
-      }
-      this.attGridParc();
-    },
-    attGridParc() {
-      // gambiarra necessária para forçar o campo valor a se atualizar
-      this.disable = false;
-      const valor = formatToBRL(
-        parseNumber(this.venda.valor_total || "0,00") / this.financeiro.length
-      );
-
-      this.financeiro.forEach(item => {
-        const parcelaAtual = item.parcelas.split("/");
-        item.parcelas = parcelaAtual[0] + "/" + this.financeiro.length;
-
-        if (!item.edit) item.valor_parcela = valor;
-      });
-
-      this.calcTotalFinanc().then(() => (this.disable = true));
+    addProduto() {
+      const sequencia = this.produtos_venda.length;
+      const produto = {
+        sequencia
+      };
+      this.produtos_venda.push(produto)
     },
     deleteItem(item) {
       this.produtos_venda = this.produtos_venda.filter(produto => {
@@ -976,19 +651,11 @@ export default {
       });
       this.calcTotal();
     },
-    deleteParcela(parcela) {
-      if (parcela) {
-        this.financeiro = this.financeiro.filter(item => {
-          return item.parcelas !== parcela.parcelas;
-        });
-      }
-
-      this.calcTotalFinanc();
-    },
     reset() {
       this.produto = {};
       this.produtos_venda = [];
       this.venda = {};
+      this.financeiroStore.financ = [];
 
       this.venda.id_vendedor = this.usuarioStore.currentUsuario.id;
 
@@ -1038,7 +705,6 @@ export default {
 
             this.parseValores();
             this.calcTotal();
-            this.calcTotalFinanc();
             this.venda.id_pessoa ? this.loadCliente() : null;
           })
           .catch(showError);
@@ -1056,17 +722,6 @@ export default {
         }
         return produto;
       });
-    },
-    loadSaldoConta(item) {
-      if (!item.id_conta) {
-        item.saldo_atual = "";
-        return;
-      }
-
-      item.saldo_atual = formatToBRL(
-        this.financeiroStore.contas.find(conta => conta.value == item.id_conta)
-          .saldo_atual || 0
-      );
     },
     parseValores() {
       this.venda.data_contato = new Date(this.venda.data_contato)
@@ -1116,7 +771,24 @@ export default {
       });
       delete this.venda.produtos;
 
-      this.financeiro = this.venda.financeiro;
+      this.financeiroStore.financ = this.venda.financeiro.map(parcela => {
+        parcela.parcelas = parcela.parcelas;
+        parcela.valor_parcela = formatToBRL(parcela.valor_parcela);
+        parcela.data_vencimento = formatDate(
+          new Date(parcela.data_vencimento).toISOString().substr(0, 10)
+        );
+        parcela.pago = parcela.pago;
+        parcela.data_baixa = parcela.data_baixa
+          ? formatDate(new Date(parcela.data_baixa).toISOString().substr(0, 10))
+          : "";
+        parcela.documento_baixa = parcela.documento_baixa || "";
+        parcela.num_documento_baixa = parcela.num_documento_baixa || "";
+        parcela.valor_acrescimo = parcela.valor_acrescimo || "R$ 0,00";
+        parcela.valor_desconto = parcela.valor_desconto || "R$ 0,00";
+        parcela.valor_pago = parcela.valor_pago || "R$ 0,00";
+
+        return parcela;
+      });
       delete this.venda.financeiro;
     },
     loadCliente() {
@@ -1185,9 +857,9 @@ export default {
         this.produtos_venda = this.produtos_venda.filter(produto => {
           if (produto.sequencia === item.sequencia) {
             produto.valor_total = formatToBRL(
-              parseNumber(produto.quantidade || "0,00", ",") *
-                parseNumber(produto.valor_venda || "0,00", ",") -
-                parseNumber(produto.valor_desconto || "0,00", ",")
+              parseNumber(produto.quantidade || "0,00") *
+                parseNumber(produto.valor_venda || "0,00") -
+                parseNumber(produto.valor_desconto || "0,00")
             );
           }
           return produto;
@@ -1200,10 +872,10 @@ export default {
         valor_total = 0;
 
       this.produtos_venda.forEach(produto => {
-        quantidade += parseNumber(produto.quantidade || "0,00", ",");
-        valor_venda += parseNumber(produto.valor_venda || "0,00", ",");
-        valor_desconto += parseNumber(produto.valor_desconto || "0,00", ",");
-        valor_total += parseNumber(produto.valor_total || "0,00", ",");
+        quantidade += parseNumber(produto.quantidade || "0,00");
+        valor_venda += parseNumber(produto.valor_venda || "0,00");
+        valor_desconto += parseNumber(produto.valor_desconto || "0,00");
+        valor_total += parseNumber(produto.valor_total || "0,00");
       });
       this.totais = {
         quantidade: formatToBRL(quantidade).replace("R$", ""),
@@ -1230,46 +902,15 @@ export default {
 
       // valor total da nota
       this.venda.valor_total = formatToBRL(
-        parseNumber(valor_produtos || "0,00", ",") +
-          parseNumber(valor_frete, ",") +
-          parseNumber(valor_seguro, ",") +
-          parseNumber(outras_despesas, ",") -
-          parseNumber(valor_desconto, ",")
+        parseNumber(valor_produtos || "0,00") +
+          parseNumber(valor_frete) +
+          parseNumber(valor_seguro) +
+          parseNumber(outras_despesas) -
+          parseNumber(valor_desconto)
       );
       this.$refs.valor_total.$el.getElementsByTagName(
         "input"
       )[0].value = this.venda.valor_total;
-    },
-    loadPagamento(item) {
-      item.data_baixa = formatDate(new Date().toISOString().substr(0, 10));
-      item.valor_pago = item.valor_parcela;
-    },
-    limpaPagamento(data) {
-      data.expanded = false;
-      data.item.data_baixa = "";
-      data.item.documento_baixa = "";
-      data.item.num_documento_baixa = "";
-      data.item.observacao = "";
-    },
-    async calcTotalFinanc() {
-      let valor = 0,
-        data = 0,
-        pago = 0;
-
-      this.financeiro.forEach(parcela => {
-        valor += parseNumber(parcela.valor_parcela || "0,00");
-        data += 1;
-        pago += parcela.pago ? parseNumber(parcela.valor_parcela || "0,00") : 0;
-      });
-
-      this.totaisFinanc = {
-        valor: formatToBRL(valor),
-        data: data === 1 ? `${data} mês` : `${data} meses`,
-        pago:
-          pago === 0
-            ? "Nenhuma parcela paga"
-            : `Total pago - ${formatToBRL(pago)}`
-      };
     },
     save() {
       if (!this.$refs.form.validate() || !this.$refs.form1.validate()) return;
@@ -1285,7 +926,8 @@ export default {
       }
 
       this.venda.produtos = this.produtos_venda;
-      this.venda.financeiro = this.financeiro;
+      if (this.venda.tipo == 2)
+        this.venda.financeiro = this.financeiroStore.financ;
 
       axios[method](url, this.venda)
         .then(() => {

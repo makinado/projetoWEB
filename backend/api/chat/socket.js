@@ -24,6 +24,7 @@ module.exports = (io, app) => {
 
         socket.on('login', user => {
             user.socketId = socket.id
+            user.online = true
             onlineUsers = addUser(onlineUsers, user)
             socket.user = user
 
@@ -73,7 +74,7 @@ module.exports = (io, app) => {
                 })
         })
 
-        socket.on('joinPrivate', (data) => {
+        socket.on('join private', (data) => {
             app.db('chat')
                 .select('id_usuario_origem', 'id_chat', 'mensagem', 'data')
                 .where({ id_usuario_destino: data.sender.id, id_usuario_origem: data.receiver.id })
@@ -95,7 +96,7 @@ module.exports = (io, app) => {
                 })
         })
 
-        socket.on('privateChatMessage', async msg => {
+        socket.on('private chat message', async msg => {
             const userReceiver = onlineUsers[msg.receiver.nome]
 
             const msg_bd = {
@@ -106,15 +107,15 @@ module.exports = (io, app) => {
                 data: msg.data,
             }
 
-            await app.db('chat').insert(msg_bd)
-                .then(() => socket.to(userReceiver.socketId).broadcast.emit('privateChatMessage', msg))
-                .catch(e => {
-                    msg.content = e.message
-                    socket.emit('privateChatMessage', msg)
-                })
+            if (userReceiver) {
+                await app.db('chat').insert(msg_bd)
+                    .then(() => socket.to(userReceiver.socketId).broadcast.emit('privateChatMessage', msg))
+            } else {
+                app.db('chat').insert(msg_bd)
+            }
         })
 
-        socket.on('chatMessage', async msg => {
+        socket.on('chat message', async msg => {
             const msg_bd = {
                 id_usuario_origem: msg.user.id,
                 id_usuario_destino: msg.user.id_dest,

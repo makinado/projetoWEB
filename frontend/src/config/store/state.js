@@ -109,6 +109,12 @@ export default {
     venda: null,
     vendas: [],
 
+    pdv: {
+      pdvProduto: {},
+      produtos: [],
+      totais: {}
+    },
+
     tabela: null,
     tabelas: []
   },
@@ -217,7 +223,11 @@ export default {
     vendas: {
       pdv: {
         visible: false,
-        status: "Aberto"
+        pendentes: false,
+        devolucoes: false,
+        sangria: false,
+        finalizar: false,
+        statusSefaz: ""
       },
       vendas: {
         visible: false,

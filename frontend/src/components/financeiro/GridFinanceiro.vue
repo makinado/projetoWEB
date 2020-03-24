@@ -15,7 +15,6 @@
               max-width="600"
               offset-x
               transition="slide-y-transition"
-              @keyup.enter
               v-model="pesquisa"
             >
               <v-btn slot="activator" :color="color" icon>
@@ -190,7 +189,6 @@
           max-width="600"
           offset-x
           transition="slide-y-transition"
-          @keyup.enter
           v-model="pesquisa"
         >
           <v-btn slot="activator" :color="color" icon>
@@ -374,7 +372,7 @@
             <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
           </td>
           <td>{{ data.item.id }}</td>
-          <td>{{ data.item.pessoa }}</td>
+          <td class="text-truncate">{{ data.item.pessoa }}</td>
           <td>
             <v-chip :color="getColor(data.item.tipo_conta)" dark>{{ data.item.tipo_conta }}</v-chip>
           </td>
@@ -388,58 +386,58 @@
           <td>{{ data.item.valor_parcela | currency }}</td>
           <td>
             <v-tooltip bottom v-if="data.item.pago == 'PENDENTE'">
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 class="mr-1"
                 @click.prevent="[financeiroStore.financ = data.item, concluirConta()]"
               >
                 <i class="fa fa-lg fa-check"></i>
-              </b-button>
+              </v-btn>
               <span>Realizar pagamento/recebimento</span>
             </v-tooltip>
             <v-tooltip bottom v-else-if="data.item.pago == 'CONCLUÍDA'">
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 class="mr-1"
                 @click.prevent="[financeiroStore.financ = data.item, cancelarConta()]"
               >
                 <i class="fa fa-lg fa-times"></i>
-              </b-button>
+              </v-btn>
               <span>Cancelar pagamento/recebimento</span>
             </v-tooltip>
             <v-tooltip bottom v-if="data.item.pago == 'PENDENTE'">
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[financeiroStore.financ = data.item, modalStore.financeiro.financ.visible = true,modalStore.financeiro.financ.title = 'Alterar parcela do financeiro']"
                 class="mr-1"
               >
                 <i class="fa fa-lg fa-pencil"></i>
-              </b-button>
+              </v-btn>
               <span>Editar conta</span>
             </v-tooltip>
             <v-tooltip bottom v-else>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[financeiroStore.financ = data.item, modalStore.financeiro.financ.visualizar = true]"
                 class="mr-1"
               >
                 <i class="fa fa-lg fa-eye"></i>
-              </b-button>
+              </v-btn>
               <span>Visualizar detalhes da conta</span>
             </v-tooltip>
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[confirmaExclusao = true, financeiroStore.financ = data.item]"
                 class="mr-1"
               >
                 <i class="fa fa-lg fa-trash"></i>
-              </b-button>
+              </v-btn>
               <span>Excluir conta</span>
             </v-tooltip>
           </td>
@@ -454,7 +452,7 @@
         </v-card-title>
         <v-card-text
           v-if="!Array.isArray(financeiroStore.financ)"
-        >Cancelar conta {{ financeiroStore.financ.id }} no valor de {{ financeiroStore.financ.valor_parcela }}?</v-card-text>
+        >Cancelar conta {{ financeiroStore.financ.id }} no valor de {{ financeiroStore.financ.valor_parcela | currency }}?</v-card-text>
         <v-card-text v-else>
           <v-flex xs12>Excluir {{ financeiroStore.financ.length }} contas?</v-flex>
           <v-flex xs12>
@@ -491,7 +489,7 @@
         </v-card-title>
         <v-card-text
           v-if="!Array.isArray(financeiroStore.financ)"
-        >Cancelar {{ financeiroStore.financ.tipo_conta == 'RECEBER' ? 'recebimento' : 'pagamento' }} no valor de {{ financeiroStore.financ.valor_pago || "R$ 0,00" }}?</v-card-text>
+        >Cancelar {{ financeiroStore.financ.tipo_conta == 'RECEBER' ? 'recebimento' : 'pagamento' }} no valor de {{ financeiroStore.financ.valor_pago | currency }}?</v-card-text>
         <v-card-text v-else>Cancelar {{ financeiroStore.financ.length }} contas?</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -612,6 +610,13 @@ export default {
   },
   watch: {
     itens_selecionados() {
+      if (
+        this.itens_selecionados.find(item => item.tipo_conta == "PAGAR") &&
+        this.itens_selecionados.find(item => item.tipo_conta == "RECEBER")
+      )
+        this.globalActions[0].disabled = true;
+      else this.globalActions[0].disabled = false;
+
       if (this.itens_selecionados.find(item => item.pago == "CONCLUÍDA"))
         this.globalActions[0].disabled = true;
       else this.globalActions[0].disabled = false;
@@ -619,13 +624,6 @@ export default {
       if (this.itens_selecionados.find(item => item.pago == "PENDENTE"))
         this.globalActions[1].disabled = true;
       else this.globalActions[1].disabled = false;
-
-      if (
-        this.itens_selecionados.find(item => item.tipo_conta == "PAGAR") &&
-        this.itens_selecionados.find(item => item.tipo_conta == "RECEBER")
-      )
-        this.globalActions[0].disabled = true;
-      else this.globalActions[0].disabled = false;
     },
     params() {
       this.loadFinanceiro();
@@ -655,6 +653,7 @@ export default {
       else return "red";
     },
     concluirConta() {
+      console.log(this.financeiroStore.financ);
       this.modalStore.financeiro.financ.pagamento = true;
     },
     cancelarConta() {

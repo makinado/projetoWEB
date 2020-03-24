@@ -7,62 +7,36 @@
     transition="dialog-bottom-transition"
   >
     <v-card v-if="modalStore.compras.compras.importar">
-      <v-toolbar dark :color="color" class="m-0 p-0">
-        <v-btn icon @click="modalStore.compras.compras.importar = false">
+      <v-toolbar fixed dark :color="color">
+        <v-toolbar-side-icon @click="modalStore.compras.compras.importar = false">
           <v-icon>close</v-icon>
-        </v-btn>
+        </v-toolbar-side-icon>
         <v-toolbar-title
-          class="headline text-white font-weight-light"
+          class="headline white--text font-weight-light"
         >{{ modalStore.compras.compras.title }}</v-toolbar-title>
+
         <v-spacer></v-spacer>
-        <v-btn icon @click>
+
+        <v-btn class="mr-3" icon @click="limpaTela">
+          <v-icon>fa fa-2x fa-eraser</v-icon>
+        </v-btn>
+        <v-btn class="mr-3" icon @click="modalStore.compras.download = true">
+          <v-icon>fa fa-2x fa-arrow-circle-down</v-icon>
+        </v-btn>
+        <v-btn class="mr-3" icon @click="save">
+          <v-icon>fa fa-2x fa-check</v-icon>
+        </v-btn>
+        <v-btn class="mr-3" icon>
           <v-icon>fa fa-2x fa-cog</v-icon>
         </v-btn>
       </v-toolbar>
 
       <v-card-text>
-        <v-container fluid grid-list-xl>
-          <v-form v-model="valid" ref="form">
-            <v-layout wrap justify-end>
-              <v-flex xs12 md3>
-                <v-layout wrap justify-end class="mt-1 mb-1">
-                  <v-tooltip bottom>
-                    <v-btn
-                      slot="activator"
-                      class="v-btn-common"
-                      color="danger"
-                      @click="limpaTela"
-                    >Limpar</v-btn>
-                    <span>Volta a tela ao seu estado inicial</span>
-                  </v-tooltip>
-                  <v-tooltip bottom>
-                    <v-btn
-                      slot="activator"
-                      class="v-btn-common"
-                      color="info"
-                      @click="modalStore.compras.download = true"
-                    >Download XML</v-btn>
-                    <span>Realize o download do XML diretamente da receita</span>
-                  </v-tooltip>
-                  <v-tooltip bottom>
-                    <v-btn
-                      slot="activator"
-                      class="v-btn-common"
-                      :color="color"
-                      @click="save"
-                      :loading="isLoadingSave"
-                    >Importar</v-btn>
-                    <span>Finalizar importação</span>
-                  </v-tooltip>
-                </v-layout>
-              </v-flex>
-            </v-layout>
-          </v-form>
-
+        <v-container fluid grid-list-xl class="my-5">
           <v-container fluid>
             <v-flex xs12 class="mb-4">
               <v-layout justify-center>
-                <v-icon class="mt-2 mr-2">fa fa-2x fa-files-o</v-icon>
+                <v-icon class="my-4 mr-1">fa fa-2x fa-files-o</v-icon>
                 <h2>Arquivos</h2>
               </v-layout>
             </v-flex>
@@ -72,7 +46,7 @@
                 <v-avatar class="warning ml-2 mr-1 mt-1" size="15" />Fornecedor não cadastrado
                 <v-avatar class="success ml-2 mr-1 mt-1" size="15" />XML ok
               </v-layout>
-              <hr />
+              <v-divider class="mt-3"></v-divider>
             </v-flex>
             <v-layout align-end>
               <v-spacer></v-spacer>
@@ -163,7 +137,7 @@
           <v-container fluid>
             <v-flex xs12 class="mb-4">
               <v-layout justify-center>
-                <v-icon class="mt-2 mr-2">fa fa-2x fa-archive</v-icon>
+                <v-icon class="my-4 mr-1">fa fa-2x fa-archive</v-icon>
                 <h2>Produtos</h2>
               </v-layout>
             </v-flex>
@@ -172,7 +146,7 @@
                 <v-avatar class="danger ml-2 mr-1 mt-1" size="15" />Produto não associado/vinculado
                 <v-avatar class="success ml-2 mr-1 mt-1" size="15" />Produto ok
               </v-layout>
-              <hr />
+              <v-divider class="mt-3"></v-divider>
             </v-flex>
             <v-layout align-end>
               <span>Edite valores diretamente na tabela</span>
@@ -273,140 +247,10 @@
             </template>
           </v-data-table>
 
-          <v-container fluid>
-            <v-flex xs12>
-              <v-layout justify-center>
-                <v-icon class="mt-2 mr-2">fa fa-2x fa-usd</v-icon>
-                <h2>Financeiro</h2>
-              </v-layout>
-              <hr />
-            </v-flex>
-            <v-layout align-end>
-              <span>Edite valores diretamente na tabela</span>
-              <v-spacer></v-spacer>
-            </v-layout>
-          </v-container>
-
-          <v-data-table
-            class="elevation-5 mb-3"
-            :items="financeiro"
-            :headers="fieldsFinanceiro"
-            :pagination.sync="paginationFinanc"
-            :rows-per-page-items="[5, 10, 20, 50, 100]"
-            rows-per-page-text="Parcelas por página"
-            no-data-text="Nenhuma parcela adicionada"
-            :expand="expand"
-            item-key="sequencia"
-          >
-            <template slot="items" slot-scope="data">
-              <td>{{ data.item.parcelas }}</td>
-              <td>{{ data.item.nota_fiscal }}</td>
-              <td>{{ data.item.vDup }}</td>
-              <td>{{ data.item.dVenc }}</td>
-              <td>
-                <v-switch
-                  v-model="data.item.pago"
-                  :color="color"
-                  hide-details
-                  @click.native="[!data.expanded && data.item.pago ? data.expanded = true : limpaPagamento(data, data.item), calcTotalFinanc()]"
-                ></v-switch>
-              </td>
-              <td>
-                <v-tooltip bottom>
-                  <b-button
-                    v-if="data.item.pago"
-                    slot="activator"
-                    variant="secundary"
-                    class="mr-1"
-                    @click="data.expanded = !data.expanded"
-                  >
-                    <i class="fa fa-lg fa-pencil"></i>
-                  </b-button>
-                  <span>Editar dados do pagamento</span>
-                </v-tooltip>
-              </td>
-            </template>
-            <template slot="expand" slot-scope="data">
-              <v-card v-if="data.expanded" flat>
-                <v-card-title>
-                  <span class="headline">Preencha os dados do pagamento desta parcela</span>
-                </v-card-title>
-                <v-card-text>
-                  <v-layout wrap justify-start>
-                    <v-flex xs12 md3>
-                      <v-menu
-                        v-model="data.item.menu1"
-                        :close-on-content-click="false"
-                        :nudge-right="40"
-                        transition="scale-transition"
-                        offset-y
-                        full-width
-                        max-width="290px"
-                        min-width="290px"
-                      >
-                        <template v-slot:activator="{ on }">
-                          <v-text-field
-                            :color="color"
-                            v-model="data.item.data_baixa"
-                            prepend-icon="event"
-                            label="Data do pagamento*"
-                            readonly
-                            v-on="on"
-                          ></v-text-field>
-                        </template>
-                        <v-date-picker
-                          :color="color"
-                          v-model="data.item.dataNotFormated"
-                          @input="[data.item.menu1 = false, data.item.data_baixa = formatDate(data.item.dataNotFormated)]"
-                          locale="pt-br"
-                        ></v-date-picker>
-                      </v-menu>
-                    </v-flex>
-                    <v-flex xs12 md3>
-                      <v-autocomplete
-                        dense
-                        :color="color"
-                        :items="financeiroStore.documentos"
-                        v-model="data.item.documento_baixa"
-                        label="Documento*"
-                        no-data-text="Nenhum resultado"
-                      ></v-autocomplete>
-                    </v-flex>
-                    <v-flex xs12 md3>
-                      <v-text-field
-                        :color="color"
-                        v-model="data.item.num_documento_baixa"
-                        label="Número documento"
-                      ></v-text-field>
-                    </v-flex>
-                    <v-flex xs12 md3>
-                      <v-text-field
-                        :color="color"
-                        v-model="data.item.observacao"
-                        label="Alguma observação?"
-                      ></v-text-field>
-                    </v-flex>
-                  </v-layout>
-                </v-card-text>
-              </v-card>
-            </template>
-            <template slot="footer">
-              <td colspan="2">
-                <h5>TOTAIS</h5>
-              </td>
-              <td colspan="2">
-                <v-tooltip bottom>
-                  <v-chip
-                    slot="activator"
-                    :color="getColor(totaisFinanc.valor)"
-                    dark
-                  >{{ totaisFinanc.valor || 'R$ 0,00' }}</v-chip>
-                  <span>Esse valor corresponde ao valor total da compra</span>
-                </v-tooltip>
-              </td>
-              <td colspan="2">{{ totaisFinanc.pago || 'Nenhuma parcela paga' }}</td>
-            </template>
-          </v-data-table>
+          <FinanceiroVue
+            :component="compra"
+            :showTotais="modalStore.compras.compras.title.includes('Alterar') ? false : true"
+          />
         </v-container>
       </v-card-text>
     </v-card>
@@ -435,6 +279,7 @@ export default {
       "financeiroStore"
     ])
   },
+  components: { FinanceiroVue: () => import("../material/Financeiro") },
   data() {
     return {
       isLoadingImport: false,
@@ -466,12 +311,12 @@ export default {
       expand: false,
       valid: false,
       urlBD: urlBD,
+      compra: {},
       xmls: [],
 
       produtoFilter: "",
       produtos: [],
       produto: {},
-      financeiro: [],
 
       fileName: "",
       fileUrl: "",
@@ -525,21 +370,12 @@ export default {
           sortable: false
         }
       ],
-      fieldsFinanceiro: [
-        { value: "parcelas", text: "Parcelas" },
-        { value: "nota_fiscal", text: "Nota fiscal" },
-        { value: "vDup", text: "Valor" },
-        { value: "dVenc", text: "Data de vencimento" },
-        { value: "pago", text: "Pago?" },
-        { value: "actions", text: "Ações" }
-      ],
       totais: [
         { value: "quantidade" },
         { value: "valor_unitario" },
         { value: "valor_desconto" },
         { value: "valor_total" }
       ],
-      totaisFinanc: [{ value: "valor" }, { value: "data" }, { value: "pago" }],
       paginationArq: {
         descending: true,
         page: 1,
@@ -552,13 +388,6 @@ export default {
         page: 1,
         rowsPerPage: 50, // -1 for All,
         sortBy: "situacao",
-        totalItems: 0
-      },
-      paginationFinanc: {
-        descending: true,
-        page: 1,
-        rowsPerPage: 10, // -1 for All,
-        sortBy: "",
         totalItems: 0
       },
       empRules: [v => !!v || "Empresa é obrigatória"],
@@ -588,10 +417,6 @@ export default {
     }
   },
   methods: {
-    getColor(valor) {
-      if (!this.valor_total || valor === this.valor_total) return "green";
-      else return "red";
-    },
     formatDate(date) {
       if (!date) return null;
 
@@ -602,20 +427,11 @@ export default {
       this.reset();
       this.loadTela(this.comprasStore.compra);
     },
-    async limpaPagamento(data, item) {
-      data.expanded = false;
-      data.item.data_baixa = "";
-      data.item.documento_baixa = "";
-      data.item.num_documento_baixa = "";
-      data.item.observacao = "";
-    },
     async reset() {
       this.xmls = [];
       this.produtos = [];
       this.produto = {};
-
-      this.financeiro = [];
-      this.totaisFinanc = {};
+      this.financeiroStore.financ = [];
 
       this.isLoadingImport = this.isLoadingSave = this.isLoadingCad = false;
 
@@ -703,7 +519,7 @@ export default {
               this.xmls = res.data; //joga os xmls selecionados na tela
 
               this.produtos = [];
-              this.financeiro = [];
+              this.financeiroStore.financ = [];
               this.xmls.forEach(arquivo => {
                 arquivo.nfeProc.NFe.infNFe.emit.CNPJ = formatToCNPJ(
                   arquivo.nfeProc.NFe.infNFe.emit.CNPJ
@@ -718,8 +534,12 @@ export default {
                 delete arquivo.nfeProc.NFe.infNFe.det;
 
                 if (arquivo.nfeProc.NFe.infNFe.cobr) {
-                  arquivo.nfeProc.NFe.infNFe.cobr.dup.forEach(parcela => {
-                    this.financeiro.push(parcela);
+                  arquivo.nfeProc.NFe.infNFe.cobr.dup.forEach(item => {
+                    this.financeiroStore.financ.push({
+                      parcelas: item.nDup,
+                      data_vencimento: item.dVenc,
+                      valor_parcela: item.vDup
+                    });
                   });
                   delete arquivo.nfeProc.NFe.infNFe.cobr;
                 }
@@ -728,7 +548,6 @@ export default {
               this.$toasted.global.defaultSuccess();
             })
             .then(() => {
-              this.calcTotalFinanc();
               this.isLoadingImport = false;
             })
             .catch(showError);
@@ -797,23 +616,6 @@ export default {
 
       produto.valor_custo = formatToBRL(custo);
     },
-    async calcTotalFinanc() {
-      let valor = 0,
-        pago = 0;
-
-      this.financeiro.forEach(parcela => {
-        valor += parseNumber(parcela.vDup || "0,00");
-        pago += parcela.pago ? parseNumber(parcela.vDup || "0,00") : 0;
-      });
-
-      this.totaisFinanc = {
-        valor: formatToBRL(valor),
-        pago:
-          pago === 0
-            ? "Nenhuma parcela paga"
-            : `Total pago - ${formatToBRL(pago)}`
-      };
-    },
     async removeArq(arquivo) {
       this.xmls = this.xmls.filter(xml => {
         return (
@@ -824,10 +626,11 @@ export default {
       this.produtos = this.produtos.filter(produto => {
         return produto.fornec !== arquivo.nfeProc.NFe.infNFe.emit.CNPJ;
       });
-      this.financeiro = this.financeiro.filter(parcela => {
-        return parcela.nota_fiscal !== arquivo.nfeProc.NFe.infNFe.ide.nNF;
-      });
-      this.calcTotalFinanc();
+      this.financeiroStore.financ = this.financeiroStore.financ.filter(
+        parcela => {
+          return parcela.nota_fiscal !== arquivo.nfeProc.NFe.infNFe.ide.nNF;
+        }
+      );
     },
     async cadFornecs() {
       this.isLoadingCad = true;
@@ -947,48 +750,26 @@ export default {
       this.modalStore.produtos.visible = true;
     },
     async loadTela(compra) {
+      this.$store.dispatch("loadFornecs");
+      this.$store.dispatch("loadProdutos");
+      this.$store.dispatch("loadDocumentos");
+      this.$store.dispatch("loadContas");
+
+      if (!compra) return;
       let url = `${urlBD}/compras/Tela`;
-
-      if (!compra) {
-        axios
-          .get(url)
-          .then(res => {
-            const tela = res.data;
-
-            this.pessoaStore.pessoas = tela.pessoas;
-            this.financeiroStore.documentos = tela.documentos;
-            this.produtoStore.produtos = tela.produtos.map(produto => {
-              produto.valor_unitario = formatToBRL(produto.valor_unitario);
-              return produto;
-            });
-          })
-          .catch(showError);
-      } else if (compra.id) {
+      if (compra.id) {
         axios
           .get(`${url}/${compra.id}`)
           .then(res => {
-            const tela = res.data;
-
-            this.compra = tela.compra;
-
-            this.pessoaStore.pessoas = tela.pessoas;
-            this.financeiroStore.documentos = tela.documentos;
-            this.produtoStore.produtos = tela.produtos.map(produto => {
-              produto.valor_unitario = formatToBRL(produto.valor_unitario);
-              return produto;
-            });
-            this.parseValores();
-            this.calcTotalFinanc();
+            this.compra = res.data;
           })
           .catch(showError);
       }
     },
     save() {
-      this.isLoadingSave = true;
-
       const filesUpload = [];
 
-      if (this.xmls.length === 0) {
+      if (this.xmls.length == 0) {
         showError("Não há nada para ser importado!");
         return;
       } else {
@@ -1010,11 +791,12 @@ export default {
             observacao: xml.nfeProc.NFe.infNFe.infAdic
           };
           arquivo.produtos = this.produtos;
-          arquivo.financeiro = this.financeiro;
+          arquivo.financeiro = this.financeiroStore.financ;
           filesUpload.push(arquivo);
         });
       }
 
+      this.isLoadingSave = true;
       axios
         .post(`${urlBD}/compras/importarXML`, filesUpload)
         .then(res => {

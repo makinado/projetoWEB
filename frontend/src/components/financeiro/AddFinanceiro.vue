@@ -7,21 +7,29 @@
     transition="dialog-bottom-transition"
   >
     <v-card v-if="modalStore.financeiro.financ.visible">
-      <v-toolbar dark :color="color" class="m-0 p-0">
-        <v-btn icon @click="modalStore.financeiro.financ.visible = false">
+      <v-toolbar fixed dark :color="color">
+        <v-toolbar-side-icon @click="modalStore.financeiro.financ.visible = false">
           <v-icon>close</v-icon>
-        </v-btn>
+        </v-toolbar-side-icon>
         <v-toolbar-title
-          class="headline text-white font-weight-light"
+          class="headline white--text font-weight-light"
         >{{ modalStore.financeiro.financ.title }}</v-toolbar-title>
+
         <v-spacer></v-spacer>
-        <v-btn icon @click>
+
+        <v-btn class="mr-3" icon @click="limpaTela">
+          <v-icon>fa fa-2x fa-eraser</v-icon>
+        </v-btn>
+        <v-btn class="mr-3" icon @click="save">
+          <v-icon>fa fa-2x fa-check</v-icon>
+        </v-btn>
+        <v-btn class="mr-3" icon>
           <v-icon>fa fa-2x fa-cog</v-icon>
         </v-btn>
       </v-toolbar>
 
       <v-card-text>
-        <v-container fluid grid-list-xl>
+        <v-container fluid grid-list-xl class="my-5">
           <v-form v-model="valid" ref="form">
             <v-text-field label="id" v-model="financ.id" v-show="false"></v-text-field>
             <v-text-field v-model="financ.id_empresa" v-show="false"></v-text-field>
@@ -55,30 +63,6 @@
                   :rules="pessoaRules"
                   @change="loadClassificacoes()"
                 ></v-autocomplete>
-              </v-flex>
-              <v-spacer></v-spacer>
-              <v-flex xs12 md3>
-                <v-layout wrap justify-end class="mt-1 mb-1">
-                  <v-tooltip bottom>
-                    <v-btn
-                      slot="activator"
-                      class="v-btn-common"
-                      color="danger"
-                      @click="limpaTela"
-                    >Limpar</v-btn>
-                    <span>Volta a tela ao seu estado inicial</span>
-                  </v-tooltip>
-                  <v-tooltip bottom>
-                    <v-btn
-                      slot="activator"
-                      class="v-btn-common"
-                      :loading="isLoading"
-                      :color="color"
-                      @click="save"
-                    >Salvar</v-btn>
-                    <span>Finalizar lançamento</span>
-                  </v-tooltip>
-                </v-layout>
               </v-flex>
             </v-layout>
           </v-form>
@@ -254,10 +238,10 @@
 
             <v-flex xs12>
               <v-layout justify-center>
-                <v-icon class="mt-2 mr-2">fa fa-2x fa-usd</v-icon>
+                <v-icon class="my-4 mr-1">fa fa-2x fa-usd</v-icon>
                 <h2>Parcelas</h2>
               </v-layout>
-              <hr />
+              <v-divider></v-divider>
             </v-flex>
             <v-layout align-end>
               <span>Edite valores diretamente na tabela</span>
@@ -351,27 +335,27 @@
               </td>
               <td>
                 <v-tooltip bottom>
-                  <b-button
+                  <v-btn
                     v-if="data.item.pago"
                     slot="activator"
-                    variant="secundary"
+                    icon
                     class="mr-1"
                     @click="data.expanded = !data.expanded"
                   >
                     <i class="fa fa-lg fa-pencil"></i>
-                  </b-button>
+                  </v-btn>
                   <span>Editar dados do pagamento</span>
                 </v-tooltip>
                 <v-tooltip bottom>
-                  <b-button
+                  <v-btn
                     v-if="!modalStore.financeiro.financ.title.includes('Alterar')"
                     slot="activator"
-                    variant="secundary"
+                    icon
                     class="mr-1"
                     @click="deleteParcela(data.item)"
                   >
                     <i class="fa fa-lg fa-trash"></i>
-                  </b-button>
+                  </v-btn>
                   <span>Excluir parcela</span>
                 </v-tooltip>
               </td>

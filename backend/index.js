@@ -23,7 +23,7 @@ consign()
     .then('./config/routes.js')
     .into(app)
 
-const PORT = process.env.port || 3000
+const PORT = process.env.PORT || 3000
 
 http.listen(PORT, function () {
     console.log('api online na porta ' + PORT);

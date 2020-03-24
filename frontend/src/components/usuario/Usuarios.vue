@@ -1,8 +1,6 @@
 <template>
   <v-container fill-height fluid grid-list-xl>
     <AddUsuario />
-    <AddPerfil />
-    <Perfis />
     <Email />
 
     <v-layout justify-center wrap>
@@ -23,8 +21,6 @@ export default {
     PageTitle: () => import("@/components/template/PageTitle"),
     GridUsuarios: () => import("./GridUsuarios"),
     AddUsuario: () => import("./AddUsuario"),
-    Perfis: () => import("./Perfis"),
-    AddPerfil: () => import("./AddPerfil"),
     Email: () => import("@/components/email/Email")
   }
 };

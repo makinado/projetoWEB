@@ -15,7 +15,6 @@
               max-width="600"
               offset-x
               transition="slide-y-transition"
-              @keyup.enter
               v-model="pesquisa"
             >
               <v-btn slot="activator" :color="color" icon>
@@ -160,7 +159,6 @@
           max-width="600"
           offset-x
           transition="slide-y-transition"
-          @keyup.enter
           v-model="pesquisa"
         >
           <v-btn slot="activator" :color="color" icon>
@@ -312,36 +310,36 @@
           <td>{{ data.item.qtdEstoque | decimal }}</td>
           <td>
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[produtoStore.produto = data.item, modalStore.produtos.visible = true, modalStore.produtos.title = 'Alterar produto']"
                 class="mr-1"
               >
                 <i class="fa fa-lg fa-pencil"></i>
-              </b-button>
+              </v-btn>
               <span>Editar produto</span>
             </v-tooltip>
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[confirmaExclusao = true,produtoStore.produto = data.item]"
                 class="mr-1"
               >
                 <i class="fa fa-lg fa-trash"></i>
-              </b-button>
+              </v-btn>
               <span>Excluir produto</span>
             </v-tooltip>
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 class="mr-1"
                 @click.prevent="[modalStore.produtos.estoque.visible = true, produtoStore.produto = data.item]"
               >
                 <i class="fa fa-lg fa-th"></i>
-              </b-button>
+              </v-btn>
               <span>Estoque do produto</span>
             </v-tooltip>
           </td>
@@ -380,7 +378,7 @@
 <script>
 import { VMoney } from "v-money";
 import axios from "axios";
-import { urlBD, showError, moneyToNumber, formatDate, saveLog } from "@/global";
+import { urlBD, showError, showSuccess } from "@/global";
 import { mapState } from "vuex";
 
 import { formatToBRL } from "brazilian-values";

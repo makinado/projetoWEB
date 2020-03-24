@@ -15,7 +15,6 @@
               max-width="600"
               offset-x
               transition="slide-y-transition"
-              @keyup.enter
               v-model="pesquisa"
             >
               <v-btn slot="activator" :color="color" icon>
@@ -72,15 +71,6 @@
               <v-btn
                 slot="activator"
                 class="v-btn-common"
-                @click="[modalStore.perfis.visible = true]"
-                color="secondary"
-              >Perfis</v-btn>
-              <span>Perfis de usuário</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                class="v-btn-common"
                 :color="color"
                 @click.prevent="[ usuarioStore.usuario = null,modalStore.usuarios.visible = true,modalStore.usuarios.title = 'Adicionar usuario']"
               >Adicionar</v-btn>
@@ -99,7 +89,6 @@
           max-width="600"
           offset-x
           transition="slide-y-transition"
-          @keyup.enter
           v-model="pesquisa"
         >
           <v-btn slot="activator" :color="color" icon>
@@ -155,15 +144,6 @@
           <v-btn
             slot="activator"
             class="v-btn-common"
-            @click="[modalStore.perfis.visible = true]"
-            color="secondary"
-          >Perfis</v-btn>
-          <span>Perfis de usuário</span>
-        </v-tooltip>
-        <v-tooltip bottom>
-          <v-btn
-            slot="activator"
-            class="v-btn-common"
             :color="color"
             @click.prevent="[ usuarioStore.usuario = null,modalStore.usuarios.visible = true,modalStore.usuarios.title = 'Adicionar usuario']"
           >Adicionar</v-btn>
@@ -190,41 +170,40 @@
             <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
           </td>
           <td>{{ data.item.id }}</td>
-          <td>{{ data.item.perfil }}</td>
           <td>{{ data.item.nome }}</td>
           <td>{{ data.item.email }}</td>
           <td>{{ data.item.contato }}</td>
           <td>
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[usuarioStore.usuario = data.item, modalStore.usuarios.visible = true,modalStore.usuarios.title = 'Alterar usuario']"
                 class="mr-1"
               >
                 <i class="fa fa-lg fa-pencil"></i>
-              </b-button>
+              </v-btn>
               <span>Editar usuário</span>
             </v-tooltip>
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[confirmaExclusao = true,usuarioStore.usuario = data.item]"
                 class="mr-1"
               >
                 <i class="fa fa-lg fa-trash"></i>
-              </b-button>
+              </v-btn>
               <span>Excluir usuário</span>
             </v-tooltip>
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[modalStore.email.visible = true, modalStore.email.para = data.item.email]"
               >
                 <i class="fa fa-lg fa-envelope"></i>
-              </b-button>
+              </v-btn>
               <span>Enviar e-mail</span>
             </v-tooltip>
           </td>
@@ -278,20 +257,19 @@ export default {
     params() {
       this.loadUsuarios();
     },
-    "$store.state.modalStore.usuarios.visible": function() {
+    "$store.state.modalStore.usuarios.visible"() {
       if (!this.modalStore.usuarios.visible) {
         this.loadUsuarios();
       }
     }
   },
-  data: function() {
+  data() {
     return {
       itens_selecionados: [],
       valid: true,
       loading: true,
       fields: [
         { value: "id", text: "Código", sortable: true },
-        { value: "perfil", text: "Perfil", sortable: true },
         { value: "nome", text: "Nome", sortable: true },
         { value: "email", text: "E-mail", sortable: true },
         { value: "contato", text: "Contato" },
@@ -380,7 +358,7 @@ export default {
       }
 
       usuarios.map(async item => {
-        const url = `${urlBD}/empresas/${item.id}`;
+        const url = `${urlBD}/usuarios/${item.id}`;
 
         await axios
           .delete(url)

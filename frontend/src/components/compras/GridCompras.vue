@@ -15,7 +15,6 @@
               max-width="600"
               offset-x
               transition="slide-y-transition"
-              @keyup.enter
               v-model="pesquisa"
             >
               <v-btn slot="activator" :color="color" icon>
@@ -161,7 +160,6 @@
           max-width="600"
           offset-x
           transition="slide-y-transition"
-          @keyup.enter
           v-model="pesquisa"
         >
           <v-btn slot="activator" :color="color" icon>
@@ -307,11 +305,10 @@
         :rows-per-page-items="[5, 10, 20, 50, 100]"
         :total-items="count"
         :pagination.sync="pagination"
-        :loading="loading"
         select-all
         v-model="itens_selecionados"
       >
-        <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
+        <!-- <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear> -->
         <template slot="items" slot-scope="data">
           <td>
             <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
@@ -327,36 +324,36 @@
           <td>{{ data.item.valor_total | currency }}</td>
           <td>
             <v-tooltip v-if="!data.item.importado" bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 class="mr-1"
-                @click.prevent="[comprasStore.compra = data.item, modalStore.compras.compras.add = true, modalStore.produtos.title = 'Alterar nota fiscal de compra']"
+                @click.prevent="[comprasStore.compra = data.item, modalStore.compras.compras.add = true, modalStore.compras.compras.title = 'Alterar nota fiscal de compra']"
               >
                 <i class="fa fa-lg fa-pencil"></i>
-              </b-button>
+              </v-btn>
               <span>Editar compra</span>
             </v-tooltip>
             <v-tooltip v-else bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 class="mr-1"
                 @click.prevent="gerarDANFe(data.item)"
               >
                 <i class="fa fa-lg fa-eye"></i>
-              </b-button>
+              </v-btn>
               <span>Visualizar DANFe</span>
             </v-tooltip>
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 class="mr-1"
                 @click.prevent="[confirmaExclusao = true, comprasStore.compra = data.item]"
               >
                 <i class="fa fa-lg fa-trash"></i>
-              </b-button>
+              </v-btn>
               <span>Excluir compra</span>
             </v-tooltip>
           </td>

@@ -216,7 +216,7 @@ module.exports = app => {
 
     const getClientes = async (req, res) => {
         app.db('pessoas')
-            .select('id as value', 'nome as text')
+            .select('id as value', 'nome as text', 'cpf', 'cnpj')
             .where({ cliente: true })
             .orderBy('nome')
             .then(pessoas => res.json(pessoas))
@@ -226,7 +226,7 @@ module.exports = app => {
 
     const getFornecs = async (req, res) => {
         app.db('pessoas')
-            .select('id as value', 'nome as text')
+            .select('id as value', 'nome as text', 'cpf', 'cnpj')
             .where({ fornecedor: true })
             .orderBy('nome')
             .then(pessoas => res.json(pessoas))
@@ -235,7 +235,7 @@ module.exports = app => {
 
     const getTransps = async (req, res) => {
         app.db('pessoas')
-            .select('id as value', 'nome as text')
+            .select('id as value', 'nome as text', 'cpf', 'cnpj')
             .where({ transportadora: true })
             .orderBy('nome')
             .then(pessoas => res.json(pessoas))

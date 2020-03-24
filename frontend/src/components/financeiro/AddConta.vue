@@ -75,12 +75,7 @@
 
 <script>
 import axios from "axios";
-import {
-  urlBD,
-  showError,
-  formatDate,
-  saveLog
-} from "@/global";
+import { urlBD, showError, formatDate, saveLog } from "@/global";
 import { mapState } from "vuex";
 import { formatToBRL } from "brazilian-values";
 
@@ -117,17 +112,17 @@ export default {
     };
   },
   methods: {
-    async limpaTela() {
+    limpaTela() {
       this.reset();
       this.loadTela(this.financeiroStore.conta);
     },
-    async reset() {
+    reset() {
       this.conta = {};
       this.banco = {};
       this.isBank = false;
       this.$refs.form ? this.$refs.form.reset() : "";
     },
-    async loadTela(conta) {
+    loadTela(conta) {
       this.$store.dispatch("loadEmpresas");
       this.$store.dispatch("loadBancos");
 
@@ -147,7 +142,7 @@ export default {
           .catch(showError);
       }
     },
-    async save() {
+    save() {
       if (!this.$refs.form.validate()) return;
 
       const method = this.conta.id ? "put" : "post";

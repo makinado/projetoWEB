@@ -66,7 +66,7 @@ module.exports = app => {
             //     totais = {
             //         pessoas: await app.db('pessoas').count('id').first().then(c => c.count),
             //         clientes: await app.db('pessoas').count('id').where({ cliente: true }).first().then(c => c.count),
-            //         fornecedores: await app.db('pessoas').count('id').where({ fornecedor: true }).first().then(c => c.count),
+            //         fornecedores: await app.db('pessoas').count('id').where({ fornecedor: true }).first().then(c => c.count),    
             //         vendedores: await app.db('pessoas').count('id').where({ vendedor: true }).first().then(c => c.count),
             //         funcionarios: await app.db('pessoas').count('id').where({ funcionario: true }).first().then(c => c.count),
             //         transportadoras: await app.db('pessoas').count('id').where({ transportadora: true }).first().then(c => c.count)
@@ -74,8 +74,8 @@ module.exports = app => {
             // )
 
         } else if (req.query.cadastros.includes('usuario')) {
-            usuarios = await app.dbUsers('usuarios')
-                .select('id', 'nome', 'email', 'contato', 'data_criado', 'data_atualizado', 'id_perfil', 'img')
+            usuarios = await app.db('usuarios')
+                .select('id', 'nome', 'email', 'contato', 'data_criado', 'data_atualizado', 'img')
                 .orderBy(req.query.ordem || "nome")
                 .where((qb) => {
                     if (req.query.data_inicial && req.query.data_final) {
@@ -86,7 +86,7 @@ module.exports = app => {
                         }
                     }
                 })
-            // usuarios.usuariosCount = await app.dbUsers('usuarios').count('id').first()
+            // usuarios.usuariosCount = await app.db('usuarios').count('id').first()
 
         } else if (req.query.cadastros.includes('produto')) {
             produtos = await app.db('produtos as p')

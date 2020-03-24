@@ -36,20 +36,20 @@
                 <td>{{ data.item.id }}</td>
                 <td>{{ data.item.nome }}</td>
                 <td>
-                  <b-button
-                    variant="secundary"
+                  <v-btn
+                    icon
                     @click.prevent="[marca = data.item, modalStore.marcas.visible = true, modalStore.marcas.title = modalStore.marcas.title.replace('Adicionar','Alterar')]"
                     class="mr-1"
                   >
                     <i class="fa fa-lg fa-pencil"></i>
-                  </b-button>
-                  <b-button
-                    variant="secundary"
+                  </v-btn>
+                  <v-btn
+                    icon
                     @click.prevent="[confirmaExlusao = true, produtoStore.marca = data.item]"
                     class="mr-1"
                   >
                     <i class="fa fa-lg fa-trash"></i>
-                  </b-button>
+                  </v-btn>
                 </td>
               </template>
             </v-data-table>

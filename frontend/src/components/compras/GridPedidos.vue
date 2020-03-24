@@ -15,7 +15,6 @@
               max-width="600"
               offset-x
               transition="slide-y-transition"
-              @keyup.enter
               v-model="pesquisa"
             >
               <v-btn slot="activator" :color="color" icon>
@@ -160,7 +159,6 @@
           max-width="600"
           offset-x
           transition="slide-y-transition"
-          @keyup.enter
           v-model="pesquisa"
         >
           <v-btn slot="activator" :color="color" icon>
@@ -305,11 +303,9 @@
         :rows-per-page-items="[5, 10, 20, 50, 100]"
         :total-items="count"
         :pagination.sync="pagination"
-        :loading="loading"
         select-all
         v-model="itens_selecionados"
       >
-        <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
         <template slot="items" slot-scope="data">
           <td>
             <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
@@ -324,47 +320,47 @@
           <td>{{ data.item.valor_total | currency }}</td>
           <td>
             <v-tooltip bottom v-if="data.item.situacao === 'PENDENTE'">
-              <b-button slot="activator" variant="secundary" class="mr-1" @click="concluirPedido">
+              <v-btn slot="activator" icon class="mr-1" @click="concluirPedido">
                 <i class="fa fa-lg fa-check"></i>
-              </b-button>
+              </v-btn>
               <span>Concluir pedido</span>
             </v-tooltip>
             <v-tooltip bottom v-else>
-              <b-button slot="activator" variant="secundary" class="mr-1">
+              <v-btn slot="activator" icon class="mr-1">
                 <i class="fa fa-lg fa-info"></i>
-              </b-button>
+              </v-btn>
               <span>Informações do pedido</span>
             </v-tooltip>
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[comprasStore.pedido = data.item, modalStore.compras.pedidos.visible = true,modalStore.compras.pedidos.title = 'Alterar pedido de compra']"
                 class="mr-1"
               >
                 <i class="fa fa-lg fa-pencil"></i>
-              </b-button>
+              </v-btn>
               <span>Editar pedido</span>
             </v-tooltip>
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[confirmaExclusao = true, comprasStore.pedido = data.item]"
                 class="mr-1"
               >
                 <i class="fa fa-lg fa-trash"></i>
-              </b-button>
+              </v-btn>
               <span>Excluir pedido</span>
             </v-tooltip>
             <v-tooltip bottom>
-              <b-button
+              <v-btn
                 slot="activator"
-                variant="secundary"
+                icon
                 @click.prevent="[modalStore.complementos.impressao = true]"
               >
                 <i class="fa fa-lg fa-print"></i>
-              </b-button>
+              </v-btn>
               <span>Exportar pedido</span>
             </v-tooltip>
           </td>

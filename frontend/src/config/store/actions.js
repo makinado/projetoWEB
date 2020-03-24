@@ -1,7 +1,10 @@
 // https://vuex.vuejs.org/en/actions.html
 
 import axios from 'axios'
-import { urlBD } from '@/global'
+import { urlBD, parseNumber } from '@/global'
+import Vue from 'vue'
+
+import { formatToBRL } from 'brazilian-values'
 
 export default {
   async loadEmpresas(state) {
@@ -100,4 +103,44 @@ export default {
       state.commit('setTabelas', res.data)
     });
   },
+  async loadOrcamentos(state) {
+    const url = `${urlBD}/vendas/orcamentos`;
+    axios.get(url).then(res => {
+      state.commit('setVendas', res.data)
+    });
+  },
+  async loadVendas(state) {
+    const url = `${urlBD}/vendas/vendas`;
+    axios.get(url).then(res => {
+      state.commit('setVendas', res.data)
+    });
+  },
+  async loadPDV(store, pdv) {
+    Vue.set(store.state.vendaStore.pdv, "id", pdv.id);
+    Vue.set(store.state.vendaStore.pdv, "id_empresa", pdv.id_empresa);
+    Vue.set(store.state.vendaStore.pdv, "id_pessoa", pdv.id_pessoa);
+    Vue.set(store.state.vendaStore.pdv, "cpf_cnpj", pdv.cpf_cnpj);
+    Vue.set(store.state.vendaStore.pdv, "id_vendedor", pdv.id_vendedor);
+    store.commit('setPDVProdutos', pdv.produtos)
+    store.dispatch('calcTotalPDV')
+
+    console.log(store.state.vendaStore.pdv)
+  },
+  async calcTotalPDV(store) {
+    let quantidade = 0,
+      valor_desconto = 0,
+      valor_total = 0;
+
+    store.state.vendaStore.pdv.produtos.forEach(produto => {
+      quantidade += parseNumber(produto.quantidade || "0,00");
+      valor_desconto += parseNumber(produto.valor_desconto || "0,00");
+      valor_total += parseNumber(produto.valor_total || "0,00");
+    });
+
+    store.commit('setTotaisPDV', {
+      quantidade: formatToBRL(quantidade).replace("R$", ""),
+      valor_desconto: formatToBRL(valor_desconto),
+      valor_total: formatToBRL(valor_total)
+    })
+  }
 }
