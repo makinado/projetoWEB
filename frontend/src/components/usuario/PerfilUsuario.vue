@@ -1,6 +1,6 @@
 <template>
   <v-container fill-height fluid grid-list-xl>
-    <v-layout justify-center wrap >
+    <v-layout justify-center wrap>
       <v-flex xs12 md8 my-5>
         <Card :color="color" title="Editar perfil">
           <v-form v-model="valid" ref="form">
@@ -10,7 +10,7 @@
                   <v-text-field
                     :color="color"
                     label="Nome*"
-                    v-model="usuarioStore.currentUsuario.nome"
+                    v-model="usuario.nome"
                     :rules="nameRules"
                   />
                 </v-flex>
@@ -18,7 +18,7 @@
                   <v-text-field
                     :color="color"
                     label="E-mail*"
-                    v-model="usuarioStore.currentUsuario.email"
+                    v-model="usuario.email"
                     :rules="emailRules"
                   />
                 </v-flex>
@@ -27,8 +27,7 @@
                     :color="color"
                     label="Contato"
                     v-mask="['(##)####-####','(##)#####-####']"
-                    v-model="usuarioStore.currentUsuario.contato"
-                    :rules="foneRules"
+                    v-model="usuario.contato"
                   />
                 </v-flex>
                 <v-flex xs12 md4>
@@ -38,7 +37,7 @@
                     prepend-icon="fa fa-lg fa-folder-open-o"
                     readonly
                     v-model="imageName"
-                    :placeholder="usuarioStore.currentUsuario.img"
+                    :placeholder="usuario.img"
                     @click="pickFile"
                   ></v-text-field>
                   <input
@@ -55,7 +54,7 @@
                     :color="color"
                     label="Senha"
                     type="password"
-                    v-model="usuarioStore.currentUsuario.senha"
+                    v-model="usuario.senha"
                     :rules="senhaRules"
                   />
                 </v-flex>
@@ -64,12 +63,17 @@
                     :color="color"
                     label="Confirmação de senha"
                     type="password"
-                    v-model="usuarioStore.currentUsuario.confirmaSenha"
+                    v-model="usuario.confirmaSenha"
                     :rules="confirmaSenhaRules"
                   />
                 </v-flex>
                 <v-flex xs12 text-xs-right>
-                  <v-btn class="v-btn-common" :color="color" @click="save()">Atualizar</v-btn>
+                  <v-btn
+                    class="v-btn-common"
+                    :color="color"
+                    @click="save()"
+                    :loading="isLoading"
+                  >Atualizar</v-btn>
                 </v-flex>
               </v-layout>
             </v-container>
@@ -80,8 +84,8 @@
         <Card class="v-card-profile">
           <v-avatar slot="offset" :color="color" class="mx-auto d-block avatar" size="180">
             <img
-              v-if="usuarioStore.currentUsuario.img"
-              :src="`${urlBD}/${usuarioStore.currentUsuario.img}`"
+              v-if="usuario.img"
+              :src="`${urlBD}/${usuario.img}`"
               alt="Imagem de perfil"
               height="50"
             />
@@ -110,7 +114,15 @@ export default {
   name: "Usuario",
   computed: {
     ...mapState("app", ["color"]),
-    ...mapState(["usuarioStore", "modalStore"])
+    ...mapState(["usuarioStore", "empresaStore", "modalStore"]),
+    usuario: {
+      get() {
+        return this.usuarioStore.currentUsuario;
+      },
+      set(value) {
+        this.usuarioStore.currentUsuario = value;
+      }
+    }
   },
   components: {
     Card: () => import("../material/Card")
@@ -119,7 +131,7 @@ export default {
     return {
       urlBD: urlBD,
       valid: true,
-      usuario: {},
+      isLoading: false,
       imageName: "",
       imageUrl: "",
       imageFile: "",
@@ -131,34 +143,36 @@ export default {
         v => !!v || "E-mail é obrigatório",
         v => (!!v && /.+@.+\..+/.test(v)) || "E-mail inválido"
       ],
-      foneRules: [
-        v => !!v || "Contato é obrigatório",
-        v => (!!v && v.length > 12) || "Contato inválido"
-      ],
       senhaRules: [
         v => !!v || "Senha é obrigatória",
-        v => (!!v && v.length >= 4) || "Senha deve ter no mínimo 4 caracteres"
+        v => (!!v && v.length >= 6) || "Senha deve ter no mínimo 6 caracteres"
       ],
       confirmaSenhaRules: [
         v => !!v || "Confirmação de senha é obrigatória",
-        v => (!!v && v.length >= 4) || "Senha deve ter no mínimo 4 caracteres",
-        v =>
-          (!!v && v === this.usuarioStore.currentUsuario.senha) ||
-          "Senhas não conferem"
+        v => (!!v && v.length >= 6) || "Senha deve ter no mínimo 6 caracteres",
+        v => (!!v && v === this.usuario.senha) || "Senhas não conferem"
       ]
     };
   },
   methods: {
     reset() {
-      this.usuario = {};
-      this.$refs.form ? this.$refs.form.reset() : "";
+      delete this.usuario.senha;
+      delete this.usuario.confirmaSenha;
     },
     save() {
       if (!this.$refs.form.validate()) return;
+      this.isLoading = true;
 
-      this.usuario = { ...this.usuarioStore.currentUsuario };
-      const id = this.usuario.id;
-      const url = `${urlBD}/usuarios/${id}`;
+      const usuario = {
+        id: this.usuario.id,
+        nome: this.usuario.nome,
+        email: this.usuario.email,
+        contato: this.usuario.contato,
+        senha: this.usuario.senha,
+        confirmaSenha: this.usuario.confirmaSenha,
+        token: this.usuario.token
+      };
+      const url = `${urlBD}/usuarios/${this.usuario.id}`;
 
       if (this.imageFile) {
         const fd = new FormData();
@@ -166,36 +180,46 @@ export default {
         axios
           .post(`${urlBD}/uploadIMG`, fd)
           .then(res => {
-            this.usuario.img = res.data;
+            usuario.img = res.data;
             axios
-              .put(url, this.usuario)
+              .put(url, usuario)
               .then(() => {
                 this.$toasted.global.defaultSuccess();
                 this.signin();
-                this.reset();
               })
               .catch(showError);
           })
           .catch(showError);
       } else {
         axios
-          .put(url, this.usuario)
+          .put(url, usuario)
           .then(() => {
             this.$toasted.global.defaultSuccess();
             this.signin();
-            this.reset();
           })
-          .catch(showError);
+          .catch(showError)
+          .then(() => (this.isLoading = false));
       }
     },
     signin() {
       axios
         .post(`${urlBD}/signin`, this.usuario)
         .then(res => {
-          this.$store.commit("setUsuario", res.data);
-          localStorage.setItem(usuarioKey, JSON.stringify(res.data));
+          this.afterSignIn(res.data);
         })
         .catch(showError);
+    },
+    afterSignIn(usuario) {
+      this.$store.commit("setUsuario", usuario);
+      localStorage.setItem(usuarioKey, JSON.stringify(usuario));
+      this.$socket.emit("login", { id: usuario.id, nome: usuario.nome });
+
+      axios.get(`${urlBD}/usuarioEmpresas/${usuario.id}`).then(res => {
+        this.empresaStore.currentEmpresas = res.data;
+        this.$store.commit("setEmpresa", res.data[0].value);
+      });
+
+      this.$router.push({ path: "/" });
     },
     pickFile() {
       this.$refs.image.click();
@@ -219,6 +243,9 @@ export default {
         this.imageUrl = "";
       }
     }
+  },
+  mounted() {
+    console.log(this.usuario);
   }
 };
 </script>

@@ -75,15 +75,6 @@ const routes = [{
     path: '/metasEmp',
     component: () => import('@/components/empresas/Metas')
 }, {
-    name: 'Metas de Vendedor',
-    path: '/metasVend',
-    component: () => import('@/components/pessoas/Metas')
-}, {
-    name: 'Comissões',
-    path: '/comissoes',
-    component: () => import('@/components/pessoas/Comissoes')
-
-}, {
     name: 'Orçamentos/Vendas',
     path: '/vendas',
     component: () => import('@/components/vendas/Vendas')

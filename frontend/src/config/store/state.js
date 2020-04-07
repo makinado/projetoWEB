@@ -26,6 +26,9 @@ export default {
     usuario: null,
     usuarios: [],
 
+    meta: {},
+    metas: [],
+
     currentPerfil: null,
     perfil: null,
     perfis: []
@@ -112,6 +115,7 @@ export default {
     pdv: {
       pdvProduto: {},
       produtos: [],
+      financeiro: [],
       totais: {}
     },
 
@@ -134,16 +138,6 @@ export default {
     pessoas: {
       visible: false,
       title: "Adicionar pessoa",
-
-      metas: {
-        visible: false,
-        title: "Gerenciar metas",
-      },
-
-      comissoes: {
-        visible: false,
-        title: "Gerenciar metas",
-      }
     },
     empresas: {
       visible: false,
@@ -166,6 +160,10 @@ export default {
     usuarios: {
       visible: false,
       title: "Adicionar usuário",
+      metas: {
+        visible: false,
+        title: "Adicionar meta",
+      }
     },
     perfis: {
       visible: false,
@@ -226,7 +224,7 @@ export default {
         pendentes: false,
         devolucoes: false,
         sangria: false,
-        finalizar: false,
+        stepper: 1,
         statusSefaz: ""
       },
       vendas: {

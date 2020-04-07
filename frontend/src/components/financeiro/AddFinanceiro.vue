@@ -48,7 +48,26 @@
                   no-data-text="Nenhuma pessoa cadastrada"
                   :rules="pessoaRules"
                   @change="[getTipoConta(), loadPessoa()]"
-                ></v-autocomplete>
+                  @focus="$store.dispatch('loadPessoas')"
+                  deletable-chips
+                  :search-input.sync="searchPessoa"
+                >
+                  <template v-slot:no-data>
+                    <v-btn
+                      type="submit"
+                      color="secondary"
+                      flat
+                      small
+                      v-if="searchPessoa"
+                      @click="$store.dispatch('addPessoa', { nome: searchPessoa })"
+                    >
+                      <span>
+                        <v-icon>fa fa-lg fa-plus-circle</v-icon>
+                        {{ searchPessoa }}
+                      </span>
+                    </v-btn>
+                  </template>
+                </v-autocomplete>
               </v-flex>
               <v-flex xs12 md3>
                 <v-autocomplete
@@ -62,6 +81,7 @@
                   no-data-text="Sem dados"
                   :rules="pessoaRules"
                   @change="loadClassificacoes()"
+                  deletable-chips
                 ></v-autocomplete>
               </v-flex>
             </v-layout>
@@ -91,6 +111,7 @@
                                 no-data-text="Selecione o tipo de conta para carregar as classificações"
                                 prepend-icon="fa fa-lg fa-plus-circle"
                                 @click:prepend="[financeiroStore.classificacao = null, modalStore.classificacoes.visible = true]"
+                                deletable-chips
                               ></v-autocomplete>
                             </v-flex>
                             <v-flex xs12 md6>
@@ -105,6 +126,8 @@
                                 no-data-text="Nenhum documento encontrado"
                                 prepend-icon="fa fa-lg fa-plus-circle"
                                 @click:prepend="[financeiroStore.documento = null, modalStore.documentos.visible = true]"
+                                @focus="$store.dispatch('loadDocumentos')"
+                                deletable-chips
                               ></v-autocomplete>
                             </v-flex>
                             <v-flex xs12>
@@ -530,6 +553,7 @@ export default {
       disable: true,
       valid: true,
       valid1: true,
+      searchPessoa: null,
       expand: false,
       fieldsFinanceiro: [
         { value: "parcela", text: "Parcela" },
@@ -579,21 +603,6 @@ export default {
       if (this.modalStore.financeiro.financ.visible) {
         this.limpaTela();
       }
-    },
-    "$store.state.modalStore.pessoas.visible": function() {
-      if (!this.modalStore.pessoas.visible) {
-        this.$store.dispatch("loadPessoas");
-      }
-    },
-    "$store.state.modalStore.financeiro.conta.visible": function() {
-      if (!this.modalStore.financeiro.conta.visible) {
-        this.$store.dispatch("loadContas");
-      }
-    },
-    "$store.state.modalStore.documentos.visible": function() {
-      if (!this.modalStore.documentos.visible) {
-        this.$store.dispatch("loadDocumentos");
-      }
     }
   },
   methods: {
@@ -639,6 +648,11 @@ export default {
       this.loadClassificacoes();
     },
     loadClassificacoes() {
+      if (!this.financ.tipo_conta) {
+        this.classificacaoStore.classificacoes = [];
+        return;
+      }
+
       const url = `${urlBD}/classificacoes/?tipo=${
         this.financ.tipo_conta == 1 ? 2 : 1
       }`;
@@ -655,6 +669,7 @@ export default {
       this.pessoa = {};
       this.totaisFinanc = {};
       this.financeiro = [];
+      this.classificacaoStore.classificacoes = [];
 
       this.$refs.form ? this.$refs.form.reset() : "";
       this.$refs.form1 ? this.$refs.form1.reset() : "";
@@ -674,6 +689,8 @@ export default {
             "input"
           )[0].value = 0)
         : "";
+
+      // this.addParcela();
     },
     loadPagamento(item) {
       item.data_baixa = formatDate(new Date().toISOString().substr(0, 10));
@@ -687,11 +704,11 @@ export default {
       data.item.observacao = "";
     },
     loadTela(financ) {
+      if (!financ) return;
+
       this.$store.dispatch("loadPessoas");
       this.$store.dispatch("loadDocumentos");
       this.$store.dispatch("loadContas");
-
-      if (!financ) return;
       let url = `${urlBD}/financeiro`;
       if (financ.id) {
         axios

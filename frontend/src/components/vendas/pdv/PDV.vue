@@ -1,37 +1,57 @@
 <template>
-  <v-container fill-height fluid grid-list-lg class="py-0" v-resize="onResize">
+  <v-container fluid grid-list-xl v-resize="onResize" class="py-0">
     <AddDocumentos />
     <AddPessoa />
     <AddUsuario />
 
-    <v-layout justify-center wrap>
-      <v-flex md12>
-        <PageTitle main="PDV" icon="fa fa-tv" />
+    <v-stepper v-model="stepper" class="transparent elevation-0 mt-2">
+      <v-stepper-header>
+        <v-stepper-step :color="color" :complete="stepper > 1" step="1">Venda</v-stepper-step>
 
-        <v-layout row wrap>
-          <v-flex xs12 md1>
-            <Card title="Opções" :color="color">
-              <PDVOpcoes :isMobile="isMobile" />
-            </Card>
-          </v-flex>
+        <v-divider></v-divider>
 
-          <v-flex xs12 md5>
-            <Card class="mb-5" title="Cliente e Vendedor" :color="color">
-              <PDVCliente ref="PDVCliente" />
-            </Card>
-            <Card title="Pesquisar" :color="color">
-              <PDVPesquisa ref="PDVPesquisa" />
-            </Card>
-          </v-flex>
+        <v-stepper-step :color="color" :complete="stepper > 2" step="2">Formas de pagamento</v-stepper-step>
 
-          <v-flex xs12 md6>
-            <Card title="Menu" :color="color">
-              <PDVMenu ref="PDVMenu" />
-            </Card>
-          </v-flex>
-        </v-layout>
-      </v-flex>
-    </v-layout>
+        <v-divider></v-divider>
+
+        <v-stepper-step :color="color" :complete="stepper > 3" step="3">Finalizar venda</v-stepper-step>
+      </v-stepper-header>
+
+      <v-stepper-items>
+        <v-stepper-content class="m-0 p-0" step="1">
+          <v-layout row wrap>
+            <v-flex xs12 md1>
+              <Card title="Opções" :color="color">
+                <PDVOpcoes :isMobile="isMobile" />
+              </Card>
+            </v-flex>
+
+            <v-flex xs12 md4>
+              <Card class="mb-5" title="Cliente e Vendedor" :color="color">
+                <PDVCliente ref="PDVCliente" />
+              </Card>
+              <Card title="Pesquisar" :color="color">
+                <PDVPesquisa ref="PDVPesquisa" />
+              </Card>
+            </v-flex>
+
+            <v-flex xs12 md7>
+              <Card title="Menu" :color="color">
+                <PDVMenu ref="PDVMenu" />
+              </Card>
+            </v-flex>
+          </v-layout>
+        </v-stepper-content>
+
+        <v-stepper-content step="2">
+          <PDVPagamento />
+        </v-stepper-content>
+
+        <v-stepper-content step="3">
+          <PDVFechamento />
+        </v-stepper-content>
+      </v-stepper-items>
+    </v-stepper>
   </v-container>
 </template>
 
@@ -41,7 +61,15 @@ export default {
   name: "PDV",
   computed: {
     ...mapState("app", ["color"]),
-    ...mapState(["modalStore"])
+    ...mapState(["modalStore"]),
+    stepper: {
+      get() {
+        return this.modalStore.vendas.pdv.stepper;
+      },
+      set(value) {
+        this.modalStore.vendas.pdv.stepper = value;
+      }
+    }
   },
   components: {
     PageTitle: () => import("@/components/template/PageTitle"),
@@ -50,6 +78,8 @@ export default {
     PDVCliente: () => import("./PDVCliente"),
     PDVOpcoes: () => import("./PDVOpcoes"),
     PDVMenu: () => import("./PDVMenu"),
+    PDVPagamento: () => import("./PDVPagamento"),
+    PDVFechamento: () => import("./PDVFechamento"),
     AddDocumentos: () => import("../../financeiro/AddDocumentos"),
     AddPessoa: () => import("../../pessoas/AddPessoa"),
     AddUsuario: () => import("../../usuario/AddUsuario")
@@ -75,9 +105,12 @@ export default {
         this.modalStore.vendas.pdv.sangria = true;
       } else if (event.key == "F8") {
       } else if (event.key == "F9") {
-        this.modalStore.vendas.pdv.finalizar = true;
+        this.stepper = 2;
       }
     });
   }
 };
 </script>
+
+<style>
+</style>

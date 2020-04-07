@@ -365,8 +365,8 @@
         select-all
         v-model="itens_selecionados"
         :total-items="count"
+        :loading="loading"
       >
-        <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
         <template slot="items" slot-scope="data">
           <td>
             <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
@@ -543,6 +543,7 @@ export default {
       valid: true,
       concluir: true,
       cancelar: true,
+      loading: false,
       itens_selecionados: [],
       fields: [
         { value: "id", text: "Código", sortable: true },
@@ -653,13 +654,15 @@ export default {
       else return "red";
     },
     concluirConta() {
-      console.log(this.financeiroStore.financ);
+      // console.log(this.financeiroStore.financ);
       this.modalStore.financeiro.financ.pagamento = true;
     },
     cancelarConta() {
       this.confirmaCancelamento = true;
     },
     async loadFinanceiro() {
+      this.loading = true;
+      
       const url = `${urlBD}/financeiro?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
       }&empresa=${this.empresaStore.currentEmpresa || ""}&tipo=${this.filter
@@ -671,11 +674,15 @@ export default {
         ""}&pagar=${this.filter.pagar || ""}&receber=${this.filter.receber ||
         ""}`;
 
-      axios.get(url).then(res => {
-        this.financeiroStore.financs = res.data.data;
-        this.count = res.data.count;
-        this.pagination.rowsPerPage = res.data.limit;
-      });
+      axios
+        .get(url)
+        .then(res => {
+          this.financeiroStore.financs = res.data.data;
+          this.count = res.data.count;
+          this.pagination.rowsPerPage = res.data.limit;
+        })
+        .catch(showError)
+        .finally(() => (this.loading = false));
     },
     async remove() {
       if (!this.confirmaExclusao) {

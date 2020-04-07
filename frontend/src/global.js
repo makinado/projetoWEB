@@ -3,8 +3,8 @@ import axios from 'axios'
 import store from './config/store/state'
 
 export const usuarioKey = 'campag-vuetify123'
-// export const urlBD = 'https://campag-node-api.herokuapp.com/'          // production
-export const urlBD = 'http://192.168.0.105:3000'          // LOCAL NETWORK
+// export const urlBD = 'https://35.247.196.105/'          // production
+export const urlBD = 'http://localhost:3000'              // LOCAL NETWORK
 // export const urlBD = 'http://localhost:3000'              // LOCAL
 
 Vue.directive('uppercase', {
@@ -17,17 +17,16 @@ Vue.directive('uppercase', {
 })
 
 export function showSuccess(e) {
-    if (e && e.response && e.response.data) {
+    if (!e) {
+        Vue.toasted.global.defaultSuccess({})
+    } else if (e && e.response && e.response.data) {
         Vue.toasted.global.defaultSuccess({ msg: e.response.data })
-
     } else if (typeof e === 'string') {
         Vue.toasted.global.defaultSuccess({ msg: e })
     } else if (e.message) {
         Vue.toasted.global.defaultSuccess({ msg: e.message })
     } else if (e.length > 0) {
         e.forEach((e) = this.Vue.toasted.global.defaultSuccess(e.message))
-    } else {
-        Vue.toasted.global.defaultSuccess({})
     }
 }
 

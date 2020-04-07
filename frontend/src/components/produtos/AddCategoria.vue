@@ -80,11 +80,7 @@
         <v-card-text>Excluir {{ categoriaStore.categoria.descricao }} ?</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn
-            color="blue darken-1"
-            flat
-            @click="confirmaExclusao = false"
-          >Fechar</v-btn>
+          <v-btn color="blue darken-1" flat @click="confirmaExclusao = false">Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
       </v-card>
@@ -131,9 +127,6 @@ export default {
     "$store.state.modalStore.categorias.visible": function() {
       if (this.modalStore.categorias.visible) this.reset();
       this.loadCategorias();
-    },
-    "$store.state.confirmaExclusao": function() {
-      this.reset();
     }
   },
   methods: {
@@ -207,6 +200,7 @@ export default {
         .then(() => {
           this.$toasted.global.defaultSuccess();
           this.confirmaExclusao = false;
+          this.reset();
 
           saveLog(
             new Date(),

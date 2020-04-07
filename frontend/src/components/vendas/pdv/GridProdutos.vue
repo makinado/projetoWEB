@@ -12,6 +12,7 @@
         <td>{{ data.item.sequencia }}</td>
         <td class="text-truncate-1">{{ data.item.produto.text }}</td>
         <td>{{ data.item.quantidade }}</td>
+        <td>{{ data.item.valor_venda }}</td>
         <td>{{ data.item.valor_total }}</td>
         <td v-if="showActions">
           <v-btn color="warning" dark icon @click="edit(data.item)">
@@ -53,6 +54,7 @@ export default {
         { value: "sequencia", text: "Item" },
         { value: "produto.text", text: "Produto" },
         { value: "quantidade", text: "Quantidade" },
+        { value: "valor_venda", text: "Vlr. venda" },
         { value: "valor_total", text: "Total" },
         {
           value: "actions",
@@ -64,7 +66,7 @@ export default {
         descending: false,
         page: 1,
         rowsPerPage: 20, // -1 for All,
-        sortBy: "produto.text",
+        sortBy: "sequencia",
         totalItems: 0
       }
     };

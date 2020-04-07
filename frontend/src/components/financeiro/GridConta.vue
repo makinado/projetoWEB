@@ -151,8 +151,8 @@
         :total-items="count"
         select-all
         v-model="itens_selecionados"
+        :loading="loading"
       >
-        <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
         <template slot="items" slot-scope="data">
           <td>
             <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
@@ -264,6 +264,7 @@ export default {
   data() {
     return {
       valid: true,
+      loading: false,
       itens_selecionados: [],
       fields: [
         { value: "id", text: "Código", sortable: true },
@@ -328,6 +329,8 @@ export default {
   },
   methods: {
     async loadContas() {
+      this.loading = true;
+
       const url = `${urlBD}/conta?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
       }&tipo=${this.filter.tipo || 1}&id=${this.filter.id || ""}&empresa=${this
@@ -344,7 +347,8 @@ export default {
           this.count = res.data.count;
           this.pagination.rowsPerPage = res.data.limit;
         })
-        .catch(showError);
+        .catch(showError)
+        .finally(() => (this.loading = false));
     },
     async remove() {
       if (!this.confirmaExclusao) {

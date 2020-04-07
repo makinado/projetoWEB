@@ -179,7 +179,7 @@ module.exports = app => {
             .then(async pessoa => {
                 res.json(await Promise.resolve(withFinanceiro(pessoa)))
             })
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e); res.status(500).send(e.toString()) })
     }
 
     withFinanceiro = async pessoa => {
@@ -223,7 +223,6 @@ module.exports = app => {
             .catch(e => res.status(500).send(e.toString()))
     }
 
-
     const getFornecs = async (req, res) => {
         app.db('pessoas')
             .select('id as value', 'nome as text', 'cpf', 'cnpj')
@@ -254,6 +253,42 @@ module.exports = app => {
         }
     }
 
+    const fastSave = async (req, res) => {
+        const pessoa = { ...req.body }
 
-    return { save, get, getById, getWithFinanceiro, getByCategoria, getClientes, getFornecs, getTransps, getAll, remove }
+        try {
+            existsOrError(pessoa.nome, 'Nome é obrigatório')
+            const pessoaDB = await app.db('pessoas').where({ nome: pessoa.nome }).first()
+
+            notExistsOrError(pessoaDB, 'Pessoa já cadastrada')
+        } catch (e) {
+            return res.status(400).send(e)
+        }
+
+        if (req.url.includes('clientes'))
+            pessoa.cliente = true
+        else if (req.url.includes('fornecedores'))
+            pessoa.fornecedor = true
+        else if (req.url.includes('transportadoras')) pessoa.transportadora = true
+
+        app.db('pessoas')
+            .insert(pessoa)
+            .then(_ => res.status(204).send())
+            .catch(e => res.status(204).send(e))
+    }
+
+
+    return {
+        save,
+        get,
+        getById,
+        getWithFinanceiro,
+        getByCategoria,
+        getClientes,
+        fastSave,
+        getFornecs,
+        getTransps,
+        getAll,
+        remove
+    }
 }

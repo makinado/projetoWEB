@@ -123,16 +123,20 @@ module.exports = app => {
 
 
     app.route('/pessoas/clientes')
-        .all(app.config.passport.authenticate())
+        // .all(app.config.passport.authenticate())
+        .post(app.api.pessoas.pessoas.fastSave)
         .get(app.api.pessoas.pessoas.getClientes)
     app.route('/pessoas/fornecedores')
         .all(app.config.passport.authenticate())
+        .post(app.api.pessoas.pessoas.fastSave)
         .get(app.api.pessoas.pessoas.getFornecs)
     app.route('/pessoas/transportadoras')
         .all(app.config.passport.authenticate())
+        .post(app.api.pessoas.pessoas.fastSave)
         .get(app.api.pessoas.pessoas.getTransps)
     app.route('/pessoas/todas')
         .all(app.config.passport.authenticate())
+        .post(app.api.pessoas.pessoas.fastSave)
         .get(app.api.pessoas.pessoas.getAll)
     app.route('/pessoas')
         .all(app.config.passport.authenticate())
@@ -172,6 +176,7 @@ module.exports = app => {
 
     app.route('/produtos/todos')
         .all(app.config.passport.authenticate())
+        .post(app.api.produtos.produtos.fastSave)
         .get(app.api.produtos.produtos.getAll)
     app.route('/produtos')
         .all(app.config.passport.authenticate())
@@ -259,15 +264,15 @@ module.exports = app => {
         .get(grantAccess(app.api.empresas.empresaMetas.getById, 'empresa'))
         .delete(grantAccess(app.api.empresas.empresaMetas.remove, 'empresa'))
 
-    app.route('/vendMetas')
+    app.route('/usuarioMetas')
         .all(app.config.passport.authenticate())
-        .post(grantAccess(app.api.pessoas.vendMetas.save, 'usuario'))
-        .get(grantAccess(app.api.pessoas.vendMetas.get, 'usuario'))
-    app.route('/vendMetas/:id')
+        .post(grantAccess(app.api.usuarios.usuarioMetas.save, 'usuario'))
+        .get(grantAccess(app.api.usuarios.usuarioMetas.get, 'usuario'))
+    app.route('/usuarioMetas/:id')
         .all(app.config.passport.authenticate())
-        .put(grantAccess(app.api.pessoas.vendMetas.save, 'usuario'))
-        .get(grantAccess(app.api.pessoas.vendMetas.getById, 'usuario'))
-        .delete(grantAccess(app.api.pessoas.vendMetas.remove, 'usuario'))
+        .put(grantAccess(app.api.usuarios.usuarioMetas.save, 'usuario'))
+        .get(grantAccess(app.api.usuarios.usuarioMetas.getById, 'usuario'))
+        .delete(grantAccess(app.api.usuarios.usuarioMetas.remove, 'usuario'))
 
 
 

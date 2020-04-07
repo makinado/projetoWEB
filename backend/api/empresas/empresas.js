@@ -99,58 +99,63 @@ module.exports = app => {
     }
 
     const get = async (req, res) => {
+        // console.log(req)
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 5
 
         const result = await app.db('empresas').count('id').first()
         const count = parseInt(result.count)
 
-        app.db('empresas')
-            .select('id', 'cnpj', 'nome', 'email', 'contato')
-            .limit(limit).offset(page * limit - limit)
-            .orderBy('nome')
-            .where((qb) => {
-                if (req.query.tipo == 2) {
-                    // pesquisa avançada
-                    if (req.query.nome) {
-                        qb.where('empresas.nome', 'ilike', `%${req.query.nome}%`);
-                    } else if (req.query.id) {
-                        qb.orWhere('empresas.id', '=', req.query.id);
-                    } else if (req.query.cnpj) {
-                        qb.orWhere('empresas.cnpj', 'ilike', `%${req.query.cnpj}%`);
+        try {
+            app.db('empresas')
+                .select('id', 'cnpj', 'nome', 'email', 'contato')
+                .limit(limit).offset(page * limit - limit)
+                .orderBy('nome')
+                .where((qb) => {
+                    if (req.query.tipo == 2) {
+                        // pesquisa avançada
+                        if (req.query.nome) {
+                            qb.where('empresas.nome', 'ilike', `%${req.query.nome}%`);
+                        } else if (req.query.id) {
+                            qb.orWhere('empresas.id', '=', req.query.id);
+                        } else if (req.query.cnpj) {
+                            qb.orWhere('empresas.cnpj', 'ilike', `%${req.query.cnpj}%`);
+                        }
+                        if (req.query.email) {
+                            qb.where('empresas.email', 'ilike', `%${req.query.email}%`);
+                        }
+                        if (req.query.contato) {
+                            qb.where('empresas.contato', 'ilike', `%${req.query.contato}%`);
+                        }
+                    } else {
+                        // pesquisa rapida
+                        if (req.query.nome) {
+                            qb.where('empresas.nome', 'ilike', `${req.query.nome}%`);
+                        } else if (req.query.id) {
+                            qb.orWhere('empresas.id', '=', req.query.id);
+                        } else if (req.query.cnpj) {
+                            qb.orWhere('empresas.cnpj', 'ilike', `${req.query.cnpj}%`);
+                        }
+                        if (req.query.email) {
+                            qb.where('empresas.email', 'ilike', `${req.query.email}%`);
+                        }
+                        if (req.query.contato) {
+                            qb.where('empresas.contato', 'ilike', `${req.query.contato}%`);
+                        }
                     }
-                    if (req.query.email) {
-                        qb.where('empresas.email', 'ilike', `%${req.query.email}%`);
-                    }
-                    if (req.query.contato) {
-                        qb.where('empresas.contato', 'ilike', `%${req.query.contato}%`);
-                    }
-                } else {
-                    // pesquisa rapida
-                    if (req.query.nome) {
-                        qb.where('empresas.nome', 'ilike', `${req.query.nome}%`);
-                    } else if (req.query.id) {
-                        qb.orWhere('empresas.id', '=', req.query.id);
-                    } else if (req.query.cnpj) {
-                        qb.orWhere('empresas.cnpj', 'ilike', `${req.query.cnpj}%`);
-                    }
-                    if (req.query.email) {
-                        qb.where('empresas.email', 'ilike', `${req.query.email}%`);
-                    }
-                    if (req.query.contato) {
-                        qb.where('empresas.contato', 'ilike', `${req.query.contato}%`);
-                    }
-                }
-            })
-            .then(empresas => res.json({ data: empresas, count, limit }))
-            .catch(e => res.status(500).send(e.toString()))
+                })
+                .then(empresas => res.json({ data: empresas, count, limit }))
+                .catch(e => res.status(500).send(e.toString()))
+        } catch (e) {
+            res.status(500).send(e.toString())
+        }
     }
 
     const getAll = async (req, res) => {
         app.db('empresas')
             .select('id as value', 'nome as text')
             .then(empresas => res.json(empresas))
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e); res.status(500).send(e.toString()) })
     }
 
     const getById = async (req, res) => {

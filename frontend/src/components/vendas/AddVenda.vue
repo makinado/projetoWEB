@@ -67,7 +67,25 @@
                   v-model="venda.id_pessoa"
                   @change="loadCliente"
                   :rules="clienteRules"
-                ></v-autocomplete>
+                  @focus="$store.dispatch('loadClientes')"
+                  :search-input.sync="searchCliente"
+                >
+                  <template v-slot:no-data>
+                    <v-btn
+                      type="submit"
+                      color="secondary"
+                      flat
+                      small
+                      v-if="searchCliente"
+                      @click="$store.dispatch('addCliente', { nome: searchCliente })"
+                    >
+                      <span>
+                        <v-icon>fa fa-lg fa-plus-circle</v-icon>
+                        {{ searchCliente }}
+                      </span>
+                    </v-btn>
+                  </template>
+                </v-autocomplete>
               </v-flex>
             </v-layout>
           </v-form>
@@ -105,7 +123,6 @@
                                     prepend-icon="event"
                                     readonly
                                     v-on="on"
-                                    :rules="dataRules"
                                   ></v-text-field>
                                 </template>
                                 <v-date-picker
@@ -137,7 +154,6 @@
                                     prepend-icon="event"
                                     readonly
                                     v-on="on"
-                                    :rules="dataRules"
                                   ></v-text-field>
                                 </template>
                                 <v-date-picker
@@ -161,6 +177,8 @@
                                 @click:prepend="[usuarioStore.usuario = null, modalStore.usuarios.visible = true]"
                                 v-model="venda.id_vendedor"
                                 :rules="vendedorRules"
+                                @focus="$store.dispatch('loadUsuarios')"
+                                deletable-chips
                               ></v-autocomplete>
                             </v-flex>
                             <v-flex xs12 md6>
@@ -174,6 +192,8 @@
                                 prepend-icon="fa fa-lg fa-plus-circle"
                                 @click:prepend="[usuarioStore.usuario = null, modalStore.usuarios.visible = true]"
                                 v-model="venda.id_representante"
+                                @focus="$store.dispatch('loadUsuarios')"
+                                deletable-chips
                               ></v-autocomplete>
                             </v-flex>
                             <v-flex xs12>
@@ -188,6 +208,8 @@
                                 prepend-icon="fa fa-lg fa-plus-circle"
                                 @click:prepend="[pessoaStore.transportadoras = null, modalStore.pessoas.visible = true]"
                                 v-model="venda.id_transportadora"
+                                @focus="$store.dispatch('loadTransps')"
+                                deletable-chips
                               ></v-autocomplete>
                             </v-flex>
                             <v-flex xs12>
@@ -366,7 +388,7 @@
                     deletable-chips
                     dense
                     chips
-                    v-model="venda.tabela_preco"
+                    v-model="venda.id_tabela_preco"
                     label="Tabela de preços"
                     :items="vendaStore.tabelas"
                     no-data-text="Nenhuma tabela cadastrada ou nenhuma empresa selecionada"
@@ -374,6 +396,7 @@
                     @click:prepend="modalStore.tabelas.visible = true"
                     @change="aplicarTabela"
                     return-object
+                    @focus="$store.dispatch('loadTabelas')"
                   ></v-autocomplete>
                   <span>Desconto aplicado sobre o valor total de cada produto</span>
                 </v-tooltip>
@@ -406,13 +429,35 @@
                   <v-autocomplete
                     class="tag-input"
                     chips
+                    deletable-chips
                     v-model="data.item.id"
                     label="Selecione"
                     :items="produtoStore.produtos"
                     prepend-icon="fa fa-lg fa-plus-circle"
                     @click:prepend="modalStore.produtos.visible = true"
                     @change="[loadDados(data.item)]"
-                  ></v-autocomplete>
+                    auto-select-first
+                    :search-input.sync="searchProduto"
+                    dense
+                    no-data-text="Nenhum produto cadastrado"
+                    @focus="$store.dispatch('loadProdutos')"
+                  >
+                    <template v-slot:no-data>
+                      <v-btn
+                        type="submit"
+                        color="secondary"
+                        flat
+                        small
+                        v-if="searchProduto"
+                        @click="$store.dispatch('addProduto', { descricao: searchProduto })"
+                      >
+                        <span>
+                          <v-icon>fa fa-lg fa-plus-circle</v-icon>
+                          {{ searchProduto }}
+                        </span>
+                      </v-btn>
+                    </template>
+                  </v-autocomplete>
                 </v-flex>
               </td>
               <td>{{ data.item.qtdEstoque | decimal}}</td>
@@ -543,22 +588,6 @@ export default {
       if (this.modalStore.vendas.vendas.visible) {
         this.limpaTela();
       }
-    },
-    "$store.state.modalStore.produtos.visible": function() {
-      if (!this.modalStore.produtos.visible) {
-        this.$store.dispatch("loadProdutos");
-      }
-    },
-    "$store.state.modalStore.pessoas.visible": function() {
-      if (!this.modalStore.pessoas.visible) {
-        this.$store.dispatch("loadClientes");
-        this.$store.dispatch("loadTransps");
-      }
-    },
-    "$store.state.modalStore.tabelas.visible": function() {
-      if (!this.modalStore.tabelas.visible) {
-        this.$store.dispatch("loadTabelas");
-      }
     }
   },
   components: { FinanceiroVue: () => import("../material/Financeiro") },
@@ -575,6 +604,8 @@ export default {
       isLoading: false,
       expand: false,
       disable: true,
+      searchCliente: null,
+      searchProduto: null,
       money: {
         decimal: ",",
         thousands: ".",
@@ -643,7 +674,7 @@ export default {
       const produto = {
         sequencia
       };
-      this.produtos_venda.push(produto)
+      this.produtos_venda.push(produto);
     },
     deleteItem(item) {
       this.produtos_venda = this.produtos_venda.filter(produto => {
@@ -685,8 +716,12 @@ export default {
             "input"
           )[0].value = 0)
         : "";
+
+      this.addProduto();
     },
     async loadTela(venda) {
+      if (!venda) return;
+
       this.$store.dispatch("loadClientes");
       this.$store.dispatch("loadTransps");
       this.$store.dispatch("loadUsuarios");
@@ -694,8 +729,6 @@ export default {
       this.$store.dispatch("loadTabelas");
       this.$store.dispatch("loadDocumentos");
       this.$store.dispatch("loadContas");
-
-      if (!venda) return;
       let url = `${urlBD}/vendas`;
       if (venda.id) {
         axios
@@ -806,19 +839,18 @@ export default {
       }
     },
     aplicarTabela() {
+      if (this.produtos_venda.length == 0) return;
+
       this.disable = false;
       this.produtos_venda.forEach(item => {
         this.loadDados(item);
 
-        if (!this.venda.tabela_preco) {
+        if (!this.venda.id_tabela_preco) {
           item.valor_desconto = formatToBRL(0);
         } else {
           const desconto =
-            (parseNumber(this.venda.tabela_preco.percentual) / 100) *
-            parseNumber(item.valor_venda);
-          item.valor_venda = formatToBRL(
-            parseNumber(item.valor_venda) - desconto
-          );
+            (parseNumber(this.venda.id_tabela_preco.percentual) / 100) *
+            parseNumber(item.valor_total || "0,00");
           item.valor_desconto = formatToBRL(desconto);
         }
 

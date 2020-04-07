@@ -64,6 +64,8 @@
                                 prepend-icon="fa fa-lg fa-plus-circle"
                                 @click:prepend="[modalStore.pessoas.visible = true, pessoaStore.pessoa = null, categoriaStore.loadCategorias = 'Produto']"
                                 v-model="produto.fornecedor"
+                                @focus="$store.dispatch('loadFornecs')"
+                                clearable
                               ></v-autocomplete>
                             </v-flex>
                             <v-flex xs12 md6>
@@ -86,6 +88,7 @@
                                 prepend-icon="fa fa-lg fa-plus-circle"
                                 @click:prepend="[modalStore.categorias.visible = true, modalStore.categorias.title = 'Adicionar categoria de produto']"
                                 v-model="produto.categoria"
+                                @focus="$store.dispatch('loadCategoriasProdutos')"
                               ></v-autocomplete>
                             </v-flex>
                             <v-flex xs12 md4>
@@ -101,6 +104,7 @@
                                 prepend-icon="fa fa-lg fa-plus-circle"
                                 @click:prepend="modalStore.marcas.visible = true"
                                 v-model="produto.marca"
+                                @focus="$store.dispatch('loadMarcas')"
                               ></v-autocomplete>
                             </v-flex>
                             <v-flex xs12 md4>
@@ -116,6 +120,7 @@
                                 prepend-icon="fa fa-lg fa-plus-circle"
                                 @click:prepend="modalStore.unidades.visible = true"
                                 v-model="produto.unidade"
+                                @focus="$store.dispatch('loadUnidades')"
                               ></v-autocomplete>
                             </v-flex>
                             <v-flex xs12 md6>
@@ -379,7 +384,7 @@ import {
   formatDate,
   parseNumber,
   moneyToNumber,
-  saveLog,
+  saveLog
 } from "@/global";
 
 export default {
@@ -462,18 +467,6 @@ export default {
         this.reset();
         this.loadTela(this.produtoStore.produto);
       }
-    },
-    "$store.state.modalStore.pessoas.visible"() {
-      if (!this.modalStore.pessoas.visible) loadFornecs();
-    },
-    "$store.state.modalStore.categorias.visible"() {
-      if (!this.modalStore.categorias.visible) loadCategoriasProdutos();
-    },
-    "$store.state.modalStore.marcas.visible"() {
-      if (!this.modalStore.marcas.visible) loadMarcas();
-    },
-    "$store.state.modalStore.unidades.visible"() {
-      if (!this.modalStore.unidades.visible) loadUnidades();
     }
   },
   methods: {
@@ -630,7 +623,7 @@ export default {
           this.produtoStore.produtos = this.produtoStore.produtos.map(
             produto => {
               produto.valor_unitario = formatToBRL(produto.valor_unitario);
-              produto.valor_venda = formatToBRL(produto.valor_venda);
+              produto.valor_venda = formatToBRL(produto.valor_venvda);
               produto.qtdEstoque = moneyToNumber(
                 formatToBRL(produto.qtdEstoque)
               );
@@ -642,12 +635,15 @@ export default {
         .catch(showError);
     },
     async loadTela(produto) {
-      this.$store.dispatch('loadFornecs')
-      this.$store.dispatch('loadCategoriasProdutos')
-      this.$store.dispatch('loadMarcas')
-      this.$store.dispatch('loadUnidades')
-
       if (!produto) return;
+
+      if (this.pessoaStore.fornecedores.length == 0) {
+        this.$store.dispatch("loadFornecs");
+        this.$store.dispatch("loadCategoriasProdutos");
+        this.$store.dispatch("loadMarcas");
+        this.$store.dispatch("loadUnidades");
+      }
+
       let url = `${urlBD}/produtos`;
       if (produto.id) {
         await axios

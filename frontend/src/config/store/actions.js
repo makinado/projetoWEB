@@ -1,12 +1,49 @@
 // https://vuex.vuejs.org/en/actions.html
 
 import axios from 'axios'
-import { urlBD, parseNumber } from '@/global'
+import { urlBD, parseNumber, showError, showSuccess } from '@/global'
 import Vue from 'vue'
+
+import store from '@/config/store'
 
 import { formatToBRL } from 'brazilian-values'
 
 export default {
+  async addPessoa(state, pessoa) {
+    const url = `${urlBD}/pessoas/todas/`
+    axios.post(url, pessoa).then(res => {
+      showSuccess()
+      store.dispatch('loadPessoas')
+    }).catch(showError)
+  },
+  async addCliente(state, cliente) {
+    const url = `${urlBD}/pessoas/clientes/`
+    axios.post(url, cliente).then(res => {
+      showSuccess()
+      store.dispatch('loadClientes')
+    }).catch(showError)
+  },
+  async addFornecedor(state, fornecedor) {
+    const url = `${urlBD}/pessoas/fornecedores/`
+    axios.post(url, fornecedor).then(res => {
+      showSuccess()
+      store.dispatch('loadFornecs')
+    }).catch(showError)
+  },
+  async addTransportadora(state, transportadora) {
+    const url = `${urlBD}/pessoas/transportadoras/`
+    axios.post(url, transportadora).then(res => {
+      showSuccess()
+      store.dispatch('loadTransps')
+    }).catch(showError)
+  },
+  async addProduto(state, produto) {
+    const url = `${urlBD}/produtos/todos/`
+    axios.post(url, produto).then(res => {
+      showSuccess()
+      store.dispatch('loadProdutos')
+    }).catch(showError)
+  },
   async loadEmpresas(state) {
     const url = `${urlBD}/empresas/todas`;
     axios.get(url).then(res => {
@@ -127,18 +164,22 @@ export default {
     console.log(store.state.vendaStore.pdv)
   },
   async calcTotalPDV(store) {
-    let quantidade = 0,
+    let valor_produtos = 0,
       valor_desconto = 0,
-      valor_total = 0;
+      valor_total = 0,
+      valor_acrescimo = 0;
 
     store.state.vendaStore.pdv.produtos.forEach(produto => {
-      quantidade += parseNumber(produto.quantidade || "0,00");
+      valor_produtos += parseNumber(produto.valor_total || "0,00");
       valor_desconto += parseNumber(produto.valor_desconto || "0,00");
-      valor_total += parseNumber(produto.valor_total || "0,00");
+      valor_acrescimo += parseNumber(produto.valor_acrescimo || "0,00");
     });
 
+    valor_total = valor_produtos
+
     store.commit('setTotaisPDV', {
-      quantidade: formatToBRL(quantidade).replace("R$", ""),
+      valor_desconto: formatToBRL(valor_desconto),
+      valor_desconto: formatToBRL(valor_desconto),
       valor_desconto: formatToBRL(valor_desconto),
       valor_total: formatToBRL(valor_total)
     })

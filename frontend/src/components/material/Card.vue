@@ -11,7 +11,7 @@
         <slot v-if="!title && !text" name="header" />
         <span v-else>
           <v-layout class="p-2" align-center>
-            <h4 class="title font-weight-light ml-2" v-text="title" />
+            <h4 class="title font-weight-light ml-2 my-1" v-text="title" />
             <p class="category font-weight-thin" v-text="text" />
             <v-spacer></v-spacer>
             <span v-if="actions" v-for="a in actions">
@@ -186,6 +186,22 @@ export default {
       },
       set(value) {
         this.vendaStore.pdv = value;
+      }
+    },
+    empresaMeta: {
+      get() {
+        return this.empresaStore.meta;
+      },
+      set(value) {
+        this.empresaStore.meta = value;
+      }
+    },
+    usuarioMeta: {
+      get() {
+        return this.usuarioStore.meta;
+      },
+      set(value) {
+        this.usuarioStore.meta = value;
       }
     }
   },

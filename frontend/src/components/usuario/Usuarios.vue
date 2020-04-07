@@ -1,6 +1,8 @@
 <template>
   <v-container fill-height fluid grid-list-xl>
     <AddUsuario />
+    <AddMeta />
+    <AddComissao />
     <Email />
 
     <v-layout justify-center wrap>
@@ -21,6 +23,8 @@ export default {
     PageTitle: () => import("@/components/template/PageTitle"),
     GridUsuarios: () => import("./GridUsuarios"),
     AddUsuario: () => import("./AddUsuario"),
+    AddMeta: () => import("./AddMeta"),
+    AddComissao: () => import("./AddComissao"),
     Email: () => import("@/components/email/Email")
   }
 };

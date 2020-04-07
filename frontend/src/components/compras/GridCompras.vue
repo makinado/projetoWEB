@@ -307,6 +307,7 @@
         :pagination.sync="pagination"
         select-all
         v-model="itens_selecionados"
+        :loading="loading"
       >
         <!-- <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear> -->
         <template slot="items" slot-scope="data">
@@ -335,12 +336,7 @@
               <span>Editar compra</span>
             </v-tooltip>
             <v-tooltip v-else bottom>
-              <v-btn
-                slot="activator"
-                icon
-                class="mr-1"
-                @click.prevent="gerarDANFe(data.item)"
-              >
+              <v-btn slot="activator" icon class="mr-1" @click.prevent="gerarDANFe(data.item)">
                 <i class="fa fa-lg fa-eye"></i>
               </v-btn>
               <span>Visualizar DANFe</span>
@@ -411,7 +407,13 @@ export default {
   name: "GridImportacoes",
   computed: {
     ...mapState("app", ["color"]),
-    ...mapState(["comprasStore", "empresaStore", "modalStore", "pessoaStore", "usuarioStore"]),
+    ...mapState([
+      "comprasStore",
+      "empresaStore",
+      "modalStore",
+      "pessoaStore",
+      "usuarioStore"
+    ]),
     computedDateFormatted1() {
       return formatDate(this.filter.data_inicial);
     },
@@ -449,7 +451,7 @@ export default {
     return {
       itens_selecionados: [],
       valid: true,
-      loading: true,
+      loading: false,
       fields: [
         { value: "id", text: "Código", sortable: true },
         { value: "pessoa", text: "Pessoa", sortable: true },
@@ -516,6 +518,8 @@ export default {
         .catch(showError);
     },
     async loadCompras() {
+      this.loading = true;
+      
       const url = `${urlBD}/compras?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
       }&empresa=${this.empresaStore.currentEmpresa || ""}&tipo=${this.filter
@@ -526,11 +530,15 @@ export default {
         ""}&concluidas=${this.filter.concluidas || ""}&canceladas=${this.filter
         .canceladas || ""}`;
 
-      axios.get(url).then(res => {
-        this.comprasStore.compras = res.data.data;
-        this.count = res.data.count;
-        this.pagination.rowsPerPage = res.data.limit;
-      });
+      axios
+        .get(url)
+        .then(res => {
+          this.comprasStore.compras = res.data.data;
+          this.count = res.data.count;
+          this.pagination.rowsPerPage = res.data.limit;
+        })
+        .catch(showError)
+        .finally(() => (this.loading = false));
     },
     async remove() {
       if (!this.confirmaExclusao) {
@@ -577,7 +585,7 @@ export default {
     }
   },
   mounted() {
-    this.$store.dispatch('loadFornecs')
+    this.$store.dispatch("loadFornecs");
   }
 };
 </script>

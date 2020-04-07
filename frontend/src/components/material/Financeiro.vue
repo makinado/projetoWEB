@@ -41,7 +41,7 @@
             v-if="disable"
             v-model.number="data.item.valor_parcela"
             v-money="money"
-            @input="[data.item.edit = true, attGridParc()]"
+            @blur="[data.item.edit = true, attGridParc()]"
           ></v-text-field>
           <span v-else>{{ data.item.valor_parcela || "R$ 0,00"}}</span>
         </td>
@@ -69,7 +69,7 @@
               <v-date-picker
                 :color="color"
                 v-model="data.item.dataNotFormated"
-                @input="[data.item.menu = false, data.item.data_vencimento = formatDate(data.item.dataNotFormated)]"
+                @blur="[data.item.menu = false, data.item.data_vencimento = formatDate(data.item.dataNotFormated)]"
                 locale="pt-br"
               ></v-date-picker>
             </v-menu>
@@ -89,6 +89,8 @@
               @click:prepend="[modalStore.documentos.visible = true]"
               no-data-text="Nenhum resultado"
               auto-select-first
+              @focus="$store.dispatch('loadDocumentos')"
+              deletable-chips
             ></v-autocomplete>
           </v-flex>
         </td>
@@ -114,12 +116,7 @@
             <span>Editar dados do pagamento</span>
           </v-tooltip>
           <v-tooltip bottom>
-            <v-btn
-              slot="activator"
-              icon
-              class="mr-1"
-              @click="deleteParcela(data.item)"
-            >
+            <v-btn slot="activator" icon class="mr-1" @click="deleteParcela(data.item)">
               <i class="fa fa-lg fa-trash"></i>
             </v-btn>
             <span>Excluir parcela</span>
@@ -145,6 +142,7 @@
                   prepend-icon="fa fa-lg fa-plus-circle"
                   @click:prepend="[financeiroStore.caixa = null, modalStore.financeiro.caixa.visible = true]"
                   @change="loadSaldoConta(data.item)"
+                  @focus="$store.dispatch('loadContas')"
                 ></v-autocomplete>
               </v-flex>
               <v-flex xs12 md2>
@@ -196,6 +194,8 @@
                   no-data-text="Nenhum documento encontrado"
                   prepend-icon="fa fa-lg fa-plus-circle"
                   @click:prepend="[financeiroStore.documento = null, modalStore.documentos.visible = true]"
+                  @focus="$store.dispatch('loadDocumentos')"
+                  clearable
                 ></v-autocomplete>
               </v-flex>
               <v-flex xs12 md2>
@@ -419,6 +419,9 @@ export default {
 
       this.calcTotalFinanc();
     }
+  },
+  mounted() {
+    this.addParcela();
   }
 };
 </script>

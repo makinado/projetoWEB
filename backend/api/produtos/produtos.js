@@ -17,14 +17,14 @@ module.exports = app => {
             if (!produto.id) {
                 notExistsOrError(produtoDB, 'Produto já cadastrado')
             }
-            if (produto.ncm) {
-                const ncm = await app.db('ncm').where({ ncm: produto.ncm }).first()
-                existsOrError(ncm, "NCM inválido")
-            }
-            if (produto.cest) {
-                const cest = await app.db('ncm_cest').where({ cest: produto.cest }).first()
-                existsOrError(cest, "CEST inválido")
-            }
+            // if (produto.ncm) {
+            //     const ncm = await app.db('ncm').where({ ncm: produto.ncm }).first()
+            //     existsOrError(ncm, "NCM inválido")
+            // }
+            // if (produto.cest) {
+            //     const cest = await app.db('ncm_cest').where({ cest: produto.cest }).first()
+            //     existsOrError(cest, "CEST inválido")
+            // }
 
         } catch (e) {
             return res.status(400).send(e.toString())
@@ -203,6 +203,7 @@ module.exports = app => {
                 produto.grupos_tributacao = await app.db('produto_grupos_tributacao')
                     .select('id_grupo').where({ id_produto: produto.id }).then(grupos => grupos.map(e => e.id_grupo))
 
+
                 res.json(produto)
             })
             .catch(e => { console.log(e); res.status(500).send(e) })
@@ -210,7 +211,7 @@ module.exports = app => {
 
     const getAll = async (req, res) => {
         app.db('produtos')
-            .select('id as value', 'descricao as text', 'valor_unitario', 'valor_venda')
+            .select('id as value', 'descricao as text', 'ncm', 'valor_unitario', 'valor_venda')
             .then(async produtos => {
                 produtos = produtos.map(produto => {
                     produto.valor_unitario = formatToBRL(produto.valor_unitario)
@@ -235,5 +236,23 @@ module.exports = app => {
         }
     }
 
-    return { save, get, getById, getAll, remove, withEstoque }
+    const fastSave = async (req, res) => {
+        const produto = { ...req.body }
+
+        try {
+            existsOrError(produto.descricao, 'Descrição é obrigatória')
+            const produtoDB = await app.db('produtos').where({ descricao: produto.descricao }).first()
+
+            notExistsOrError(produtoDB, 'produto já cadastrado')
+        } catch (e) {
+            return res.status(400).send(e)
+        }
+
+        app.db('produtos')
+            .insert(produto)
+            .then(_ => res.status(204).send())
+            .catch(e => res.status(204).send(e))
+    }
+
+    return { save, get, getById, getAll, remove, withEstoque, fastSave }
 }

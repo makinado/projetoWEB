@@ -164,6 +164,7 @@
         :pagination.sync="pagination"
         v-model="itens_selecionados"
         select-all
+        :loading="loading"
       >
         <template slot="items" slot-scope="data">
           <td>
@@ -174,6 +175,22 @@
           <td>{{ data.item.email }}</td>
           <td>{{ data.item.contato }}</td>
           <td>
+            <v-tooltip bottom>
+              <v-btn
+                slot="activator"
+                icon
+                @click.prevent="[usuarioStore.meta.id_usuario = data.item.id, modalStore.usuarios.metas.visible = true, modalStore.usuarios.metas.title = `Gerenciar metas do(a) ${data.item.nome}`]"
+              >
+                <i class="fa fa-lg fa-line-chart"></i>
+              </v-btn>
+              <span>Metas</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <v-btn slot="activator" icon @click.prevent="[]">
+                <i class="fa fa-lg fa-usd"></i>
+              </v-btn>
+              <span>Comissões</span>
+            </v-tooltip>
             <v-tooltip bottom>
               <v-btn
                 slot="activator"
@@ -267,7 +284,7 @@ export default {
     return {
       itens_selecionados: [],
       valid: true,
-      loading: true,
+      loading: false,
       fields: [
         { value: "id", text: "Código", sortable: true },
         { value: "nome", text: "Nome", sortable: true },
@@ -318,17 +335,23 @@ export default {
       }
     },
     async loadUsuarios() {
+      this.loading = true;
+
       const url = `${urlBD}/usuarios?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
       }&tipo=${this.filter.tipo || 1}&id=${this.filter.id || ""}&nome=${this
         .filter.nome || ""}&email=${this.filter.email || ""}&contato=${this
         .filter.contato || ""}`;
 
-      axios.get(url).then(res => {
-        this.usuarioStore.usuarios = res.data.data;
-        this.count = res.data.count;
-        this.pagination.rowsPerPage = res.data.limit;
-      });
+      axios
+        .get(url)
+        .then(res => {
+          this.usuarioStore.usuarios = res.data.data;
+          this.count = res.data.count;
+          this.pagination.rowsPerPage = res.data.limit;
+        })
+        .catch(showError)
+        .finally(() => (this.loading = false));
     },
     remove() {
       if (!this.confirmaExclusao) {

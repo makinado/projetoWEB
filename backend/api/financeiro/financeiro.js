@@ -44,6 +44,9 @@ module.exports = app => {
             return res.status(400).send(e.toString())
         }
 
+        console.log(financeiro)
+        return
+
         financeiro.forEach(financ => {
             if (financ.id) {
                 return app.db.transaction(async function (trx) {
@@ -300,6 +303,7 @@ module.exports = app => {
                         .transacting(trx)
                         .then(trx.commit)
                         .catch(trx.rollback);
+
                 }).then(function (inserts) {
                     res.status(204).send()
                 }).catch(function (error) {

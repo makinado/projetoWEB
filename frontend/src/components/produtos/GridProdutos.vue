@@ -296,8 +296,8 @@
         :total-items="count"
         :pagination.sync="pagination"
         select-all
+        :loading="loading"
       >
-        <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
         <template slot="items" slot-scope="data">
           <td>
             <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
@@ -426,11 +426,11 @@ export default {
       }
     }
   },
-  data: function() {
+  data() {
     return {
       itens_selecionados: [],
       valid: true,
-      true: true,
+      loading: false,
       fields: [
         { value: "id", text: "Código", sortable: true },
         { value: "descricao", text: "Descricao", sortable: true },
@@ -484,20 +484,25 @@ export default {
       return window.innerWidth / 2 - 150;
     },
     async loadProdutos() {
-      const url = `${urlBD}/produtos?page=${
-        this.pagination.page
-      }&limit=${this.pagination.rowsPerPage}&tipo=${this.filter.tipo ||
-        1}&id=${this.filter.id || ""}&descricao=${this.filter.descricao ||
-        ""}&categoria=${this.filter.categoria || ""}&marca=${this.filter
-        .marca || ""}&unidade=${this.filter.unidade || ""}&estoque_min=${this
-        .filter.estoque_min || ""}&estoque_max=${this.filter.estoque_max ||
-        ""}`;
+      this.loading = true;
 
-      axios.get(url).then(res => {
-        this.produtoStore.produtos = res.data.data;
-        this.count = res.data.count;
-        this.pagination.rowsPerPage = res.data.limit;
-      });
+      const url = `${urlBD}/produtos?page=${this.pagination.page}&limit=${
+        this.pagination.rowsPerPage
+      }&tipo=${this.filter.tipo || 1}&id=${this.filter.id ||
+        ""}&descricao=${this.filter.descricao || ""}&categoria=${this.filter
+        .categoria || ""}&marca=${this.filter.marca || ""}&unidade=${this.filter
+        .unidade || ""}&estoque_min=${this.filter.estoque_min ||
+        ""}&estoque_max=${this.filter.estoque_max || ""}`;
+
+      axios
+        .get(url)
+        .then(res => {
+          this.produtoStore.produtos = res.data.data;
+          this.count = res.data.count;
+          this.pagination.rowsPerPage = res.data.limit;
+        })
+        .catch(showError)
+        .finally(() => (this.loading = false));
     },
     async remove() {
       if (!this.confirmaExclusao) {

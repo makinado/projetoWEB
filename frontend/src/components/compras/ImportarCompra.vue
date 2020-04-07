@@ -754,17 +754,6 @@ export default {
       this.$store.dispatch("loadProdutos");
       this.$store.dispatch("loadDocumentos");
       this.$store.dispatch("loadContas");
-
-      if (!compra) return;
-      let url = `${urlBD}/compras/Tela`;
-      if (compra.id) {
-        axios
-          .get(`${url}/${compra.id}`)
-          .then(res => {
-            this.compra = res.data;
-          })
-          .catch(showError);
-      }
     },
     save() {
       const filesUpload = [];

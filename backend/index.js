@@ -9,9 +9,11 @@ require('./api/chat/socket')(io, app);
 const consign = require('consign')
 const mongoose = require('mongoose')
 
-const db = require('./config/db')
+const { dbUsers, db } = require('./config/db')
 
+app.dbUsers = dbUsers
 app.db = db
+
 app.mongoose = mongoose
 app.use(compression())
 

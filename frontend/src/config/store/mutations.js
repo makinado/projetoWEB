@@ -7,7 +7,7 @@ import { showSuccess } from '@/global'
 export default {
   setUsuario(state, usuario) {
     state.usuarioStore.currentUsuario = usuario
-    if (state.usuarioStore.currentUsuario) {
+    if (usuario) {
       axios.defaults.headers.common['Authorization'] = `bearer ${usuario.token}`
       state.TemplateVisible = true
     } else {
@@ -24,6 +24,7 @@ export default {
     state.usuarioStore.currentPerfil = perfil
   },
   setEmpresas(state, empresas) {
+    console.log(empresas)
     state.empresaStore.empresas = empresas
   },
   setUsuarios(state, usuarios) {
@@ -89,7 +90,7 @@ export default {
   pushPDVProduto(state, produto) {
     if (!produto.sequencia) {
       if (state.vendaStore.pdv.produtos.length == 0)
-        produto.sequencia = 0
+        produto.sequencia = 1
       else {
         produto.sequencia = state.vendaStore.pdv.produtos.slice(-1)[0].sequencia + 1
       }

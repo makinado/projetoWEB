@@ -19,13 +19,13 @@ module.exports = app => {
             existsOrError(usuario.nome, 'Nome não informado')
             existsOrError(usuario.email, 'E-mail não informado')
             existsOrError(usuario.senha, 'Senha não informada')
-            existsOrError(usuario.acessos, 'Permissões não informadas')
-            existsOrError(usuario.empresas, 'Empresas que o usuário acessará não informadas')
+            // existsOrError(usuario.acessos, 'Permissões não informadas')
+            // existsOrError(usuario.empresas, 'Empresas que o usuário acessará não informadas')
             existsOrError(usuario.confirmaSenha, 'Confirmação de Senha inválida')
             equalsOrError(usuario.senha, usuario.confirmaSenha,
                 'Senhas não conferem')
 
-            const usuarioFromDB = await app.db('usuarios')
+            const usuarioFromDB = await app.dbUsers('usuarios')
                 .where({ email: usuario.email }).first()
             if (!usuario.id) {
                 notExistsOrError(usuarioFromDB, 'Usuário já cadastrado')
@@ -36,8 +36,6 @@ module.exports = app => {
 
         usuario.senha = encryptSenha(usuario.senha)
         delete usuario.confirmaSenha
-        delete usuario.iat
-        delete usuario.exp
         delete usuario.token
 
         var empresas = usuario.empresas
@@ -46,30 +44,53 @@ module.exports = app => {
         delete usuario.acessos
 
         if (usuario.id) {
-            return app.db.transaction(async function (trx) {
-                return app.db('usuarios')
+            return app.dbUsers.transaction(async function (trx) {
+                return app.dbUsers('usuarios')
                     .update(usuario)
                     .where({ id: usuario.id })
                     .transacting(trx)
                     .then(async function () {
-                        if (empresas) {
-                            await app.db('usuario_empresas').where({ id_usuario: usuario.id }).delete().transacting(trx)
-                            await app.db('acesso').where({ id_usuario: usuario.id }).delete().transacting(trx)
-
-                            acessos.id_usuario = usuario.id
-                            empresas = await empresas.map(empresa => {
-                                const usuario_empresas = {
-                                    id_usuario: usuario.id,
-                                    id_empresa: empresa
-                                }
-
-                                return usuario_empresas
-                            })
-                            return app.db('acesso').insert(acessos)
+                        if (acessos) {
+                            await app.dbUsers('acesso').where({ id_usuario: usuario.id }).delete().transacting(trx)
+                            return app.dbUsers('acesso')
+                                .insert({ ...acessos, id_usuario: usuario.id })
                                 .transacting(trx)
                                 .then(() => {
-                                    return app.db.batchInsert('usuario_empresas', empresas)
-                                        .transacting(trx)
+                                    return app.db('usuarios')
+                                        .update(usuario)
+                                        .where({ id: usuario.id })
+                                        .then(async () => {
+                                            if (empresas) {
+                                                empresas = empresas.map(e => {
+                                                    const newEmp = {
+                                                        id_empresa: e,
+                                                        id_usuario: usuario.id
+                                                    }
+
+                                                    return newEmp
+                                                })
+                                                await app.db('usuario_empresas').where({ id_usuario: usuario.id }).delete()
+                                                return app.db.batchInsert('usuario_empresas', empresas)
+                                            }
+                                        })
+                                })
+                        } else {
+                            return app.db('usuarios')
+                                .update(usuario)
+                                .where({ id: usuario.id })
+                                .then(async () => {
+                                    if (empresas) {
+                                        empresas = empresas.map(e => {
+                                            const newEmp = {
+                                                id_empresa: e,
+                                                id_usuario: usuario.id
+                                            }
+
+                                            return newEmp
+                                        })
+                                        await app.db('usuario_empresas').where({ id_usuario: usuario.id }).delete()
+                                        return app.db.batchInsert('usuario_empresas', empresas)
+                                    }
                                 })
                         }
                     })
@@ -81,26 +102,49 @@ module.exports = app => {
                 res.status(500).send(error.toString())
             });
         } else {
-            return app.db.transaction(async function (trx) {
-                return app.db('usuarios')
+            return app.dbUsers.transaction(async function (trx) {
+                return app.dbUsers('usuarios')
                     .insert(usuario).returning('id')
                     .transacting(trx)
-                    .then(async function (id) {
-                        acessos.id_usuario = id[0]
-                        empresas = await empresas.map(empresa => {
-                            const usuario_empresas = {
-                                id_usuario: id[0],
-                                id_empresa: empresa
-                            }
-                            return usuario_empresas
-                        })
+                    .then(async function (id_usuario) {
+                        if (acessos) {
+                            return app.dbUsers('acesso')
+                                .insert({ ...acessos, id_usuario: id_usuario[0] })
+                                .transacting(trx)
+                                .then(() => {
+                                    return app.db('usuarios')
+                                        .insert({ ...usuario, id: id_usuario[0] })
+                                        .then(() => {
+                                            if (empresas) {
+                                                empresas = empresas.map(e => {
+                                                    const newEmp = {
+                                                        id_empresa: e,
+                                                        id_usuario: id_usuario[0]
+                                                    }
 
-                        return app.db('acesso').insert(acessos)
-                            .transacting(trx)
-                            .then(() => {
-                                return app.db.batchInsert('usuario_empresas', empresas)
-                                    .transacting(trx)
-                            })
+                                                    return newEmp
+                                                })
+                                                return app.db.batchInsert('usuario_empresas', empresas)
+                                            }
+                                        })
+                                })
+                        } else {
+                            return app.db('usuarios')
+                                .insert({ ...usuario, id: id_usuario[0] })
+                                .then(() => {
+                                    if (empresas) {
+                                        empresas = empresas.map(e => {
+                                            const newEmp = {
+                                                id_empresa: e,
+                                                id_usuario: id_usuario[0]
+                                            }
+
+                                            return newEmp
+                                        })
+                                        return app.db.batchInsert('usuario_empresas', empresas)
+                                    }
+                                })
+                        }
                     })
                     .then(trx.commit).catch(trx.rollback);
             }).then(function (inserts) {
@@ -169,7 +213,7 @@ module.exports = app => {
         app.db('usuarios')
             .select('id as value', 'nome as text')
             .then(usuarios => res.json(usuarios))
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e); res.status(500).send(e.toString()) })
     }
 
     const getById = async (req, res) => {
@@ -180,21 +224,27 @@ module.exports = app => {
             .then(async usuario => {
                 usuario.empresas = await app.db('usuario_empresas')
                     .select('id_empresa').where({ id_usuario: usuario.id }).then(empresas => empresas.map(e => e.id_empresa))
-                usuario.acessos = await app.db('acesso').where({ id_usuario: usuario.id }).first()
+                usuario.acessos = await app.dbUsers('acesso').where({ id_usuario: usuario.id }).first()
                 res.json(usuario)
             })
             .catch(e => res.status(500).send(e.toString()))
     }
 
     const remove = async (req, res) => {
-        app.db.transaction(async function (trx) {
-            return app.db('usuarios')
+        app.dbUsers.transaction(async function (trx) {
+            return app.dbUsers('usuarios')
                 .where({ id: req.params.id }).delete()
                 .transacting(trx)
                 .then(function () {
-                    return app.db('acesso')
+                    return app.dbUsers('acesso')
                         .where({ id_usuario: req.params.id }).delete()
                         .transacting(trx)
+                        .then(function () {
+                            return app.db('usuarios').where({ id: req.params.id }).delete()
+                                .then(function () {
+                                    return app.db('usuario_empresas').where({ id_usuario: req.params.id }).delete()
+                                })
+                        })
                 })
                 .then(trx.commit)
                 .catch(trx.rollback);

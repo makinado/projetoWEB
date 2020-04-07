@@ -74,7 +74,7 @@
                   </v-btn>
                   <v-btn
                     icon
-                    @click.prevent="[modalStore.tabelas.deleteDoc = true, vendaStore.tabela = data.item]"
+                    @click.prevent="[confirmaExclusao = true, vendaStore.tabela = data.item]"
                     class="mr-1"
                   >
                     <i class="fa fa-lg fa-trash"></i>
@@ -95,12 +95,8 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-dialog
-      v-model="modalStore.tabelas.deleteDoc"
-      persistent
-      max-width="500px"
-      v-if="vendaStore.tabela"
-    >
+
+    <v-dialog v-model="confirmaExclusao" max-width="500px" v-if="vendaStore.tabela">
       <v-card>
         <v-card-title>
           <span class="headline">Excluir tabela</span>
@@ -108,7 +104,7 @@
         <v-card-text>Excluir {{ vendaStore.tabela.descricao }} ?</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" flat @click="modalStore.tabelas.deleteDoc = false">Fechar</v-btn>
+          <v-btn color="blue darken-1" flat @click="confirmaExclusao = false">Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
       </v-card>
@@ -120,7 +116,7 @@
 import { VMoney } from "v-money";
 
 import axios from "axios";
-import { urlBD, showError, formatDate } from "@/global";
+import { urlBD, showError, formatDate, saveLog } from "@/global";
 import { mapState } from "vuex";
 
 export default {
@@ -140,6 +136,7 @@ export default {
         { value: "percentual", text: "Percentual", sortable: true },
         { value: "actions", text: "Ações" }
       ],
+      confirmaExclusao: false,
       pagination: {
         descending: false,
         page: 1,
@@ -168,9 +165,6 @@ export default {
       if (this.modalStore.tabelas.visible) {
         this.reset();
       }
-    },
-    "$store.state.modalStore.tabelas.deleteDoc": function() {
-      this.reset();
     }
   },
   methods: {
@@ -234,24 +228,18 @@ export default {
       const id = this.tabela.id ? this.tabela.id : "";
       const urldocumentos = `${urlBD}/tabelas/${id}`;
 
-      let data = new Date();
-      const hora = `${data.getHours()}:${data.getMinutes()}:${data.getSeconds()}`;
-      const log = {
-        id_usuario: this.usuarioStore.currentUsuario.id,
-        data: formatDate(data.toISOString().substr(0, 10)),
-        hora,
-        tipo: method === "post" ? "GRAVAÇÂO" : "ALTERAÇÃO",
-        tela: "tabelas",
-        detalhe:
-          method === "post"
-            ? `tabela adicionado: ${this.tabela.descricao}`
-            : `tabela alterado: ${this.tabela.id}-${this.tabela.descricao}`
-      };
-
       axios[method](urldocumentos, this.tabela)
         .then(() => {
           this.$toasted.global.defaultSuccess();
-          axios.post(`${urlBD}/log`, log).catch(showError);
+
+          saveLog(
+            new Date(),
+            method === "post" ? "GRAVAÇÂO" : "ALTERAÇÃO",
+            "TABELAS DE PREÇOS",
+            method === "post"
+              ? `tabela adicionado: ${this.tabela.descricao}`
+              : `tabela alterado: ${this.tabela.id}-${this.tabela.descricao}`
+          );
 
           this.reset();
         })
@@ -261,24 +249,19 @@ export default {
       const id = this.vendaStore.tabela.id;
       const urldocumentos = `${urlBD}/tabelas/${id}`;
 
-      let data = new Date();
-      const hora = `${data.getHours()}:${data.getMinutes()}:${data.getSeconds()}`;
-      const log = {
-        id_usuario: this.usuarioStore.currentUsuario.id,
-        data: formatDate(data.toISOString().substr(0, 10)),
-        hora,
-        tipo: "EXCLUSÃO",
-        tela: "tabelas",
-        detalhe: `tabela excluído: ${this.tabela.id}-${this.tabela.descricao}`
-      };
-
       axios
         .delete(urldocumentos, this.tabela)
         .then(() => {
           this.$toasted.global.defaultSuccess();
-          axios.post(`${urlBD}/log`, log).catch(showError);
 
-          this.modalStore.tabelas.deleteDoc = false;
+          saveLog(
+            new Date(),
+            "EXCLUSÃO",
+            "TABELAS DE PREÇOS",
+            `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu a tabela ${this.vendaStore.tabela.descricao}`
+          );
+
+          this.confirmaExclusao = false;
         })
         .catch(showError);
     }

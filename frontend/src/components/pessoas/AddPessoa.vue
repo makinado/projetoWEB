@@ -152,6 +152,7 @@
                                 :items="['Ativo','Inativo', 'Em análise']"
                                 no-data-text="Nenhum resultado"
                                 :rules="sitRules"
+                                clearable
                               ></v-autocomplete>
                             </v-flex>
                             <v-flex xs12 md6>
@@ -166,6 +167,8 @@
                                 no-data-text="Nenhum resultado"
                                 prepend-icon="fa fa-lg fa-plus-circle"
                                 @click:prepend="[modalStore.categorias.visible = true, modalStore.categorias.title = 'Adicionar categoria de pessoa']"
+                                @focus="$store.dispatch('loadCategoriasPessoas')"
+                                clearable
                               ></v-autocomplete>
                             </v-flex>
                             <v-flex xs12 md6>
@@ -415,9 +418,6 @@ export default {
         this.reset();
         this.loadTela(this.pessoaStore.pessoa);
       }
-    },
-    "$store.state.modalStore.categorias.visible": function() {
-      if (!this.modalStore.categorias.visible) this.loadCategoriasPessoas();
     }
   },
   methods: {
@@ -451,9 +451,9 @@ export default {
         .catch(showError);
     },
     async loadTela(pessoa) {
-      this.$store.dispatch("loadCategoriasPessoas");
-
       if (!pessoa) return;
+
+      this.$store.dispatch("loadCategoriasPessoas");
       let url = `${urlBD}/pessoas`;
       if (pessoa.id) {
         await axios

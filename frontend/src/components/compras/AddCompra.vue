@@ -40,18 +40,36 @@
               <v-flex xs12 md3>
                 <v-autocomplete
                   class="tag-input"
-                  chips
-                  deletable-chips
                   dense
                   :color="color"
                   label="Fornecedor*"
+                  chips
                   :items="pessoaStore.fornecedores"
                   prepend-icon="fa fa-lg fa-plus-circle"
-                  @click:prepend="[pessoaStore.pessoa = null, modalStore.pessoas.visible = true]"
+                  @click:prepend="[pessoaStore.pessoa = null, modalStore.pessoas.visible = true, modalStore.pessoas.title = 'Adicionar pessoa']"
                   v-model="compra.id_pessoa"
                   no-data-text="Nenhum fornecedor cadastrado"
                   :rules="pessoaRules"
-                ></v-autocomplete>
+                  @focus="$store.dispatch('loadFornecs')"
+                  deletable-chips
+                  :search-input.sync="searchFornec"
+                >
+                  <template v-slot:no-data>
+                    <v-btn
+                      type="submit"
+                      color="secondary"
+                      flat
+                      small
+                      v-if="searchFornec"
+                      @click="$store.dispatch('addFornecedor', { nome: searchFornec })"
+                    >
+                      <span>
+                        <v-icon>fa fa-lg fa-plus-circle</v-icon>
+                        {{ searchFornec }}
+                      </span>
+                    </v-btn>
+                  </template>
+                </v-autocomplete>
               </v-flex>
               <!-- <v-flex xs12 md3> //DESENVOLVIMENTO FUTURO
               <v-autocomplete
@@ -282,13 +300,35 @@
                   <v-autocomplete
                     class="tag-input"
                     chips
+                    deletable-chips
                     v-model="data.item.id"
                     label="Selecione"
                     :items="produtoStore.produtos"
                     prepend-icon="fa fa-lg fa-plus-circle"
-                    @click:prepend="[produtoStore.produto = null, modalStore.produtos.visible = true]"
+                    @click:prepend="modalStore.produtos.visible = true"
                     @change="[loadDados(data.item)]"
-                  ></v-autocomplete>
+                    auto-select-first
+                    :search-input.sync="searchProduto"
+                    dense
+                    no-data-text="Nenhum produto cadastrado"
+                    @focus="$store.dispatch('loadProdutos')"
+                  >
+                    <template v-slot:no-data>
+                      <v-btn
+                        type="submit"
+                        color="secondary"
+                        flat
+                        small
+                        v-if="searchProduto"
+                        @click="$store.dispatch('addProduto', { descricao: searchProduto })"
+                      >
+                        <span>
+                          <v-icon>fa fa-lg fa-plus-circle</v-icon>
+                          {{ searchProduto }}
+                        </span>
+                      </v-btn>
+                    </template>
+                  </v-autocomplete>
                 </v-flex>
               </td>
               <td>
@@ -354,12 +394,7 @@
               <td>{{ data.item.valor_total || "R$ 0,00"}}</td>
               <td>
                 <v-tooltip bottom>
-                  <v-btn
-                    slot="activator"
-                    icon
-                    class="mr-1"
-                    @click="deleteItem(data.item)"
-                  >
+                  <v-btn slot="activator" icon class="mr-1" @click="deleteItem(data.item)">
                     <i class="fa fa-lg fa-trash"></i>
                   </v-btn>
                   <span>Excluir produto</span>
@@ -443,6 +478,8 @@ export default {
       isLoading: false,
       valid: true,
       valid1: true,
+      searchFornec: null,
+      searchProduto: null,
       compra: {},
       situacoes_trib: [],
       produto: {},
@@ -514,20 +551,6 @@ export default {
       if (this.modalStore.compras.compras.add) {
         this.limpaTela();
       }
-    },
-    "$store.state.modalStore.documentos.visible"() {
-      if (!this.modalStore.documentos.visible)
-        this.$store.dispatch("loadDocumentos");
-    },
-    "$store.state.modalStore.contas.visible"() {
-      if (!this.modalStore.contas.visible) this.$store.dispatch("loadContas");
-    },
-    "$store.state.modalStore.produtos.visible"() {
-      if (!this.modalStore.produtos.visible)
-        this.$store.dispatch("loadProdutos");
-    },
-    "$store.state.modalStore.pessoas.visible"() {
-      if (!this.modalStore.pessoas.visible) this.$store.dispatch("loadFornecs");
     }
   },
   methods: {
@@ -580,6 +603,8 @@ export default {
             "input"
           )[0].value = 0)
         : "";
+
+      this.addProduto();
     },
     async loadCompras() {
       const url = `${urlBD}/compras`;
@@ -594,12 +619,12 @@ export default {
       });
     },
     async loadTela(compra) {
+      if (!compra) return;
+
       this.$store.dispatch("loadFornecs");
       this.$store.dispatch("loadProdutos");
       this.$store.dispatch("loadDocumentos");
       this.$store.dispatch("loadContas");
-
-      if (!compra) return;
       let url = `${urlBD}/compras`;
       if (compra.id) {
         axios
@@ -617,10 +642,12 @@ export default {
         return produto.value === item.id;
       });
 
+      if (!produtoFilter) return;
+
       this.produtos_compra = this.produtos_compra.map(produto => {
         if (produto.sequencia === item.sequencia) {
-          produto.ncm = produtoFilter.ncm;
-          produto.valor_unitario = produtoFilter.valor_unitario;
+          this.$set(produto, "ncm", produtoFilter.ncm);
+          this.$set(produto, "valor_unitario", produtoFilter.valor_unitario);
         }
         return produto;
       });

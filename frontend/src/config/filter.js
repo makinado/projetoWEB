@@ -1,6 +1,7 @@
 import Vue from 'vue'
 
 import { formatToBRL } from 'brazilian-values'
+import { formatDate } from '@/global'
 
 Vue.filter('currency', value => {
     if (!value) return "R$ 0,00"
@@ -23,5 +24,5 @@ Vue.filter('percent', value => {
 Vue.filter('date', value => {
     if (!value) return ""
 
-    return new Date(value).toLocaleDateString()
+    return formatDate(new Date(value).toISOString().substr(0, 10))
 })

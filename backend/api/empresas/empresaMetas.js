@@ -9,111 +9,104 @@ module.exports = app => {
 
         try {
             existsOrError(meta.id_empresa, 'Informe a empresa da meta')
+            existsOrError(meta.nome, 'Informe um nome pra meta')
             existsOrError(meta.tipo_receita_despesa, 'Informe a tipo da meta')
             existsOrError(meta.data, 'Informe a data da meta')
-            existsOrError(meta.valor_total, 'Informe a valor total da meta')
+            existsOrError(meta.valor, 'Informe a valor total da meta')
 
-            if (meta.valor_total === '0,00')
+            meta.valor = parseNumber(meta.valor)
+
+            if (meta.valor === '0,00')
                 throw 'O valor da meta não pode ser 0,00'
 
-            meta.valor_total = parseFloat(parseNumber(meta.valor_total))
-
-            const metaBD = await app.db('meta_empresa')
-                .where({ id_empresa: meta.id_empresa, tipo_receita_despesa: meta.tipo_receita_despesa, valor_total: meta.valor_total }).first()
+            const metaBD = await app.db('empresa_metas')
+                .where({ id_empresa: meta.id_empresa, tipo_receita_despesa: meta.tipo_receita_despesa, data: new Date(meta.data), valor: meta.valor }).first()
             if (!meta.id) {
-                notExistsOrError(metaBD, 'Meta já cadastrada')
+                notExistsOrError(metaBD, 'Meta com mesma data e valor já cadastrada para esta empresa')
             }
         } catch (e) {
             return res.status(400).send(e.toString())
         }
 
-        const metaAnual = meta.metaAnual
-        delete meta.metaAnual
+        meta.janeiro = parseNumber(meta.janeiro)
+        meta.fevereiro = parseNumber(meta.fevereiro)
+        meta.marco = parseNumber(meta.marco)
+        meta.abril = parseNumber(meta.abril)
+        meta.maio = parseNumber(meta.maio)
+        meta.junho = parseNumber(meta.junho)
+        meta.julho = parseNumber(meta.julho)
+        meta.agosto = parseNumber(meta.agosto)
+        meta.setembro = parseNumber(meta.setembro)
+        meta.outubro = parseNumber(meta.outubro)
+        meta.novembro = parseNumber(meta.novembro)
+        meta.dezembro = parseNumber(meta.dezembro)
 
-        const data = new Date().toISOString().substr(0, 10)
-        const [year, month, day] = data.split('-')
+        delete meta.concluido_valor
+        delete meta.concluido_porc
 
-        meta.data += '-' + day
-
-        if (meta.id) {
-            app.db('meta_empresa')
+        if (meta.id)
+            app.db('empresa_metas')
                 .update(meta)
                 .where({ id: meta.id })
-                .then(async _ => {
-                    await app.db('meta_empresa_valores').where({ id_meta: meta.id }).delete()
-
-                    metaAnual.map(metaAnual => {
-                        let newMeta = {
-                            id_meta: meta.id,
-                            mes: metaAnual.mes,
-                            ano: year,
-                            valor: parseFloat(parseNumber(metaAnual.valor)),
-                            percentual: parseFloat(parseNumber(metaAnual.percentual))
-                        }
-
-                        app.db('meta_empresa_valores')
-                            .insert(newMeta)
-                            .catch(e => console.log(e.toString()))
-                    })
-                    res.status(204).send()
-                })
+                .then(_ => res.status(204).send())
                 .catch(e => res.status(500).send(e.toString()))
-        } else {
-            const id_meta = await app.db('meta_empresa')
-                .insert(meta).returning('id')
+        else
+            app.db('empresa_metas')
+                .insert(meta)
+                .then(_ => res.status(204).send())
                 .catch(e => res.status(500).send(e.toString()))
-
-            metaAnual.map(meta => {
-                let newMeta = {
-                    id_meta: id_meta[0],
-                    mes: meta.mes,
-                    ano: year,
-                    valor: parseFloat(parseNumber(meta.valor)),
-                    percentual: parseFloat(parseNumber(meta.percentual))
-                }
-
-                app.db('meta_empresa_valores')
-                    .insert(newMeta)
-                    .catch(e => console.log(e.toString()))
-            })
-            res.status(204).send()
-        }
     }
 
 
     const get = async (req, res) => {
-        let metas = await app.db('meta_empresa').select('id', 'id_empresa', 'tipo_receita_despesa', 'valor_total')
-            .catch(e => res.status(500).send(e.toString()))
+        const page = parseInt(req.query.page) || 1
+        const limit = parseInt(req.query.limit) || 10
 
-        metas = metas.map(async meta => {
-            meta.empresa = await app.db('empresas').select('nome').where({ id: meta.id_empresa }).first();
-            meta.empresa = meta.empresa.nome
-            return meta;
-        })
+        const result = await app.db('empresa_metas').count('id').first()
+        const count = parseInt(result.count)
 
-        const result = await Promise.all(metas)
+        app.db('empresa_metas')
+            .join('empresas', 'empresa_metas.id_empresa', 'empresas.id')
+            .select('empresa_metas.id', 'empresa_metas.nome', 'empresas.nome as empresa', 'tipo_receita_despesa', 'data', 'valor')
+            .limit(limit).offset(page * limit - limit)
+            .orderBy('empresa_metas.nome')
+            .where((qb) => {
+                if (req.query.nome) {
+                    qb.where('empresa_metas.nome', 'ilike', `%${req.query.nome}%`);
+                } else if (req.query.id) {
+                    qb.orWhere('empresa_metas.id', '=', req.query.id);
+                }
+            })
+            .then(async metas => {
+                metas = await Promise.all(metas.map(async m => {
+                    const valor_vendas = await app.db('venda').sum('valor_total')
+                    m.concluido_valor = valor_vendas.sum || 0
+                    m.concluido_porc = valor_vendas.sum || 0 * 100 / m.valor
 
-        res.json(result)
+                    return m
+                }))
+
+                res.json({ data: metas, count, limit })
+            })
+            .catch(e => res.status(500).send(e.message))
     }
 
     const getById = async (req, res) => {
-        app.db('meta_empresa')
-            .where({ id: req.params.id })
-            .first()
-            .then(empresaMeta => res.json(empresaMeta))
-            .catch(e => res.status(500).send(e.toString()))
+        app.db('empresa_metas')
+            .where({ id: req.params.id }).first()
+            .then(metas => res.json(metas))
+            .catch(e => res.status(500).send(e))
     }
 
     const remove = async (req, res) => {
         try {
-            const exclusao = await app.db('meta_empresa')
+            const exclusao = await app.db('empresa_metas')
                 .where({ id: req.params.id }).delete()
             existsOrError(exclusao, 'Meta não encontrada')
 
             res.status(204).send()
         } catch (e) {
-            console.log(e.toString())
-            return res.status(500).send("Erro durante a exclusão")
+            return res.status(400).send(e.toString())
         }
     }
 

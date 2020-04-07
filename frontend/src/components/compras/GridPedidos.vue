@@ -305,6 +305,7 @@
         :pagination.sync="pagination"
         select-all
         v-model="itens_selecionados"
+        :loading="loading"
       >
         <template slot="items" slot-scope="data">
           <td>
@@ -481,7 +482,7 @@ export default {
   data() {
     return {
       valid: true,
-      loading: true,
+      loading: false,
       itens_selecionados: [],
       fields: [
         { value: "id", text: "Código", sortable: true },
@@ -561,6 +562,8 @@ export default {
       this.finalizar = true;
     },
     async loadPedidos() {
+      this.loading = true;
+      
       const url = `${urlBD}/pedidos?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
       }&empresa=${this.empresaStore.currentEmpresa || ""}&tipo=${this.filter
@@ -571,11 +574,15 @@ export default {
         ""}&pendentes=${this.filter.pendentes || ""}&concluidos=${this.filter
         .concluidos || ""}`;
 
-      axios.get(url).then(res => {
-        this.comprasStore.pedidos = res.data.data;
-        this.count = res.data.count;
-        this.pagination.rowsPerPage = res.data.limit;
-      });
+      axios
+        .get(url)
+        .then(res => {
+          this.comprasStore.pedidos = res.data.data;
+          this.count = res.data.count;
+          this.pagination.rowsPerPage = res.data.limit;
+        })
+        .catch(showError)
+        .finally(() => (this.loading = false));
     },
     async remove() {
       if (!this.confirmaExclusao) {

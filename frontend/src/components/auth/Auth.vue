@@ -134,7 +134,7 @@
                         :rules="confirmaSenhaRules"
                       ></v-text-field>
                     </v-form>
-                    <v-flex xs12>
+                    <!-- <v-flex xs12>
                       <v-layout align-center justify-center>
                         <v-btn color="#4267B2" dark large @click="socialLogin('facebook')">
                           <v-icon class="mr-2">fa fa-facebook</v-icon>
@@ -145,7 +145,7 @@
                           <span>Google</span>
                         </v-btn>
                       </v-layout>
-                    </v-flex>
+                    </v-flex> -->
                   </v-tab-item>
 
                   <v-tab-item value="2">
@@ -162,7 +162,7 @@
                       ></v-text-field>
                       <v-text-field
                         ref="nome_empresa"
-                        v-model="usuario.nome_empresa"
+                        v-model="usuario.nomeEmpresa"
                         prepend-icon="fa fa-building-o"
                         label="Razão social"
                         :color="color"
@@ -171,7 +171,7 @@
                       ></v-text-field>
                       <v-text-field
                         ref="email_empresa"
-                        v-model="usuario.email_empresa"
+                        v-model="usuario.emailEmpresa"
                         prepend-icon="fa fa-envelope"
                         label="E-mail empresarial (opcional)"
                         :color="color"
@@ -180,7 +180,7 @@
                       ></v-text-field>
                       <v-text-field
                         ref="contato_empresa"
-                        v-model="usuario.contato_empresa"
+                        v-model="usuario.contatoEmpresa"
                         prepend-icon="fa fa-phone"
                         label="Contato (opcional)"
                         :color="color"
@@ -204,7 +204,7 @@
                         @click="[showForgotPassword ? recoverPassword() : showSignup? signup() : signin()]"
                       >{{ showForgotPassword ? "Enviar" : showSignup? "Continuar" :"Entrar" }}</v-btn>
                     </v-layout>
-                    <v-divider class="mb-4" />
+                    <v-divider class="my-4" />
                   </v-flex>
                   <v-flex xs12>
                     <v-layout justify-center>
@@ -309,24 +309,12 @@ export default {
         return (this.stepper = "2");
       }
 
-      // this.isLoading = true;
-      // firebase
-      //   .auth()
-      //   .createUserWithEmailAndPassword(this.usuario.email, this.usuario.senha)
-      //   .then(data => {
-      //     console.log(data.user);
-      //   })
-      //   .catch(showError)
-      //   .then(() => (this.isLoading = false));
-
-      console.log(this.usuario);
-      return;
+      this.isLoading = true;
 
       axios
         .post(`${urlBD}/signup`, this.usuario)
         .then(() => {
           this.$toasted.global.defaultSuccess();
-          this.usuario = {};
           this.showSignup = false;
         })
         .catch(showError)

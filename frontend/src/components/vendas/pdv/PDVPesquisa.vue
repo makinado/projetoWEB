@@ -17,6 +17,7 @@
           return-object
           :rules="produtoRules"
           @input="produto.produto ? $refs.quantidade.focus() : null"
+          @focus="$store.dispatch('loadProdutos')"
         ></v-autocomplete>
 
         <v-layout row wrap>
@@ -172,6 +173,7 @@ export default {
       }
       this.$store.dispatch("calcTotalPDV");
       this.reset();
+      this.$refs.produto.focus();
     },
     loadDados(produto) {
       if (!produto.value) {
@@ -218,7 +220,6 @@ export default {
     }
   },
   mounted() {
-    this.$store.dispatch("loadProdutos");
     this.reset();
 
     Bus.$on("setProduto", produto => {

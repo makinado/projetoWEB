@@ -52,29 +52,19 @@ module.exports = app => {
     }
 
     const getPessoa = async (req, res) => {
-        try {
-            const categoria = await app.db('categorias')
-                .select('id', 'descricao', 'id as value', 'descricao as text')
-                .where({ tipo: 1 })
-                .catch(e => res.status(500).send(e.toString()))
-
-            res.status(200).json(categoria)
-        } catch (e) {
-            res.status(500).send(e.toString())
-        }
+        app.db('categorias')
+            .select('id', 'descricao', 'id as value', 'descricao as text')
+            .where({ tipo: 1 })
+            .then(categorias => res.status(200).send(categorias))
+            .catch(e => res.status(500).send(e.toString()))
     }
 
     const getProduto = async (req, res) => {
-        try {
-            const categoria = await app.db('categorias')
-                .select('id', 'descricao', 'id as value', 'descricao as text')
-                .where({ tipo: 2 })
-                .catch(e => res.status(500).send(e.toString()))
-
-            res.status(200).json(categoria)
-        } catch (e) {
-            res.status(500).send(e.toString())
-        }
+        app.db('categorias')
+            .select('id', 'descricao', 'id as value', 'descricao as text')
+            .where({ tipo: 2 })
+            .then(categorias => res.status(200).send(categorias))
+            .catch(e => res.status(500).send(e.toString()))
     }
 
     const remove = async (req, res) => {

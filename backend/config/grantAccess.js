@@ -1,6 +1,5 @@
 module.exports = (middleware, resource) => {
     return (req, res, next) => {
-        console.log(resource, req.method)
         if (req.method == "POST") {
             if (resource || req.user[resource + '_create']) {
                 middleware(req, res, next)

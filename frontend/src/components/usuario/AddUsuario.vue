@@ -112,10 +112,10 @@
 
               <v-flex xs12 class="mt-4">
                 <v-layout justify-center>
-                  <v-icon class="mt-2 mr-2">fa fa-2x fa-key</v-icon>
+                  <v-icon class="mt-4 mr-2">fa fa-2x fa-key</v-icon>
                   <h2>Acesso</h2>
                 </v-layout>
-                <hr />
+                <v-divider class="my-3"></v-divider>
               </v-flex>
 
               <v-form v-model="valid1" ref="form_acesso">
@@ -134,6 +134,7 @@
                       :menu-props="{ maxHeight: '300' }"
                       persistent-hint
                       :rules="empresaRules"
+                      @focus="$store.dispatch('loadEmpresas')"
                     ></v-autocomplete>
                   </v-flex>
                   <v-flex xs12>
@@ -319,10 +320,6 @@ export default {
         v => !!v || "E-mail é obrigatório",
         v => (!!v && /.+@.+\..+/.test(v)) || "E-mail inválido"
       ],
-      foneRules: [
-        v => !!v || "Contato é obrigatório",
-        v => (!!v && v.length > 12) || "Contato inválido"
-      ],
       senhaRules: [
         v => !!v || "Senha é obrigatória",
         v => (!!v && v.length >= 6) || "Senha deve ter no mínimo 6 caracteres"
@@ -362,9 +359,9 @@ export default {
       this.tabIndex = "tab-1";
     },
     async loadTela(usuario) {
-      this.$store.dispatch("loadEmpresas");
-
       if (!usuario) return;
+
+      this.$store.dispatch("loadEmpresas");
       let url = `${urlBD}/usuarios`;
       if (usuario.id) {
         await axios
@@ -604,7 +601,7 @@ export default {
 
       const method = this.usuario.id ? "put" : "post";
       const id = this.usuario.id ? this.usuario.id : "";
-      const urlUsuario = `${urlBD}/usuarios/${id}`;
+      const url = `${urlBD}/usuarios/${id}`;
 
       this.usuario.empresas = this.usuario.empresas.map(empresa => {
         empresa = empresa.value ? empresa.value : empresa;
@@ -612,6 +609,7 @@ export default {
         return empresa;
       });
       this.usuario.acessos = this.acessos;
+      this.usuario.nome_base = this.usuarioStore.currentUsuario.nome_base;
 
       if (this.imageFile) {
         const fd = new FormData();
@@ -620,7 +618,7 @@ export default {
           .post(`${urlBD}/uploadIMG`, fd)
           .then(res => {
             this.usuario.img = res.data;
-            axios[method](urlUsuario, this.usuario)
+            axios[method](url, this.usuario)
               .then(res => {
                 this.$toasted.global.defaultSuccess();
                 saveLog(
@@ -638,7 +636,7 @@ export default {
           })
           .catch(showError);
       } else {
-        axios[method](urlUsuario, this.usuario)
+        axios[method](url, this.usuario)
           .then(res => {
             this.$toasted.global.defaultSuccess();
             saveLog(

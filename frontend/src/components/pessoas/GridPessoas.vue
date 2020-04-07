@@ -64,22 +64,12 @@
                         <v-flex xs12 md4>
                           <v-switch label="Fornecedores" :color="color" v-model="filter.fornecedor"></v-switch>
                         </v-flex>
-                        <v-flex xs12 md4>
-                          <v-switch
-                            label="Funcionários"
-                            :color="color"
-                            v-model="filter.funcionario"
-                          ></v-switch>
-                        </v-flex>
                         <v-flex xs12 md6>
                           <v-switch
                             label="Transpotadoras"
                             :color="color"
                             v-model="filter.transportadora"
                           ></v-switch>
-                        </v-flex>
-                        <v-flex xs12 md6>
-                          <v-switch label="Vendedores" :color="color" v-model="filter.vendedor"></v-switch>
                         </v-flex>
                       </v-layout>
                     </v-form>
@@ -180,18 +170,12 @@
                     <v-flex xs12 md4>
                       <v-switch label="Fornecedores" :color="color" v-model="filter.fornecedor"></v-switch>
                     </v-flex>
-                    <v-flex xs12 md4>
-                      <v-switch label="Funcionários" :color="color" v-model="filter.funcionario"></v-switch>
-                    </v-flex>
                     <v-flex xs12 md6>
                       <v-switch
                         label="Transpotadoras"
                         :color="color"
                         v-model="filter.transportadora"
                       ></v-switch>
-                    </v-flex>
-                    <v-flex xs12 md6>
-                      <v-switch label="Vendedores" :color="color" v-model="filter.vendedor"></v-switch>
                     </v-flex>
                   </v-layout>
                 </v-form>
@@ -246,6 +230,7 @@
         :pagination.sync="pagination"
         v-model="itens_selecionados"
         select-all
+        :loading="loading"
       >
         <template slot="items" slot-scope="data">
           <td>
@@ -302,6 +287,7 @@
         <v-card-title>
           <span class="headline">Excluir pessoa</span>
         </v-card-title>
+        
         <v-card-text
           v-if="!Array.isArray(pessoaStore.pessoa)"
         >Excluir {{ pessoaStore.pessoa.nome }}?</v-card-text>
@@ -364,6 +350,7 @@ export default {
     return {
       itens_selecionados: [],
       valid: true,
+      loading: false,
       fields: [
         { value: "id", text: "Código", sortable: true },
         { value: "nome", text: "Nome", sortable: true },
@@ -419,6 +406,8 @@ export default {
       }
     },
     async loadPessoas() {
+      this.loading = true;
+
       const url = `${urlBD}/pessoas?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
       }&tipo=${this.filter.tipo || 1}&id=${this.filter.id || ""}&nome=${this
@@ -429,11 +418,15 @@ export default {
         ""}&vendedor=${this.filter.vendedor || ""}&funcionario=${this.filter
         .funcionario || ""}&transportadora=${this.filter.transportadora || ""}`;
 
-      axios.get(url).then(res => {
-        this.pessoaStore.pessoas = res.data.data;
-        this.count = res.data.count;
-        this.pagination.rowsPerPage = res.data.limit;
-      });
+      axios
+        .get(url)
+        .then(res => {
+          this.pessoaStore.pessoas = res.data.data;
+          this.count = res.data.count;
+          this.pagination.rowsPerPage = res.data.limit;
+        })
+        .catch(showError)
+        .finally(() => (this.loading = false));
     },
     async remove() {
       if (!this.confirmaExclusao) {

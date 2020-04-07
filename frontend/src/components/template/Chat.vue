@@ -325,16 +325,13 @@ export default {
       }
     },
     notify(msg) {
-      this.new_messages = ++this.new_messages;
       if (this.menu) this.scrollToEnd();
-
-      this.$notification.show(
-        msg.user.nome,
-        {
+      else {
+        this.new_messages = ++this.new_messages;
+        this.$notification.show(msg.user.nome, {
           body: msg.content
-        },
-        {}
-      );
+        });
+      }
     }
   },
   mounted() {

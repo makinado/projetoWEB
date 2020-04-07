@@ -202,6 +202,7 @@
         select-all
         :hide-headers="isMobile"
         :class="{mobile: isMobile}"
+        :loading="loading"
       >
         <template slot="items" slot-scope="data">
           <td>
@@ -311,7 +312,7 @@ export default {
     return {
       itens_selecionados: [],
       valid: true,
-      loading: true,
+      loading: false,
       isMobile: false,
       confirmaExclusao: false,
       fields: [
@@ -366,17 +367,23 @@ export default {
       this.filter = {};
     },
     async loadEmpresas() {
+      this.loading = true;
+
       const url = `${urlBD}/empresas?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
       }&tipo=${this.filter.tipo || 1}&id=${this.filter.id || ""}&nome=${this
         .filter.nome || ""}&email=${this.filter.email || ""}&contato=${this
         .filter.contato || ""}&cnpj=${this.filter.cnpj || ""}`;
 
-      axios.get(url).then(res => {
-        this.empresaStore.empresas = res.data.data;
-        this.count = res.data.count;
-        this.pagination.rowsPerPage = res.data.limit;
-      });
+      axios
+        .get(url)
+        .then(res => {
+          this.empresaStore.empresas = res.data.data;
+          this.count = res.data.count;
+          this.pagination.rowsPerPage = res.data.limit;
+        })
+        .catch(showError)
+        .finally(() => (this.loading = false));
     },
     async remove() {
       if (!this.confirmaExclusao) {

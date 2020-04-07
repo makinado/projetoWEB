@@ -316,10 +316,8 @@
         no-data-text="Nenhum orçamento / venda realizado"
         select-all
         v-model="itens_selecionados"
+        :loading="loading"
       >
-        <template v-slot:progress>
-          <v-progress-linear color="blue" :indeterminate="true" height="3"></v-progress-linear>
-        </template>
         <template slot="items" slot-scope="data">
           <td>
             <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
@@ -371,12 +369,7 @@
       </v-data-table>
     </Card>
 
-    <v-dialog
-      v-model="confirmaExclusao"
-      persistent
-      max-width="500px"
-      v-if="vendaStore.venda"
-    >
+    <v-dialog v-model="confirmaExclusao" persistent max-width="500px" v-if="vendaStore.venda">
       <v-card>
         <v-card-title>
           <span class="headline">Excluir orçamento</span>
@@ -384,11 +377,7 @@
         <v-card-text>Excluir venda {{ vendaStore.venda.id }} ?</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn
-            color="blue darken-1"
-            flat
-            @click="confirmaExclusao = false"
-          >Fechar</v-btn>
+          <v-btn color="blue darken-1" flat @click="confirmaExclusao = false">Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
       </v-card>
@@ -445,7 +434,7 @@ export default {
   data: function() {
     return {
       valid: true,
-      loading: true,
+      loading: false,
       confirmaExclusao: false,
       itens_selecionados: [],
       fields: [
@@ -501,6 +490,8 @@ export default {
       else return "blue";
     },
     async loadVendas() {
+      this.loading = true;
+
       const url = `${urlBD}/vendas?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
       }&empresa=${this.empresaStore.currentEmpresa || ""}&tipo=${this.filter
@@ -510,11 +501,15 @@ export default {
         ""}&pendentes=${this.filter.pendentes || ""}&concluidos=${this.filter
         .concluidos || ""}`;
 
-      axios.get(url).then(res => {
-        this.vendaStore.vendas = res.data.data;
-        this.count = res.data.count;
-        this.pagination.rowsPerPage = res.data.limit;
-      });
+      axios
+        .get(url)
+        .then(res => {
+          this.vendaStore.vendas = res.data.data;
+          this.count = res.data.count;
+          this.pagination.rowsPerPage = res.data.limit;
+        })
+        .catch(showError)
+        .finally(() => (this.loading = false));
     },
     async remove() {
       let itens = [];

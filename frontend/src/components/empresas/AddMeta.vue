@@ -1,401 +1,240 @@
 <template>
-  <v-dialog v-model="modalStore.empresas.metas.visible" lazy persistent max-width="1200px">
-    <v-card v-if="modalStore.empresas.metas.visible">
-      <v-card-title>
-        <span class="headline">{{ modalStore.empresas.metas.title }}</span>
-      </v-card-title>
-      <v-card-text>
-        <v-container fluid>
-          <v-text-field label="id" v-model="meta.id" v-show="false"></v-text-field>
-          <v-layout wrap>
-            <v-flex xs12>
-              <v-tabs v-model="tabIndex" centered color="#FFFFFF" light icons-and-text>
-                <v-tabs-slider color="color"></v-tabs-slider>
-                <v-tab href="#tab-1">
-                  BÁSICO
-                  <v-icon>fa fa-lg fa-file</v-icon>
-                </v-tab>
+  <div>
+    <v-dialog v-model="modalStore.empresas.metas.visible" lazy persistent max-width="1200px">
+      <v-card v-if="modalStore.empresas.metas.visible">
+        <v-card-title>
+          <span class="headline">{{ modalStore.empresas.metas.title }}</span>
+        </v-card-title>
+        <v-card-text>
+          <v-container fluid>
+            <v-text-field label="id" v-model="meta.id" v-show="false"></v-text-field>
+            <v-layout wrap>
+              <v-flex xs12>
+                <v-tabs v-model="tabIndex" centered color="#FFFFFF" light icons-and-text>
+                  <v-tabs-slider color="color"></v-tabs-slider>
+                  <v-tab href="#tab-1">
+                    BÁSICO
+                    <v-icon>fa fa-lg fa-file</v-icon>
+                  </v-tab>
 
-                <v-tab
-                  href="#tab-2"
-                  :disabled="!showTabela || meta.tipo_receita_despesa !== 'RECEITA'"
-                >
-                  VENDEDORES
-                  <v-icon>fa fa-lg fa-user</v-icon>
-                </v-tab>
+                  <!-- <v-tab href="#tab-2">
+                    VENDEDORES
+                    <v-icon>fa fa-lg fa-user</v-icon>
+                  </v-tab>-->
 
-                <v-tab-item value="tab-1">
-                  <v-card flat>
-                    <v-card-text>
-                      <v-container grid-list-xl>
-                        <v-form ref="form" v-model="valid">
-                          <v-layout wrap>
-                            <v-flex xs12 md4>
-                              <v-autocomplete
-                                class="tag-input"
-                                chips
-                                dense
-                                :color="color"
-                                label="Tipo de meta"
-                                :items="['RECEITA', 'DESPESA']"
-                                v-model="meta.tipo_receita_despesa"
-                                :rules="tipoRules"
-                              ></v-autocomplete>
-                            </v-flex>
-                            <v-flex xs12 md4>
-                              <v-menu
-                                v-model="menu1"
-                                :close-on-content-click="false"
-                                :nudge-right="40"
-                                lazy
-                                transition="scale-transition"
-                                offset-y
-                                full-width
-                                max-width="290px"
-                                min-width="290px"
-                              >
-                                <template v-slot:activator="{ on }">
-                                  <v-text-field
-                                    :color="color"
-                                    v-model="computedDateFormatted1"
-                                    label="Data de início da meta"
-                                    prepend-icon="event"
-                                    readonly
-                                    v-on="on"
-                                    :rules="dataRules"
-                                    @blur="flagData = true"
-                                  ></v-text-field>
-                                </template>
-                                <v-date-picker
-                                  ref="picker"
-                                  type="month"
+                  <v-tab-item value="tab-1">
+                    <v-card flat>
+                      <v-card-text>
+                        <v-container grid-list-xl>
+                          <v-form ref="form" v-model="valid">
+                            <v-layout wrap>
+                              <v-flex xs12 md4>
+                                <v-autocomplete
+                                  class="tag-input"
+                                  chips
+                                  dense
                                   :color="color"
-                                  v-model="meta.data"
-                                  @input="menu1 = false"
-                                  locale="pt-br"
-                                ></v-date-picker>
-                              </v-menu>
-                            </v-flex>
-                            <v-flex xs12 md3>
-                              <v-text-field
-                                ref="valor_total"
-                                :color="color"
-                                label="Valor total da meta"
-                                v-money="money"
-                                v-model="meta.valor_total"
-                                :rules="valorRules"
-                              ></v-text-field>
-                            </v-flex>
-                            <v-flex xs12 md1>
-                              <v-btn
-                                class="v-btn-common"
-                                :color="color"
-                                @click="[geraTabela()]"
-                              >Gerar</v-btn>
-                            </v-flex>
-                          </v-layout>
-                        </v-form>
-                      </v-container>
-                      <small
-                        v-show="showTabela"
-                      >É possível alterar os valores e percentuais diretamente da tabela.</small>
-                      <v-data-table
-                        v-show="showTabela"
-                        :items="metaAnual"
-                        :headers="fields"
-                        no-results-text="Nenhum registro encontrado"
-                        no-data-text="Nenhuma meta calculada"
-                        hide-actions
-                        :expand="expand"
-                        item-key="mes"
-                      >
-                        <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
-                        <template slot="items" slot-scope="data">
-                          <td>{{ data.item.mes}}</td>
-                          <td>{{ data.item.valor}}</td>
-                          <td>{{ data.item.percentual}}</td>
-                          <td>
-                            <v-btn
-                              flat
-                              small
-                              @click="data.item.valor !== '-' ? (data.expanded = !data.expanded) : null"
-                            >
-                              <i class="fa fa-lg fa-pencil"></i>
-                            </v-btn>
-                          </td>
-                        </template>
-                        <template slot="expand" slot-scope="data">
-                          <v-card flat>
-                            <v-card-title>
-                              <span class="headline">Alterar valores do mês de {{ data.item.mes }}</span>
-                            </v-card-title>
-                            <v-card-text>
-                              <v-container grid-list-xl>
-                                <v-layout row>
-                                  <v-flex xs12 md6>
+                                  label="Tipo de meta"
+                                  :items="['RECEITA', 'DESPESA']"
+                                  v-model="meta.tipo_receita_despesa"
+                                  :rules="tipoRules"
+                                  deletable-chips
+                                ></v-autocomplete>
+                              </v-flex>
+                              <v-flex xs12 md4 class="mt-2">
+                                <v-menu
+                                  v-model="menu1"
+                                  :close-on-content-click="false"
+                                  :nudge-right="40"
+                                  lazy
+                                  transition="scale-transition"
+                                  offset-y
+                                  full-width
+                                  max-width="290px"
+                                  min-width="290px"
+                                >
+                                  <template v-slot:activator="{ on }">
                                     <v-text-field
-                                      ref="meta_valor"
                                       :color="color"
-                                      label="Valor"
-                                      v-money="money"
-                                      v-model="data.item.valor"
-                                      @blur="calcPercent(data.item)"
+                                      v-model="computedDateFormatted1"
+                                      label="Data"
+                                      prepend-icon="event"
+                                      readonly
+                                      v-on="on"
+                                      :rules="dataRules"
                                     ></v-text-field>
-                                  </v-flex>
-                                  <v-flex xs12 md6>
-                                    <v-text-field
-                                      ref="meta_percentual"
-                                      :color="color"
-                                      label="Percentual"
-                                      v-money="percent"
-                                      v-model="data.item.percentual"
-                                      @blur="calcValor(data.item)"
-                                    ></v-text-field>
-                                  </v-flex>
-                                </v-layout>
-                              </v-container>
-                            </v-card-text>
-                          </v-card>
-                        </template>
-                      </v-data-table>
-                    </v-card-text>
-                  </v-card>
-                </v-tab-item>
+                                  </template>
+                                  <v-date-picker
+                                    ref="picker"
+                                    type="date"
+                                    :color="color"
+                                    v-model="meta.data"
+                                    @input="menu1 = false"
+                                    locale="pt-br"
+                                  ></v-date-picker>
+                                </v-menu>
+                              </v-flex>
+                              <v-flex xs12 md4 class="mt-2">
+                                <v-text-field
+                                  ref="valor"
+                                  :color="color"
+                                  label="VALOR DA META"
+                                  v-money="money"
+                                  v-model="meta.valor"
+                                  :rules="valorRules"
+                                  @blur="calcular"
+                                  @keyup.enter="calcular"
+                                ></v-text-field>
+                              </v-flex>
+                              <v-flex xs12>
+                                <v-text-field
+                                  label="Nome"
+                                  :placeholder="`Ex: Meta principal de ${new Date().getFullYear()}`"
+                                  v-model="meta.nome"
+                                ></v-text-field>
+                              </v-flex>
+                            </v-layout>
 
-                <v-tab-item value="tab-2">
-                  <v-card flat>
-                    <v-card-text>
-                      <v-container grid-list-xl>
-                        <v-layout wrap justify-end>
-                          <v-btn
-                            class="v-btn-common"
-                            :color="color"
-                            @click="[!showTabela ? tabIndex = 'tab-1' : geraTabelaVend() ]"
-                          >Gerar</v-btn>
-                        </v-layout>
-                      </v-container>
-                      <small
-                        v-if="metaVend.length > 0"
-                      >*Altere os valores de cada vendedor clicando sobre ele</small>
-                      <v-data-table
-                        v-model="metaVendAtt"
-                        :items="metaVend"
-                        :headers="fieldsFunc"
-                        no-data-text="Meta não gerada ou nenhum vendedor cadastrado"
-                        hide-actions
-                        select-all
-                        item-key="id"
-                        :expand="expand2"
-                      >
-                        <v-progress-linear slot="progress" color="blue" height="3" indeterminate></v-progress-linear>
-                        <template slot="items" slot-scope="data">
-                          <td>
-                            <v-tooltip bottom>
-                              <v-checkbox
-                                slot="activator"
-                                v-model="data.selected"
-                                :color="color"
-                                hide-details
-                              ></v-checkbox>
-                              <span>Selecione os vendedores</span>
-                            </v-tooltip>
-                          </td>
-                          <td>{{ data.item.id }}</td>
-                          <td>{{ data.item.nome }}</td>
-                          <td>{{ data.item.total }}</td>
-                          <td>
-                            <v-btn flat small @click="[data.expanded = !data.expanded]">
-                              <i class="fa fa-lg fa-pencil"></i>
-                            </v-btn>
-                          </td>
-                        </template>
-                        <template slot="expand" slot-scope="data">
-                          <v-card flat>
-                            <v-card-title>
-                              <span class="headline">Alterar meta do {{ data.item.nome }}</span>
-                            </v-card-title>
-                            <v-card-text>
-                              <v-container grid-list-xl>
-                                <v-layout row>
-                                  <v-flex xs12 md3>
-                                    <v-text-field
-                                      ref="total_vendedor"
-                                      :color="color"
-                                      label="Total"
-                                      v-money="money"
-                                      v-model="data.item.total"
-                                      @blur="atualizaVend(data.item, false)"
-                                    ></v-text-field>
-                                  </v-flex>
-                                </v-layout>
-                                <v-layout row>
-                                  <v-flex xs12 md3>
-                                    <v-text-field
-                                      ref="janeiro"
-                                      :color="color"
-                                      label="Janeiro"
-                                      v-money="money"
-                                      v-model="data.item.janeiro"
-                                      :disabled="metaAnual[0].valor === '-'"
-                                      @blur="atualizaVend(data.item, true)"
-                                    ></v-text-field>
-                                  </v-flex>
-                                  <v-flex xs12 md3>
-                                    <v-text-field
-                                      ref="fevereiro"
-                                      :color="color"
-                                      label="Fevereiro"
-                                      v-money="money"
-                                      v-model="data.item.fevereiro"
-                                      :disabled="metaAnual[1].valor === '-'"
-                                      @blur="atualizaVend(data.item, true)"
-                                    ></v-text-field>
-                                  </v-flex>
-                                  <v-flex xs12 md3>
-                                    <v-text-field
-                                      ref="marco"
-                                      :color="color"
-                                      label="Março"
-                                      v-money="money"
-                                      v-model="data.item.marco"
-                                      :disabled="metaAnual[2].valor === '-'"
-                                      @blur="atualizaVend(data.item, true)"
-                                    ></v-text-field>
-                                  </v-flex>
-                                  <v-flex xs12 md3>
-                                    <v-text-field
-                                      ref="abril"
-                                      :color="color"
-                                      label="Abril"
-                                      v-money="money"
-                                      v-model="data.item.abril"
-                                      :disabled="metaAnual[3].valor === '-'"
-                                      @blur="atualizaVend(data.item, true)"
-                                    ></v-text-field>
-                                  </v-flex>
-                                  <v-flex xs12 md3>
-                                    <v-text-field
-                                      ref="maio"
-                                      :color="color"
-                                      label="Maio"
-                                      v-money="money"
-                                      v-model="data.item.maio"
-                                      :disabled="metaAnual[4].valor === '-'"
-                                      @blur="atualizaVend(data.item, true)"
-                                    ></v-text-field>
-                                  </v-flex>
-                                  <v-flex xs12 md3>
-                                    <v-text-field
-                                      ref="junho"
-                                      :color="color"
-                                      label="Junho"
-                                      v-money="money"
-                                      v-model="data.item.junho"
-                                      :disabled="metaAnual[5].valor === '-'"
-                                      @blur="atualizaVend(data.item, true)"
-                                    ></v-text-field>
-                                  </v-flex>
-                                  <v-flex xs12 md3>
-                                    <v-text-field
-                                      ref="julho"
-                                      :color="color"
-                                      label="Julho"
-                                      v-money="money"
-                                      v-model="data.item.julho"
-                                      :disabled="metaAnual[6].valor === '-'"
-                                      @blur="atualizaVend(data.item, true)"
-                                    ></v-text-field>
-                                  </v-flex>
-                                  <v-flex xs12 md3>
-                                    <v-text-field
-                                      ref="agosto"
-                                      :color="color"
-                                      label="Agosto"
-                                      v-money="money"
-                                      v-model="data.item.agosto"
-                                      :disabled="metaAnual[7].valor === '-'"
-                                      @blur="atualizaVend(data.item, true)"
-                                    ></v-text-field>
-                                  </v-flex>
-                                  <v-flex xs12 md3>
-                                    <v-text-field
-                                      ref="setembro"
-                                      :color="color"
-                                      label="Setembro"
-                                      v-money="money"
-                                      v-model="data.item.setembro"
-                                      :disabled="metaAnual[8].valor === '-'"
-                                      @blur="atualizaVend(data.item, true)"
-                                    ></v-text-field>
-                                  </v-flex>
-                                  <v-flex xs12 md3>
-                                    <v-text-field
-                                      ref="outubro"
-                                      :color="color"
-                                      label="Outubro"
-                                      v-money="money"
-                                      v-model="data.item.outubro"
-                                      :disabled="metaAnual[9].valor === '-'"
-                                      @blur="atualizaVend(data.item, true)"
-                                    ></v-text-field>
-                                  </v-flex>
-                                  <v-flex xs12 md3>
-                                    <v-text-field
-                                      ref="novembro"
-                                      :color="color"
-                                      label="Novembro"
-                                      v-money="money"
-                                      v-model="data.item.novembro"
-                                      :disabled="metaAnual[10].valor === '-'"
-                                      @blur="atualizaVend(data.item, true)"
-                                    ></v-text-field>
-                                  </v-flex>
-                                  <v-flex xs12 md3>
-                                    <v-text-field
-                                      ref="dezembro"
-                                      :color="color"
-                                      label="Dezembro"
-                                      v-money="money"
-                                      v-model="data.item.dezembro"
-                                      :disabled="metaAnual[11].valor === '-'"
-                                      @blur="atualizaVend(data.item, true)"
-                                    ></v-text-field>
-                                  </v-flex>
-                                </v-layout>
-                              </v-container>
-                            </v-card-text>
-                          </v-card>
-                        </template>
-                      </v-data-table>
-                    </v-card-text>
-                  </v-card>
-                </v-tab-item>
-              </v-tabs>
-            </v-flex>
-          </v-layout>
-        </v-container>
-      </v-card-text>
-      <v-card-actions>
-        <v-btn color="blue darken-1" flat @click="reset">Limpar</v-btn>
-        <v-spacer></v-spacer>
-        <v-btn color="blue darken-1" flat @click="modalStore.empresas.metas.visible = false">Fechar</v-btn>
-        <v-btn color="blue darken-1" flat @click="save">Salvar</v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+                            <v-layout row wrap class="mt-3">
+                              <v-flex xs12 md2>
+                                <v-text-field
+                                  ref="janeiro"
+                                  label="JANEIRO"
+                                  v-model="meta.janeiro"
+                                  v-money="money"
+                                  @change="alteraMes('janeiro')"
+                                ></v-text-field>
+                              </v-flex>
+                              <v-flex xs12 md2>
+                                <v-text-field
+                                  ref="fevereiro"
+                                  label="FEVEREIRO"
+                                  v-model="meta.fevereiro"
+                                  v-money="money"
+                                  @change="alteraMes('fevereiro')"
+                                ></v-text-field>
+                              </v-flex>
+                              <v-flex xs12 md2>
+                                <v-text-field
+                                  ref="marco"
+                                  label="MARÇO"
+                                  v-model="meta.marco"
+                                  v-money="money"
+                                  @change="alteraMes('marco')"
+                                ></v-text-field>
+                              </v-flex>
+                              <v-flex xs12 md2>
+                                <v-text-field
+                                  ref="abril"
+                                  label="ABRIL"
+                                  v-model="meta.abril"
+                                  v-money="money"
+                                  @change="alteraMes('abril')"
+                                ></v-text-field>
+                              </v-flex>
+                              <v-flex xs12 md2>
+                                <v-text-field
+                                  ref="maio"
+                                  label="MAIO"
+                                  v-model="meta.maio"
+                                  v-money="money"
+                                  @change="alteraMes('maio')"
+                                ></v-text-field>
+                              </v-flex>
+                              <v-flex xs12 md2>
+                                <v-text-field
+                                  ref="junho"
+                                  label="JUNHO"
+                                  v-model="meta.junho"
+                                  v-money="money"
+                                  @change="alteraMes('junho')"
+                                ></v-text-field>
+                              </v-flex>
+                              <v-flex xs12 md2>
+                                <v-text-field
+                                  ref="julho"
+                                  label="JULHO"
+                                  v-model="meta.julho"
+                                  v-money="money"
+                                  @change="alteraMes('julho')"
+                                ></v-text-field>
+                              </v-flex>
+                              <v-flex xs12 md2>
+                                <v-text-field
+                                  ref="agosto"
+                                  label="AGOSTO"
+                                  v-model="meta.agosto"
+                                  v-money="money"
+                                  @change="alteraMes('agosto')"
+                                ></v-text-field>
+                              </v-flex>
+                              <v-flex xs12 md2>
+                                <v-text-field
+                                  ref="setembro"
+                                  label="SETEMBRO"
+                                  v-model="meta.setembro"
+                                  v-money="money"
+                                  @change="alteraMes('setembro')"
+                                ></v-text-field>
+                              </v-flex>
+                              <v-flex xs12 md2>
+                                <v-text-field
+                                  ref="outubro"
+                                  label="OUTUBRO"
+                                  v-model="meta.outubro"
+                                  v-money="money"
+                                  @change="alteraMes('outubro')"
+                                ></v-text-field>
+                              </v-flex>
+                              <v-flex xs12 md2>
+                                <v-text-field
+                                  ref="novembro"
+                                  label="NOVEMBRO"
+                                  v-model="meta.novembro"
+                                  v-money="money"
+                                  @change="alteraMes('novembro')"
+                                ></v-text-field>
+                              </v-flex>
+                              <v-flex xs12 md2>
+                                <v-text-field
+                                  ref="dezembro"
+                                  label="DEZEMBRO"
+                                  v-model="meta.dezembro"
+                                  v-money="money"
+                                  @change="alteraMes('dezembro')"
+                                ></v-text-field>
+                              </v-flex>
+                            </v-layout>
+                          </v-form>
+                        </v-container>
+                      </v-card-text>
+                    </v-card>
+                  </v-tab-item>
+                </v-tabs>
+              </v-flex>
+            </v-layout>
+          </v-container>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn color="blue darken-1" flat @click="reset">Limpar</v-btn>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="blue darken-1"
+            flat
+            @click="modalStore.empresas.metas.visible = false"
+          >Fechar</v-btn>
+          <v-btn color="blue darken-1" flat @click="save">Salvar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </div>
 </template>
 
 <script>
 import { VMoney } from "v-money";
 
 import axios from "axios";
-import {
-  urlBD,
-  showError,
-  parseNumber,
-  formatDate,
-  moneyToNumber
-} from "@/global";
+import { urlBD, showError, parseNumber, formatDate, saveLog } from "@/global";
 import { mapState } from "vuex";
 import { formatToBRL } from "brazilian-values";
 
@@ -403,18 +242,16 @@ export default {
   directives: { money: VMoney },
   computed: {
     computedDateFormatted1() {
-      return this.formatDate(this.meta.data);
+      return formatDate(this.meta.data);
     },
     ...mapState("app", ["color"]),
     ...mapState(["modalStore", "empresaStore", "pessoaStore", "usuarioStore"])
   },
   watch: {
-    "$store.state.modalStore.empresas.metas.visible": function() {
+    "$store.state.modalStore.empresas.metas.visible"() {
       if (this.modalStore.empresas.metas.visible) {
         this.reset();
         this.loadTela(this.empresaStore.meta);
-      } else {
-        this.loadMetas();
       }
     }
   },
@@ -424,105 +261,25 @@ export default {
       expand: false,
       expand2: false,
       flagData: false,
-      confirmacao: false,
-      showTabela: false,
       meta: {},
-      metaAux: {},
-      metaVendAux: {},
+      mesesAlterados: {},
       metaVendAtt: [],
       menu1: false,
       tabIndex: "tab-1",
       pessoas: [],
-      fields: [
-        { value: "mes", text: "Mês", sortable: false },
-        { value: "valor", text: "Valor", sortable: false },
-        { value: "percentual", text: "Percentual", sortable: false },
-        { value: "actions", text: "Ações", sortable: false }
-      ],
       fieldsFunc: [
         { value: "id", text: "Código", sortable: false },
         { value: "nome", text: "Vendedor", sortable: false },
         { value: "total", text: "Total do ano", sortable: false },
         { value: "actions", text: "Ações" }
       ],
-      metaAnual: [
-        {
-          mes: "Janeiro",
-          valor: "",
-          percentual: "",
-          expanded: false
-        },
-        {
-          mes: "Fevereiro",
-          valor: "",
-          percentual: "",
-          expanded: false
-        },
-        {
-          mes: "Março",
-          valor: "",
-          percentual: "",
-          expanded: false
-        },
-        {
-          mes: "Abril",
-          valor: "",
-          percentual: "",
-          expanded: false
-        },
-        {
-          mes: "Maio",
-          valor: "",
-          percentual: "",
-          expanded: false
-        },
-        {
-          mes: "Junho",
-          valor: "",
-          percentual: "",
-          expanded: false
-        },
-        {
-          mes: "Julho",
-          valor: "",
-          percentual: "",
-          expanded: false
-        },
-        {
-          mes: "Agosto",
-          valor: "",
-          percentual: "",
-          expanded: false
-        },
-        {
-          mes: "Setembro",
-          valor: "",
-          percentual: "",
-          expanded: false
-        },
-        {
-          mes: "Outubro",
-          valor: "",
-          percentual: "",
-          expanded: false
-        },
-        {
-          mes: "Novembro",
-          valor: "",
-          percentual: "",
-          expanded: false
-        },
-        {
-          mes: "Dezembro",
-          valor: "",
-          percentual: "",
-          expanded: false
-        }
-      ],
       metaVend: [],
       tipoRules: [v => !!v || "Tipo de meta obrigatório"],
       dataRules: [v => !!v || "Data de início de meta obrigatória"],
-      valorRules: [v => !!v || v == "R$ 0,00" || "Valor da meta obrigatório"],
+      valorRules: [
+        v => !!v || "Valor é obrigatório",
+        v => (!!v && v !== "R$ 0,00") || "Valor não pode ser 0,00"
+      ],
       money: {
         decimal: ",",
         thousands: ".",
@@ -538,286 +295,201 @@ export default {
     };
   },
   methods: {
-    formatDate(date) {
-      if (!date) return null;
-
-      const [year, month, day] = date.split("-");
-      return `${month}/${year}`;
-    },
     reset() {
       this.$refs.form ? this.$refs.form.reset() : null;
-
-      this.$refs.valor_total
-        ? (this.$refs.valor_total.$el.getElementsByTagName(
-            "input"
-          )[0].value = 0)
-        : null;
-
       this.meta = {};
-      this.flagData = false;
+      this.mesesAlterados = {};
       this.showTabela = false;
       this.tabIndex = "tab-1";
-      this.metaAnual = [
-        { mes: "Janeiro", valor: "", percentual: "" },
-        { mes: "Fevereiro", valor: "", percentual: "" },
-        { mes: "Março", valor: "", percentual: "" },
-        { mes: "Abril", valor: "", percentual: "" },
-        { mes: "Maio", valor: "", percentual: "" },
-        { mes: "Junho", valor: "", percentual: "" },
-        { mes: "Julho", valor: "", percentual: "" },
-        { mes: "Agosto", valor: "", percentual: "" },
-        { mes: "Setembro", valor: "", percentual: "" },
-        { mes: "Outubro", valor: "", percentual: "" },
-        { mes: "Novembro", valor: "", percentual: "" },
-        { mes: "Dezembro", valor: "", percentual: "" }
-      ];
-      this.metaVend = [];
-    },
-    geraTabela() {
-      if (!this.$refs.form.validate()) return;
 
-      const [year, month, day] = this.meta.data.split("-");
-      const meses = 12 - (month - 1);
+      this.$refs.valor
+        ? (this.$refs.valor.$el.getElementsByTagName("input")[0].value = 0)
+        : null;
 
-      let valorMes = parseNumber(this.meta.valor_total);
-      valorMes = parseFloat(valorMes / meses);
-      let percentMes = parseFloat(100 / meses);
-      percentMes = moneyToNumber(formatToBRL(percentMes)) + "%";
-
-      let i = 0;
-
-      this.metaAnual = this.metaAnual.map(metaMes => {
-        if (i >= month - 1) {
-          metaMes.valor = formatToBRL(valorMes);
-          metaMes.percentual = percentMes;
-          metaMes.calcular = true;
-        } else {
-          metaMes.valor = "-";
-          metaMes.percentual = "-";
-        }
-        i++;
-        return metaMes;
-      });
-
-      this.showTabela = true;
-    },
-    geraTabelaVend() {
-      this.metaVend = [];
-      this.expand2 = false;
-      this.pessoaStore.pessoas.forEach(pessoa => {
-        let totalVend = 0;
-        let metaPessoa = {
-          id: pessoa.id,
-          nome: pessoa.nome,
-          id_empresa: this.empresaStore.currentEmpresa.value,
-          janeiro: formatToBRL(
-            parseFloat(parseNumber(this.metaAnual[0].valor)) /
-              this.pessoaStore.pessoas.length
-          ),
-          fevereiro: formatToBRL(
-            parseFloat(parseNumber(this.metaAnual[1].valor)) /
-              this.pessoaStore.pessoas.length
-          ),
-          marco: formatToBRL(
-            parseFloat(parseNumber(this.metaAnual[2].valor)) /
-              this.pessoaStore.pessoas.length
-          ),
-          abril: formatToBRL(
-            parseFloat(parseNumber(this.metaAnual[3].valor)) /
-              this.pessoaStore.pessoas.length
-          ),
-          maio: formatToBRL(
-            parseFloat(parseNumber(this.metaAnual[4].valor)) /
-              this.pessoaStore.pessoas.length
-          ),
-          junho: formatToBRL(
-            parseFloat(parseNumber(this.metaAnual[5].valor)) /
-              this.pessoaStore.pessoas.length
-          ),
-          julho: formatToBRL(
-            parseFloat(parseNumber(this.metaAnual[6].valor)) /
-              this.pessoaStore.pessoas.length
-          ),
-          agosto: formatToBRL(
-            parseFloat(parseNumber(this.metaAnual[7].valor)) /
-              this.pessoaStore.pessoas.length
-          ),
-          setembro: formatToBRL(
-            parseFloat(parseNumber(this.metaAnual[8].valor)) /
-              this.pessoaStore.pessoas.length
-          ),
-          outubro: formatToBRL(
-            parseFloat(parseNumber(this.metaAnual[9].valor)) /
-              this.pessoaStore.pessoas.length
-          ),
-          novembro: formatToBRL(
-            parseFloat(parseNumber(this.metaAnual[10].valor)) /
-              this.pessoaStore.pessoas.length
-          ),
-          dezembro: formatToBRL(
-            parseFloat(parseNumber(this.metaAnual[11].valor)) /
-              this.pessoaStore.pessoas.length
-          ),
-          total: formatToBRL(
-            parseFloat(parseNumber(this.meta.valor_total)) /
-              this.pessoaStore.pessoas.length
-          ),
-          calcular: true
-        };
-
-        this.metaVend.push(metaPessoa);
-      });
-    },
-    atualizaVend(item, calcTotal) {
-      const data = Object.values(item);
-      if (calcTotal) {
-        const soma = data.reduce((total, item, index) => {
-          if (index > 2 && index < 15) return (total += parseNumber(item));
-          else return (total += 0);
-        }, 0);
-
-        item.total = formatToBRL(soma);
-        this.$refs.total_vendedor.$el.getElementsByTagName("input")[0].value =
-          item.total;
-      }
-    },
-    loadValoresVend(meta) {
-      this.metaVendAux = meta;
       this.$refs.janeiro
-        ? (this.$refs.janeiro.$el.getElementsByTagName("input")[0].value =
-            meta.janeiro)
-        : 0;
+        ? (this.$refs.janeiro.$el.getElementsByTagName("input")[0].value = 0)
+        : null;
       this.$refs.fevereiro
-        ? (this.$refs.fevereiro.$el.getElementsByTagName("input")[0].value =
-            meta.fevereiro)
-        : 0;
+        ? (this.$refs.fevereiro.$el.getElementsByTagName("input")[0].value = 0)
+        : null;
       this.$refs.marco
-        ? (this.$refs.marco.$el.getElementsByTagName("input")[0].value =
-            meta.marco)
-        : 0;
+        ? (this.$refs.marco.$el.getElementsByTagName("input")[0].value = 0)
+        : null;
       this.$refs.abril
-        ? (this.$refs.abril.$el.getElementsByTagName("input")[0].value =
-            meta.abril)
-        : 0;
+        ? (this.$refs.abril.$el.getElementsByTagName("input")[0].value = 0)
+        : null;
       this.$refs.maio
-        ? (this.$refs.maio.$el.getElementsByTagName("input")[0].value =
-            meta.maio)
-        : 0;
+        ? (this.$refs.maio.$el.getElementsByTagName("input")[0].value = 0)
+        : null;
       this.$refs.junho
-        ? (this.$refs.junho.$el.getElementsByTagName("input")[0].value =
-            meta.junho)
-        : 0;
+        ? (this.$refs.junho.$el.getElementsByTagName("input")[0].value = 0)
+        : null;
       this.$refs.julho
-        ? (this.$refs.julho.$el.getElementsByTagName("input")[0].value =
-            meta.julho)
-        : 0;
+        ? (this.$refs.julho.$el.getElementsByTagName("input")[0].value = 0)
+        : null;
       this.$refs.agosto
-        ? (this.$refs.agosto.$el.getElementsByTagName("input")[0].value =
-            meta.agosto)
-        : 0;
+        ? (this.$refs.agosto.$el.getElementsByTagName("input")[0].value = 0)
+        : null;
       this.$refs.setembro
-        ? (this.$refs.setembro.$el.getElementsByTagName("input")[0].value =
-            meta.setembro)
-        : 0;
+        ? (this.$refs.setembro.$el.getElementsByTagName("input")[0].value = 0)
+        : null;
       this.$refs.outubro
-        ? (this.$refs.outubro.$el.getElementsByTagName("input")[0].value =
-            meta.outubro)
-        : 0;
+        ? (this.$refs.outubro.$el.getElementsByTagName("input")[0].value = 0)
+        : null;
       this.$refs.novembro
-        ? (this.$refs.novembro.$el.getElementsByTagName("input")[0].value =
-            meta.novembro)
-        : 0;
+        ? (this.$refs.novembro.$el.getElementsByTagName("input")[0].value = 0)
+        : null;
       this.$refs.dezembro
-        ? (this.$refs.dezembro.$el.getElementsByTagName("input")[0].value =
-            meta.dezembro)
-        : 0;
-      this.$refs.total
-        ? (this.$refs.total.$el.getElementsByTagName("input")[0].value =
-            meta.total)
-        : 0;
+        ? (this.$refs.dezembro.$el.getElementsByTagName("input")[0].value = 0)
+        : null;
     },
-    calcPercent(item) {
-      const valor = parseNumber(item.valor);
-
-      const percentual =
-        (valor / parseNumber(this.meta.valor_total, ",")) * 100;
-      item.percentual = moneyToNumber(formatToBRL(percentual)) + "%";
-      this.$refs.meta_percentual.$el.getElementsByTagName("input")[0].value =
-        item.percentual;
-
-      this.calcTotal();
+    alteraMes(mes) {
+      this.mesesAlterados[mes] = { valor: this.meta[mes] };
+      this.calcular();
     },
-    calcValor(item) {
-      const percentual = parseNumber(item.percentual);
+    calcular() {
+      if (this.meta.valor == "R$ 0,00") return;
 
-      const valor =
-        (parseNumber(this.meta.valor_total, ",") / 100) * percentual;
-      item.valor = formatToBRL(valor);
-      this.$refs.meta_valor.$el.getElementsByTagName("input")[0].value =
-        item.valor;
-
-      this.calcTotal();
-    },
-    calcTotal() {
-      const soma = this.metaAnual.reduce((total, item) => {
-        return (total += parseNumber(item.valor));
+      const mesesAlterados = Object.values(this.mesesAlterados);
+      const valorMesesAlterados = mesesAlterados.reduce((total, mes) => {
+        return total + parseNumber(mes.valor || "0,00");
       }, 0);
+      const valorMes = formatToBRL(
+        (parseNumber(this.meta.valor) - valorMesesAlterados) /
+          (12 - mesesAlterados.length)
+      );
 
-      this.meta.valor_total = formatToBRL(soma);
-      this.$refs.valor_total
-        ? (this.$refs.valor_total.$el.getElementsByTagName(
-            "input"
-          )[0].value = this.meta.valor_total)
-        : "";
+      if (mesesAlterados.length == 0)
+        this.meta.janeiro = this.meta.fevereiro = this.meta.marco = this.meta.abril = this.meta.maio = this.meta.junho = this.meta.julho = this.meta.agosto = this.meta.setembro = this.meta.outubro = this.meta.novembro = this.meta.dezembro = valorMes;
+      else {
+        this.meta.janeiro = this.mesesAlterados.janeiro
+          ? this.mesesAlterados.janeiro.valor
+          : valorMes;
+        this.meta.fevereiro = this.mesesAlterados.fevereiro
+          ? this.mesesAlterados.fevereiro.valor
+          : valorMes;
+        this.meta.marco = this.mesesAlterados.marco
+          ? this.mesesAlterados.marco.valor
+          : valorMes;
+        this.meta.abril = this.mesesAlterados.abril
+          ? this.mesesAlterados.abril.valor
+          : valorMes;
+        this.meta.maio = this.mesesAlterados.maio
+          ? this.mesesAlterados.maio.valor
+          : valorMes;
+        this.meta.junho = this.mesesAlterados.junho
+          ? this.mesesAlterados.junho.valor
+          : valorMes;
+        this.meta.julho = this.mesesAlterados.julho
+          ? this.mesesAlterados.julho.valor
+          : valorMes;
+        this.meta.agosto = this.mesesAlterados.agosto
+          ? this.mesesAlterados.agosto.valor
+          : valorMes;
+        this.meta.setembro = this.mesesAlterados.setembro
+          ? this.mesesAlterados.setembro.valor
+          : valorMes;
+        this.meta.outubro = this.mesesAlterados.outubro
+          ? this.mesesAlterados.outubro.valor
+          : valorMes;
+        this.meta.novembro = this.mesesAlterados.novembro
+          ? this.mesesAlterados.novembro.valor
+          : valorMes;
+        this.meta.dezembro = this.mesesAlterados.dezembro
+          ? this.mesesAlterados.dezembro.valor
+          : valorMes;
+      }
+
+      this.$refs.janeiro.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.janeiro;
+      this.$refs.fevereiro.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.fevereiro;
+      this.$refs.marco.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.marco;
+      this.$refs.abril.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.abril;
+      this.$refs.maio.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.maio;
+      this.$refs.junho.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.junho;
+      this.$refs.julho.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.julho;
+      this.$refs.agosto.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.agosto;
+      this.$refs.setembro.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.setembro;
+      this.$refs.outubro.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.outubro;
+      this.$refs.novembro.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.novembro;
+      this.$refs.dezembro.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.dezembro;
     },
     loadTela(meta) {
-      let urlTela = `${urlBD}/empresaMetas/TelaMetas/`;
-      if (!meta) {
-        axios.get(urlTela).then(res => {
-          const tela = res.data;
+      if (!meta) return;
 
-          this.pessoaStore.pessoas = tela.pessoas;
-        });
-      } else if (meta.id) {
-        urlTela += meta.id;
-        axios.get(urlTela).then(res => {
-          const tela = res.data;
-
-          this.meta = tela.meta;
-          this.metaAnual = this.meta.metaAnual;
-          this.metaAnual = this.metaAnual.map(mes => {
-            mes.valor = formatToBRL(mes.valor);
-            mes.percentual = moneyToNumber(formatToBRL(mes.percentual)) + "%";
-
-            return mes;
-          });
-
-          this.meta.data = new Date(this.meta.data).toISOString().substr(0, 10);
-
-          this.pessoaStore.pessoas = tela.pessoas;
-          this.showTabela = true;
-
-          this.$refs.valor
-            ? (this.$refs.valor.$el.getElementsByTagName(
-                "input"
-              )[0].value = this.meta.valor_total)
-            : "";
-        });
-      }
+      const url = `${urlBD}/empresaMetas/${meta.id}`;
+      axios.get(url).then(res => {
+        console.log(res.data);
+        this.meta = res.data;
+        this.parseValores();
+      });
     },
-    loadMetas() {
-      const url = `${urlBD}/empresaMetas/`;
+    parseValores() {
+      this.meta.data = new Date(this.meta.data).toISOString().substr(0, 10);
 
-      axios
-        .get(url)
-        .then(res => {
-          this.empresaStore.metas = res.data;
-          this.empresaStore.metas = this.empresaStore.metas.map(meta => {
-            meta.valor_total = formatToBRL(meta.valor_total);
-            return meta;
-          });
-        })
-        .catch(showError);
+      this.$refs.valor.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.valor;
+
+      this.$refs.janeiro.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.janeiro;
+      this.$refs.fevereiro.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.fevereiro;
+      this.$refs.marco.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.marco;
+      this.$refs.abril.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.abril;
+      this.$refs.maio.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.maio;
+      this.$refs.junho.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.junho;
+      this.$refs.julho.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.julho;
+      this.$refs.agosto.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.agosto;
+      this.$refs.setembro.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.setembro;
+      this.$refs.outubro.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.outubro;
+      this.$refs.novembro.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.novembro;
+      this.$refs.dezembro.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.meta.dezembro;
     },
     save() {
       if (!this.$refs.form.validate()) return;
@@ -829,15 +501,15 @@ export default {
       const url = `${urlBD}/empresaMetas/${id}`;
 
       if (!this.meta.id_empresa) {
-        this.meta.id_empresa = this.empresaStore.currentEmpresa.value;
+        this.meta.id_empresa = this.empresaStore.currentEmpresa;
       }
 
-      this.meta.vendedores = this.metaVendAtt;
+      // this.meta.vendedores = this.metaVendAtt;
 
       axios[method](url, this.meta)
         .then(() => {
           this.$toasted.global.defaultSuccess();
-          this.modalStore.empresas.metas.visible;
+          this.modalStore.empresas.metas.visible = false;
 
           saveLog(
             new Date(),

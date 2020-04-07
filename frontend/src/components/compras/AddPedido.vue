@@ -48,7 +48,26 @@
                   v-model="pedido.id_pessoa"
                   no-data-text="Nenhum fornecedor cadastrado"
                   :rules="fornecRules"
-                ></v-autocomplete>
+                  @focus="$store.dispatch('loadFornecs')"
+                  deletable-chips
+                  :search-input.sync="searchFornec"
+                >
+                  <template v-slot:no-data>
+                    <v-btn
+                      type="submit"
+                      color="secondary"
+                      flat
+                      small
+                      v-if="searchFornec"
+                      @click="$store.dispatch('addFornecedor', { nome: searchFornec })"
+                    >
+                      <span>
+                        <v-icon>fa fa-lg fa-plus-circle</v-icon>
+                        {{ searchFornec }}
+                      </span>
+                    </v-btn>
+                  </template>
+                </v-autocomplete>
               </v-flex>
             </v-layout>
           </v-form>
@@ -265,7 +284,27 @@
                     @click:prepend="modalStore.produtos.visible = true"
                     @change="[loadDados(data.item)]"
                     auto-select-first
-                  ></v-autocomplete>
+                    :search-input.sync="searchProduto"
+                    dense
+                    no-data-text="Nenhum produto cadastrado"
+                    @focus="$store.dispatch('loadProdutos')"
+                  >
+                    <template v-slot:no-data>
+                      <v-btn
+                        type="submit"
+                        color="secondary"
+                        flat
+                        small
+                        v-if="searchProduto"
+                        @click="$store.dispatch('addProduto', { descricao: searchProduto })"
+                      >
+                        <span>
+                          <v-icon>fa fa-lg fa-plus-circle</v-icon>
+                          {{ searchProduto }}
+                        </span>
+                      </v-btn>
+                    </template>
+                  </v-autocomplete>
                 </v-flex>
               </td>
               <td>
@@ -304,12 +343,7 @@
               <td>{{ data.item.valor_total || "R$ 0,00"}}</td>
               <td>
                 <v-tooltip bottom>
-                  <v-btn
-                    slot="activator"
-                    icon
-                    class="mr-1"
-                    @click="deleteItem(data.item)"
-                  >
+                  <v-btn slot="activator" icon class="mr-1" @click="deleteItem(data.item)">
                     <i class="fa fa-lg fa-trash"></i>
                   </v-btn>
                   <span>Excluir produto</span>
@@ -383,6 +417,8 @@ export default {
       valid: true,
       valid1: true,
       isLoading: false,
+      searchFornec: null,
+      searchProduto: null,
       pedido: {},
       produtos_pedido: [],
       menu: false,
@@ -482,12 +518,14 @@ export default {
             "input"
           )[0].value = 0)
         : "";
+
+      this.addProduto();
     },
     async loadTela(pedido) {
+      if (!pedido) return;
+
       this.$store.dispatch("loadFornecs");
       this.$store.dispatch("loadProdutos");
-
-      if (!pedido) return;
       let url = `${urlBD}/pedidos`;
       if (pedido.id) {
         axios

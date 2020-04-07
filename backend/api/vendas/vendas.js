@@ -42,8 +42,10 @@ module.exports = app => {
             return res.status(400).send(e.toString())
         }
 
-        if (venda.tabela_preco)
-            venda.tabela_preco = venda.tabela_preco.value
+        if (venda.id_tabela_preco) {
+            venda.perc_desconto = venda.id_tabela_preco.percentual
+            venda.id_tabela_preco = venda.id_tabela_preco.value
+        }
         venda.data_criacao = new Date()
 
         var produtos = venda.produtos
@@ -51,11 +53,14 @@ module.exports = app => {
         delete venda.produtos
         delete venda.financeiro
 
+        console.log(venda)
+
         try {
             venda.valor_frete = parseNumber(venda.valor_frete || "0,00")
             venda.valor_seguro = parseNumber(venda.valor_seguro || "0,00")
             venda.outras_despesas = parseNumber(venda.outras_despesas || "0,00")
             venda.valor_desconto = parseNumber(venda.valor_desconto || "0,00")
+            venda.perc_desconto = parseNumber(venda.perc_desconto || "0,00")
             venda.valor_produtos = parseNumber(venda.valor_produtos || "0,00")
             venda.valor_total = parseNumber(venda.valor_total || "0,00")
 
@@ -81,7 +86,9 @@ module.exports = app => {
 
                                     quantidade: (parseNumber(produto.quantidade || "0,00")),
                                     valor_venda: (parseNumber(produto.valor_venda || "0,00")),
+                                    valor_unitario: (parseNumber(produto.valor_unitario || "0,00")),
                                     valor_desconto: (parseNumber(produto.valor_desconto || "0,00")),
+                                    perc_desconto: venda.perc_desconto,
                                     valor_total: (parseNumber(produto.valor_total || "0,00")),
                                 }
                                 if (venda.tipo == 2) {
@@ -186,7 +193,9 @@ module.exports = app => {
 
                                     quantidade: parseNumber(produto.quantidade || "0,00"),
                                     valor_venda: parseNumber(produto.valor_venda || "0,00"),
+                                    valor_unitario: parseNumber(produto.valor_unitario || "0,00"),
                                     valor_desconto: parseNumber(produto.valor_desconto || "0,00"),
+                                    perc_desconto: venda.perc_desconto,
                                     valor_total: parseNumber(produto.valor_total || "0,00"),
                                 }
 
@@ -381,6 +390,7 @@ module.exports = app => {
                         'pv.quantidade',
                         'pv.valor_desconto',
                         'pv.valor_venda',
+                        'pv.valor_unitario',
                         'pv.valor_total')
                     .where({ id_venda: venda.id })
                     .catch(e => res.status(500).send(e.toString()))

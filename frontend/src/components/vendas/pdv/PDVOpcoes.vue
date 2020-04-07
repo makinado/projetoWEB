@@ -12,7 +12,8 @@
           >
             <v-icon>{{item.icon}}</v-icon>
           </v-btn>
-          <span>{{item.shortcut + ' | ' +item.text}}</span>
+          <span v-if="item.shortcut">{{item.shortcut + ' | ' +item.text}}</span>
+          <span v-else>{{item.text}}</span>
         </v-tooltip>
       </v-flex>
     </v-layout>
@@ -68,6 +69,11 @@ export default {
           text: "Imprimir",
           color: "blue",
           shortcut: "F8"
+        },
+        {
+          icon: "fa fa-lg fa-cog",
+          text: "Configurações",
+          color: "secondary"
         }
       ]
     };

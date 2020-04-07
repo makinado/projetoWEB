@@ -17,9 +17,10 @@
               :items="pessoaStore.clientes"
               v-model="venda.id_pessoa"
               @change="loadCliente"
+              @focus="$store.dispatch('loadClientes')"
             ></v-autocomplete>
           </v-flex>
-          <v-flex xs12 md6> 
+          <v-flex xs12 md6>
             <v-autocomplete
               class="tag-input"
               chips
@@ -31,6 +32,7 @@
               label="Vendedor"
               :items="usuarioStore.currentUsuarios"
               v-model="venda.id_vendedor"
+              @focus="$store.dispatch('loadUsuarios')"
               :rules="vendRules"
             ></v-autocomplete>
           </v-flex>
@@ -78,9 +80,6 @@ export default {
     }
   },
   mounted() {
-    this.$store.dispatch("loadClientes");
-    this.$store.dispatch("loadUsuarios");
-
     this.$refs.cliente.focus();
     this.venda.id_vendedor = this.usuarioStore.currentUsuario.id;
   }

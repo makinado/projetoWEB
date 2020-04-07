@@ -54,16 +54,12 @@
                 <td>{{ data.item.nome_nfce }}</td>
                 <td>{{ data.item.perc_custo }}</td>
                 <td>
-                  <v-btn
-                    icon
-                    @click.prevent="loadDocumento(data.item)"
-                    class="mr-1"
-                  >
+                  <v-btn icon @click.prevent="loadDocumento(data.item)" class="mr-1">
                     <i class="fa fa-lg fa-pencil"></i>
                   </v-btn>
                   <v-btn
                     icon
-                    @click.prevent="[confirmaExlusao = true, financeiroStore.documento = data.item]"
+                    @click.prevent="[confirmaExclusao = true, financeiroStore.documento = data.item]"
                     class="mr-1"
                   >
                     <i class="fa fa-lg fa-trash"></i>
@@ -84,12 +80,8 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-dialog
-      v-model="confirmaExlusao"
-      persistent
-      max-width="500px"
-      v-if="financeiroStore.documento"
-    >
+
+    <v-dialog v-model="confirmaExclusao" max-width="500px" v-if="financeiroStore.documento">
       <v-card>
         <v-card-title>
           <span class="headline">Excluir documento</span>
@@ -97,7 +89,7 @@
         <v-card-text>Excluir {{ financeiroStore.documento.nome }} ?</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" flat @click="confirmaExlusao = false">Fechar</v-btn>
+          <v-btn color="blue darken-1" flat @click="confirmaExclusao = false">Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
       </v-card>
@@ -139,7 +131,7 @@ export default {
         totalItems: 0
       },
       valid: true,
-      confirmaExlusao: false,
+      confirmaExclusao: false,
       nameRules: [
         v => !!v || "Nome é obrigatório",
         v => (!!v && v.length >= 3) || "Nome deve ter no mínimo 3 caracteres"
@@ -154,9 +146,6 @@ export default {
   },
   watch: {
     "$store.state.modalStore.documentos.visible": function() {
-      this.reset();
-    },
-    "$store.state.confirmaExlusao": function() {
       this.reset();
     }
   },
@@ -232,8 +221,6 @@ export default {
         .delete(urldocumentos, this.documento)
         .then(() => {
           this.$toasted.global.defaultSuccess();
-          this.confirmaExlusao = false;
-          this.reset()
 
           saveLog(
             new Date(),
@@ -241,6 +228,9 @@ export default {
             "DOCUMENTOS",
             `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu o documento ${this.financeiroStore.documento.nome}`
           );
+
+          this.confirmaExclusao = false;
+          this.reset();
         })
         .catch(showError);
     }
