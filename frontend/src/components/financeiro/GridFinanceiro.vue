@@ -155,6 +155,7 @@
                 class="v-btn-common"
                 color="danger"
                 @click.prevent="modalStore.documentos.visible = true"
+                v-if="usuarioStore.currentUsuario.financeiro_create"
               >Documentos</v-btn>
               <span>Gerenciar formas de pagamento</span>
             </v-tooltip>
@@ -164,6 +165,7 @@
                 class="v-btn-common"
                 color="secondary"
                 @click.prevent="modalStore.classificacoes.visible = true"
+                v-if="usuarioStore.currentUsuario.financeiro_create"
               >Classificações</v-btn>
               <span>Gerenciar classificações de conta</span>
             </v-tooltip>
@@ -173,6 +175,7 @@
                 class="v-btn-common"
                 :color="color"
                 @click.prevent="[financeiroStore.financ = null, modalStore.financeiro.financ.visible = true, modalStore.financeiro.financ.title = 'Adicionar conta']"
+                v-if="usuarioStore.currentUsuario.financeiro_create"
               >Adicionar conta</v-btn>
               <span>Adicionar conta a pagar/receber</span>
             </v-tooltip>
@@ -329,6 +332,7 @@
             class="v-btn-common"
             color="danger"
             @click.prevent="modalStore.documentos.visible = true"
+            v-if="usuarioStore.currentUsuario.financeiro_create"
           >Documentos</v-btn>
           <span>Gerenciar formas de pagamento</span>
         </v-tooltip>
@@ -338,6 +342,7 @@
             class="v-btn-common"
             color="secondary"
             @click.prevent="modalStore.classificacoes.visible = true"
+            v-if="usuarioStore.currentUsuario.financeiro_create"
           >Classificações</v-btn>
           <span>Gerenciar classificações de conta</span>
         </v-tooltip>
@@ -347,6 +352,7 @@
             class="v-btn-common"
             :color="color"
             @click.prevent="[financeiroStore.financ = null, modalStore.financeiro.financ.visible = true, modalStore.financeiro.financ.title = 'Adicionar conta']"
+            v-if="usuarioStore.currentUsuario.financeiro_create"
           >Adicionar conta</v-btn>
           <span>Adicionar conta a pagar/receber</span>
         </v-tooltip>
@@ -391,6 +397,7 @@
                 icon
                 class="mr-1"
                 @click.prevent="[financeiroStore.financ = data.item, concluirConta()]"
+                v-if="usuarioStore.currentUsuario.financeiro_update"
               >
                 <i class="fa fa-lg fa-check"></i>
               </v-btn>
@@ -402,6 +409,7 @@
                 icon
                 class="mr-1"
                 @click.prevent="[financeiroStore.financ = data.item, cancelarConta()]"
+                v-if="usuarioStore.currentUsuario.financeiro_update"
               >
                 <i class="fa fa-lg fa-times"></i>
               </v-btn>
@@ -413,6 +421,7 @@
                 icon
                 @click.prevent="[financeiroStore.financ = data.item, modalStore.financeiro.financ.visible = true,modalStore.financeiro.financ.title = 'Alterar parcela do financeiro']"
                 class="mr-1"
+                v-if="usuarioStore.currentUsuario.financeiro_update"
               >
                 <i class="fa fa-lg fa-pencil"></i>
               </v-btn>
@@ -435,6 +444,7 @@
                 icon
                 @click.prevent="[confirmaExclusao = true, financeiroStore.financ = data.item]"
                 class="mr-1"
+                v-if="usuarioStore.currentUsuario.financeiro_delete"
               >
                 <i class="fa fa-lg fa-trash"></i>
               </v-btn>
@@ -550,8 +560,8 @@ export default {
         { value: "pessoa", text: "Pessoa", sortable: true },
         { value: "tipo_conta", text: "Tipo", sortable: true },
         { value: "pago", text: "Situação", sortable: true },
-        { value: "documento_origem", text: "Documento", sortable: false },
-        { value: "num_documento_origem", text: "Número doc", sortable: false },
+        { value: "documento_origem", text: "Documento", sortable: true },
+        { value: "num_documento_origem", text: "Número doc", sortable: true },
         { value: "data_vencimento", text: "Data vencimento", sortable: true },
         { value: "data_baixa", text: "Data baixa", sortable: true },
         { value: "valor_parcela", text: "Valor da parcela", sortable: true },
@@ -662,9 +672,11 @@ export default {
     },
     async loadFinanceiro() {
       this.loading = true;
-      
+
       const url = `${urlBD}/financeiro?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
+      }&order=${this.pagination.sortBy || ""}&desc=${
+        this.pagination.descending ? "desc" : "asc"
       }&empresa=${this.empresaStore.currentEmpresa || ""}&tipo=${this.filter
         .tipo || 1}&id=${this.filter.id || ""}&pessoa=${this.filter.pessoa ||
         ""}&documento=${this.filter.documento || ""}&tipo_data=${this.filter

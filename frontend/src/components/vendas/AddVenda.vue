@@ -444,7 +444,6 @@
                   >
                     <template v-slot:no-data>
                       <v-btn
-                        type="submit"
                         color="secondary"
                         flat
                         small

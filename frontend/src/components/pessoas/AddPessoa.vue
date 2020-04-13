@@ -29,7 +29,6 @@
                   label="CNPJ*"
                   v-mask="'##.###.###/####-##'"
                   v-model="pessoa.cnpj"
-                  :disabled="modalStore.pessoas.title.includes('Alterar')"
                   :rules="cnpjRules"
                 ></v-text-field>
               </v-flex>
@@ -57,7 +56,6 @@
                   label="CPF*"
                   v-mask="'###.###.###-##'"
                   v-model="pessoa.cpf"
-                  :disabled="modalStore.pessoas.title.includes('Alterar')"
                   :rules="cpfRules"
                 ></v-text-field>
               </v-flex>
@@ -69,9 +67,13 @@
 
           <v-layout wrap>
             <v-flex xs12>
-              <v-tabs v-model="tabIndex" centered color="#FFFFFF" light icons-and-text>
-                <v-tabs-slider color="color"></v-tabs-slider>
-
+              <v-tabs
+                v-model="tabIndex"
+                centered
+                color="transparent"
+                :slider-color="color"
+                icons-and-text
+              >
                 <v-tab href="#tab-1">
                   BÁSICO
                   <v-icon>fa fa-lg fa-file</v-icon>

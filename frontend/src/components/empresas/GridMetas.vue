@@ -69,6 +69,7 @@
                 class="v-btn-common"
                 :color="color"
                 @click.prevent="[empresaStore.meta = null, modalStore.empresas.metas.visible = true, modalStore.empresas.metas.title = 'Adicionar meta']"
+                v-if="usuarioStore.currentUsuario.empresa_create"
               >Adicionar</v-btn>
               <span>Adicionar meta</span>
             </v-tooltip>
@@ -140,6 +141,7 @@
             class="v-btn-common"
             :color="color"
             @click.prevent="[empresaStore.meta = null, modalStore.empresas.metas.visible = true, modalStore.empresas.metas.title = 'Adicionar meta']"
+            v-if="usuarioStore.currentUsuario.empresa_create"
           >Adicionar</v-btn>
           <span>Adicionar meta</span>
         </v-tooltip>
@@ -175,7 +177,7 @@
           <td>{{ data.item.data | date }}</td>
           <td>{{ data.item.valor | currency }}</td>
           <td>
-            {{ data.concluido_valor | currency }} - {{ data.item.valor | currency }}
+            {{ data.item.concluido_valor | currency }} - {{ data.item.valor | currency }}
             <v-progress-linear :value="data.item.concluido_porc"></v-progress-linear>
           </td>
           <td>
@@ -271,8 +273,8 @@ export default {
         { value: "tipo_receita_despesa", text: "Tipo", sortable: true },
         { value: "data", text: "Data", sortable: true },
         { value: "valor", text: "Valor", sortable: true },
-        { value: "concluido_proc", text: "Concluído", sortable: true },
-        { value: "actions", text: "Ações" }
+        { value: "concluido_proc", text: "Concluído", sortable: false },
+        { value: "actions", text: "Ações", sortable: false }
       ],
       pagination: {
         descending: false,
@@ -315,6 +317,8 @@ export default {
 
       const url = `${urlBD}/empresaMetas?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
+      }&order=${this.pagination.sortBy || ""}&desc=${
+        this.pagination.descending ? "desc" : "asc"
       }&tipo=${this.filter.tipo || 1}&id=${this.filter.id || ""}&nome=${this
         .filter.nome || ""}`;
 

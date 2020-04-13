@@ -57,12 +57,13 @@
                       v-html="evento.descricao"
                       :color="color"
                       flat
+                      dark
                       class="pt-0 pl-1 text-light my-event"
                     ></v-card>
                   </template>
                   <v-card color="grey lighten-4" min-width="350px" flat>
                     <v-toolbar :color="color" dark>
-                      <v-toolbar-title class="text-light" v-html="evento.descricao"></v-toolbar-title>
+                      <v-toolbar-title class="text-light white--text" v-html="evento.descricao"></v-toolbar-title>
                     </v-toolbar>
                     <v-card-title primary-title>
                       <span v-html="evento.observacao"></span>
@@ -99,7 +100,7 @@
                   </template>
                   <v-card color="grey lighten-4" min-width="350px" flat>
                     <v-toolbar :color="color" dark>
-                      <v-toolbar-title class="text-light" v-html="evento.descricao"></v-toolbar-title>
+                      <v-toolbar-title class="text-light white--text" v-html="evento.descricao"></v-toolbar-title>
                     </v-toolbar>
                     <v-card-title primary-title>
                       <span v-html="evento.observacao"></span>
@@ -138,7 +139,7 @@
                   </template>
                   <v-card color="grey lighten-4" min-width="350px" flat>
                     <v-toolbar :color="color" dark>
-                      <v-toolbar-title class="text-light" v-html="evento.descricao"></v-toolbar-title>
+                      <v-toolbar-title class="text-light white--text" v-html="evento.descricao"></v-toolbar-title>
                     </v-toolbar>
                     <v-card-title primary-title>
                       <span v-html="evento.observacao"></span>
@@ -242,7 +243,6 @@ export default {
     loadEventos() {
       const url = `${urlBD}/eventos_agenda`;
       axios.get(url).then(res => {
-        console.log(res.data);
         this.eventoStore.eventos = res.data;
         this.eventoStore.eventos.map(evento => {
           evento.open = false;

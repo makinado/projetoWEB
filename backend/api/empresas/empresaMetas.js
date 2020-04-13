@@ -1,5 +1,6 @@
 module.exports = app => {
     const { existsOrError, notExistsOrError, parseNumber } = app.api.validation
+    const { formatToBRL } = require('brazilian-values')
 
     const save = async (req, res) => {
         const meta = { ...req.body }
@@ -69,7 +70,7 @@ module.exports = app => {
             .join('empresas', 'empresa_metas.id_empresa', 'empresas.id')
             .select('empresa_metas.id', 'empresa_metas.nome', 'empresas.nome as empresa', 'tipo_receita_despesa', 'data', 'valor')
             .limit(limit).offset(page * limit - limit)
-            .orderBy('empresa_metas.nome')
+            .orderBy(req.query.order || "empresa_metas.nome", req.query.desc || "asc")
             .where((qb) => {
                 if (req.query.nome) {
                     qb.where('empresa_metas.nome', 'ilike', `%${req.query.nome}%`);
@@ -79,11 +80,13 @@ module.exports = app => {
             })
             .then(async metas => {
                 metas = await Promise.all(metas.map(async m => {
-                    const valor_vendas = await app.db('venda').sum('valor_total')
-                    m.concluido_valor = valor_vendas.sum || 0
-                    m.concluido_porc = valor_vendas.sum || 0 * 100 / m.valor
+                    if (m.tipo_receita_despesa == 'RECEITA') {
+                        const valor_vendas = await app.db('venda').sum('valor_total')
+                        m.concluido_valor = valor_vendas[0].sum || 0
+                        m.concluido_porc = parseNumber(valor_vendas[0].sum || "0,00", '.') * 100 / parseNumber(m.valor, '.')
 
-                    return m
+                        return m
+                    }
                 }))
 
                 res.json({ data: metas, count, limit })

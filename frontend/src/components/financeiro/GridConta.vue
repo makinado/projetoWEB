@@ -66,6 +66,7 @@
                 class="v-btn-common"
                 :color="color"
                 @click.prevent="[financeiroStore.conta = null, modalStore.financeiro.conta.visible = true, modalStore.financeiro.conta.title = 'Adicionar conta']"
+                v-if="usuarioStore.currentUsuario.contas_create"
               >Adicionar conta</v-btn>
               <span>Adicionar conta a pagar/receber</span>
             </v-tooltip>
@@ -133,6 +134,7 @@
             class="v-btn-common"
             :color="color"
             @click.prevent="[financeiroStore.conta = null, modalStore.financeiro.conta.visible = true, modalStore.financeiro.conta.title = 'Adicionar conta']"
+            v-if="usuarioStore.currentUsuario.contas_create"
           >Adicionar conta</v-btn>
           <span>Adicionar conta conta</span>
         </v-tooltip>
@@ -168,6 +170,7 @@
                 icon
                 @click.prevent="[financeiroStore.conta = data.item, modalStore.financeiro.movimento.visible = true]"
                 class="mr-1"
+                v-if="usuarioStore.currentUsuario.contas_update"
               >
                 <i class="fa fa-lg fa-eye"></i>
               </v-btn>
@@ -179,6 +182,7 @@
                 icon
                 @click.prevent="[financeiroStore.conta = data.item, modalStore.financeiro.conta.visible = true,modalStore.financeiro.conta.title = 'Alterar conta']"
                 class="mr-1"
+                v-if="usuarioStore.currentUsuario.contas_update"
               >
                 <i class="fa fa-lg fa-pencil"></i>
               </v-btn>
@@ -190,6 +194,7 @@
                 icon
                 @click.prevent="[confirmaExclusao = true, financeiroStore.conta = data.item]"
                 class="mr-1"
+                v-if="usuarioStore.currentUsuario.contas_delete"
               >
                 <i class="fa fa-lg fa-trash"></i>
               </v-btn>
@@ -333,6 +338,8 @@ export default {
 
       const url = `${urlBD}/conta?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
+      }&order=${this.pagination.sortBy || ""}&desc=${
+        this.pagination.descending ? "desc" : "asc"
       }&tipo=${this.filter.tipo || 1}&id=${this.filter.id || ""}&empresa=${this
         .filter.empresa || ""}&nome=${this.filter.nome || ""}&valor=${this
         .filter.valor || ""}`;

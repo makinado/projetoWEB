@@ -26,7 +26,7 @@
               </Card>
             </v-flex>
 
-            <v-flex xs12 md4>
+            <v-flex xs12 md5>
               <Card class="mb-5" title="Cliente e Vendedor" :color="color">
                 <PDVCliente ref="PDVCliente" />
               </Card>
@@ -35,7 +35,7 @@
               </Card>
             </v-flex>
 
-            <v-flex xs12 md7>
+            <v-flex xs12 md6>
               <Card title="Menu" :color="color">
                 <PDVMenu ref="PDVMenu" />
               </Card>

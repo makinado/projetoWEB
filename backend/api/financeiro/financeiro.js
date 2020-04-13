@@ -25,10 +25,11 @@ module.exports = app => {
                 }
 
                 financ.data_criacao = financ.data_criacao ? financ.data_criacao : new Date()
+                financ.data_baixa = financ.data_baixa ? financ.data_baixa : null
                 financ.valor_parcela = parseNumber(financ.valor)
                 financ.valor_desconto = parseNumber(financ.valor_desconto || "0,00")
                 financ.valor_acrescimo = parseNumber(financ.valor_acrescimo || "0,00")
-                financ.valor_pago = parseNumber(financ.valor_pago || "0,00")
+                financ.valor_pago = financ.pago ? parseNumber(financ.valor_pago) : 0
                 financ.valor_total = parseNumber(financ.valor_total)
 
                 delete financ.edit
@@ -44,8 +45,6 @@ module.exports = app => {
             return res.status(400).send(e.toString())
         }
 
-        console.log(financeiro)
-        return
 
         financeiro.forEach(financ => {
             if (financ.id) {
@@ -196,7 +195,7 @@ module.exports = app => {
                 'num_documento_origem'
             )
             .limit(limit).offset(page * limit - limit)
-            .orderBy('tipo_conta', 'pago')
+            .orderBy(req.query.order || "tipo_conta", req.query.desc || "asc")
             .where((qb) => {
                 if (req.query.empresa) {
                     qb.where('financeiro.id_empresa', '=', req.query.empresa);

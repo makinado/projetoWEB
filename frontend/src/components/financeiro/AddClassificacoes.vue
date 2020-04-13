@@ -7,9 +7,13 @@
           <v-container fluid grid-list-xl>
             <v-layout wrap>
               <v-flex xs12>
-                <v-tabs v-model="tabIndex" centered color="#FFFFFF" light icons-and-text>
-                  <v-tabs-slider :color="color"></v-tabs-slider>
-
+                <v-tabs
+                  v-model="tabIndex"
+                  centered
+                  color="transparent"
+                  :slider-color="color"
+                  icons-and-text
+                >
                   <v-tab :color="color" href="#tab-1">
                     RECEITAS
                     <v-icon>fa fa-lg fa-arrow-down</v-icon>

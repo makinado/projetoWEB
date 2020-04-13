@@ -61,6 +61,8 @@ export default {
 
       const res = await axios.post(`${urlBD}/validateToken`, usuario);
 
+      console.log(usuario);
+
       if (res.data) {
         this.$store.commit("setUsuario", usuario);
         this.$socket.emit("login", { id: usuario.id, nome: usuario.nome });

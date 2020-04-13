@@ -12,9 +12,13 @@
           <v-container grid-list-xl>
             <v-layout row>
               <v-flex xs12>
-                <v-tabs v-model="tabIndex" centered color="#FFFFFF" light icons-and-text>
-                  <v-tabs-slider :color="color"></v-tabs-slider>
-
+                <v-tabs
+                  v-model="tabIndex"
+                  centered
+                  color="transparent"
+                  :slider-color="color"
+                  icons-and-text
+                >
                   <v-tab href="#tab-1">
                     ESTOQUE
                     <v-icon>fa fa-lg fa-th</v-icon>

@@ -7,6 +7,8 @@ require('dotenv').config()
 const compression = require('compression')
 require('./api/chat/socket')(io, app);
 const consign = require('consign')
+
+require('./config/mongodb')
 const mongoose = require('mongoose')
 
 const { dbUsers, db } = require('./config/db')

@@ -84,7 +84,7 @@ module.exports = app => {
         app.db('pessoas')
             .select('id', 'nome', 'cpf', 'cnpj', 'email', 'contato')
             .limit(limit).offset(page * limit - limit)
-            .orderBy('nome')
+            .orderBy(req.query.order || "nome", req.query.desc || "asc")
             .where((qb) => {
                 if (req.query.tipo == 2) {
                     // pesquisa avançada

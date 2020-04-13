@@ -24,7 +24,12 @@
               </v-flex>
 
               <v-flex xs12 md4 class="mt-2">
-                <v-text-field label="CPF/CNPJ" v-model="venda.cpf_cnpj" readonly></v-text-field>
+                <v-text-field
+                  label="CPF/CNPJ"
+                  v-model="venda.cpf_cnpj"
+                  v-mask="['###.###.###-##', '##.###.###/####-##']"
+                  clearable
+                ></v-text-field>
               </v-flex>
 
               <v-flex xs12 md4>
@@ -40,17 +45,22 @@
                 ></v-autocomplete>
               </v-flex>
 
-              <v-flex xs12 md3>
-                <v-text-field label="VALOR DOS PRODUTOS"></v-text-field>
+              <v-flex xs12 md4>
+                <v-text-field
+                  label="VALOR DESCONTOS"
+                  readonly
+                  v-model="venda.totais.valor_desconto"
+                ></v-text-field>
               </v-flex>
-              <v-flex xs12 md3>
-                <v-text-field label="VALOR DESCONTOS"></v-text-field>
+              <v-flex xs12 md4>
+                <v-text-field
+                  label="VALOR ACRÉSCIMOS"
+                  readonly
+                  v-model="venda.totais.valor_acrescimo"
+                ></v-text-field>
               </v-flex>
-              <v-flex xs12 md3>
-                <v-text-field label="VALOR ACRÉSCIMOS"></v-text-field>
-              </v-flex>
-              <v-flex xs12 md3>
-                <v-text-field label="VALOR TOTAL"></v-text-field>
+              <v-flex xs12 md4>
+                <v-text-field label="VALOR TOTAL" readonly v-model="venda.totais.valor_total"></v-text-field>
               </v-flex>
             </v-layout>
           </v-container>
@@ -94,6 +104,7 @@ export default {
     ...mapState([
       "pessoaStore",
       "usuarioStore",
+      "empresaStore",
       "financeiroStore",
       "vendaStore",
       "modalStore"
@@ -151,7 +162,44 @@ export default {
     };
   },
   methods: {
-    save() {}
+    save() {
+      const method = this.venda.id ? "put" : "post";
+      const id = this.venda.id ? this.venda.id : "";
+      const url = `${urlBD}/vendas/${id}`;
+
+      const venda = { ...this.venda };
+      if (!venda.id_empresa) {
+        venda.id_empresa = this.empresaStore.currentEmpresa;
+      }
+
+      venda.tipo = 2; // venda
+      venda.valor_desconto = venda.totais.valor_desconto;
+      venda.valor_total = venda.totais.valor_total;
+      delete venda.pdvProduto;
+      delete venda.totais;
+
+      venda.produtos = venda.produtos.map(p => {
+        p.id = p.id ? p.id : p.produto.value;
+        delete p.produto;
+        return p;
+      });
+
+      axios[method](url, venda)
+        .then(() => {
+          this.$toasted.global.defaultSuccess();
+          this.$store.dispatch("resetPDV");
+
+          saveLog(
+            new Date(),
+            method === "post" ? "GRAVAÇÃO" : "ALTERAÇÃO",
+            "PDV",
+            `Usuário ${this.usuarioStore.currentUsuario.nome} ${
+              method === "post" ? "ADICIONOU" : "ALTEROU"
+            } uma venda ao cliente ${this.venda.id_pessoa}`
+          );
+        })
+        .catch(showError);
+    }
   }
 };
 </script>

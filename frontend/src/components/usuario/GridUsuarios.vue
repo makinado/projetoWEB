@@ -73,6 +73,7 @@
                 class="v-btn-common"
                 :color="color"
                 @click.prevent="[ usuarioStore.usuario = null,modalStore.usuarios.visible = true,modalStore.usuarios.title = 'Adicionar usuario']"
+                v-if="usuarioStore.currentUsuario.usuario_create"
               >Adicionar</v-btn>
               <span>Adicionar usuário</span>
             </v-tooltip>
@@ -146,6 +147,7 @@
             class="v-btn-common"
             :color="color"
             @click.prevent="[ usuarioStore.usuario = null,modalStore.usuarios.visible = true,modalStore.usuarios.title = 'Adicionar usuario']"
+            v-if="usuarioStore.currentUsuario.usuario_create"
           >Adicionar</v-btn>
           <span>Adicionar usuário</span>
         </v-tooltip>
@@ -180,13 +182,19 @@
                 slot="activator"
                 icon
                 @click.prevent="[usuarioStore.meta.id_usuario = data.item.id, modalStore.usuarios.metas.visible = true, modalStore.usuarios.metas.title = `Gerenciar metas do(a) ${data.item.nome}`]"
+                v-if="usuarioStore.currentUsuario.usuario_update"
               >
                 <i class="fa fa-lg fa-line-chart"></i>
               </v-btn>
               <span>Metas</span>
             </v-tooltip>
             <v-tooltip bottom>
-              <v-btn slot="activator" icon @click.prevent="[]">
+              <v-btn
+                slot="activator"
+                icon
+                @click.prevent="[]"
+                v-if="usuarioStore.currentUsuario.usuario_update"
+              >
                 <i class="fa fa-lg fa-usd"></i>
               </v-btn>
               <span>Comissões</span>
@@ -197,6 +205,7 @@
                 icon
                 @click.prevent="[usuarioStore.usuario = data.item, modalStore.usuarios.visible = true,modalStore.usuarios.title = 'Alterar usuario']"
                 class="mr-1"
+                v-if="usuarioStore.currentUsuario.usuario_update"
               >
                 <i class="fa fa-lg fa-pencil"></i>
               </v-btn>
@@ -208,6 +217,7 @@
                 icon
                 @click.prevent="[confirmaExclusao = true,usuarioStore.usuario = data.item]"
                 class="mr-1"
+                v-if="usuarioStore.currentUsuario.usuario_delete"
               >
                 <i class="fa fa-lg fa-trash"></i>
               </v-btn>
@@ -289,8 +299,8 @@ export default {
         { value: "id", text: "Código", sortable: true },
         { value: "nome", text: "Nome", sortable: true },
         { value: "email", text: "E-mail", sortable: true },
-        { value: "contato", text: "Contato" },
-        { value: "actions", text: "Ações" }
+        { value: "contato", text: "Contato", sortable: false },
+        { value: "actions", text: "Ações", sortable: false }
       ],
       filter: {},
       concluir: false,
@@ -339,6 +349,8 @@ export default {
 
       const url = `${urlBD}/usuarios?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
+      }&order=${this.pagination.sortBy || ""}&desc=${
+        this.pagination.descending ? "desc" : "asc"
       }&tipo=${this.filter.tipo || 1}&id=${this.filter.id || ""}&nome=${this
         .filter.nome || ""}&email=${this.filter.email || ""}&contato=${this
         .filter.contato || ""}`;

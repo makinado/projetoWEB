@@ -82,6 +82,7 @@
                 @click.left.exact="navigate('/metasEmp',false)"
                 @click.ctrl="navigate('/metasEmp',true)"
                 color="secondary"
+                v-if="usuarioStore.currentUsuario.empresa_read"
               >Metas</v-btn>
               <span>Metas da empresa</span>
             </v-tooltip>
@@ -91,6 +92,7 @@
                 class="v-btn-common"
                 :color="color"
                 @click.prevent="[ empresaStore.empresa = null,modalStore.empresas.visible = true,modalStore.empresas.title = 'Adicionar empresa']"
+                v-if="usuarioStore.currentUsuario.empresa_create"
               >Adicionar</v-btn>
               <span>Adicionar empresa</span>
             </v-tooltip>
@@ -174,6 +176,7 @@
             @click.left.exact="navigate('/metasEmp',false)"
             @click.ctrl="navigate('/metasEmp',true)"
             color="secondary"
+            v-if="usuarioStore.currentUsuario.empresa_read"
           >Metas</v-btn>
           <span>Metas da empresa</span>
         </v-tooltip>
@@ -183,6 +186,7 @@
             class="v-btn-common"
             :color="color"
             @click.prevent="[empresaStore.empresa = null,modalStore.empresas.visible = true,modalStore.empresas.title = 'Adicionar empresa']"
+            v-if="usuarioStore.currentUsuario.empresa_create"
           >Adicionar</v-btn>
           <span>Adicionar empresa</span>
         </v-tooltip>
@@ -220,6 +224,7 @@
                 icon
                 @click.prevent="[empresaStore.empresa = data.item, modalStore.empresas.visible = true, modalStore.empresas.title = 'Alterar empresa']"
                 class="mr-1"
+                v-if="usuarioStore.currentUsuario.empresa_update"
               >
                 <i class="fa fa-lg fa-pencil"></i>
               </v-btn>
@@ -231,6 +236,7 @@
                 icon
                 @click.prevent="[confirmaExclusao = true,empresaStore.empresa = data.item]"
                 class="mr-1"
+                v-if="usuarioStore.currentUsuario.empresa_delete"
               >
                 <i class="fa fa-lg fa-trash"></i>
               </v-btn>
@@ -320,8 +326,8 @@ export default {
         { value: "cnpj", text: "CNPJ", sortable: true },
         { value: "nome", text: "Razão social", sortable: true },
         { value: "email", text: "E-mail", sortable: true },
-        { value: "contato", text: "Contato" },
-        { value: "actions", text: "Ações" }
+        { value: "contato", text: "Contato", sortable: false },
+        { value: "actions", text: "Ações", sortable: false }
       ],
       pagination: {
         descending: false,
@@ -371,6 +377,8 @@ export default {
 
       const url = `${urlBD}/empresas?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
+      }&order=${this.pagination.sortBy || ""}&desc=${
+        this.pagination.descending ? "desc" : "asc"
       }&tipo=${this.filter.tipo || 1}&id=${this.filter.id || ""}&nome=${this
         .filter.nome || ""}&email=${this.filter.email || ""}&contato=${this
         .filter.contato || ""}&cnpj=${this.filter.cnpj || ""}`;

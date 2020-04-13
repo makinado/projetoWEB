@@ -184,7 +184,7 @@
               <td>{{ data.item.data | date }}</td>
               <td>{{ data.item.valor || "R$ 0,00" }}</td>
               <td>
-                {{ data.concluido_valor | currency }} - {{ data.item.valor || "R$ 0,00" }}
+                {{ data.item.concluido_valor | currency }} - {{ data.item.valor || "R$ 0,00" }}
                 <v-progress-linear :value="data.item.concluido_porc"></v-progress-linear>
               </td>
               <td>

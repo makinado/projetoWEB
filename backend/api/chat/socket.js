@@ -22,6 +22,10 @@ module.exports = (io, app) => {
             io.emit('onlineUsers', onlineUsers)
         }
 
+        const reloadClients = () => {
+            io.emit('reload')
+        }
+
         socket.on('login', user => {
             user.socketId = socket.id
             user.online = true
@@ -41,7 +45,7 @@ module.exports = (io, app) => {
 
         })
 
-        socket.on('disconnect', () => {
+        socket.on('disconnect', param => {
             // usuario fechou o browser
             if ("user" in socket) {
                 onlineUsers = removeUser(onlineUsers, socket.user.nome)

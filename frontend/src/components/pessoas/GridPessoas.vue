@@ -96,6 +96,7 @@
                 class="v-btn-common"
                 @click.prevent="[modalStore.categorias.visible = true, modalStore.categorias.title = 'Adicionar categoria de pessoa']"
                 color="secondary"
+                v-if="usuarioStore.currentUsuario.pessoa_create"
               >Categorias</v-btn>
               <span>Categorias de pessoas</span>
             </v-tooltip>
@@ -105,6 +106,7 @@
                 class="v-btn-common"
                 :color="color"
                 @click.prevent="[pessoaStore.pessoa = null,modalStore.pessoas.visible = true,modalStore.pessoas.title = 'Adicionar pessoa']"
+                v-if="usuarioStore.currentUsuario.pessoa_create"
               >Adicionar</v-btn>
               <span>Adicionar pessoa</span>
             </v-tooltip>
@@ -203,6 +205,7 @@
             class="v-btn-common"
             @click.prevent="[modalStore.categorias.visible = true, modalStore.categorias.title = 'Adicionar categoria de pessoa']"
             color="secondary"
+            v-if="usuarioStore.currentUsuario.pessoa_create"
           >Categorias</v-btn>
           <span>Categorias de pessoas</span>
         </v-tooltip>
@@ -212,6 +215,7 @@
             class="v-btn-common"
             :color="color"
             @click.prevent="[pessoaStore.pessoa = null,modalStore.pessoas.visible = true,modalStore.pessoas.title = 'Adicionar pessoa']"
+            v-if="usuarioStore.currentUsuario.pessoa_create"
           >Adicionar</v-btn>
           <span>Adicionar pessoa</span>
         </v-tooltip>
@@ -249,6 +253,7 @@
                 icon
                 @click.prevent="[pessoaStore.pessoa = data.item, modalStore.pessoas.visible = true,modalStore.pessoas.title = 'Alterar pessoa']"
                 class="mr-1"
+                v-if="usuarioStore.currentUsuario.pessoa_update"
               >
                 <i class="fa fa-lg fa-pencil"></i>
               </v-btn>
@@ -261,6 +266,7 @@
                 icon
                 @click.prevent="[confirmaExclusao = true, pessoaStore.pessoa = data.item]"
                 class="mr-1"
+                v-if="usuarioStore.currentUsuario.pessoa_delete"
               >
                 <i class="fa fa-lg fa-trash"></i>
               </v-btn>
@@ -287,7 +293,7 @@
         <v-card-title>
           <span class="headline">Excluir pessoa</span>
         </v-card-title>
-        
+
         <v-card-text
           v-if="!Array.isArray(pessoaStore.pessoa)"
         >Excluir {{ pessoaStore.pessoa.nome }}?</v-card-text>
@@ -357,8 +363,8 @@ export default {
         { value: "cpf", text: "CPF", sortable: true },
         { value: "cnpj", text: "CNPJ", sortable: true },
         { value: "email", text: "E-mail", sortable: true },
-        { value: "contato", text: "Contato" },
-        { value: "actions", text: "Ações" }
+        { value: "contato", text: "Contato", sortable: false },
+        { value: "actions", text: "Ações", sortable: false }
       ],
       filter: {},
       concluir: false,
@@ -410,6 +416,8 @@ export default {
 
       const url = `${urlBD}/pessoas?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
+      }&order=${this.pagination.sortBy || ""}&desc=${
+        this.pagination.descending ? "desc" : "asc"
       }&tipo=${this.filter.tipo || 1}&id=${this.filter.id || ""}&nome=${this
         .filter.nome || ""}&email=${this.filter.email || ""}&contato=${this
         .filter.contato || ""}&cpf_cnpj=${this.filter.cpf_cnpj ||

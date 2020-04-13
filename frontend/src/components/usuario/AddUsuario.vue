@@ -80,7 +80,6 @@
                                   label="Contato"
                                   v-mask="['(##)####-####','(##)#####-####']"
                                   v-model="usuario.contato"
-                                  :rules="foneRules"
                                 ></v-text-field>
                               </v-flex>
                               <v-flex xs12 md6>

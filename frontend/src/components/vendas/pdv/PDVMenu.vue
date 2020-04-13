@@ -14,10 +14,6 @@
                 <h3>TOTAIS</h3>
               </v-flex>
               <v-flex xs12 md4>
-                <span class="mr-2">PRODUTOS</span>
-                <strong class="body-2">{{ vendaStore.pdv.totais.valor_produtos || "0,00" }}</strong>
-              </v-flex>
-              <v-flex xs12 md4>
                 <span class="mr-2">DESCONTOS</span>
                 <strong class="body-2">{{ vendaStore.pdv.totais.valor_desconto || "R$ 0,00" }}</strong>
               </v-flex>
@@ -147,18 +143,6 @@ export default {
     Card: () => import("@/components/material/Card"),
     GridProdutos: () => import("./GridProdutos")
   },
-  watch: {
-    "$store.state.modalStore.pessoas.visible": function() {
-      if (!this.modalStore.pessoas.visible) {
-        this.$store.dispatch("loadClientes");
-      }
-    },
-    "$store.state.modalStore.documentos.visible": function() {
-      if (!this.modalStore.documentos.visible) {
-        this.$store.dispatch("loadDocumentos");
-      }
-    }
-  },
   data() {
     return {
       confirmaCancelar: false,
@@ -166,30 +150,30 @@ export default {
     };
   },
   methods: {
-    reset() {
-      this.$set(this.venda, "id_pessoa", null);
-      this.$set(this.venda, "id_pessoa", null);
-      this.$set(this.venda, "cpf_cnpj", null);
-      this.$store.commit("setPDVProdutos", []);
-      this.$store.dispatch("calcTotalPDV");
-    },
     verificaVenda() {
-      if (this.venda.produtos.length == 0) return false;
+      if (!this.venda.id_pessoa) {
+        showError("Cliente não informado");
+        return false;
+      } else if (!this.venda.id_vendedor) {
+        showError("Vendedor não informado");
+        return false;
+      } else if (this.venda.produtos.length == 0) {
+        showError("Nenhum produto adicionado");
+        return false;
+      }
       return true;
     },
     cancel() {
-      if (!this.verificaVenda())
-        return showError("Não há nada para ser descartado");
       if (!this.confirmaCancelar) {
         this.confirmaCancelar = true;
         return;
       }
 
       this.confirmaCancelar = false;
-      this.reset();
+      this.$store.dispatch('resetPDV');
     },
     save(aguardar = false) {
-      if (!this.verificaVenda()) return showError("Nenhum produto adicionado");
+      if (!this.verificaVenda()) return;
 
       if (!aguardar) {
         this.stepper += 1;
@@ -204,11 +188,8 @@ export default {
       if (!venda.id_empresa) {
         venda.id_empresa = this.empresaStore.currentEmpresa;
       }
-      if (aguardar) {
-        venda.tipo = 1; // orçamento
-      } else {
-        venda.tipo = 2; // venda
-      }
+
+      venda.tipo = 1; // orçamento
       venda.valor_desconto = venda.totais.valor_desconto;
       venda.valor_total = venda.totais.valor_total;
       delete venda.pdvProduto;
@@ -223,12 +204,12 @@ export default {
       axios[method](url, venda)
         .then(() => {
           this.$toasted.global.defaultSuccess();
-          this.reset();
+          this.$store.dispatch('resetPDV');
 
           saveLog(
             new Date(),
             method === "post" ? "GRAVAÇÃO" : "ALTERAÇÃO",
-            "ORÇAMENTOS/VENDAS",
+            "PDV",
             `Usuário ${this.usuarioStore.currentUsuario.nome} ${
               method === "post" ? "ADICIONOU" : "ALTEROU"
             } uma venda ao cliente ${this.venda.id_pessoa}`

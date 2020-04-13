@@ -137,7 +137,7 @@ module.exports = app => {
                 'pessoas.nome as pessoa'
             )
             .limit(limit).offset(page * limit - limit)
-            .orderBy('compra_pedido.situacao')
+            .orderBy(req.query.order || "compra_pedido.situacao", req.query.desc || "asc")
             .where(async (qb) => {
                 if (req.query.empresa) {
                     qb.where('compra_pedido.id_empresa', '=', req.query.empresa);

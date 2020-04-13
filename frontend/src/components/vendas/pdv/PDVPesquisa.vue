@@ -21,7 +21,7 @@
         ></v-autocomplete>
 
         <v-layout row wrap>
-          <v-flex xs12 md4>
+          <v-flex xs12 md3>
             <v-text-field
               ref="quantidade"
               v-model="produto.quantidade"
@@ -32,7 +32,7 @@
               :rules="quantidadeRules"
             ></v-text-field>
           </v-flex>
-          <v-flex xs12 md4>
+          <v-flex xs12 md3>
             <v-text-field
               ref="valor_venda"
               v-model="produto.valor_venda"
@@ -43,12 +43,22 @@
               :rules="valorVendaRules"
             ></v-text-field>
           </v-flex>
-          <v-flex xs12 md4>
+          <v-flex xs12 md3>
             <v-text-field
               ref="valor_desconto"
               v-model="produto.valor_desconto"
               v-money="money"
               label="DESCONTO"
+              @change="calcTotal"
+              @keyup.enter="add"
+            ></v-text-field>
+          </v-flex>
+          <v-flex xs12 md3>
+            <v-text-field
+              ref="valor_acrescimo"
+              v-model="produto.valor_acrescimo"
+              v-money="money"
+              label="Acréscimo"
               @change="calcTotal"
               @keyup.enter="add"
             ></v-text-field>
@@ -203,7 +213,8 @@ export default {
         "valor_total",
         formatToBRL(
           parseNumber(this.produto.quantidade || "0,00") *
-            parseNumber(this.produto.valor_venda || "0,00") -
+            parseNumber(this.produto.valor_venda || "0,00") +
+            parseNumber(this.produto.valor_acrescimo || "0,00") -
             parseNumber(this.produto.valor_desconto || "0,00")
         )
       );

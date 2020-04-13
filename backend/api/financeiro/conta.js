@@ -52,6 +52,7 @@ module.exports = app => {
             .join('empresas', 'conta.id_empresa', 'empresas.id')
             .select('conta.id', 'conta.nome', 'conta.observacao', 'empresas.nome as empresa', 'saldo_atual')
             .limit(limit).offset(page * limit - limit)
+            .orderBy(req.query.order || "conta.nome", req.query.desc || "asc")
             .where((qb) => {
                 if (req.query.tipo == 2) {
                     // pesquisa avançada
@@ -78,7 +79,6 @@ module.exports = app => {
                     }
                 }
             })
-            .orderBy('nome')
             .then(contas => res.json({ data: contas, count, limit }))
             .catch(e => res.status(500).send(e.toString()))
     }

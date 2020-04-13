@@ -106,6 +106,7 @@
                 class="v-btn-common"
                 @click.prevent="[ modalStore.grupo_trib.visible = true, modalStore.grupo_trib.title = 'Gerenciar grupos de tributação']"
                 color="info"
+                v-if="usuarioStore.currentUsuario.produto_create"
               >Grupos tributação</v-btn>
               <span>Grupos de tributação</span>
             </v-tooltip>
@@ -115,6 +116,7 @@
                 class="v-btn-common"
                 @click.prevent="[modalStore.categorias.visible = true, modalStore.categorias.title = 'Adicionar categoria de produto']"
                 color="danger"
+                v-if="usuarioStore.currentUsuario.produto_create"
               >Categorias</v-btn>
               <span>Categorias de produtos</span>
             </v-tooltip>
@@ -124,6 +126,7 @@
                 class="v-btn-common"
                 @click.prevent="[modalStore.marcas.visible = true, modalStore.marcas.title = 'Adicionar marca']"
                 color="warning"
+                v-if="usuarioStore.currentUsuario.produto_create"
               >Marcas</v-btn>
               <span>Marcas de produtos</span>
             </v-tooltip>
@@ -133,6 +136,7 @@
                 class="v-btn-common"
                 @click.prevent="[produtoStore.unidade = null, modalStore.unidades.visible = true, modalStore.unidades.title = 'Adicionar unidade']"
                 color="secondary"
+                v-if="usuarioStore.currentUsuario.produto_create"
               >Unidades</v-btn>
               <span>Unidades de produtos</span>
             </v-tooltip>
@@ -142,6 +146,7 @@
                 class="v-btn-common"
                 :color="color"
                 @click.prevent="[produtoStore.produto = null,modalStore.produtos.visible = true,modalStore.produtos.title = 'Adicionar produto', categoriaStore.loadCategorias = 'Produto']"
+                v-if="usuarioStore.currentUsuario.produto_create"
               >Adicionar</v-btn>
               <span>Adicionar produto</span>
             </v-tooltip>
@@ -242,6 +247,7 @@
             class="v-btn-common"
             @click.prevent="[ modalStore.grupo_trib.visible = true]"
             color="info"
+            v-if="usuarioStore.currentUsuario.produto_create"
           >Grupos tributação</v-btn>
           <span>Grupos de tributação</span>
         </v-tooltip>
@@ -251,6 +257,7 @@
             class="v-btn-common"
             @click.prevent="[modalStore.categorias.visible = true, modalStore.categorias.title = 'Adicionar categoria de produto']"
             color="danger"
+            v-if="usuarioStore.currentUsuario.produto_create"
           >Categorias</v-btn>
           <span>Categorias de produtos</span>
         </v-tooltip>
@@ -260,6 +267,7 @@
             class="v-btn-common"
             @click.prevent="[modalStore.marcas.visible = true, modalStore.marcas.title = 'Adicionar marca']"
             color="warning"
+            v-if="usuarioStore.currentUsuario.produto_create"
           >Marcas</v-btn>
           <span>Marcas de produtos</span>
         </v-tooltip>
@@ -269,6 +277,7 @@
             class="v-btn-common"
             @click.prevent="[produtoStore.unidade = null, modalStore.unidades.visible = true, modalStore.unidades.title = 'Adicionar unidade']"
             color="secondary"
+            v-if="usuarioStore.currentUsuario.produto_create"
           >Unidades</v-btn>
           <span>Unidades de produtos</span>
         </v-tooltip>
@@ -278,6 +287,7 @@
             class="v-btn-common"
             :color="color"
             @click.prevent="[produtoStore.produto = null,modalStore.produtos.visible = true,modalStore.produtos.title = 'Adicionar produto', categoriaStore.loadCategorias = 'Produto']"
+            v-if="usuarioStore.currentUsuario.produto_create"
           >Adicionar</v-btn>
           <span>Adicionar produto</span>
         </v-tooltip>
@@ -315,6 +325,7 @@
                 icon
                 @click.prevent="[produtoStore.produto = data.item, modalStore.produtos.visible = true, modalStore.produtos.title = 'Alterar produto']"
                 class="mr-1"
+                v-if="usuarioStore.currentUsuario.produto_update"
               >
                 <i class="fa fa-lg fa-pencil"></i>
               </v-btn>
@@ -326,6 +337,7 @@
                 icon
                 @click.prevent="[confirmaExclusao = true,produtoStore.produto = data.item]"
                 class="mr-1"
+                v-if="usuarioStore.currentUsuario.produto_delete"
               >
                 <i class="fa fa-lg fa-trash"></i>
               </v-btn>
@@ -337,6 +349,7 @@
                 icon
                 class="mr-1"
                 @click.prevent="[modalStore.produtos.estoque.visible = true, produtoStore.produto = data.item]"
+                v-if="usuarioStore.currentUsuario.produto_update"
               >
                 <i class="fa fa-lg fa-th"></i>
               </v-btn>
@@ -437,8 +450,8 @@ export default {
         { value: "categoria", text: "Categoria", sortable: true },
         { value: "marca", text: "Marca", sortable: true },
         { value: "valor_venda", text: "Valor venda", sortable: true },
-        { value: "qtdEstoque", text: "Estoque total", sortable: true },
-        { value: "actions", text: "Ações" }
+        { value: "qtdEstoque", text: "Estoque total", sortable: false },
+        { value: "actions", text: "Ações", sortable: false }
       ],
       filter: {},
       concluir: false,
@@ -488,6 +501,8 @@ export default {
 
       const url = `${urlBD}/produtos?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
+      }&order=${this.pagination.sortBy || ""}&desc=${
+        this.pagination.descending ? "desc" : "asc"
       }&tipo=${this.filter.tipo || 1}&id=${this.filter.id ||
         ""}&descricao=${this.filter.descricao || ""}&categoria=${this.filter
         .categoria || ""}&marca=${this.filter.marca || ""}&unidade=${this.filter

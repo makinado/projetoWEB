@@ -15,9 +15,13 @@
             </v-layout>-->
 
             <v-flex xs12>
-              <v-tabs v-model="tabIndex" centered color="#FFFFFF" light icons-and-text>
-                <v-tabs-slider color="primary"></v-tabs-slider>
-
+              <v-tabs
+                v-model="tabIndex"
+                centered
+                color="transparent"
+                :slider-color="color"
+                icons-and-text
+              >
                 <v-tab href="#tab-1">
                   BÁSICO
                   <v-icon>fa fa-lg fa-file</v-icon>

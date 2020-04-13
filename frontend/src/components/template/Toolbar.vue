@@ -2,7 +2,7 @@
   <v-toolbar dense flat app extended extension-height="5">
     <v-toolbar-side-icon @click="$store.state.drawerLeft = !$store.state.drawerLeft"></v-toolbar-side-icon>
 
-    <v-flex xs12 md4 class="ml-4 mt-4">
+    <v-flex xs12 md3 class="ml-4 mt-4">
       <SelectEmpresa />
     </v-flex>
 
@@ -18,12 +18,41 @@
       offset-x
       transition="slide-y-transition"
     >
-      <v-badge slot="activator" color="danger" left overlap>
-        <v-span v-if="notificacoes.lenght > 0" slot="badge" dark small>{{ notificacoes.lenght }}</v-span>
-        <v-btn icon @click="notify">
-          <v-icon>fa fa-lg fa-bell</v-icon>
-        </v-btn>
-      </v-badge>
+      <v-btn icon slot="activator">
+        <v-badge v-if="notificacoes.length > 0" color="danger" left>
+          <template v-slot:badge>
+            <small>{{ notificacoes.length }}</small>
+          </template>
+        </v-badge>
+        <v-icon>fa fa-lg fa-bell</v-icon>
+      </v-btn>
+
+      <v-toolbar :color="color" dark dense>
+        <v-layout row wrap justify-center>
+          <span class="my-2">Central de notificações</span>
+        </v-layout>
+      </v-toolbar>
+      <v-list>
+        <v-layout row wrap justify-center>
+          <span v-if="notificacoes.length == 0">Nenhuma nova notificação</span>
+        </v-layout>
+        <v-list-tile
+          class="my-2"
+          v-for="(item, index) in notificacoes"
+          :key="index"
+          @click="clickEvent(item.title, item.link)"
+        >
+          <v-list-tile-action>
+            <v-btn icon :color="item.color" dark>
+              <v-icon>fa fa-lg fa-bell</v-icon>
+            </v-btn>
+          </v-list-tile-action>
+          <v-layout column>
+            <v-list-tile-title>{{ item.title }}</v-list-tile-title>
+            <small>{{ item.text }}</small>
+          </v-layout>
+        </v-list-tile>
+      </v-list>
     </v-menu>
 
     <v-menu
@@ -46,7 +75,7 @@
           @click="clickEvent(item.title, item.link)"
         >
           <v-list-tile-action>
-            <v-btn icon color="primary">
+            <v-btn icon :color="color">
               <v-icon>{{item.icon}}</v-icon>
             </v-btn>
           </v-list-tile-action>

@@ -74,8 +74,8 @@ module.exports = app => {
             .then(async metas => {
                 metas = await Promise.all(metas.map(async m => {
                     const valor_vendas = await app.db('venda').sum('valor_total').where({ id_vendedor: m.id_usuario })
-                    m.concluido_valor = formatToBRL(valor_vendas.sum || 0)
-                    m.concluido_porc = valor_vendas.sum || 0 * 100 / m.valor
+                    m.concluido_valor = valor_vendas[0].sum || 0
+                    m.concluido_porc = parseNumber(valor_vendas[0].sum || "0,00", '.') * 100 / parseNumber(m.valor, '.')
 
                     m.valor = formatToBRL(m.valor)
 

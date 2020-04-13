@@ -7,18 +7,35 @@
             <v-autocomplete
               ref="cliente"
               class="tag-input"
-              chips
               dense
+              :color="color"
+              chips
               deletable-chips
+              label="Cliente*"
+              :items="pessoaStore.clientes"
               no-data-text="Nenhum cliente cadastrado"
               prepend-icon="fa fa-lg fa-plus-circle"
-              @click:prepend="[pessoaStore.pessoa = null, modalStore.pessoas.visible = true]"
-              label="Cliente"
-              :items="pessoaStore.clientes"
+              @click:prepend="[pessoaStore.pessoa = null, modalStore.pessoas.visible = true, modalStore.pessoas.title = 'Adicionar pessoa']"
               v-model="venda.id_pessoa"
-              @change="loadCliente"
               @focus="$store.dispatch('loadClientes')"
-            ></v-autocomplete>
+              :search-input.sync="searchCliente"
+            >
+              <template v-slot:no-data>
+                <v-btn
+                  type="submit"
+                  color="secondary"
+                  flat
+                  small
+                  v-if="searchCliente"
+                  @click="$store.dispatch('addCliente', { nome: searchCliente })"
+                >
+                  <span>
+                    <v-icon>fa fa-lg fa-plus-circle</v-icon>
+                    {{ searchCliente }}
+                  </span>
+                </v-btn>
+              </template>
+            </v-autocomplete>
           </v-flex>
           <v-flex xs12 md6>
             <v-autocomplete
@@ -66,6 +83,7 @@ export default {
   data() {
     return {
       valid: true,
+      searchCliente: null,
       vendRules: [v => !!v || "Vendedor obrigatório"]
     };
   },

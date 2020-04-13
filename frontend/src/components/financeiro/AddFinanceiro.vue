@@ -698,10 +698,11 @@ export default {
     },
     limpaPagamento(data) {
       data.expanded = false;
-      data.item.data_baixa = "";
-      data.item.documento_baixa = "";
-      data.item.num_documento_baixa = "";
-      data.item.observacao = "";
+
+      delete data.item.data_baixa;
+      delete data.item.documento_baixa;
+      delete data.item.num_documento_baixa;
+      delete data.item.observacao;
     },
     loadTela(financ) {
       if (!financ) return;

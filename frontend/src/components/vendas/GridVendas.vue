@@ -140,6 +140,7 @@
                 class="v-btn-common"
                 color="secondary"
                 @click.prevent="modalStore.tabelas.visible = true"
+                v-if="usuarioStore.currentUsuario.vendas_create"
               >Tabelas de preço</v-btn>
               <span>Gerenciar tabelas de preço</span>
             </v-tooltip>
@@ -149,6 +150,7 @@
                 class="v-btn-common"
                 :color="color"
                 @click.prevent="[vendaStore.venda = null, modalStore.vendas.vendas.visible = true, modalStore.vendas.title = 'Adicionar orçamento / venda']"
+                v-if="usuarioStore.currentUsuario.vendas_create"
               >Adicionar</v-btn>
               <span>Adicionar orçamento/venda</span>
             </v-tooltip>
@@ -290,6 +292,7 @@
             class="v-btn-common"
             color="secondary"
             @click.prevent="modalStore.tabelas.visible = true"
+            v-if="usuarioStore.currentUsuario.vendas_create"
           >Tabelas de preço</v-btn>
           <span>Gerenciar tabelas de preço</span>
         </v-tooltip>
@@ -299,6 +302,7 @@
             class="v-btn-common"
             :color="color"
             @click.prevent="[vendaStore.venda = null, modalStore.vendas.vendas.visible = true, modalStore.vendas.title = 'Adicionar orçamento / venda']"
+            v-if="usuarioStore.currentUsuario.vendas_create"
           >Adicionar</v-btn>
           <span>Adicionar orçamento/venda</span>
         </v-tooltip>
@@ -338,6 +342,7 @@
                 icon
                 @click.prevent="[vendaStore.venda = data.item, modalStore.vendas.vendas.visible = true, modalStore.vendas.title = 'Alterar orçamento / venda']"
                 class="mr-1"
+                v-if="usuarioStore.currentUsuario.vendas_update"
               >
                 <i class="fa fa-lg fa-pencil"></i>
               </v-btn>
@@ -349,6 +354,7 @@
                 icon
                 @click.prevent="[confirmaExclusao = true,vendaStore.venda = data.item]"
                 class="mr-1"
+                v-if="usuarioStore.currentUsuario.vendas_delete"
               >
                 <i class="fa fa-lg fa-trash"></i>
               </v-btn>

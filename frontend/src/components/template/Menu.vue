@@ -310,6 +310,7 @@
       app
       right
       floating
+      dark
       mobile-break-point="1500px"
     >
       <v-layout class="fill-height" tag="v-list" column>
@@ -317,9 +318,8 @@
           avatar
           @click.left.exact="[$store.state.drawerRight = false, navigate('/atividades',false)]"
           @click.ctrl="navigate('/atividades',true)"
-          value="true"
         >
-          <v-list-tile-avatar color="white">
+          <v-list-tile-avatar >
             <v-icon>fa fa-lg fa-align-left</v-icon>
           </v-list-tile-avatar>
           <v-list-tile-title class="title text-light">Atividade dos usuários</v-list-tile-title>

@@ -143,6 +143,7 @@
                 class="v-btn-common"
                 :color="color"
                 @click.prevent="[comprasStore.pedido = null, modalStore.compras.pedidos.visible = true, modalStore.compras.pedidos.title = 'Adicionar pedido de compra']"
+                v-if="usuarioStore.currentUsuario.pedidos_create"
               >Adicionar</v-btn>
               <span>Adicionar pedido</span>
             </v-tooltip>
@@ -287,6 +288,7 @@
             class="v-btn-common"
             :color="color"
             @click.prevent="[comprasStore.pedido = null, modalStore.compras.pedidos.visible = true, modalStore.compras.pedidos.title = 'Adicionar pedido de compra']"
+            v-if="usuarioStore.currentUsuario.pedidos_create"
           >Adicionar</v-btn>
           <span>Adicionar pedido</span>
         </v-tooltip>
@@ -321,7 +323,13 @@
           <td>{{ data.item.valor_total | currency }}</td>
           <td>
             <v-tooltip bottom v-if="data.item.situacao === 'PENDENTE'">
-              <v-btn slot="activator" icon class="mr-1" @click="concluirPedido">
+              <v-btn
+                slot="activator"
+                icon
+                class="mr-1"
+                @click="concluirPedido"
+                v-if="usuarioStore.currentUsuario.pedidos_update"
+              >
                 <i class="fa fa-lg fa-check"></i>
               </v-btn>
               <span>Concluir pedido</span>
@@ -338,6 +346,7 @@
                 icon
                 @click.prevent="[comprasStore.pedido = data.item, modalStore.compras.pedidos.visible = true,modalStore.compras.pedidos.title = 'Alterar pedido de compra']"
                 class="mr-1"
+                v-if="usuarioStore.currentUsuario.pedidos_update"
               >
                 <i class="fa fa-lg fa-pencil"></i>
               </v-btn>
@@ -349,6 +358,7 @@
                 icon
                 @click.prevent="[confirmaExclusao = true, comprasStore.pedido = data.item]"
                 class="mr-1"
+                v-if="usuarioStore.currentUsuario.pedidos_delete"
               >
                 <i class="fa fa-lg fa-trash"></i>
               </v-btn>
@@ -461,7 +471,13 @@ export default {
   name: "GridPedidos",
   computed: {
     ...mapState("app", ["color"]),
-    ...mapState(["comprasStore", "modalStore", "pessoaStore", "empresaStore"]),
+    ...mapState([
+      "comprasStore",
+      "modalStore",
+      "pessoaStore",
+      "empresaStore",
+      "usuarioStore"
+    ]),
     computedDateFormatted1() {
       return formatDate(this.filter.data_inicial);
     },
@@ -491,7 +507,7 @@ export default {
         { value: "nota_fiscal", text: "Nota fiscal", sortable: true },
         { value: "data_pedido", text: "Data", sortable: true },
         { value: "valor_total", text: "Valor", sortable: true },
-        { value: "actions", text: "Ações" }
+        { value: "actions", text: "Ações", sortable: false }
       ],
       filter: {},
       pagination: {
@@ -563,9 +579,11 @@ export default {
     },
     async loadPedidos() {
       this.loading = true;
-      
+
       const url = `${urlBD}/pedidos?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
+      }&order=${this.pagination.sortBy || ""}&desc=${
+        this.pagination.descending ? "desc" : "asc"
       }&empresa=${this.empresaStore.currentEmpresa || ""}&tipo=${this.filter
         .tipo || 1}&id=${this.filter.id || ""}&fornecedor=${this.filter
         .fornecedor || ""}&documento=${this.filter.documento ||

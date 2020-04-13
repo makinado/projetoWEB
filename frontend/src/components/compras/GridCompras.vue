@@ -141,11 +141,13 @@
               class="v-btn-common"
               color="secondary"
               @click.prevent="[comprasStore.compra = null, modalStore.compras.compras.importar = true, modalStore.compras.compras.title = 'Importar NF-e de compra']"
+              v-if="usuarioStore.currentUsuario.compras_create"
             >Importar</v-btn>
             <v-btn
               class="v-btn-common"
               :color="color"
               @click.prevent="[comprasStore.compra = null, modalStore.compras.compras.add = true, modalStore.compras.compras.title = 'Adicionar NF-e de compra']"
+              v-if="usuarioStore.currentUsuario.compras_create"
             >Adicionar</v-btn>
           </v-layout>
         </v-flex>
@@ -286,11 +288,13 @@
           class="v-btn-common"
           color="secondary"
           @click.prevent="[comprasStore.compra = null, modalStore.compras.compras.importar = true, modalStore.compras.compras.title = 'Importar nota fiscal de compra']"
+          v-if="usuarioStore.currentUsuario.compras_create"
         >Importar</v-btn>
         <v-btn
           class="v-btn-common"
           :color="color"
           @click.prevent="[comprasStore.compra = null, modalStore.compras.compras.add = true, modalStore.compras.compras.title = 'Adicionar nota fiscal de compra']"
+          v-if="usuarioStore.currentUsuario.compras_create"
         >Adicionar</v-btn>
       </v-layout>
     </v-container>
@@ -330,6 +334,7 @@
                 icon
                 class="mr-1"
                 @click.prevent="[comprasStore.compra = data.item, modalStore.compras.compras.add = true, modalStore.compras.compras.title = 'Alterar nota fiscal de compra']"
+                v-if="usuarioStore.currentUsuario.compras_update"
               >
                 <i class="fa fa-lg fa-pencil"></i>
               </v-btn>
@@ -347,6 +352,7 @@
                 icon
                 class="mr-1"
                 @click.prevent="[confirmaExclusao = true, comprasStore.compra = data.item]"
+                v-if="usuarioStore.currentUsuario.compras_delete"
               >
                 <i class="fa fa-lg fa-trash"></i>
               </v-btn>
@@ -460,7 +466,7 @@ export default {
         { value: "data_notafiscal", text: "Data NF-e", sortable: true },
         { value: "data_lancamento", text: "Data lançamento", sortable: true },
         { value: "valor_total", text: "Valor total", sortable: true },
-        { value: "actions", text: "Ações" }
+        { value: "actions", text: "Ações", sortable: false }
       ],
       filter: {},
       pagination: {
@@ -519,9 +525,11 @@ export default {
     },
     async loadCompras() {
       this.loading = true;
-      
+
       const url = `${urlBD}/compras?page=${this.pagination.page}&limit=${
         this.pagination.rowsPerPage
+      }&order=${this.pagination.sortBy || ""}&desc=${
+        this.pagination.descending ? "desc" : "asc"
       }&empresa=${this.empresaStore.currentEmpresa || ""}&tipo=${this.filter
         .tipo || 1}&id=${this.filter.id || ""}&fornecedor=${this.filter
         .fornecedor || ""}&documento=${this.filter.documento ||

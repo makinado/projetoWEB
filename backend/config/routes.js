@@ -450,6 +450,10 @@ module.exports = app => {
         .post(app.api.log.log.save)
         .get(grantAccess(app.api.log.log.getAll, 'atividades'))
 
+    app.route('/stats')
+        .all(app.config.passport.authenticate())
+        .get(app.api.stat.get)
+
 
     app.get('*', function (req, res) {
         res.status(404).send('Erro 404');

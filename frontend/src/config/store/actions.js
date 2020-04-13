@@ -44,6 +44,8 @@ export default {
       store.dispatch('loadProdutos')
     }).catch(showError)
   },
+
+
   async loadEmpresas(state) {
     const url = `${urlBD}/empresas/todas`;
     axios.get(url).then(res => {
@@ -163,23 +165,27 @@ export default {
 
     console.log(store.state.vendaStore.pdv)
   },
+  async resetPDV(store, pdv) {
+    Vue.set(store.state.vendaStore.pdv, "id_pessoa", null);
+    Vue.set(store.state.vendaStore.pdv, "id_vendedor", store.state.usuarioStore.currentUsuario.id);
+    Vue.set(store.state.vendaStore.pdv, "cpf_cnpj", null);
+    store.state.modalStore.vendas.pdv.stepper = 1
+    store.commit("setPDVProdutos", []);
+    store.dispatch("calcTotalPDV");
+  },
   async calcTotalPDV(store) {
-    let valor_produtos = 0,
-      valor_desconto = 0,
+    let valor_desconto = 0,
       valor_total = 0,
       valor_acrescimo = 0;
 
     store.state.vendaStore.pdv.produtos.forEach(produto => {
-      valor_produtos += parseNumber(produto.valor_total || "0,00");
       valor_desconto += parseNumber(produto.valor_desconto || "0,00");
       valor_acrescimo += parseNumber(produto.valor_acrescimo || "0,00");
+      valor_total += parseNumber(produto.valor_total || "0,00")
     });
 
-    valor_total = valor_produtos
-
     store.commit('setTotaisPDV', {
-      valor_desconto: formatToBRL(valor_desconto),
-      valor_desconto: formatToBRL(valor_desconto),
+      valor_acrescimo: formatToBRL(valor_acrescimo),
       valor_desconto: formatToBRL(valor_desconto),
       valor_total: formatToBRL(valor_total)
     })

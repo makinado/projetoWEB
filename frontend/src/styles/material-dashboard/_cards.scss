@@ -77,7 +77,7 @@
   margin: $card-margin 0 !important;
 }
 
-@include card-header-color('info', $brand-info, $cyan-400, $cyan-600);
+@include card-header-color('info', $blue-400, $blue-600, $blue-400);
 @include card-header-color('red', $brand-danger, $red-400, $red-600);
 @include card-header-color('green', $brand-success, $green-400, $green-600);
 @include card-header-color('orange', $brand-warning, $orange-400, $orange-600);

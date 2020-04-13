@@ -125,7 +125,7 @@ module.exports = app => {
             .leftJoin('marcas', 'produtos.marca', 'marcas.id')
             .select('produtos.id', 'produtos.descricao', 'categorias.descricao as categoria', 'marcas.nome as marca', 'valor_venda')
             .limit(limit).offset(page * limit - limit)
-            .orderBy('descricao')
+            .orderBy(req.query.order || "descricao", req.query.desc || "asc")
             .where(async (qb) => {
                 if (req.query.tipo == 2) {
                     // pesquisa avançada

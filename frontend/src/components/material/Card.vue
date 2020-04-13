@@ -13,8 +13,10 @@
           <v-layout class="p-2" align-center>
             <h4 class="title font-weight-light ml-2 my-1" v-text="title" />
             <p class="category font-weight-thin" v-text="text" />
+
             <v-spacer></v-spacer>
-            <span v-if="actions" v-for="a in actions">
+
+            <span v-for="a in actions" :key="a.icon">
               <v-tooltip v-if="!a.disabled" bottom>
                 <v-btn slot="activator" class="p-1" icon @click="handleClick(a)">
                   <v-icon>{{ a.icon }}</v-icon>
@@ -208,6 +210,9 @@ export default {
   methods: {
     handleClick(action) {
       // required significa que posso chamar o método do componente pai diretamente
+
+      // console.log(action);
+
       if (action.required) {
         if (action.param) return this.$parent[action.method](action.param);
         return this.$parent[action.method]().then(() =>

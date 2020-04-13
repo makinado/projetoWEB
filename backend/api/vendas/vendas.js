@@ -23,7 +23,6 @@ module.exports = app => {
                 return res.status(400).send(`Produto ${teste_produto.sequencia} com quantidade ou valor de venda zerado, verifique.`)
             }
 
-
             if (venda.tipo == 2) {
                 existsOrError(venda.financeiro, 'Informe a(s) parcela(s) da venda')
                 var teste_financeiro = null
@@ -52,8 +51,6 @@ module.exports = app => {
         var financeiro = venda.financeiro
         delete venda.produtos
         delete venda.financeiro
-
-        console.log(venda)
 
         try {
             venda.valor_frete = parseNumber(venda.valor_frete || "0,00")
@@ -122,7 +119,7 @@ module.exports = app => {
                                         observacao: venda.observacao,
 
                                         valor_parcela: parseNumber(parcela.valor_parcela || "0,00"),
-                                        valor_pago: parseNumber(parcela.valor_pago || "0,00"),
+                                        valor_pago: parcela.pago ? parseNumber(parcela.valor_pago) : 0,
                                         valor_total: venda.valor_total || "0,00",
 
                                         documento_origem: parcela.documento_origem,
@@ -130,6 +127,7 @@ module.exports = app => {
 
                                         data_criacao: new Date(),
                                         data_emissao: venda.data_emissao,
+                                        data_baixa: parcela.pago ? parcela.data_baixa : null,
                                         data_vencimento: parcela.data
                                     }
                                     if (newFinanc.pago)
@@ -227,7 +225,7 @@ module.exports = app => {
                                         observacao: venda.observacao,
 
                                         valor_parcela: parseNumber(parcela.valor_parcela || "0,00"),
-                                        valor_pago: parseNumber(parcela.valor_pago || "0,00"),
+                                        valor_pago: parcela.pago ? parseNumber(parcela.valor_pago) : 0,
                                         valor_total: venda.valor_total || "0,00",
 
                                         documento_origem: parcela.documento_origem,
@@ -235,8 +233,8 @@ module.exports = app => {
 
                                         data_criacao: new Date(),
                                         data_emissao: venda.data_emissao,
-                                        data_vencimento: parcela.data,
-                                        data_baixa: parcela.data_baixa
+                                        data_baixa: parcela.pago ? parcela.data_baixa : null,
+                                        data_vencimento: parcela.data
                                     }
                                     if (newFinanc.pago)
                                         movim_conta.push({

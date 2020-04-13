@@ -117,8 +117,8 @@ module.exports = app => {
                                     observacao: compra.observacao,
 
                                     valor_parcela: parseNumber(parcela.valor_parcela || "0,00"),
-                                    valor_pago: parseNumber(parcela.valor_pago || "0,00"),
-                                    valor_total: compra.valor_total,
+                                    valor_pago: parcela.pago ? parseNumber(parcela.valor_pago) : 0,
+                                    valor_total: venda.valor_total || "0,00",
 
                                     documento_origem: parcela.documento_origem,
                                     num_documento_origem: compra.nota_fiscal,
@@ -130,7 +130,7 @@ module.exports = app => {
                                     data_criacao: new Date(),
                                     data_emissao: compra.data_notafiscal,
                                     data_vencimento: parcela.data_vencimento,
-                                    data_baixa: parcela.data_baixa
+                                    data_baixa: parcela.pago ? parcela.data_baixa : null,
                                 }
                                 if (newFinanc.pago)
                                     movim_conta.push({
@@ -223,8 +223,8 @@ module.exports = app => {
                                     observacao: compra.observacao,
 
                                     valor_parcela: parseNumber(parcela.valor_parcela || "0,00"),
-                                    valor_pago: parseNumber(parcela.valor_pago || "0,00"),
-                                    valor_total: compra.valor_total || "0,00",
+                                    valor_pago: parcela.pago ? parseNumber(parcela.valor_pago) : 0,
+                                    valor_total: venda.valor_total || "0,00",
 
                                     documento_origem: parcela.documento_origem,
                                     num_documento_origem: compra.nota_fiscal,
@@ -236,7 +236,7 @@ module.exports = app => {
                                     data_criacao: new Date(),
                                     data_emissao: compra.data_notafiscal,
                                     data_vencimento: parcela.data_vencimento,
-                                    data_baixa: parcela.data_baixa
+                                    data_baixa: parcela.pago ? parcela.data_baixa : null,s
                                 }
                                 if (newFinanc.pago)
                                     movim_conta.push({
@@ -311,7 +311,7 @@ module.exports = app => {
                 'xml'
             )
             .limit(limit).offset(page * limit - limit)
-            .orderBy('compra.situacao')
+            .orderBy(req.query.order || "compra.situacao", req.query.desc || "asc")
             .where(async (qb) => {
                 if (req.query.empresa) {
                     qb.where('compra.id_empresa', '=', req.query.empresa);
