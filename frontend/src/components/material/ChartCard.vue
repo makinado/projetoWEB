@@ -8,6 +8,7 @@
       :ratio="ratio"
       :responsive-options="responsiveOptions"
       :type="type"
+      
     />
 
     <slot />

@@ -66,12 +66,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-dialog
-      v-model="confirmaExlusao"
-      persistent
-      max-width="500px"
-      v-if="produtoStore.marca"
-    >
+    <v-dialog v-model="confirmaExlusao" persistent max-width="500px" v-if="produtoStore.marca">
       <v-card>
         <v-card-title>
           <span class="headline">Excluir marca</span>
@@ -123,9 +118,6 @@ export default {
   },
   watch: {
     "$store.state.modalStore.marcas.visible": function() {
-      this.reset();
-    },
-    "$store.state.confirmaExlusao": function() {
       this.reset();
     }
   },
@@ -196,6 +188,8 @@ export default {
         .then(() => {
           this.$toasted.global.defaultSuccess();
           this.confirmaExlusao = false;
+
+          this.reset();
 
           saveLog(
             new Date(),

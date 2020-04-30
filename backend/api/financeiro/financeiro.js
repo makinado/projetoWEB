@@ -37,6 +37,7 @@ module.exports = app => {
                 delete financ.menu1
                 delete financ.data
                 delete financ.dataNotFormated
+                delete financ.saldo_atual
                 delete financ.valor
 
                 return financ

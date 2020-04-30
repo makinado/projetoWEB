@@ -76,12 +76,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-dialog
-      v-model="confirmaExlusao"
-      persistent
-      max-width="500px"
-      v-if="produtoStore.unidade"
-    >
+    <v-dialog v-model="confirmaExlusao" persistent max-width="500px" v-if="produtoStore.unidade">
       <v-card>
         <v-card-title>
           <span class="headline">Excluir unidade</span>
@@ -89,11 +84,7 @@
         <v-card-text>Excluir {{ produtoStore.unidade.descricao }} ?</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn
-            color="blue darken-1"
-            flat
-            @click="confirmaExlusao = false"
-          >Fechar</v-btn>
+          <v-btn color="blue darken-1" flat @click="confirmaExlusao = false">Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
       </v-card>
@@ -143,9 +134,6 @@ export default {
   },
   watch: {
     "$store.state.modalStore.unidades.visible": function() {
-      this.reset();
-    },
-    "$store.state.confirmaExlusao": function() {
       this.reset();
     }
   },
@@ -199,6 +187,8 @@ export default {
         .then(() => {
           this.$toasted.global.defaultSuccess();
           this.confirmaExlusao = false;
+
+          this.reset();
 
           saveLog(
             new Date(),

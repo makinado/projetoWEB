@@ -4,8 +4,6 @@ module.exports = app => {
 
         if (req.query.cadastros.includes('cliente') ||
             req.query.cadastros.includes('fornecedor') ||
-            req.query.cadastros.includes('vendedor') ||
-            req.query.cadastros.includes('funcionario') ||
             req.query.cadastros.includes('transportadora')) {
             pessoas = await app.db('pessoas')
                 .leftJoin('categorias', 'pessoas.categoria', 'categorias.id')
@@ -96,7 +94,7 @@ module.exports = app => {
                 .select(
                     'p.id',
                     'p.descricao',
-                    app.db.raw('to_char(valor_unitario)'),
+                    'valor_unitario',
                     'categorias.descricao as categoria',
                     'marcas.nome as marca',
                     'unidades.sigla as unidade'

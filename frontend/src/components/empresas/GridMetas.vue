@@ -181,26 +181,48 @@
             <v-progress-linear :value="data.item.concluido_porc"></v-progress-linear>
           </td>
           <td>
-            <v-btn
-              icon
-              @click.prevent="[empresaStore.meta = data.item, modalStore.empresas.metas.visible = true,modalStore.empresas.metas.title = 'Alterar meta']"
-              class="mr-1"
-            >
-              <i class="fa fa-lg fa-pencil"></i>
-            </v-btn>
-            <v-btn
-              icon
-              @click.prevent="[confirmaExclusao = true,empresaStore.meta = data.item]"
-              class="mr-1"
-            >
-              <i class="fa fa-lg fa-trash"></i>
-            </v-btn>
-            <v-btn
-              icon
-              @click.prevent="[modalStore.email.visible = true, modalStore.email.para = data.item.email]"
-            >
-              <i class="fa fa-lg fa-envelope"></i>
-            </v-btn>
+            <v-menu offset-y left>
+              <v-btn icon slot="activator">
+                <v-icon>fa fa-lg fa-ellipsis-v</v-icon>
+              </v-btn>
+              <v-card :color="color">
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[empresaStore.meta = data.item, modalStore.empresas.metas.visible = true,modalStore.empresas.metas.title = 'Alterar meta']"
+                    class="mr-1"
+                  >
+                    <i class="fa fa-lg fa-pencil"></i>
+                  </v-btn>
+                  <span>Editar meta</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[confirmaExclusao = true,empresaStore.meta = data.item]"
+                    class="mr-1"
+                  >
+                    <i class="fa fa-lg fa-trash"></i>
+                  </v-btn>
+                  <span>Excluir meta</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[modalStore.email.visible = true, modalStore.email.para = data.item.email]"
+                  >
+                    <i class="fa fa-lg fa-envelope"></i>
+                  </v-btn>
+                  <span>Enviar meta por e-mail</span>
+                </v-tooltip>
+              </v-card>
+            </v-menu>
           </td>
         </template>
       </v-data-table>

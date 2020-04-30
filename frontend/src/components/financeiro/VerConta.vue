@@ -84,7 +84,7 @@
         </v-container>
       </v-card-text>
       <v-card-actions>
-        <v-btn color="blue darken-1" flat @click>Imprimir</v-btn>
+        <v-btn color="blue darken-1" flat>Imprimir</v-btn>
         <v-spacer></v-spacer>
         <v-btn
           color="blue darken-1"
@@ -155,10 +155,24 @@ export default {
           this.conta.tipo_conta =
             this.conta.tipo_conta == 1 ? "PAGAR" : "RECEBER";
 
-          this.conta.data_vencimento = formatDate(this.conta.data_vencimento);
-          this.conta.data_baixa = formatDate(this.conta.data_baixa);
-          this.conta.data_emissao = formatDate(this.conta.data_emissao);
-          this.conta.data_criacao = formatDate(this.conta.data_criacao);
+          this.conta.data_vencimento = formatDate(
+            new Date(this.conta.data_vencimento).toISOString().substr(0, 10)
+          );
+          this.conta.data_baixa = formatDate(
+            new Date(this.conta.data_baixa).toISOString().substr(0, 10)
+          );
+          this.conta.data_emissao = formatDate(
+            new Date(this.conta.data_emissao).toISOString().substr(0, 10)
+          );
+          this.conta.data_criacao = formatDate(
+            new Date(this.conta.data_criacao).toISOString().substr(0, 10)
+          );
+
+          this.conta.valor_acrescimo = formatToBRL(this.conta.valor_acrescimo);
+          this.conta.valor_desconto = formatToBRL(this.conta.valor_desconto);
+          this.conta.valor_parcela = formatToBRL(this.conta.valor_parcela);
+          this.conta.valor_pago = formatToBRL(this.conta.valor_pago);
+          this.conta.valor_total = formatToBRL(this.conta.valor_total);
         })
         .catch(showError);
     }

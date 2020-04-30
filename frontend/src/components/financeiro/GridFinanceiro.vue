@@ -134,7 +134,11 @@
                   </v-container>
                 </v-card-text>
                 <v-card-actions>
-                  <v-btn color="blue darken-1" flat @click="filter = {}">Limpar pesquisa</v-btn>
+                  <v-btn
+                    color="blue darken-1"
+                    flat
+                    @click="$store.commit('setFilter', {})"
+                  >Limpar pesquisa</v-btn>
                 </v-card-actions>
               </v-card>
             </v-menu>
@@ -311,7 +315,11 @@
               </v-container>
             </v-card-text>
             <v-card-actions>
-              <v-btn color="blue darken-1" flat @click="filter = {}">Limpar pesquisa</v-btn>
+              <v-btn
+                color="blue darken-1"
+                flat
+                @click="$store.commit('setFilter', {})"
+              >Limpar pesquisa</v-btn>
             </v-card-actions>
           </v-card>
         </v-menu>
@@ -391,65 +399,77 @@
           <td>{{ data.item.data_baixa | date }}</td>
           <td>{{ data.item.valor_parcela | currency }}</td>
           <td>
-            <v-tooltip bottom v-if="data.item.pago == 'PENDENTE'">
-              <v-btn
-                slot="activator"
-                icon
-                class="mr-1"
-                @click.prevent="[financeiroStore.financ = data.item, concluirConta()]"
-                v-if="usuarioStore.currentUsuario.financeiro_update"
-              >
-                <i class="fa fa-lg fa-check"></i>
+            <v-menu offset-y left>
+              <v-btn icon slot="activator">
+                <v-icon>fa fa-lg fa-ellipsis-v</v-icon>
               </v-btn>
-              <span>Realizar pagamento/recebimento</span>
-            </v-tooltip>
-            <v-tooltip bottom v-else-if="data.item.pago == 'CONCLUÍDA'">
-              <v-btn
-                slot="activator"
-                icon
-                class="mr-1"
-                @click.prevent="[financeiroStore.financ = data.item, cancelarConta()]"
-                v-if="usuarioStore.currentUsuario.financeiro_update"
-              >
-                <i class="fa fa-lg fa-times"></i>
-              </v-btn>
-              <span>Cancelar pagamento/recebimento</span>
-            </v-tooltip>
-            <v-tooltip bottom v-if="data.item.pago == 'PENDENTE'">
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[financeiroStore.financ = data.item, modalStore.financeiro.financ.visible = true,modalStore.financeiro.financ.title = 'Alterar parcela do financeiro']"
-                class="mr-1"
-                v-if="usuarioStore.currentUsuario.financeiro_update"
-              >
-                <i class="fa fa-lg fa-pencil"></i>
-              </v-btn>
-              <span>Editar conta</span>
-            </v-tooltip>
-            <v-tooltip bottom v-else>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[financeiroStore.financ = data.item, modalStore.financeiro.financ.visualizar = true]"
-                class="mr-1"
-              >
-                <i class="fa fa-lg fa-eye"></i>
-              </v-btn>
-              <span>Visualizar detalhes da conta</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[confirmaExclusao = true, financeiroStore.financ = data.item]"
-                class="mr-1"
-                v-if="usuarioStore.currentUsuario.financeiro_delete"
-              >
-                <i class="fa fa-lg fa-trash"></i>
-              </v-btn>
-              <span>Excluir conta</span>
-            </v-tooltip>
+              <v-card :color="color">
+                <v-tooltip bottom v-if="data.item.pago == 'PENDENTE'">
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    class="mr-1"
+                    @click.prevent="[financeiroStore.financ = data.item, concluirConta()]"
+                    v-if="usuarioStore.currentUsuario.financeiro_update"
+                  >
+                    <i class="fa fa-lg fa-check"></i>
+                  </v-btn>
+                  <span>Realizar pagamento/recebimento</span>
+                </v-tooltip>
+                <v-tooltip bottom v-else-if="data.item.pago == 'CONCLUÍDA'">
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    class="mr-1"
+                    @click.prevent="[financeiroStore.financ = data.item, cancelarConta()]"
+                    v-if="usuarioStore.currentUsuario.financeiro_update"
+                  >
+                    <i class="fa fa-lg fa-times"></i>
+                  </v-btn>
+                  <span>Cancelar pagamento/recebimento</span>
+                </v-tooltip>
+                <v-tooltip bottom v-if="data.item.pago == 'PENDENTE'">
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[financeiroStore.financ = data.item, modalStore.financeiro.financ.visible = true,modalStore.financeiro.financ.title = 'Alterar parcela do financeiro']"
+                    class="mr-1"
+                    v-if="usuarioStore.currentUsuario.financeiro_update"
+                  >
+                    <i class="fa fa-lg fa-pencil"></i>
+                  </v-btn>
+                  <span>Editar conta</span>
+                </v-tooltip>
+                <v-tooltip bottom v-else>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[financeiroStore.financ = data.item, modalStore.financeiro.financ.visualizar = true]"
+                    class="mr-1"
+                  >
+                    <i class="fa fa-lg fa-eye"></i>
+                  </v-btn>
+                  <span>Visualizar detalhes da conta</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[confirmaExclusao = true, financeiroStore.financ = data.item]"
+                    class="mr-1"
+                    v-if="usuarioStore.currentUsuario.financeiro_delete"
+                  >
+                    <i class="fa fa-lg fa-trash"></i>
+                  </v-btn>
+                  <span>Excluir conta</span>
+                </v-tooltip>
+              </v-card>
+            </v-menu>
           </td>
         </template>
       </v-data-table>
@@ -528,7 +548,8 @@ export default {
       "empresaStore",
       "usuarioStore",
       "modalStore",
-      "pessoaStore"
+      "pessoaStore",
+      "filter"
     ]),
     computedDateFormatted1() {
       return formatDate(this.filter.data_inicial);
@@ -571,14 +592,13 @@ export default {
         descending: false,
         page: 1,
         rowsPerPage: 20, // -1 for All,
-        sortBy: "tipo",
+        sortBy: "tipo_conta",
         totalItems: 0
       },
       count: 0,
       confirmaExclusao: false,
       confirmaCancelamento: false,
       concluir: false,
-      filter: {},
       menu1: false,
       menu2: false,
       pesquisa: false,

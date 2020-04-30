@@ -32,6 +32,7 @@ module.exports = app => {
 
         const grupos = produto.grupos
         delete produto.grupos
+        delete produto.grupos_tributacao
         delete produto.qtdEstoque
 
         produto.estoque_min = parseNumber(produto.estoque_min || '0,00', ',')

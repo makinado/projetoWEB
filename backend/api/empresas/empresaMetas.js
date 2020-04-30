@@ -81,12 +81,19 @@ module.exports = app => {
             .then(async metas => {
                 metas = await Promise.all(metas.map(async m => {
                     if (m.tipo_receita_despesa == 'RECEITA') {
-                        const valor_vendas = await app.db('venda').sum('valor_total')
-                        m.concluido_valor = valor_vendas[0].sum || 0
-                        m.concluido_porc = parseNumber(valor_vendas[0].sum || "0,00", '.') * 100 / parseNumber(m.valor, '.')
+                        const valor_receitas = await app.db('venda').sum('valor_total')
+                        m.concluido_valor = valor_receitas[0] ? valor_receitas[0].sum || 0 : 0
+                        m.concluido_porc = parseNumber(m.concluido_valor || "0,00", '.') * 100 / parseNumber(m.valor, '.')
 
-                        return m
+                    } else {
+                        const valor_despesas = await app.db('financeiro')
+                            .sum('valor_total')
+                            .having('tipo_conta', '=', 1).having('pago', '=', true)
+                            .groupBy('tipo_conta', 'pago')
+                        m.concluido_valor = valor_despesas[0] ? valor_despesas[0].sum || 0 : 0
+                        m.concluido_porc = parseNumber(m.concluido_valor || "0,00", '.') * 100 / parseNumber(m.valor, '.')
                     }
+                    return m
                 }))
 
                 res.json({ data: metas, count, limit })

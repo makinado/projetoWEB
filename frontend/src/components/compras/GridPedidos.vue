@@ -322,58 +322,70 @@
           <td>{{ data.item.data_pedido | date }}</td>
           <td>{{ data.item.valor_total | currency }}</td>
           <td>
-            <v-tooltip bottom v-if="data.item.situacao === 'PENDENTE'">
-              <v-btn
-                slot="activator"
-                icon
-                class="mr-1"
-                @click="concluirPedido"
-                v-if="usuarioStore.currentUsuario.pedidos_update"
-              >
-                <i class="fa fa-lg fa-check"></i>
+            <v-menu offset-y left>
+              <v-btn icon slot="activator">
+                <v-icon>fa fa-lg fa-ellipsis-v</v-icon>
               </v-btn>
-              <span>Concluir pedido</span>
-            </v-tooltip>
-            <v-tooltip bottom v-else>
-              <v-btn slot="activator" icon class="mr-1">
-                <i class="fa fa-lg fa-info"></i>
-              </v-btn>
-              <span>Informações do pedido</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[comprasStore.pedido = data.item, modalStore.compras.pedidos.visible = true,modalStore.compras.pedidos.title = 'Alterar pedido de compra']"
-                class="mr-1"
-                v-if="usuarioStore.currentUsuario.pedidos_update"
-              >
-                <i class="fa fa-lg fa-pencil"></i>
-              </v-btn>
-              <span>Editar pedido</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[confirmaExclusao = true, comprasStore.pedido = data.item]"
-                class="mr-1"
-                v-if="usuarioStore.currentUsuario.pedidos_delete"
-              >
-                <i class="fa fa-lg fa-trash"></i>
-              </v-btn>
-              <span>Excluir pedido</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[modalStore.complementos.impressao = true]"
-              >
-                <i class="fa fa-lg fa-print"></i>
-              </v-btn>
-              <span>Exportar pedido</span>
-            </v-tooltip>
+              <v-card :color="color">
+                <v-tooltip bottom v-if="data.item.situacao === 'PENDENTE'">
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    class="mr-1"
+                    @click="concluirPedido"
+                    v-if="usuarioStore.currentUsuario.pedidos_update"
+                  >
+                    <i class="fa fa-lg fa-check"></i>
+                  </v-btn>
+                  <span>Concluir pedido</span>
+                </v-tooltip>
+                <v-tooltip bottom v-else>
+                  <v-btn slot="activator" icon
+                  dark class="mr-1">
+                    <i class="fa fa-lg fa-info"></i>
+                  </v-btn>
+                  <span>Informações do pedido</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[comprasStore.pedido = data.item, modalStore.compras.pedidos.visible = true,modalStore.compras.pedidos.title = 'Alterar pedido de compra']"
+                    class="mr-1"
+                    v-if="usuarioStore.currentUsuario.pedidos_update"
+                  >
+                    <i class="fa fa-lg fa-pencil"></i>
+                  </v-btn>
+                  <span>Editar pedido</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[confirmaExclusao = true, comprasStore.pedido = data.item]"
+                    class="mr-1"
+                    v-if="usuarioStore.currentUsuario.pedidos_delete"
+                  >
+                    <i class="fa fa-lg fa-trash"></i>
+                  </v-btn>
+                  <span>Excluir pedido</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[modalStore.complementos.impressao = true]"
+                  >
+                    <i class="fa fa-lg fa-print"></i>
+                  </v-btn>
+                  <span>Exportar pedido</span>
+                </v-tooltip>
+              </v-card>
+            </v-menu>
           </td>
         </template>
       </v-data-table>

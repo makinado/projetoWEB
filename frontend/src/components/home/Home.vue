@@ -6,9 +6,34 @@
       </v-flex>
 
       <v-flex xs12>
-        <Card title="Selecione o período do painel" :color="color">
-          <v-layout row wrap>
-            <v-flex xs12 md6>
+        <Card title="Selecione o período do painel" icon="fa fa-lg fa-calendar" :color="color">
+          <v-layout row align-center wrap>
+            <v-flex xs12 md3>
+              <v-autocomplete
+                class="tag-input"
+                dense
+                chips
+                :color="color"
+                label="Selecione um modo de visualização"
+                v-model="mode"
+                :items="[{ value: 'year', text: 'Ano' }, { value: 'month', text: 'Mês' }]"
+                @change="handleGraficos()"
+              ></v-autocomplete>
+            </v-flex>
+            <v-flex xs12 md3>
+              <v-autocomplete
+                class="tag-input"
+                dense
+                chips
+                deletable-chips
+                :color="color"
+                label="Selecione uma empresa"
+                placeholder="Todas as empresas selecionadas"
+                v-model="painel.empresa"
+                :items="empresaStore.currentEmpresas"
+              ></v-autocomplete>
+            </v-flex>
+            <v-flex xs12 md3>
               <v-menu
                 v-model="menu"
                 :close-on-content-click="false"
@@ -38,7 +63,7 @@
                 ></v-date-picker>
               </v-menu>
             </v-flex>
-            <v-flex xs12 md6>
+            <v-flex xs12 md3>
               <v-menu
                 lazy
                 v-model="menu1"
@@ -76,24 +101,22 @@
       <v-flex sm6 xs12 md6 lg3>
         <router-link to="/financeiro">
           <StatsCard
+            @click="$store.commit('setFilter', { pendentes: true, data_inicial: painel.data_inicial, data_final: painel.data_final, pagar: true })"
             color="warning"
             icon="fa fa-arrow-up"
             title="Contas a pagar"
             :value="stats.contasPagar | currency"
-            sub-icon="fa fa-clock-o"
-            sub-text="Agora mesmo"
           />
         </router-link>
       </v-flex>
       <v-flex sm6 xs12 md6 lg3>
         <router-link to="/financeiro">
           <StatsCard
+            @click="$store.commit('setFilter', { pendentes: true, data_inicial: painel.data_inicial, data_final: painel.data_final, receber: true })"
             color="success"
             icon="fa fa-arrow-down"
             title="Contas a receber"
             :value="stats.contasReceber | currency"
-            sub-icon="fa fa-clock-o"
-            sub-text="Agora mesmo"
           />
         </router-link>
       </v-flex>
@@ -103,9 +126,7 @@
             color="red"
             icon="fa fa-shopping-cart"
             title="Vendas realizadas"
-            :value="stats.vendas"
-            sub-icon="fa fa-clock-o"
-            sub-text="Agora mesmo"
+            :value="stats.vendas || 0"
           />
         </router-link>
       </v-flex>
@@ -116,13 +137,11 @@
             icon="fa fa-user-o"
             title="Usuários online"
             :value="usuariosOnline"
-            sub-icon="fa fa-clock-o"
-            sub-text="Agora mesmo"
           />
         </router-link>
       </v-flex>
 
-      <v-flex xs12 md9>
+      <v-flex class="mt-3" xs12 md9>
         <ChartCard
           :data="graficoFluxoCaixa.data"
           :options="graficoFluxoCaixa.options"
@@ -133,10 +152,10 @@
           <h4 class="title font-weight-light">Fluxo de caixa</h4>
           <p class="category d-inline-flex font-weight-light">Acompanhe o fluxo de caixa da empresa</p>
 
-          <template slot="actions">
+          <!-- <template slot="actions">
             <v-icon class="mr-2" small>fa fa-clock-o</v-icon>
             <span class="caption grey--text font-weight-light">Agora mesmo</span>
-          </template>
+          </template>-->
         </ChartCard>
       </v-flex>
 
@@ -167,17 +186,16 @@
             class="category d-inline-flex font-weight-light"
           >Acompanhe as despesas e receitas da empresa</p>
 
-          <template slot="actions">
+          <!-- <template slot="actions">
             <v-icon class="mr-2" small>fa fa-clock-o</v-icon>
             <span class="caption grey--text font-weight-light">Agora mesmo</span>
-          </template>
+          </template>-->
         </ChartCard>
       </v-flex>
       <v-flex md12 sm12 lg4>
         <ChartCard
           :data="graficoVendas.data"
           :options="graficoVendas.options"
-          :responsive-options="graficoVendas.responsiveOptions"
           color="red"
           type="Bar"
         >
@@ -186,10 +204,10 @@
             class="category d-inline-flex font-weight-light"
           >Acompanhe as vendas realizadas no sistema</p>
 
-          <template slot="actions">
+          <!-- <template slot="actions">
             <v-icon class="mr-2" small>fa fa-clock-o</v-icon>
             <span class="caption grey--text font-weight-light">Agora mesmo</span>
-          </template>
+          </template>-->
         </ChartCard>
       </v-flex>
       <v-flex md12 sm12 lg4>
@@ -204,10 +222,10 @@
             class="category d-inline-flex font-weight-light"
           >Acompanhe as pessoas cadastradas no sistema</p>
 
-          <template slot="actions">
+          <!-- <template slot="actions">
             <v-icon class="mr-2" small>fa fa-clock-o</v-icon>
-            <span class="caption grey--text font-weight-light">Atualizado há 20 minutos</span>
-          </template>
+            <span class="caption grey--text font-weight-light">Agora mesmo</span>
+          </template>-->
         </ChartCard>
       </v-flex>
 
@@ -277,12 +295,16 @@ import { urlBD, showError, formatDate } from "@/global";
 import axios from "axios";
 import { mapState } from "vuex";
 import Chart from "chart.js";
+import chartist_tooltip from "chartist-plugin-tooltips";
+import chartist_pointlabel from "chartist-plugin-pointlabels";
+
+import { formatToBRL } from "brazilian-values";
 
 export default {
   name: "home",
   computed: {
     ...mapState("app", ["color"]),
-    ...mapState(["usuarioStore"]),
+    ...mapState(["usuarioStore", "empresaStore"]),
     usuariosOnline: {
       get() {
         return (
@@ -308,6 +330,12 @@ export default {
       set(value) {
         this.painel.data_final = value;
       }
+    },
+    params() {
+      return {
+        ...this.mode,
+        ...this.painel
+      };
     }
   },
   components: {
@@ -316,14 +344,19 @@ export default {
     ChartCard: () => import("../material/ChartCard"),
     StatsCard: () => import("../material/StatsCard")
   },
+  watch: {
+    params() {
+      this.loadStats();
+    }
+  },
   data() {
     return {
       arrayEvents: null,
       painel: {},
-      loadingStats: false,
       menu: false,
       menu1: false,
       tabindex: 0,
+      mode: "year",
       datePicker: new Date().toISOString().substr(0, 10),
       stats: {
         contasPagar: 0,
@@ -332,20 +365,7 @@ export default {
       },
       graficoFluxoCaixa: {
         data: {
-          labels: [
-            "Ja",
-            "Fe",
-            "Ma",
-            "Ap",
-            "Mai",
-            "Ju",
-            "Jul",
-            "Au",
-            "Se",
-            "Oc",
-            "No",
-            "De"
-          ],
+          labels: [],
           series: []
         },
         options: {
@@ -359,29 +379,40 @@ export default {
             right: 0,
             bottom: 0,
             left: 0
-          }
+          },
+          axisY: {
+            onlyInteger: true
+          },
+          plugins: [this.$chartist.plugins.tooltip()]
         }
       },
       graficoFinanceiro: {
         data: {
-          labels: [
-            "Ja",
-            "Fe",
-            "Ma",
-            "Ap",
-            "Mai",
-            "Ju",
-            "Jul",
-            "Au",
-            "Se",
-            "Oc",
-            "No",
-            "De"
-          ],
-          series: [
-            [12, 17, 7, 17, 23, 18, 38],
-            [5, 20, 2, 7, 22, 25, 13]
-          ]
+          labels: [],
+          series: []
+        },
+        options: {
+          lineSmooth: this.$chartist.Interpolation.cardinal({
+            tension: 0
+          }),
+          low: 0,
+          high: 10000, // creative tim: we recommend you to set the high sa the biggest value + something for a better look
+          chartPadding: {
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0
+          },
+          axisY: {
+            onlyInteger: true
+          },
+          plugins: [this.$chartist.plugins.tooltip()]
+        }
+      },
+      graficoVendas: {
+        data: {
+          labels: [],
+          series: []
         },
         options: {
           lineSmooth: this.$chartist.Interpolation.cardinal({
@@ -394,48 +425,23 @@ export default {
             right: 0,
             bottom: 0,
             left: 0
-          }
-        }
-      },
-      graficoVendas: {
-        data: {
-          labels: [
-            "Ja",
-            "Fe",
-            "Ma",
-            "Ap",
-            "Mai",
-            "Ju",
-            "Jul",
-            "Au",
-            "Se",
-            "Oc",
-            "No",
-            "De"
-          ],
-          series: [[500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500]]
-        },
-        options: {
-          axisX: {
-            showGrid: false
           },
           axisY: {
-            onlyInteger: true //seta só números inteiros no Y
+            onlyInteger: true
           },
-          low: 0,
-          high: 1000,
-          chartPadding: {
-            top: 0,
-            right: 5,
-            bottom: 0,
-            left: 0
-          }
+          plugins: [this.$chartist.plugins.tooltip()]
         }
       },
       graficoCadastros: {
         data: {
-          labels: ["Clientes", "Fornecedores", "Transportadoras"],
-          series: [[250, 200, 150]]
+          labels: [
+            "Clientes",
+            "Fornecedores",
+            "Transportadoras",
+            "usuarios",
+            "produtos"
+          ],
+          series: []
         },
         options: {
           lineSmooth: this.$chartist.Interpolation.cardinal({
@@ -449,11 +455,9 @@ export default {
             bottom: 0,
             left: 0
           },
+          plugins: [this.$chartist.plugins.tooltip()],
           axisY: {
-            onlyInteger: true //seta só números inteiros no Y
-          },
-          axisY: {
-            scaleMinSpace: 40
+            onlyInteger: true
           }
         }
       },
@@ -475,11 +479,79 @@ export default {
       } else {
         this.$router.push({ path: path });
       }
+    },
+    handleGraficos() {
+      this.graficoFinanceiro.data.labels = [];
+      this.graficoFluxoCaixa.data.labels = [];
+      this.graficoVendas.data.labels = [];
+      if (this.mode == "year") {
+        this.graficoFinanceiro.data.labels = this.graficoFluxoCaixa.data.labels = this.graficoVendas.data.labels = [
+          "Jan",
+          "Fev",
+          "Mai",
+          "Abr",
+          "Mai",
+          "Jun",
+          "Jul",
+          "Ago",
+          "Set",
+          "Out",
+          "Nov",
+          "Dez"
+        ];
+      } else if (this.mode == "month") {
+        for (let i = 0; i < 32; i++) {
+          this.graficoFinanceiro.data.labels.push(i);
+          this.graficoFluxoCaixa.data.labels.push(i);
+          this.graficoVendas.data.labels.push(i);
+        }
+      }
+    },
+    loadStats() {
+      this.$store.state.isLoading = true;
+
+      axios
+        .get(
+          `${urlBD}/stats?view=${this.mode}&data_inicial=${this.painel
+            .data_inicial || ""}&data_final=${this.painel.data_final || ""}`
+        )
+        .then(res => {
+          this.stats = {
+            contasPagar: res.data.contasPagar,
+            contasReceber: res.data.contasReceber,
+            vendas: res.data.vendas
+          };
+
+          this.graficoFluxoCaixa.data.series = res.data.graficoFluxoCaixa || [];
+          this.graficoFinanceiro.data.series = res.data.graficoFinanceiro || [];
+          this.graficoVendas.data.series = res.data.graficoVendas || [];
+          this.graficoCadastros.data.series = res.data.graficoCadastros || [];
+
+          axios.get(`${urlBD}/eventos_agenda`).then(res => {
+            this.arrayEvents = res.data.map(evento => {
+              const date = new Date(evento.data);
+
+              return date.toISOString().substr(0, 10);
+            });
+          });
+          axios
+            .get(`${urlBD}/usuarioMetas/${this.usuarioStore.currentUsuario.id}`)
+            .then(res => {
+              this.metasUsuario = res.data;
+            });
+          axios.get(`${urlBD}/empresaMetas/`).then(res => {
+            this.metasEmpresa = res.data.data;
+          });
+        })
+        .catch(showError)
+        .finally(
+          setTimeout(() => {
+            this.$store.state.isLoading = false;
+          }, 2000)
+        );
     }
   },
   async mounted() {
-    this.loadingStats = true;
-
     this.$set(
       this.painel,
       "data_inicial",
@@ -490,35 +562,18 @@ export default {
       "data_final",
       new Date().toISOString().substr(0, 10)
     );
-
-    axios
-      .get(`${urlBD}/stats`)
-      .then(res => {
-        this.stats = res.data;
-
-        axios.get(`${urlBD}/eventos_agenda`).then(res => {
-          this.arrayEvents = res.data.map(evento => {
-            const date = new Date(evento.data);
-
-            return date.toISOString().substr(0, 10);
-          });
-        });
-        axios
-          .get(`${urlBD}/usuarioMetas/${this.usuarioStore.currentUsuario.id}`)
-          .then(res => {
-            this.metasUsuario = res.data;
-          });
-        axios.get(`${urlBD}/empresaMetas/`).then(res => {
-          this.metasEmpresa = res.data.data;
-        });
-      })
-      .catch(showError)
-      .finally(() => {
-        this.loadingStats = false;
-      });
+    this.handleGraficos();
   }
 };
 </script>
 
 <style>
+.chartist-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 0px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
 </style>

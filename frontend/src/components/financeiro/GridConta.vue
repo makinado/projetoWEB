@@ -164,52 +164,63 @@
           <td>{{ data.item.nome }}</td>
           <td>{{ data.item.saldo_atual || "R$ 0,00" }}</td>
           <td>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[financeiroStore.conta = data.item, modalStore.financeiro.movimento.visible = true]"
-                class="mr-1"
-                v-if="usuarioStore.currentUsuario.contas_update"
-              >
-                <i class="fa fa-lg fa-eye"></i>
+            <v-menu offset-y left>
+              <v-btn icon slot="activator">
+                <v-icon>fa fa-lg fa-ellipsis-v</v-icon>
               </v-btn>
-              <span>Ver movimento</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[financeiroStore.conta = data.item, modalStore.financeiro.conta.visible = true,modalStore.financeiro.conta.title = 'Alterar conta']"
-                class="mr-1"
-                v-if="usuarioStore.currentUsuario.contas_update"
-              >
-                <i class="fa fa-lg fa-pencil"></i>
-              </v-btn>
-              <span>Editar conta</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[confirmaExclusao = true, financeiroStore.conta = data.item]"
-                class="mr-1"
-                v-if="usuarioStore.currentUsuario.contas_delete"
-              >
-                <i class="fa fa-lg fa-trash"></i>
-              </v-btn>
-              <span>Excluir conta</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[modalStore.complementos.impressao = true]"
-              >
-                <i class="fa fa-lg fa-print"></i>
-              </v-btn>
-              <span>Exportar conta</span>
-            </v-tooltip>
+              <v-card :color="color">
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[financeiroStore.conta = data.item, modalStore.financeiro.movimento.visible = true]"
+                    class="mr-1"
+                    v-if="usuarioStore.currentUsuario.contas_update"
+                  >
+                    <i class="fa fa-lg fa-eye"></i>
+                  </v-btn>
+                  <span>Ver movimento</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[financeiroStore.conta = data.item, modalStore.financeiro.conta.visible = true,modalStore.financeiro.conta.title = 'Alterar conta']"
+                    class="mr-1"
+                    v-if="usuarioStore.currentUsuario.contas_update"
+                  >
+                    <i class="fa fa-lg fa-pencil"></i>
+                  </v-btn>
+                  <span>Editar conta</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[confirmaExclusao = true, financeiroStore.conta = data.item]"
+                    class="mr-1"
+                    v-if="usuarioStore.currentUsuario.contas_delete"
+                  >
+                    <i class="fa fa-lg fa-trash"></i>
+                  </v-btn>
+                  <span>Excluir conta</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[modalStore.complementos.impressao = true]"
+                  >
+                    <i class="fa fa-lg fa-print"></i>
+                  </v-btn>
+                  <span>Exportar conta</span>
+                </v-tooltip>
+              </v-card>
+            </v-menu>
           </td>
         </template>
       </v-data-table>

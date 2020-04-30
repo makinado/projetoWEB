@@ -27,6 +27,7 @@ module.exports = app => {
             return res.status(400).send(e.toString())
         }
 
+
         if (conta.id) {
             app.db('conta')
                 .update(conta)
@@ -34,6 +35,7 @@ module.exports = app => {
                 .then(async _ => res.status(204).send())
                 .catch(e => res.status(500).send(e.toString()))
         } else {
+            conta.saldo_atual = 0
             app.db('conta')
                 .insert(conta)
                 .then(async _ => res.status(204).send())

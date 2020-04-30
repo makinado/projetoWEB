@@ -171,7 +171,6 @@
           </v-container>
 
           <v-data-table
-            class="elevation-5"
             :items="usuarioStore.metas"
             :headers="fields"
             rows-per-page-text="Registros por página"
@@ -257,9 +256,6 @@ export default {
       if (this.modalStore.usuarios.metas.visible) {
         this.reset();
       }
-    },
-    confirmaExclusao() {
-      if (!this.confirmaExclusao) this.reset();
     }
   },
   data() {
@@ -366,7 +362,7 @@ export default {
         ? (this.$refs.dezembro.$el.getElementsByTagName("input")[0].value = 0)
         : null;
 
-      this.loadTela(this.usuarioStore.meta);
+      this.loadMetas(this.usuarioStore.meta);
     },
     alteraMes(mes) {
       this.mesesAlterados[mes] = { valor: this.meta[mes] };
@@ -462,7 +458,7 @@ export default {
         "input"
       )[0].value = this.meta.dezembro;
     },
-    loadTela(meta) {
+    loadMetas(meta) {
       if (!meta.id_usuario) return;
 
       const url = `${urlBD}/usuarioMetas/${meta.id_usuario}`;
@@ -552,9 +548,9 @@ export default {
         .delete(url)
         .then(() => {
           this.$toasted.global.defaultSuccess();
+          this.confirmaExclusao = false;
 
           this.reset();
-          this.confirmaExclusao = false;
 
           saveLog(
             new Date(),

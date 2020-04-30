@@ -8,6 +8,7 @@ export default {
   dialogLoading: false,
   notificacoes: [],
   sockets: [],
+  filter: {},
   empresaStore: {
     currentEmpresa: null,
     currentEmpresas: [],
@@ -29,9 +30,8 @@ export default {
     meta: {},
     metas: [],
 
-    currentPerfil: null,
-    perfil: null,
-    perfis: []
+    comissao: {},
+    comissoes: []
   },
   pessoaStore: {
     pessoa: null,
@@ -40,12 +40,6 @@ export default {
     clientes: [],
     fornecedores: [],
     transportadoras: [],
-
-    metas: [],
-    meta: null,
-
-    comissoes: [],
-    comissao: null
   },
   produtoStore: {
     produto: null,
@@ -163,6 +157,10 @@ export default {
       metas: {
         visible: false,
         title: "Adicionar meta",
+      },
+      comissoes: {
+        visible: false,
+        title: "Adicionar comissão",
       }
     },
     perfis: {

@@ -35,7 +35,7 @@
                         <v-container grid-list-xl>
                           <v-form ref="formEstoque" v-model="valid">
                             <v-layout wrap>
-                              <v-flex xs12 md4>
+                              <v-flex xs12 md3>
                                 <v-autocomplete
                                   no-data-text="Nenhum resultado"
                                   dense
@@ -46,7 +46,7 @@
                                   :rules="tipoRules"
                                 ></v-autocomplete>
                               </v-flex>
-                              <v-flex xs12 md4>
+                              <v-flex xs12 md3>
                                 <v-text-field
                                   ref="quant"
                                   :color="color"
@@ -57,7 +57,7 @@
                                   :rules="quantidadeRules"
                                 ></v-text-field>
                               </v-flex>
-                              <v-flex xs12 md6>
+                              <v-flex xs12 md3>
                                 <v-autocomplete
                                   ref="origem"
                                   no-data-text="Nenhum resultado"
@@ -69,7 +69,7 @@
                                   :rules="origemRules"
                                 ></v-autocomplete>
                               </v-flex>
-                              <v-flex xs12 md6>
+                              <v-flex xs12 md3>
                                 <v-menu
                                   v-model="menu"
                                   :close-on-content-click="false"

@@ -11,6 +11,7 @@
         <slot v-if="!title && !text" name="header" />
         <span v-else>
           <v-layout class="p-2" align-center>
+            <v-icon class="mx-2" v-text="icon"></v-icon>
             <h4 class="title font-weight-light ml-2 my-1" v-text="title" />
             <p class="category font-weight-thin" v-text="text" />
 
@@ -75,6 +76,10 @@ export default {
       default: 24
     },
     title: {
+      type: String,
+      default: undefined
+    },
+    icon: {
       type: String,
       default: undefined
     },

@@ -71,7 +71,7 @@
   }
 
   &.info {
-    @include button-color($brand-info);
+    @include button-color($blue-600);
   }
 
   &.danger {

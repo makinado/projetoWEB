@@ -1,0 +1,4 @@
+﻿id;nome;fantasia;cpf;cnpj;cep;uf;cidade;bairro;logradouro;numero;contato;contato2;email;email2;situacao;categoria;inscricao_estadual;inscricao_municipal;data_criado;data_atualizado;observacao
+29;"cliente top";null;"573.366.230-18";"";"19026-440";"São Paulo";"Presidente Prudente";"Jardim Maracanã";"Rua Claudemir Rodrigues";"542";null;null;null;null;"Ativo";"";null;null;"2020-04-07T20:36:28.554Z";"2020-04-08T14:12:48.488Z";null
+31;"esse é o cliente mais top de todos";null;"734.917.950-28";"";"59136-245";"Rio Grande do Norte";"Natal";"Lagoa Azul";"Avenida Moema Tinoco da Cunha Lima";"00";null;null;null;null;"Ativo";"";null;null;"2020-04-08T17:13:17.231Z";"2020-04-08T14:13:53.139Z";null
+30;"outro cliente top";null;"185.425.260-74";"";"81240-240";"Paraná";"Curitiba";"Cidade Industrial";"Rua Cidade de Tubarão";"1234";null;null;null;null;"Ativo";"";null;null;"2020-04-08T17:10:16.947Z";"2020-04-08T14:14:19.029Z";null

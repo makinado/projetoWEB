@@ -177,62 +177,74 @@
           <td>{{ data.item.email }}</td>
           <td>{{ data.item.contato }}</td>
           <td>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[usuarioStore.meta.id_usuario = data.item.id, modalStore.usuarios.metas.visible = true, modalStore.usuarios.metas.title = `Gerenciar metas do(a) ${data.item.nome}`]"
-                v-if="usuarioStore.currentUsuario.usuario_update"
-              >
-                <i class="fa fa-lg fa-line-chart"></i>
+            <v-menu offset-y left>
+              <v-btn icon slot="activator">
+                <v-icon>fa fa-lg fa-ellipsis-v</v-icon>
               </v-btn>
-              <span>Metas</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[]"
-                v-if="usuarioStore.currentUsuario.usuario_update"
-              >
-                <i class="fa fa-lg fa-usd"></i>
-              </v-btn>
-              <span>Comissões</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[usuarioStore.usuario = data.item, modalStore.usuarios.visible = true,modalStore.usuarios.title = 'Alterar usuario']"
-                class="mr-1"
-                v-if="usuarioStore.currentUsuario.usuario_update"
-              >
-                <i class="fa fa-lg fa-pencil"></i>
-              </v-btn>
-              <span>Editar usuário</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[confirmaExclusao = true,usuarioStore.usuario = data.item]"
-                class="mr-1"
-                v-if="usuarioStore.currentUsuario.usuario_delete"
-              >
-                <i class="fa fa-lg fa-trash"></i>
-              </v-btn>
-              <span>Excluir usuário</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[modalStore.email.visible = true, modalStore.email.para = data.item.email]"
-              >
-                <i class="fa fa-lg fa-envelope"></i>
-              </v-btn>
-              <span>Enviar e-mail</span>
-            </v-tooltip>
+              <v-card :color="color">
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[usuarioStore.meta.id_usuario = data.item.id, modalStore.usuarios.metas.visible = true, modalStore.usuarios.metas.title = `Gerenciar metas do(a) ${data.item.nome}`]"
+                    v-if="usuarioStore.currentUsuario.usuario_update"
+                  >
+                    <i class="fa fa-lg fa-line-chart"></i>
+                  </v-btn>
+                  <span>Metas</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[usuarioStore.comissao.id_usuario = data.item.id, modalStore.usuarios.comissoes.visible = true, modalStore.usuarios.comissoes.title = `Gerenciar comissões do(a) ${data.item.nome}`]"
+                    v-if="usuarioStore.currentUsuario.usuario_update"
+                  >
+                    <i class="fa fa-lg fa-usd"></i>
+                  </v-btn>
+                  <span>Comissões</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[usuarioStore.usuario = data.item, modalStore.usuarios.visible = true,modalStore.usuarios.title = 'Alterar usuario']"
+                    class="mr-1"
+                    v-if="usuarioStore.currentUsuario.usuario_update"
+                  >
+                    <i class="fa fa-lg fa-pencil"></i>
+                  </v-btn>
+                  <span>Editar usuário</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[confirmaExclusao = true,usuarioStore.usuario = data.item]"
+                    class="mr-1"
+                    v-if="usuarioStore.currentUsuario.usuario_delete"
+                  >
+                    <i class="fa fa-lg fa-trash"></i>
+                  </v-btn>
+                  <span>Excluir usuário</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[modalStore.email.visible = true, modalStore.email.para = data.item.email]"
+                  >
+                    <i class="fa fa-lg fa-envelope"></i>
+                  </v-btn>
+                  <span>Enviar e-mail</span>
+                </v-tooltip>
+              </v-card>
+            </v-menu>
           </td>
         </template>
       </v-data-table>

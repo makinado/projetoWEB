@@ -274,6 +274,16 @@ module.exports = app => {
         .get(grantAccess(app.api.usuarios.usuarioMetas.getById, 'usuario'))
         .delete(grantAccess(app.api.usuarios.usuarioMetas.remove, 'usuario'))
 
+    app.route('/usuarioComissoes')
+        .all(app.config.passport.authenticate())
+        .post(grantAccess(app.api.usuarios.usuarioComissoes.save, 'usuario'))
+        .get(grantAccess(app.api.usuarios.usuarioComissoes.get, 'usuario'))
+    app.route('/usuarioComissoes/:id')
+        .all(app.config.passport.authenticate())
+        .put(grantAccess(app.api.usuarios.usuarioComissoes.save, 'usuario'))
+        .get(grantAccess(app.api.usuarios.usuarioComissoes.getById, 'usuario'))
+        .delete(grantAccess(app.api.usuarios.usuarioComissoes.remove, 'usuario'))
+
 
 
     app.route('/email')
@@ -443,6 +453,23 @@ module.exports = app => {
     app.route('/rel_cadastros')
         .all(app.config.passport.authenticate())
         .post(grantAccess(app.api.relatorios.rel_cadastros.getData, 'rel_cadastros'))
+    app.route('/rel_estoque')
+        .all(app.config.passport.authenticate())
+        .get(grantAccess(app.api.relatorios.rel_estoque.getData, 'rel_estoque'))
+    app.route('/rel_compras')
+        .all(app.config.passport.authenticate())
+        .get(grantAccess(app.api.relatorios.rel_compras.getData, 'rel_compras'))
+    app.route('/rel_vendas')
+        .all(app.config.passport.authenticate())
+        .get(grantAccess(app.api.relatorios.rel_vendas.getData, 'rel_vendas'))
+    app.route('/rel_financeiro')
+        .all(app.config.passport.authenticate())
+        .get(grantAccess(app.api.relatorios.rel_financeiro.getData, 'rel_financeiro'))
+    app.route('/rel_estat')
+        .all(app.config.passport.authenticate())
+        .get(grantAccess(app.api.relatorios.rel_estat.getData, 'rel_estat'))
+
+
 
     app.get('/log/hoje', app.api.log.log.get)
     app.route('/log')

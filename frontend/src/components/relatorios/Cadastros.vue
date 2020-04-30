@@ -9,11 +9,7 @@
         />
       </v-flex>
       <v-flex xs12>
-        <Card
-          :color="color"
-          title="Selecione as opções para a emissão do relatório"
-          :actions="globalActions"
-        >
+        <Card :color="color" title="Selecione as opções para a emissão do relatório">
           <v-form ref="form" v-model="valid">
             <v-layout row wrap>
               <v-flex xs12 md4>
@@ -42,7 +38,7 @@
                   label="Categoria"
                   v-model="filter.categoria"
                   :items="categoriaStore.categorias"
-                  no-data-text="Filtro de categoria não permitido"
+                  no-data-text="Filtro de categoria não permitido ou nada cadastrado"
                 ></v-autocomplete>
               </v-flex>
               <v-flex xs12 md2>
@@ -55,7 +51,7 @@
                   label="Marca"
                   v-model="filter.marca"
                   :items="produtoStore.marcas"
-                  no-data-text="Filtro de marca não permitido"
+                  no-data-text="Filtro de marca não permitido ou nada cadastrado"
                 ></v-autocomplete>
               </v-flex>
               <v-flex xs12 md2>
@@ -68,7 +64,7 @@
                   label="Unidade"
                   v-model="filter.unidade"
                   :items="produtoStore.unidades"
-                  no-data-text="Filtro de unidade não permitido"
+                  no-data-text="Filtro de unidade não permitido ou nada cadastrado"
                 ></v-autocomplete>
               </v-flex>
               <v-flex xs12 md2>
@@ -151,6 +147,18 @@
               </v-flex>
             </v-layout>
           </v-form>
+
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn class="v-btn-common" color="warning" @click="reset">Limpar</v-btn>
+            <v-btn class="v-btn-common" color="danger" @click="emit('pdf')" :loading="isLoading">PDF</v-btn>
+            <v-btn
+              class="v-btn-common"
+              color="success"
+              @click="emit('csv')"
+              :loading="isLoading"
+            >Excel</v-btn>
+          </v-card-actions>
         </Card>
       </v-flex>
     </v-layout>
@@ -159,20 +167,13 @@
 
 <script>
 import { mapState } from "vuex";
-import {
-  urlBD,
-  showError,
-  parseNumber,
-  formatDate,
-  loadMarcas,
-  loadUnidades
-} from "@/global";
+import { urlBD, showError, parseNumber, formatDate } from "@/global";
 import axios from "axios";
 
 import { ExportToCsv } from "export-to-csv";
 
 export default {
-  name: "cadastros",
+  name: "rel_cadastros",
   components: {
     PageTitle: () => import("@/components/template/PageTitle"),
     Card: () => import("../material/Card")
@@ -185,11 +186,29 @@ export default {
       "produtoStore",
       "categoriaStore"
     ]),
-    computedDateFormatted() {
-      return formatDate(this.filter.data_inicial);
+    computedDateFormatted: {
+      get() {
+        return formatDate(this.filter.data_inicial);
+      },
+      set(value) {
+        this.filter.data_inicial = value;
+      }
     },
-    computedDateFormatted1() {
-      return formatDate(this.filter.data_final);
+    computedDateFormatted1: {
+      get() {
+        return formatDate(this.filter.data_final);
+      },
+      set(value) {
+        this.filter.data_final = value;
+      }
+    },
+    nomeEmpresa: {
+      get() {
+        if (!this.empresaStore.currentEmpresa) return "Todas as empresas estão selecionadas"
+        return this.empresaStore.currentEmpresas.find(
+          e => e.value == this.empresaStore.currentEmpresa
+        ).text;
+      }
     }
   },
   watch: {
@@ -294,30 +313,7 @@ export default {
       ordens: [
         { value: "id", text: "Código" },
         { value: "nome", text: "Nome" },
-        { value: "uf", text: "UF" },
-        { value: "logradouro", text: "Endereço" }
-      ],
-      globalActions: [
-        {
-          icon: "fa fa-2x fa-eraser",
-          tooltip: "Limpar",
-          method: "reset",
-          required: true
-        },
-        {
-          icon: "fa fa-2x fa-file-pdf-o",
-          tooltip: "Confirmar relatório em PDF",
-          method: "emit",
-          param: 'pdf',
-          required: true
-        },
-        {
-          icon: "fa fa-2x fa-file-excel-o",
-          tooltip: "Confirmar relatório em Excel",
-          method: "emit",
-          param: 'excel',
-          required: true
-        }
+        { value: "uf", text: "UF" }
       ],
       valid: true,
       categoriaVisible: true,
@@ -446,11 +442,7 @@ export default {
 
           //cabeçalho
           doc.setFontSize(8);
-          doc.text(
-            this.empresaStore.currentEmpresa.text || "ERRO NA EMPRESA",
-            40,
-            35
-          );
+          doc.text(this.nomeEmpresa, 40, 35);
           doc.setFontSize(12);
           doc.text(
             "Relatório de cadastros",

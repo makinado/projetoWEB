@@ -12,7 +12,7 @@ module.exports = app => {
             existsOrError(meta.id_usuario, 'Vendedor não informado')
             existsOrError(meta.valor, 'Valor da meta não informado')
 
-            if (meta.valor === '0,00')
+            if (meta.valor == '0,00')
                 throw 'Valor da meta não informado'
 
             meta.valor = parseNumber(meta.valor)
@@ -41,6 +41,7 @@ module.exports = app => {
 
         delete meta.concluido_valor
         delete meta.usuario
+        delete meta.nome
         delete meta.concluido_porc
 
         if (meta.id)
@@ -84,7 +85,7 @@ module.exports = app => {
 
                 res.json(metas)
             })
-            .catch(e => { console.log(e); res.status(500).send(e.message) })
+            .catch(e => { console.log(e); res.status(500).send(e) })
     }
 
     const remove = async (req, res) => {

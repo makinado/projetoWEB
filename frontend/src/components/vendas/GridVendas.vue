@@ -336,40 +336,50 @@
           <td>{{ data.item.data_emissao| date }}</td>
           <td>{{ data.item.valor_total | currency }}</td>
           <td>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[vendaStore.venda = data.item, modalStore.vendas.vendas.visible = true, modalStore.vendas.title = 'Alterar orçamento / venda']"
-                class="mr-1"
-                v-if="usuarioStore.currentUsuario.vendas_update"
-              >
-                <i class="fa fa-lg fa-pencil"></i>
+            <v-menu offset-y left>
+              <v-btn icon slot="activator">
+                <v-icon>fa fa-lg fa-ellipsis-v</v-icon>
               </v-btn>
-              <span>Editar orçamento</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[confirmaExclusao = true,vendaStore.venda = data.item]"
-                class="mr-1"
-                v-if="usuarioStore.currentUsuario.vendas_delete"
-              >
-                <i class="fa fa-lg fa-trash"></i>
-              </v-btn>
-              <span>Excluir orçamento</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[modalStore.complementos.impressao = true]"
-              >
-                <i class="fa fa-lg fa-print"></i>
-              </v-btn>
-              <span>Exportar orçamento</span>
-            </v-tooltip>
+              <v-card :color="color">
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[vendaStore.venda = data.item, modalStore.vendas.vendas.visible = true, modalStore.vendas.title = 'Alterar orçamento / venda']"
+                    class="mr-1"
+                    v-if="usuarioStore.currentUsuario.vendas_update"
+                  >
+                    <i class="fa fa-lg fa-pencil"></i>
+                  </v-btn>
+                  <span>Editar orçamento</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[confirmaExclusao = true,vendaStore.venda = data.item]"
+                    class="mr-1"
+                    v-if="usuarioStore.currentUsuario.vendas_delete"
+                  >
+                    <i class="fa fa-lg fa-trash"></i>
+                  </v-btn>
+                  <span>Excluir orçamento</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[modalStore.complementos.impressao = true]"
+                  >
+                    <i class="fa fa-lg fa-print"></i>
+                  </v-btn>
+                  <span>Exportar orçamento</span>
+                </v-tooltip>
+              </v-card>
+            </v-menu>
           </td>
         </template>
       </v-data-table>

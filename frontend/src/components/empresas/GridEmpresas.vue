@@ -218,40 +218,50 @@
           <td>{{ data.item.email }}</td>
           <td>{{ data.item.contato }}</td>
           <td>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[empresaStore.empresa = data.item, modalStore.empresas.visible = true, modalStore.empresas.title = 'Alterar empresa']"
-                class="mr-1"
-                v-if="usuarioStore.currentUsuario.empresa_update"
-              >
-                <i class="fa fa-lg fa-pencil"></i>
+            <v-menu offset-y left>
+              <v-btn icon slot="activator">
+                <v-icon>fa fa-lg fa-ellipsis-v</v-icon>
               </v-btn>
-              <span>Editar empresa</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[confirmaExclusao = true,empresaStore.empresa = data.item]"
-                class="mr-1"
-                v-if="usuarioStore.currentUsuario.empresa_delete"
-              >
-                <i class="fa fa-lg fa-trash"></i>
-              </v-btn>
-              <span>Excluir empresa</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[modalStore.email.visible = true, modalStore.email.para = data.item.email]"
-              >
-                <i class="fa fa-lg fa-envelope"></i>
-              </v-btn>
-              <span>Enviar e-mail</span>
-            </v-tooltip>
+              <v-card :color="color">
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[empresaStore.empresa = data.item, modalStore.empresas.visible = true, modalStore.empresas.title = 'Alterar empresa']"
+                    class="mr-1"
+                    v-if="usuarioStore.currentUsuario.empresa_update"
+                  >
+                    <i class="fa fa-lg fa-pencil"></i>
+                  </v-btn>
+                  <span>Editar empresa</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[confirmaExclusao = true,empresaStore.empresa = data.item]"
+                    class="mr-1"
+                    v-if="usuarioStore.currentUsuario.empresa_delete"
+                  >
+                    <i class="fa fa-lg fa-trash"></i>
+                  </v-btn>
+                  <span>Excluir empresa</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[modalStore.email.visible = true, modalStore.email.para = data.item.email]"
+                  >
+                    <i class="fa fa-lg fa-envelope"></i>
+                  </v-btn>
+                  <span>Enviar e-mail</span>
+                </v-tooltip>
+              </v-card>
+            </v-menu>
           </td>
         </template>
       </v-data-table>

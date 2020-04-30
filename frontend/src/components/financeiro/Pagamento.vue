@@ -35,6 +35,7 @@
                   prepend-icon="fa fa-lg fa-plus-circle"
                   @click:prepend="[financeiroStore.caixa = null, modalStore.financeiro.caixa.visible = true]"
                   @change="loadSaldoConta"
+                  @focus="$store.dispatch('loadContas')"
                   :rules="contaRules"
                 ></v-autocomplete>
               </v-flex>
@@ -89,6 +90,7 @@
                   prepend-icon="fa fa-lg fa-plus-circle"
                   @click:prepend="[financeiroStore.documento = null, modalStore.documentos.visible = true]"
                   :rules="docRules"
+                  @focus="$store.dispatch('loadDocumentos')"
                 ></v-autocomplete>
               </v-flex>
               <v-flex xs12 md4>
@@ -172,16 +174,6 @@ export default {
       if (this.modalStore.financeiro.financ.pagamento) {
         this.limpaTela();
       }
-    },
-    "$store.state.modalStore.financeiro.conta.visible": function() {
-      if (!this.modalStore.financeiro.conta.visible) {
-        loadContas();
-      }
-    },
-    "$store.state.modalStore.documentos.visible": function() {
-      if (!this.modalStore.documentos.visible) {
-        loadDocumentos();
-      }
     }
   },
   data() {
@@ -262,10 +254,10 @@ export default {
       const id = this.pagamento.id_conta;
 
       if (!id) return;
-
+      
       this.saldo = formatToBRL(
         this.financeiroStore.contas.find(conta => conta.value == id)
-          .saldo_atual || "0,00"
+          .saldo_atual || 0
       );
     },
     async save() {

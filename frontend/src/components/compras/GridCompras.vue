@@ -328,36 +328,51 @@
           <td>{{ data.item.data_lancamento | date }}</td>
           <td>{{ data.item.valor_total | currency }}</td>
           <td>
-            <v-tooltip v-if="!data.item.importado" bottom>
-              <v-btn
-                slot="activator"
-                icon
-                class="mr-1"
-                @click.prevent="[comprasStore.compra = data.item, modalStore.compras.compras.add = true, modalStore.compras.compras.title = 'Alterar nota fiscal de compra']"
-                v-if="usuarioStore.currentUsuario.compras_update"
-              >
-                <i class="fa fa-lg fa-pencil"></i>
+            <v-menu offset-y left>
+              <v-btn icon slot="activator">
+                <v-icon>fa fa-lg fa-ellipsis-v</v-icon>
               </v-btn>
-              <span>Editar compra</span>
-            </v-tooltip>
-            <v-tooltip v-else bottom>
-              <v-btn slot="activator" icon class="mr-1" @click.prevent="gerarDANFe(data.item)">
-                <i class="fa fa-lg fa-eye"></i>
-              </v-btn>
-              <span>Visualizar DANFe</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                class="mr-1"
-                @click.prevent="[confirmaExclusao = true, comprasStore.compra = data.item]"
-                v-if="usuarioStore.currentUsuario.compras_delete"
-              >
-                <i class="fa fa-lg fa-trash"></i>
-              </v-btn>
-              <span>Excluir compra</span>
-            </v-tooltip>
+              <v-card :color="color">
+                <v-tooltip v-if="!data.item.importado" bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    class="mr-1"
+                    @click.prevent="[comprasStore.compra = data.item, modalStore.compras.compras.add = true, modalStore.compras.compras.title = 'Alterar nota fiscal de compra']"
+                    v-if="usuarioStore.currentUsuario.compras_update"
+                  >
+                    <i class="fa fa-lg fa-pencil"></i>
+                  </v-btn>
+                  <span>Editar compra</span>
+                </v-tooltip>
+                <v-tooltip v-else bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    class="mr-1"
+                    @click.prevent="gerarDANFe(data.item)"
+                  >
+                    <i class="fa fa-lg fa-eye"></i>
+                  </v-btn>
+                  <span>Visualizar DANFe</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    class="mr-1"
+                    @click.prevent="[confirmaExclusao = true, comprasStore.compra = data.item]"
+                    v-if="usuarioStore.currentUsuario.compras_delete"
+                  >
+                    <i class="fa fa-lg fa-trash"></i>
+                  </v-btn>
+                  <span>Excluir compra</span>
+                </v-tooltip>
+              </v-card>
+            </v-menu>
           </td>
         </template>
       </v-data-table>

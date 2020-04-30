@@ -29,12 +29,12 @@
 
       <v-toolbar :color="color" dark dense>
         <v-layout row wrap justify-center>
-          <span class="my-2">Central de notificações</span>
+          <span>Central de notificações</span>
         </v-layout>
       </v-toolbar>
       <v-list>
         <v-layout row wrap justify-center>
-          <span v-if="notificacoes.length == 0">Nenhuma nova notificação</span>
+          <span class="my-3" v-if="notificacoes.length == 0">Nenhuma nova notificação</span>
         </v-layout>
         <v-list-tile
           class="my-2"
@@ -87,11 +87,12 @@
     <v-btn class="mr-4" icon @click="clickDrawerRight">
       <v-icon>fa fa-lg fa-align-left</v-icon>
     </v-btn>
+
     <v-progress-linear
       v-if="isLoading"
       slot="extension"
       color="primary"
-      :indeterminate="true"
+      indeterminate
       height="3"
     />
   </v-toolbar>

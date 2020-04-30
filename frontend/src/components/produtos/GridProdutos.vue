@@ -319,42 +319,52 @@
           <td>{{ data.item.valor_venda | currency }}</td>
           <td>{{ data.item.qtdEstoque | decimal }}</td>
           <td>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[produtoStore.produto = data.item, modalStore.produtos.visible = true, modalStore.produtos.title = 'Alterar produto']"
-                class="mr-1"
-                v-if="usuarioStore.currentUsuario.produto_update"
-              >
-                <i class="fa fa-lg fa-pencil"></i>
+            <v-menu offset-y left>
+              <v-btn icon slot="activator">
+                <v-icon>fa fa-lg fa-ellipsis-v</v-icon>
               </v-btn>
-              <span>Editar produto</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                @click.prevent="[confirmaExclusao = true,produtoStore.produto = data.item]"
-                class="mr-1"
-                v-if="usuarioStore.currentUsuario.produto_delete"
-              >
-                <i class="fa fa-lg fa-trash"></i>
-              </v-btn>
-              <span>Excluir produto</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <v-btn
-                slot="activator"
-                icon
-                class="mr-1"
-                @click.prevent="[modalStore.produtos.estoque.visible = true, produtoStore.produto = data.item]"
-                v-if="usuarioStore.currentUsuario.produto_update"
-              >
-                <i class="fa fa-lg fa-th"></i>
-              </v-btn>
-              <span>Estoque do produto</span>
-            </v-tooltip>
+              <v-card :color="color">
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[produtoStore.produto = data.item, modalStore.produtos.visible = true, modalStore.produtos.title = 'Alterar produto']"
+                    class="mr-1"
+                    v-if="usuarioStore.currentUsuario.produto_update"
+                  >
+                    <i class="fa fa-lg fa-pencil"></i>
+                  </v-btn>
+                  <span>Editar produto</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[confirmaExclusao = true,produtoStore.produto = data.item]"
+                    class="mr-1"
+                    v-if="usuarioStore.currentUsuario.produto_delete"
+                  >
+                    <i class="fa fa-lg fa-trash"></i>
+                  </v-btn>
+                  <span>Excluir produto</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    class="mr-1"
+                    @click.prevent="[modalStore.produtos.estoque.visible = true, produtoStore.produto = data.item]"
+                    v-if="usuarioStore.currentUsuario.produto_update"
+                  >
+                    <i class="fa fa-lg fa-th"></i>
+                  </v-btn>
+                  <span>Estoque do produto</span>
+                </v-tooltip>
+              </v-card>
+            </v-menu>
           </td>
         </template>
       </v-data-table>

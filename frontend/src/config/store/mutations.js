@@ -100,5 +100,8 @@ export default {
   },
   setTotaisPDV(state, totais) {
     state.vendaStore.pdv.totais = totais
+  },
+  setFilter(state, filter) {
+    state.filter = filter
   }
 }
