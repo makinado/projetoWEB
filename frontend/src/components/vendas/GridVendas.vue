@@ -119,7 +119,7 @@
                   </v-container>
                 </v-card-text>
                 <v-card-actions>
-                  <v-btn color="blue darken-1" flat @click="filter = {}">Limpar pesquisa</v-btn>
+                  <v-btn color="blue darken-1" flat @click="$store.commit('setFilter', {})">Limpar pesquisa</v-btn>
                 </v-card-actions>
               </v-card>
             </v-menu>
@@ -271,7 +271,7 @@
               </v-container>
             </v-card-text>
             <v-card-actions>
-              <v-btn color="blue darken-1" flat @click="filter = {}">Limpar pesquisa</v-btn>
+              <v-btn color="blue darken-1" flat @click="$store.commit('setFilter', {})">Limpar pesquisa</v-btn>
             </v-card-actions>
           </v-card>
         </v-menu>
@@ -421,7 +421,8 @@ export default {
       "categoriaStore",
       "pessoaStore",
       "usuarioStore",
-      "empresaStore"
+      "empresaStore",
+      "filter"
     ]),
     computedDateFormatted1() {
       return formatDate(this.filter.data_inicial);
@@ -470,7 +471,6 @@ export default {
         sortBy: "situacao",
         totalItems: 0
       },
-      filter: {},
       count: 0,
       concluir: false,
       menu1: false,

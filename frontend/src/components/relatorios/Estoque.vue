@@ -32,7 +32,6 @@
                   label="Produto"
                   v-model="filter.produto"
                   :items="produtoStore.produtos"
-                  :rules="tipoRules"
                   @focus="$store.dispatch('loadProdutos')"
                 ></v-autocomplete>
               </v-flex>

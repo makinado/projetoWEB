@@ -95,6 +95,7 @@ module.exports = app => {
                                     id_produto: produto.id,
                                     tipo_movimentacao: 0,
                                     data_movimentacao: compra.data_lancamento,
+                                    origem: "COMPRA",
                                     id_movimentacao: compra.id,
                                     quantidade: parseNumber(produto.quantidade || "0,00"),
                                     observacao: compra.observacao
@@ -142,7 +143,7 @@ module.exports = app => {
                                         id_documento: parcela.documento_origem,
                                         num_documento: compra.nota_fiscal,
                                         observacao: compra.observacao,
-                                        origem: "GERADO",
+                                        origem: "COMPRA",
                                         dc: 'D',
                                         valor: parseNumber(parcela.valor_pago)
                                     })
@@ -203,6 +204,7 @@ module.exports = app => {
                                     id_produto: produto.id,
                                     tipo_movimentacao: 0,
                                     data_movimentacao: compra.data_lancamento,
+                                    origem: "COMPRA",
                                     id_movimentacao: id[0],
                                     quantidade: parseNumber(produto.quantidade || "0,00"),
                                     observacao: compra.observacao
@@ -248,7 +250,7 @@ module.exports = app => {
                                         id_documento: parcela.documento_origem,
                                         num_documento: compra.nota_fiscal,
                                         observacao: compra.observacao,
-                                        origem: "GERADO",
+                                        origem: "COMPRA",
                                         dc: 'D',
                                         valor: parseNumber(parcela.valor_pago)
                                     })

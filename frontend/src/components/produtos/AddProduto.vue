@@ -395,6 +395,7 @@ export default {
   directives: { money: VMoney },
   name: "Add-Produto",
   computed: {
+    ...mapState('app', ['color']),
     ...mapState([
       "produtoStore",
       "pessoaStore",

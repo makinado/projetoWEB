@@ -13,10 +13,10 @@
         <v-layout class="fill-height" tag="v-list" column>
           <a href="#" @click.left.exact="navigate('/',false)" @click.ctrl="navigate('/',true)">
             <v-list-tile avatar>
-              <v-list-tile-avatar color="white">
-                <v-img :src="logo" height="40" contain />
+              <v-list-tile-avatar color="transparent" size="60">
+                <v-img :src="require('@/assets/logo1.png')" height="60" />
               </v-list-tile-avatar>
-              <v-list-tile-title class="title text-light">CodeStudio</v-list-tile-title>
+              <v-list-tile-title class="title text-light">CampagWEB</v-list-tile-title>
             </v-list-tile>
           </a>
 
@@ -374,7 +374,7 @@ export default {
   data() {
     return {
       confirmar: false,
-      logo: `${urlBD}/uploads/img/vue-logo.png`,
+      logo: '@/assets/logo1resized.png',
       urlBD: urlBD,
       sidebarOverlayGradiant: "rgba(27, 27, 27, 0.74),rgba(27, 27, 27, 0.74)",
       data: "",

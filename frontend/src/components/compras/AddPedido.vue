@@ -8,7 +8,7 @@
     transition="dialog-bottom-transition"
   >
     <v-card v-if="modalStore.compras.pedidos.visible">
-      <v-toolbar fixed dark :color="color">
+      <v-toolbar dense flat extended extension-height="5" dark :color="color">
         <v-toolbar-side-icon @click="modalStore.compras.pedidos.visible = false">
           <v-icon>close</v-icon>
         </v-toolbar-side-icon>
@@ -18,15 +18,24 @@
 
         <v-spacer></v-spacer>
 
-        <v-btn class="mr-3" icon @click="limpaTela">
-          <v-icon>fa fa-2x fa-eraser</v-icon>
-        </v-btn>
-        <v-btn class="mr-3" icon @click="save">
-          <v-icon>fa fa-2x fa-check</v-icon>
-        </v-btn>
-        <v-btn class="mr-3" icon>
-          <v-icon>fa fa-2x fa-cog</v-icon>
-        </v-btn>
+        <v-tooltip bottom>
+          <v-btn slot="activator" class="mr-3" icon @click="limpaTela">
+            <v-icon>fa fa-2x fa-eraser</v-icon>
+          </v-btn>
+          <span>Limpar tela</span>
+        </v-tooltip>
+        <v-tooltip bottom>
+          <v-btn slot="activator" class="mr-3" icon @click="save">
+            <v-icon>fa fa-2x fa-check</v-icon>
+          </v-btn>
+          <span>Salvar pedido</span>
+        </v-tooltip>
+        <v-tooltip bottom>
+          <v-btn slot="activator" class="mr-3" icon>
+            <v-icon>fa fa-2x fa-cog</v-icon>
+          </v-btn>
+          <span>Configurações</span>
+        </v-tooltip>
       </v-toolbar>
 
       <v-card-text>

@@ -46,9 +46,11 @@ module.exports = app => {
                 'conta_movimento.id',
                 'empresas.nome as empresa',
                 'conta_movimento.dc',
+                'conta_movimento.id_movimento_origem',
                 'conta_movimento.origem',
                 'conta_movimento.data_lancamento',
-                'conta_movimento.valor'
+                'conta_movimento.valor',
+                'conta_movimento.observacao'
             )
             .limit(limit).offset(page * limit - limit)
             .where((qb) => {
@@ -56,10 +58,40 @@ module.exports = app => {
                 if (req.query.data_inicial && req.query.data_final) { qb.whereBetween('conta_movimento.data_lancamento', [req.query.data_inicial, req.query.data_final]) }
             })
             .orderBy('data_lancamento')
-            .then(movims => res.json({ data: movims, count, limit }))
+            .then(async movims => {
+                movims = await Promise.all(movims.map(async m => {
+                    m.dados = null
+                    if (m.origem == 'COMPRA' && m.id_movimento_origem) {
+                        m.dados = await app.db('compra')
+                            .join('pessoas', 'compra.id_pessoa', 'pessoas.id')
+                            .select(
+                                'compra.id',
+                                'compra.nota_fiscal',
+                                'compra.data_lancamento',
+                                'pessoas.nome as fornecedor'
+                            )
+                            .where({ 'compra.id': m.id_movimento_origem }).first()
+                    } else if (m.origem == 'VENDA' && m.id_movimento_origem) {
+                        m.dados = await app.db('venda')
+                            .join('usuarios as vend', 'venda.id_vendedor', 'usuarios.id')
+                            .join('pessoas as cli', 'venda.id_pessoa', 'pessoas.id')
+                            .select(
+                                'venda.id',
+                                'venda.nota_fiscal',
+                                'venda.data_criacao',
+                                'cli.nome as cliente',
+                                'vend.nome as vendedor'
+                            )
+                            .where({ 'venda.id': m.id_movimento_origem }).first()
+                    }
+                    return m
+                }))
+
+                res.json({ data: movims, count, limit })
+            })
             .catch(e => {
                 console.log(e.toString())
-                return res.status(500).send("Erro inesperado")
+                return res.status(500).send()
             })
     }
 

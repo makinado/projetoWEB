@@ -874,7 +874,7 @@ export default {
 
       if (this.imageFile) {
         const fd = new FormData();
-        fd.append("logo", this.imageFile, this.imageName);
+        fd.append("img", this.imageFile, this.imageName);
         axios
           .post(`${urlBD}/uploadIMG`, fd)
           .then(res => {

@@ -78,20 +78,20 @@
         <td>
           <v-flex xs8>
             <v-autocomplete
-              class="tag-input"
-              chips
-              dense
-              :color="color"
-              :items="financeiroStore.documentos"
-              v-model="data.item.documento_origem"
-              placeholder="Selecione"
-              prepend-icon="fa fa-lg fa-plus-circle"
-              @click:prepend="[modalStore.documentos.visible = true]"
-              no-data-text="Nenhum resultado"
-              auto-select-first
-              @focus="$store.dispatch('loadDocumentos')"
-              deletable-chips
-            ></v-autocomplete>
+                  class="tag-input"
+                  dense
+                  chips
+                  :color="color"
+                  label="Documento"
+                  v-model="data.item.documento_origem"
+                  :items="financeiroStore.documentos"
+                  prepend-icon="fa fa-lg fa-plus-circle"
+                  @click:prepend="[financeiroStore.documento = null, modalStore.documentos.visible = true]"
+                  @focus="$store.dispatch('loadDocumentos')"
+                  no-data-text="Nenhum documento encontrado"
+                  deletable-chips
+                >
+                </v-autocomplete>
           </v-flex>
         </td>
         <td>
@@ -191,12 +191,13 @@
                   label="Forma de pagamento"
                   v-model="data.item.documento_baixa"
                   :items="financeiroStore.documentos"
-                  no-data-text="Nenhum documento encontrado"
                   prepend-icon="fa fa-lg fa-plus-circle"
                   @click:prepend="[financeiroStore.documento = null, modalStore.documentos.visible = true]"
                   @focus="$store.dispatch('loadDocumentos')"
+                  no-data-text="Nenhum documento encontrado"
                   clearable
-                ></v-autocomplete>
+                >
+                </v-autocomplete>
               </v-flex>
               <v-flex xs12 md2>
                 <v-text-field
@@ -251,6 +252,8 @@
         <td colspan="2">{{ totaisFinanc.pago || 'Nenhuma parcela paga' }}</td>
       </template>
     </v-data-table>
+
+    <Documentos />
   </div>
 </template>
 
@@ -263,11 +266,17 @@ import { VMoney } from "v-money";
 export default {
   name: "financeiro-table",
   directives: { money: VMoney },
-  computed: { ...mapState("app", ["color"]), ...mapState(["financeiroStore"]) },
+  computed: {
+    ...mapState("app", ["color"]),
+    ...mapState(["financeiroStore", "modalStore"])
+  },
   props: {
     component: { type: Object, default: null },
     title: { type: String, default: "Financeiro" },
     showTotais: { type: Boolean, default: true }
+  },
+  components: {
+    Documentos: () => import("../financeiro/AddDocumentos")
   },
   data() {
     return {
@@ -394,8 +403,6 @@ export default {
             ? "Nenhuma parcela paga"
             : `Total pago - ${formatToBRL(pago)}`
       };
-
-      console.log(this.totaisFinanc);
     },
     loadPagamento(item) {
       item.data_baixa = this.formatDate(new Date().toISOString().substr(0, 10));

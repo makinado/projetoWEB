@@ -49,26 +49,26 @@ module.exports = app => {
                 nota_fiscal: xml.dados.nNF,
                 chave_nfe: xml.dados.chNFe,
                 natureza_operacao: xml.dados.natOp,
-                id_pessoa: await app.db('pessoas').select('id').where({ cnpj: xml.dados.cnpj }).first().then(fornec => fornec.id),
+                id_pessoa: await app.db('pessoas').select('id').where({ cnpj: xml.dados.cnpj }).first().then(fornec => fornec ? fornec.id : null),
                 data_lancamento: new Date().toISOString().substr(0, 10),
                 data_notafiscal: xml.dados.dhEmi.substr(0, 10),
                 observacao: xml.dados.observacao,
 
-                base_icms: parseNumber(xml.dados.vBC, '.'),
-                valor_icms: parseNumber(xml.dados.vICMS, '.'),
-                base_st: parseNumber(xml.dados.vBCST, '.'),
-                valor_st: parseNumber(xml.dados.vST, '.'),
+                base_icms: parseNumber(xml.dados.vBC || "0.00", '.'),
+                valor_icms: parseNumber(xml.dados.vICMS || "0.00", '.'),
+                base_st: parseNumber(xml.dados.vBCST || "0.00", '.'),
+                valor_st: parseNumber(xml.dados.vST || "0.00", '.'),
 
-                valor_ipi: parseNumber(xml.dados.vIPI, '.'),
-                valor_pis: parseNumber(xml.dados.vPIS, '.'),
-                valor_cofins: parseNumber(xml.dados.vCOFINS, '.'),
+                valor_ipi: parseNumber(xml.dados.vIPI || "0.00", '.'),
+                valor_pis: parseNumber(xml.dados.vPIS || "0.00", '.'),
+                valor_cofins: parseNumber(xml.dados.vCOFINS || "0.00", '.'),
 
-                valor_frete: parseNumber(xml.dados.vFrete, '.'),
-                valor_seguro: parseNumber(xml.dados.vSeg, '.'),
-                valor_desconto: parseNumber(xml.dados.vDesc, '.'),
-                outras_despesas: parseNumber(xml.dados.vOutro, '.'),
-                valor_produtos: parseNumber(xml.dados.vProd, '.'),
-                valor_total: parseNumber(xml.dados.vNF),
+                valor_frete: parseNumber(xml.dados.vFrete || "0.00", '.'),
+                valor_seguro: parseNumber(xml.dados.vSeg || "0.00", '.'),
+                valor_desconto: parseNumber(xml.dados.vDesc || "0.00", '.'),
+                outras_despesas: parseNumber(xml.dados.vOutro || "0.00", '.'),
+                valor_produtos: parseNumber(xml.dados.vProd || "0.00", '.'),
+                valor_total: parseNumber(xml.dados.vNF || "0,00"),
                 situacao: 'CONCLUÍDA',
                 importado: true,
                 xml: xml.xml
@@ -125,6 +125,7 @@ module.exports = app => {
                                 tipo_movimentacao: 0,
                                 data_movimentacao: compra.data_lancamento,
                                 id_movimentacao: id[0],
+                                origem: 'COMPRA',
                                 quantidade: newProd.quantidade == 0 ? newProd.qcom : newProd.quantidade * newProd.qcom,
                             })
 
@@ -146,8 +147,8 @@ module.exports = app => {
                                 data_emissao: compra.data_notafiscal.substr(0, 10),
                                 data_vencimento: parcela.dVenc,
                                 data_baixa: parcela.pago ? parcela.data_baixa : null,
-                                valor_parcela: parseNumber(parcela.vDup),
-                                valor_pago: parcela.pago ? parseNumber(parcela.vDup) : 0
+                                valor_parcela: parseNumber(parcela.vDup || "0,00"),
+                                valor_pago: parcela.pago ? parseNumber(parcela.vDup || "0,00") : 0
                             }
                             return newFinanc
                         })
@@ -458,11 +459,11 @@ module.exports = app => {
                 produto.prod.CFOP = produto.prod.CFOP.replace('6', '2')
 
             produto.prod.valor_custo = formatToBRL(
-                parseNumber(produto.prod.vUnCom, '.') +
+                parseNumber(produto.prod.vUnCom || "0.00", '.') +
                 parseNumber(produto.imposto.valor_st || "0,00") +
                 parseNumber(produto.imposto.valor_ipi || "0,00") +
-                parseNumber(total.ICMSTot.vFrete, '.') / produtos.length +
-                parseNumber(total.ICMSTot.vSeg, '.') / produtos.length
+                parseNumber(total.ICMSTot.vFrete || "0.00", '.') / produtos.length +
+                parseNumber(total.ICMSTot.vSeg || "0.00", '.') / produtos.length
             )
             produto.prod.vUnCom = formatToBRL((produto.prod.vUnCom))
             produto.prod.vProd = formatToBRL((produto.prod.vProd))

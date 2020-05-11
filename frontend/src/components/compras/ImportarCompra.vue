@@ -7,7 +7,7 @@
     transition="dialog-bottom-transition"
   >
     <v-card v-if="modalStore.compras.compras.importar">
-      <v-toolbar fixed dark :color="color">
+      <v-toolbar dense flat extended extension-height="5" dark :color="color">
         <v-toolbar-side-icon @click="modalStore.compras.compras.importar = false">
           <v-icon>close</v-icon>
         </v-toolbar-side-icon>
@@ -17,18 +17,30 @@
 
         <v-spacer></v-spacer>
 
-        <v-btn class="mr-3" icon @click="limpaTela">
-          <v-icon>fa fa-2x fa-eraser</v-icon>
-        </v-btn>
-        <v-btn class="mr-3" icon @click="modalStore.compras.download = true">
-          <v-icon>fa fa-2x fa-arrow-circle-down</v-icon>
-        </v-btn>
-        <v-btn class="mr-3" icon @click="save">
-          <v-icon>fa fa-2x fa-check</v-icon>
-        </v-btn>
-        <v-btn class="mr-3" icon>
-          <v-icon>fa fa-2x fa-cog</v-icon>
-        </v-btn>
+        <v-tooltip bottom>
+          <v-btn slot="activator" class="mr-3" icon @click="limpaTela">
+            <v-icon>fa fa-2x fa-eraser</v-icon>
+          </v-btn>
+          <span>Limpar tela</span>
+        </v-tooltip>
+        <v-tooltip bottom>
+          <v-btn slot="activator" class="mr-3" icon @click="modalStore.compras.download = true">
+            <v-icon>fa fa-2x fa-arrow-circle-down</v-icon>
+          </v-btn>
+          <span>Baixar XML da nota</span>
+        </v-tooltip>
+        <v-tooltip bottom>
+          <v-btn slot="activator" class="mr-3" icon @click="save">
+            <v-icon>fa fa-2x fa-check</v-icon>
+          </v-btn>
+          <span>Salvar compra</span>
+        </v-tooltip>
+        <v-tooltip bottom>
+          <v-btn slot="activator" class="mr-3" icon>
+            <v-icon>fa fa-2x fa-cog</v-icon>
+          </v-btn>
+          <span>Configurações</span>
+        </v-tooltip>
       </v-toolbar>
 
       <v-card-text>
@@ -260,7 +272,7 @@
 <script>
 import { VMoney } from "v-money";
 
-import { urlBD, urlUsuarios, showError, parseNumber } from "@/global";
+import { urlBD, saveLog, showError, parseNumber } from "@/global";
 import axios from "axios";
 import { mapState } from "vuex";
 import { formatToBRL, formatToCNPJ } from "brazilian-values";
@@ -276,7 +288,8 @@ export default {
       "empresaStore",
       "pessoaStore",
       "produtoStore",
-      "financeiroStore"
+      "financeiroStore",
+      "usuarioStore"
     ])
   },
   components: { FinanceiroVue: () => import("../material/Financeiro") },
@@ -764,7 +777,7 @@ export default {
       } else {
         this.xmls.forEach(xml => {
           let arquivo = {};
-          arquivo.id_empresa = this.empresaStore.currentEmpresa.value;
+          arquivo.id_empresa = this.empresaStore.currentEmpresa;
           arquivo.situacao = xml.situacao;
           arquivo.xml = this.files.find(file => {
             if (file.name.includes(xml.nfeProc.protNFe.infProt.chNFe))
@@ -793,9 +806,9 @@ export default {
 
           saveLog(
             new Date(),
-            method === "post" ? "GRAVAÇÃO" : "ALTERAÇÃO",
+            "GRAVAÇÃO",
             "COMPRAS",
-            `Usuário ${this.usuarioStore.currentUsuario.nome} IMPORTOU com ${this.xmls.length} arquivos`
+            `Usuário ${this.usuarioStore.currentUsuario.nome} IMPORTOU ${this.xmls.length} arquivos`
           );
 
           this.modalStore.compras.compras.importar = false;

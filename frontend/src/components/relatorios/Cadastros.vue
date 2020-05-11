@@ -204,7 +204,8 @@ export default {
     },
     nomeEmpresa: {
       get() {
-        if (!this.empresaStore.currentEmpresa) return "Todas as empresas estão selecionadas"
+        if (!this.empresaStore.currentEmpresa)
+          return "Todas as empresas estão selecionadas";
         return this.empresaStore.currentEmpresas.find(
           e => e.value == this.empresaStore.currentEmpresa
         ).text;
@@ -216,8 +217,6 @@ export default {
       if (
         this.filter.cadastros.includes("cliente") ||
         this.filter.cadastros.includes("fornecedor") ||
-        this.filter.cadastros.includes("vendedor") ||
-        this.filter.cadastros.includes("funcionario") ||
         this.filter.cadastros.includes("transportadora")
       ) {
         this.cadastros.map(item => {
@@ -279,18 +278,6 @@ export default {
         },
         {
           group: "Pessoas",
-          value: "vendedor",
-          text: "Vendedores",
-          disabled: false
-        },
-        {
-          group: "Pessoas",
-          value: "funcionario",
-          text: "Funcionários",
-          disabled: false
-        },
-        {
-          group: "Pessoas",
           value: "transportadora",
           text: "Transportadoras",
           disabled: false
@@ -338,8 +325,6 @@ export default {
       if (
         this.filter.cadastros.includes("cliente") ||
         this.filter.cadastros.includes("fornecedor") ||
-        this.filter.cadastros.includes("vendedor") ||
-        this.filter.cadastros.includes("funcionario") ||
         this.filter.cadastros.includes("transportadora")
       ) {
         this.$store.dispatch("loadCategoriasPessoas");
@@ -509,6 +494,31 @@ export default {
           theme: "striped",
           headStyles: { fillColor: "#B2DFDB", textColor: "black" }
         });
+
+        doc.addPage();
+        doc.setFontSize(16);
+        doc.text(`Total de clientes: ${data.stats.clientes}`, 40, 100);
+        doc.text(`Total de fornecedores: ${data.stats.fornecedores}`, 40, 120);
+        doc.text(
+          `Total de transportadoras: ${data.stats.transportadoras}`,
+          40,
+          140
+        );
+        doc.text(
+          `Total de pessoas ativas: ${data.stats.ativos}`,
+          doc.internal.pageSize.width / 2 - 60,
+          100
+        );
+        doc.text(
+          `Total de pessoas inativas: ${data.stats.inativos}`,
+          doc.internal.pageSize.width / 2 - 60,
+          120
+        );
+        doc.text(
+          `Total de pessoas em análise: ${data.stats.emAnalise}`,
+          doc.internal.pageSize.width / 2 - 60,
+          140
+        );
       } else if (data.usuarios) {
         doc.autoTable(usuarios_columns, data.usuarios, {
           theme: "striped",

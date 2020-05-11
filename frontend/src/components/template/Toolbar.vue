@@ -17,6 +17,7 @@
       nudge-left="12"
       offset-x
       transition="slide-y-transition"
+      slot="activator"
     >
       <v-btn icon slot="activator">
         <v-badge v-if="notificacoes.length > 0" color="danger" left>
@@ -88,13 +89,7 @@
       <v-icon>fa fa-lg fa-align-left</v-icon>
     </v-btn>
 
-    <v-progress-linear
-      v-if="isLoading"
-      slot="extension"
-      color="primary"
-      indeterminate
-      height="3"
-    />
+    <v-progress-linear v-if="isLoading" slot="extension" :color="color" indeterminate height="3" />
   </v-toolbar>
 </template>
 

@@ -43,6 +43,20 @@ module.exports = app => {
         }
     }
 
+    const getAll = async (req, res) => {
+        app.db('classificacao')
+            .select('id as value', 'descricao as text')
+            .where(async (qb) => {
+                if (req.query.tipo == 1)
+                    qb.where('classificacao.tipo', '=', 1);
+                else if (req.query.tipo == 2)
+                    qb.where('classificacao.tipo', '=', 2);
+            })
+            .orderBy('descricao')
+            .then(classificacoes => res.json(classificacoes))
+            .catch(e => { console.log(e.toString()); res.status(500).send(e.toString()) })
+    }
+
     const get = async (req, res) => {
         app.db('classificacao')
             .where(async (qb) => {
@@ -53,7 +67,7 @@ module.exports = app => {
             })
             .orderBy('descricao')
             .then(classificacoes => res.json(classificacoes))
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e.toString()); res.status(500).send(e.toString()) })
     }
 
     const toTree = (classificacoes, tree) => {
@@ -68,6 +82,7 @@ module.exports = app => {
     }
 
     const getById = async (req, res) => {
+        console.log('chegou')
         app.db('classificacao')
             .where({ id: req.params.id }).first()
             .then(classificacao => res.json(classificacao))
@@ -93,5 +108,5 @@ module.exports = app => {
             .catch(err => res.status(500).send(err))
     }
 
-    return { save, get, getById, getTree, remove }
+    return { save, getAll, get, getById, getTree, remove }
 }

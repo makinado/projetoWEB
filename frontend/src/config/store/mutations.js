@@ -45,6 +45,9 @@ export default {
   setProdutos(state, produtos) {
     state.produtoStore.produtos = produtos
   },
+  setPedidos(state, pedidos) {
+    state.comprasStore.pedidos = pedidos
+  },
   setMarcas(state, marcas) {
     state.produtoStore.marcas = marcas
   },
@@ -74,6 +77,9 @@ export default {
   },
   setVendas(state, vendas) {
     state.vendaStore.vendas = vendas
+  },
+  setClassificacoes(state, classificacoes) {
+    state.financeiroStore.classificacoes = classificacoes
   },
   setPDVProdutos(state, produtos) {
     state.vendaStore.pdv.produtos = produtos.map(p => {

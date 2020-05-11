@@ -44,8 +44,6 @@ export default {
       store.dispatch('loadProdutos')
     }).catch(showError)
   },
-
-
   async loadEmpresas(state) {
     const url = `${urlBD}/empresas/todas`;
     axios.get(url).then(res => {
@@ -87,6 +85,12 @@ export default {
     axios.get(url).then(res => {
       state.commit('setProdutos', res.data)
     });
+  },
+  async loadPedidos(state) {
+    const url = `${urlBD}/pedidos/pendentes`
+    axios.get(url).then(res => {
+      state.commit('setPedidos', res.data)
+    })
   },
   async loadCategoriasProdutos(state) {
     const url = `${urlBD}/categorias/produtos`;
@@ -152,6 +156,13 @@ export default {
     const url = `${urlBD}/vendas/vendas`;
     axios.get(url).then(res => {
       state.commit('setVendas', res.data)
+    });
+  },
+  async loadClassificacoes(state, tipo = "") {
+    const url = `${urlBD}/classificacoes/todas?tipo=${tipo}`
+    axios.get(url).then(res => {
+      console.log(res.data)
+      state.commit('setClassificacoes', res.data)
     });
   },
   async loadPDV(store, pdv) {

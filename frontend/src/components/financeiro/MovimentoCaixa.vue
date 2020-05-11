@@ -6,174 +6,87 @@
           <span class="headline">{{ modalStore.financeiro.movimento.title }}</span>
         </v-card-title>
         <v-card-text>
-          <v-container grid-list-xl>
-            <v-layout row>
-              <v-flex xs12>
-                <v-tabs
-                  v-model="tabIndex"
-                  centered
-                  color="transparent"
-                  :slider-color="color"
-                  icons-and-text
-                >
-                  <v-tab href="#tab-1">
-                    CONTA
-                    <v-icon>fa fa-lg fa-bank</v-icon>
-                  </v-tab>
+          <v-layout row>
+            <v-flex xs12>
+              <v-tabs
+                v-model="tabIndex"
+                centered
+                color="transparent"
+                :slider-color="color"
+                icons-and-text
+              >
+                <v-tab href="#tab-1">
+                  CONTA
+                  <v-icon>fa fa-lg fa-bank</v-icon>
+                </v-tab>
 
-                  <v-tab href="#tab-2">
-                    MOVIM. DE CONTA
-                    <v-icon>fa fa-lg fa-exchange</v-icon>
-                  </v-tab>
+                <v-tab href="#tab-2">
+                  MOVIM. DE CONTA
+                  <v-icon>fa fa-lg fa-exchange</v-icon>
+                </v-tab>
 
-                  <v-tab-item value="tab-1">
-                    <v-card flat>
-                      <v-card-text>
-                        <v-container grid-list-xl>
-                          <v-form ref="form" v-model="valid">
-                            <v-layout wrap>
-                              <v-flex xs12 md3>
-                                <v-text-field
-                                  ref="valor"
-                                  color="primary"
-                                  label="VALOR DA MOVIMENTAÇÃO"
-                                  v-money="money"
-                                  v-model="movim.valor"
-                                  :rules="valorRules"
-                                ></v-text-field>
-                              </v-flex>
-                              <v-flex xs12 md3>
-                                <v-autocomplete
-                                  dense
-                                  :color="color"
-                                  label="Classificação"
-                                  v-model="movim.id_classificacao"
-                                  :items="classificacaoStore.classificacoes"
-                                  prepend-icon="fa fa-lg fa-plus-circle"
-                                  @click:prepend="[financeiroStore.classificacao = null, modalStore.classificacoes.visible = true]"
-                                  @input="getTipoClass(movim.id_classificacao)"
-                                ></v-autocomplete>
-                              </v-flex>
-                              <v-flex xs12 md3>
-                                <v-autocomplete
-                                  no-data-text="Nenhum resultado"
-                                  dense
-                                  color="primary"
-                                  label="Tipo de movimentação"
-                                  v-model="movim.dc"
-                                  :items="[{ value: 'D', text: 'Débito' }, { value: 'C', text: 'Crédito' }]"
-                                  :rules="tipoRules"
-                                ></v-autocomplete>
-                              </v-flex>
-                              <v-flex xs12 md3>
-                                <v-autocomplete
-                                  dense
-                                  :color="color"
-                                  label="Documento"
-                                  v-model="movim.id_documento"
-                                  :items="financeiroStore.documentos"
-                                  prepend-icon="fa fa-lg fa-plus-circle"
-                                  @click:prepend="[financeiroStore.documento = null, modalStore.documentos.visible = true]"
-                                ></v-autocomplete>
-                              </v-flex>
-                              <v-flex xs12 md3>
-                                <v-text-field
-                                  :color="color"
-                                  label="Número documento"
-                                  v-model="movim.num_documento"
-                                ></v-text-field>
-                              </v-flex>
-                              <v-flex xs12 md4>
-                                <v-menu
-                                  v-model="menu"
-                                  :close-on-content-click="false"
-                                  :nudge-right="40"
-                                  lazy
-                                  transition="scale-transition"
-                                  offset-y
-                                  full-width
-                                  max-width="290px"
-                                  min-width="290px"
-                                >
-                                  <template v-slot:activator="{ on }">
-                                    <v-text-field
-                                      ref="date"
-                                      color="primary"
-                                      v-model="computedDateFormatted"
-                                      label="Data de lançamento"
-                                      prepend-icon="event"
-                                      readonly
-                                      v-on="on"
-                                      :rules="dataRules"
-                                    ></v-text-field>
-                                  </template>
-                                  <v-date-picker
-                                    color="primary"
-                                    v-model="movim.data_lancamento"
-                                    @input="menu = false"
-                                    locale="pt-br"
-                                  ></v-date-picker>
-                                </v-menu>
-                              </v-flex>
-                              <v-flex xs12 md4>
-                                <v-menu
-                                  v-model="menu1"
-                                  :close-on-content-click="false"
-                                  :nudge-right="40"
-                                  lazy
-                                  transition="scale-transition"
-                                  offset-y
-                                  full-width
-                                  max-width="290px"
-                                  min-width="290px"
-                                >
-                                  <template v-slot:activator="{ on }">
-                                    <v-text-field
-                                      ref="date"
-                                      color="primary"
-                                      v-model="computedDateFormatted1"
-                                      label="Data de emissão"
-                                      prepend-icon="event"
-                                      readonly
-                                      v-on="on"
-                                      :rules="dataRules"
-                                    ></v-text-field>
-                                  </template>
-                                  <v-date-picker
-                                    color="primary"
-                                    v-model="movim.data_emissao"
-                                    @input="menu1 = false"
-                                    locale="pt-br"
-                                  ></v-date-picker>
-                                </v-menu>
-                              </v-flex>
-                              <v-flex xs12>
-                                <v-textarea
-                                  color="primary"
-                                  label="Alguma observação?"
-                                  box
-                                  v-model="movim.observacao"
-                                ></v-textarea>
-                              </v-flex>
-                            </v-layout>
-                          </v-form>
-                        </v-container>
-                      </v-card-text>
-                    </v-card>
-                  </v-tab-item>
-
-                  <v-tab-item value="tab-2">
-                    <v-card flat>
-                      <v-card-text>
-                        <v-container grid-list-xl>
+                <v-tab-item value="tab-1">
+                  <v-card flat>
+                    <v-card-text>
+                      <v-container grid-list-xl>
+                        <v-form ref="form" v-model="valid">
                           <v-layout wrap>
-                            <v-flex xs12>
-                              <p>* Selecione o período</p>
+                            <v-flex xs12 md3>
+                              <v-text-field
+                                ref="valor"
+                                color="primary"
+                                label="VALOR DA MOVIMENTAÇÃO"
+                                v-money="money"
+                                v-model="movim.valor"
+                                :rules="valorRules"
+                              ></v-text-field>
                             </v-flex>
-                            <v-flex xs12 md6>
+                            <v-flex xs12 md3>
+                              <v-autocomplete
+                                dense
+                                :color="color"
+                                label="Classificação"
+                                v-model="movim.id_classificacao"
+                                :items="classificacaoStore.classificacoes"
+                                prepend-icon="fa fa-lg fa-plus-circle"
+                                @click:prepend="[financeiroStore.classificacao = null, modalStore.classificacoes.visible = true]"
+                                @input="getTipoClass(movim.id_classificacao)"
+                                @focus="$store.dispatch('loadClassificacoes')"
+                              ></v-autocomplete>
+                            </v-flex>
+                            <v-flex xs12 md3>
+                              <v-autocomplete
+                                no-data-text="Nenhum resultado"
+                                dense
+                                color="primary"
+                                label="Tipo de movimentação"
+                                v-model="movim.dc"
+                                :items="[{ value: 'D', text: 'Débito' }, { value: 'C', text: 'Crédito' }]"
+                                :rules="tipoRules"
+                              ></v-autocomplete>
+                            </v-flex>
+                            <v-flex xs12 md3>
+                              <v-autocomplete
+                                dense
+                                :color="color"
+                                label="Documento"
+                                v-model="movim.id_documento"
+                                :items="financeiroStore.documentos"
+                                prepend-icon="fa fa-lg fa-plus-circle"
+                                @click:prepend="[financeiroStore.documento = null, modalStore.documentos.visible = true]"
+                                @focus="$store.dispatch('loadDocumentos')"
+                              ></v-autocomplete>
+                            </v-flex>
+                            <v-flex xs12 md3>
+                              <v-text-field
+                                :color="color"
+                                label="Número documento"
+                                v-model="movim.num_documento"
+                              ></v-text-field>
+                            </v-flex>
+                            <v-flex xs12 md4>
                               <v-menu
-                                ref="date1"
-                                v-model="menu2"
+                                v-model="menu"
                                 :close-on-content-click="false"
                                 :nudge-right="40"
                                 lazy
@@ -185,27 +98,27 @@
                               >
                                 <template v-slot:activator="{ on }">
                                   <v-text-field
-                                    :color="color"
-                                    v-model="computedDateFormatted2"
-                                    label="Data inicial"
+                                    ref="date"
+                                    color="primary"
+                                    v-model="computedDateFormatted"
+                                    label="Data de lançamento"
                                     prepend-icon="event"
                                     readonly
                                     v-on="on"
+                                    :rules="dataRules"
                                   ></v-text-field>
                                 </template>
                                 <v-date-picker
-                                  :color="color"
-                                  v-model="date1"
-                                  @input="menu2 = false"
+                                  color="primary"
+                                  v-model="movim.data_lancamento"
+                                  @input="menu = false"
                                   locale="pt-br"
                                 ></v-date-picker>
                               </v-menu>
                             </v-flex>
-
-                            <v-flex xs12 md5>
+                            <v-flex xs12 md4>
                               <v-menu
-                                ref="date2"
-                                v-model="menu3"
+                                v-model="menu1"
                                 :close-on-content-click="false"
                                 :nudge-right="40"
                                 lazy
@@ -217,74 +130,215 @@
                               >
                                 <template v-slot:activator="{ on }">
                                   <v-text-field
-                                    :color="color"
-                                    v-model="computedDateFormatted3"
-                                    label="Data final"
+                                    ref="date"
+                                    color="primary"
+                                    v-model="computedDateFormatted1"
+                                    label="Data de emissão"
                                     prepend-icon="event"
                                     readonly
                                     v-on="on"
+                                    :rules="dataRules"
                                   ></v-text-field>
                                 </template>
                                 <v-date-picker
-                                  :color="color"
-                                  v-model="date2"
-                                  @input="menu3 = false"
+                                  color="primary"
+                                  v-model="movim.data_emissao"
+                                  @input="menu1 = false"
                                   locale="pt-br"
                                 ></v-date-picker>
                               </v-menu>
                             </v-flex>
-                            <v-flex xs12 md1>
-                              <v-btn class="v-btn-common" color="secondary" @click="loadMovim">
-                                <v-icon>fa fa-lg fa-search</v-icon>
-                              </v-btn>
-                            </v-flex>
                             <v-flex xs12>
-                              <v-data-table
-                                class="elevation-5"
-                                :items="movimContaItens"
-                                :headers="fieldsMovim"
-                                :pagination.sync="paginationMovim"
-                                :rows-per-page-items="[10,20]"
-                                rows-per-page-text="Registros por página"
-                                no-results-text="Nenhum registro encontrado"
-                                no-data-text="Nenhum registro"
-                                item-key="id"
-                                :total-items="count"
-                              >
-                                <template slot="items" slot-scope="data">
-                                  <td>{{ data.item.id }}</td>
-                                  <td>{{ data.item.empresa }}</td>
-                                  <td>
-                                    <v-chip :color="getColor(data.item.dc)" dark>{{ data.item.dc }}</v-chip>
-                                  </td>
-                                  <td>{{ data.item.data_lancamento }}</td>
-                                  <td>{{ data.item.valor }}</td>
-                                  <td>
-                                    <v-tooltip bottom>
-                                      <v-btn
-                                        slot="activator"
-                                        icon
-                                        @click.prevent="[modalStore.financeiro.deleteMovimento = true, financeiroStore.movim = data.item]"
-                                        class="mr-1"
-                                        :disabled="(data.item.tipoStr === 'Entrada' || data.item.tipoStr === 'Saída') || (data.item.origem === 'Implantação de saldo' && movimContaItens.length > 1)"
-                                      >
-                                        <i class="fa fa-lg fa-trash"></i>
-                                      </v-btn>
-                                      <span>Excluir movimentação</span>
-                                    </v-tooltip>
-                                  </td>
-                                </template>
-                              </v-data-table>
+                              <v-textarea
+                                color="primary"
+                                label="Alguma observação?"
+                                box
+                                v-model="movim.observacao"
+                              ></v-textarea>
                             </v-flex>
                           </v-layout>
-                        </v-container>
-                      </v-card-text>
-                    </v-card>
-                  </v-tab-item>
-                </v-tabs>
-              </v-flex>
-            </v-layout>
-          </v-container>
+                        </v-form>
+                      </v-container>
+                    </v-card-text>
+                  </v-card>
+                </v-tab-item>
+
+                <v-tab-item value="tab-2">
+                  <v-card flat>
+                    <v-card-text>
+                      <v-container grid-list-xl>
+                        <v-layout wrap>
+                          <v-flex xs12>
+                            <p>* Selecione o período</p>
+                          </v-flex>
+                          <v-flex xs12 md6>
+                            <v-menu
+                              ref="date1"
+                              v-model="menu2"
+                              :close-on-content-click="false"
+                              :nudge-right="40"
+                              lazy
+                              transition="scale-transition"
+                              offset-y
+                              full-width
+                              max-width="290px"
+                              min-width="290px"
+                            >
+                              <template v-slot:activator="{ on }">
+                                <v-text-field
+                                  :color="color"
+                                  v-model="computedDateFormatted2"
+                                  label="Data inicial"
+                                  prepend-icon="event"
+                                  readonly
+                                  v-on="on"
+                                ></v-text-field>
+                              </template>
+                              <v-date-picker
+                                :color="color"
+                                v-model="date1"
+                                @input="menu2 = false"
+                                locale="pt-br"
+                              ></v-date-picker>
+                            </v-menu>
+                          </v-flex>
+
+                          <v-flex xs12 md5>
+                            <v-menu
+                              ref="date2"
+                              v-model="menu3"
+                              :close-on-content-click="false"
+                              :nudge-right="40"
+                              lazy
+                              transition="scale-transition"
+                              offset-y
+                              full-width
+                              max-width="290px"
+                              min-width="290px"
+                            >
+                              <template v-slot:activator="{ on }">
+                                <v-text-field
+                                  :color="color"
+                                  v-model="computedDateFormatted3"
+                                  label="Data final"
+                                  prepend-icon="event"
+                                  readonly
+                                  v-on="on"
+                                ></v-text-field>
+                              </template>
+                              <v-date-picker
+                                :color="color"
+                                v-model="date2"
+                                @input="menu3 = false"
+                                locale="pt-br"
+                              ></v-date-picker>
+                            </v-menu>
+                          </v-flex>
+                          <v-flex xs12 md1>
+                            <v-btn class="v-btn-common" color="secondary" @click="loadMovim">
+                              <v-icon>fa fa-lg fa-search</v-icon>
+                            </v-btn>
+                          </v-flex>
+                        </v-layout>
+                      </v-container>
+
+                      <v-data-table
+                        class="elevation-4"
+                        :items="movimContaItens"
+                        :headers="fieldsMovim"
+                        :pagination.sync="paginationMovim"
+                        :rows-per-page-items="[10,20]"
+                        rows-per-page-text="Registros por página"
+                        no-results-text="Nenhum registro encontrado"
+                        no-data-text="Nenhum registro"
+                        :total-items="count"
+                        :expand="expand"
+                        item-key="id"
+                      >
+                        <template slot="items" slot-scope="data">
+                          <td>{{ data.item.id }}</td>
+                          <td>{{ data.item.empresa }}</td>
+                          <td>
+                            <v-chip :color="getColor(data.item.dc)" dark>{{ data.item.dc }}</v-chip>
+                          </td>
+                          <td>{{ data.item.data_lancamento }}</td>
+                          <td>{{ data.item.valor }}</td>
+                          <td>
+                            <v-menu offset-y left>
+                              <v-btn icon slot="activator">
+                                <v-icon>fa fa-lg fa-ellipsis-v</v-icon>
+                              </v-btn>
+                              <v-card :color="color">
+                                <v-tooltip bottom>
+                                  <v-btn
+                                    slot="activator"
+                                    icon
+                                    dark
+                                    @click="data.expanded = !data.expanded"
+                                    class="mr-1"
+                                  >
+                                    <i class="fa fa-lg fa-eye"></i>
+                                  </v-btn>
+                                  <span>Ver detalhes</span>
+                                </v-tooltip>
+                                <v-tooltip bottom>
+                                  <v-btn
+                                    slot="activator"
+                                    icon
+                                    dark
+                                    @click.prevent="[modalStore.financeiro.deleteMovimento = true, financeiroStore.movim = data.item]"
+                                    class="mr-1"
+                                    :disabled="(data.item.tipoStr === 'Entrada' || data.item.tipoStr === 'Saída') || (data.item.origem === 'Implantação de saldo' && movimContaItens.length > 1)"
+                                  >
+                                    <i class="fa fa-lg fa-trash"></i>
+                                  </v-btn>
+                                  <span>Excluir movimentação</span>
+                                </v-tooltip>
+                              </v-card>
+                            </v-menu>
+                          </td>
+                        </template>
+
+                        <template slot="expand" slot-scope="data">
+                          <v-card v-if="data.expanded" flat color="bege">
+                            <v-card-title>
+                              <span class="headline">Visualizar dados adicionais dessa movimentação</span>
+                            </v-card-title>
+                            <v-card-text>
+                              <template v-if="data.item.origem == 'COMPRA'">
+                                <h4>Origem - {{ data.item.origem }}</h4>
+                                <h4>Empresa - {{ data.item.empresa }}</h4>
+                                <h4>Fornecedor - {{ data.item.dados.fornecedor }}</h4>
+                                <h4>Nota fiscal - {{ data.item.dados.nota_fiscal }}</h4>
+                                <h4>Data de lançamento - {{ formatDate(new Date(data.item.dados.data_lancamento).toISOString().substr(0, 10)) }}</h4>
+                                <h4>Observações - {{ data.item.observacao || "Nenhuma observação" }}</h4>
+                              </template>
+                              <template v-else-if="data.item.origem == 'VENDA'">
+                                <h4>Origem - {{ data.item.origem }}</h4>
+                                <h4>Empresa - {{ data.item.empresa }}</h4>
+                                <h4>Cliente - {{ data.item.dados.cliente }}</h4>
+                                <h4>Vendedor - {{ data.item.dados.vendedor }}</h4>
+                                <h4>Nota fiscal - {{ data.item.dados.nota_fiscal }}</h4>
+                                <h4>Data de lançamento - {{ formatDate(new Date(data.item.dados.data_criacao).toISOString().substr(0, 10)) }}</h4>
+                                <h4>Observações - {{ data.item.observacao || "Nenhuma observação" }}</h4>
+                              </template>
+                              <template v-else>
+                                <h4>
+                                  <h4>Origem - {{ data.item.origem }}</h4>
+                                  <h4>Empresa - {{ data.item.empresa }}</h4>
+                                  <h4>Observações - {{ data.item.observacao || "Nenhuma observação" }}</h4>
+                                </h4>
+                              </template>
+                            </v-card-text>
+                          </v-card>
+                        </template>
+                      </v-data-table>
+                    </v-card-text>
+                  </v-card>
+                </v-tab-item>
+              </v-tabs>
+            </v-flex>
+          </v-layout>
         </v-card-text>
         <v-card-actions>
           <v-btn v-if="tabIndex === 'tab-2'" color="blue darken-1" flat @click="resetMovim">Limpar</v-btn>
@@ -382,6 +436,7 @@ export default {
     return {
       movim: {},
       valid: true,
+      expand: false,
       menu: false,
       menu1: false,
       menu2: false,

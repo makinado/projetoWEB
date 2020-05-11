@@ -93,7 +93,8 @@ module.exports = app => {
                                         id_empresa: venda.id_empresa,
                                         id_produto: produto.id,
                                         tipo_movimentacao: 1,
-                                        data_movimentacao: venda.data_lancamento,
+                                        data_movimentacao: venda.data_emissao,
+                                        origem: "COMPRA",
                                         id_movimentacao: venda.id,
                                         quantidade: parseNumber(produto.quantidade || "0,00"),
                                         observacao: venda.observacao
@@ -135,12 +136,12 @@ module.exports = app => {
                                             id_empresa: venda.id_empresa,
                                             id_conta: parcela.id_conta,
                                             id_movimento_origem: venda.id,
-                                            data_lancamento: new Date(),
+                                            data_emissao: new Date(),
                                             data_emissao: venda.data_emissao,
                                             id_documento: parcela.documento_origem,
                                             num_documento: venda.nota_fiscal,
                                             observacao: venda.observacao,
-                                            origem: "GERADO",
+                                            origem: "VENDA",
                                             dc: 'C',
                                             valor: newFinanc.valor_pago
                                         })
@@ -202,7 +203,8 @@ module.exports = app => {
                                         id_empresa: venda.id_empresa,
                                         id_produto: produto.id,
                                         tipo_movimentacao: 1,
-                                        data_movimentacao: venda.data_lancamento,
+                                        data_movimentacao: venda.data_emissao,
+                                        origem: "VENDA",
                                         id_movimentacao: id[0],
                                         quantidade: parseNumber(produto.quantidade || "0,00"),
                                         observacao: venda.observacao
@@ -241,12 +243,12 @@ module.exports = app => {
                                             id_empresa: venda.id_empresa,
                                             id_conta: parcela.id_conta,
                                             id_movimento_origem: id[0],
-                                            data_lancamento: new Date(),
+                                            data_emissao: new Date(),
                                             data_emissao: venda.data_baixa,
                                             id_documento: parcela.documento_origem,
                                             num_documento: venda.nota_fiscal,
                                             observacao: venda.observacao,
-                                            origem: "GERADO",
+                                            origem: "VENDA",
                                             dc: 'C',
                                             valor: parseNumber(parcela.valor_pago)
                                         })
@@ -330,7 +332,7 @@ module.exports = app => {
                         }
                     } else {
                         if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('venda.data_lancamento', [req.query.data_inicial, req.query.data_final])
+                            qb.whereBetween('venda.data_emissao', [req.query.data_inicial, req.query.data_final])
                         }
                     }
                     if (req.query.concluidas) {
@@ -354,7 +356,7 @@ module.exports = app => {
                         }
                     } else {
                         if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('venda.data_lancamento', [req.query.data_inicial, req.query.data_final])
+                            qb.whereBetween('venda.data_emissao', [req.query.data_inicial, req.query.data_final])
                         }
                     }
                     if (req.query.concluidas) {

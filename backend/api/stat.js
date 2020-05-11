@@ -22,20 +22,18 @@ module.exports = app => {
                 req.query.view = 'day'
             }
 
-            // console.log(req.query.view)
-
-            const graficoFinanceiro = [
-                await app.db('financeiro')
-                    .sum('valor_total')
-                    .where({ tipo_conta: 1 })
-                    .groupByRaw(`date_trunc('${req.query.view || 'month'}', financeiro.data_criacao)`)
-                    .then(contas => contas.map(conta => conta.sum)),
-                await app.db('financeiro')
-                    .sum('valor_total')
-                    .where({ tipo_conta: 2 })
-                    .groupByRaw(`date_trunc('${req.query.view || 'month'}', financeiro.data_criacao)`)
-                    .then(contas => contas.map(conta => conta.sum))
-            ]
+            // const graficoFinanceiro = [
+            //     await app.db('financeiro')
+            //         .sum('valor_total')
+            //         .where({ tipo_conta: 1 })
+            //         .groupByRaw(`date_trunc('${req.query.view || 'month'}', financeiro.data_criacao)`)
+            //         .then(contas => contas.map(conta => conta.sum)),
+            //     await app.db('financeiro')
+            //         .sum('valor_total')
+            //         .where({ tipo_conta: 2 })
+            //         .groupByRaw(`date_trunc('${req.query.view || 'month'}', financeiro.data_criacao)`)
+            //         .then(contas => contas.map(conta => conta.sum))
+            // ]
 
             // console.log(graficoFinanceiro)
 
@@ -44,7 +42,6 @@ module.exports = app => {
                 contasReceber: contasReceber[0].sum || 0,
                 vendas: vendas[0] ? vendas[0].count : 0,
                 graficoCadastros,
-                graficoFinanceiro
             }
 
             // console.log(response)

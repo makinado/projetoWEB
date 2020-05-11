@@ -1,262 +1,269 @@
 <template>
-  <div class="add-empresa">
-    <v-dialog
-      v-model="modalStore.usuarios.visible"
-      fullscreen
-      persistent
-      hide-overlay
-      transition="dialog-bottom-transition"
-    >
-      <v-card v-if="modalStore.usuarios.visible">
-        <v-toolbar fixed dark :color="color">
-          <v-toolbar-side-icon @click="modalStore.usuarios.visible = false">
-            <v-icon>close</v-icon>
-          </v-toolbar-side-icon>
-          <v-toolbar-title
-            class="headline white--text font-weight-light"
-          >{{ modalStore.usuarios.title }}</v-toolbar-title>
+  <v-dialog
+    v-model="modalStore.usuarios.visible"
+    fullscreen
+    persistent
+    hide-overlay
+    transition="dialog-bottom-transition"
+  >
+    <v-card v-if="modalStore.usuarios.visible">
+      <v-toolbar dense flat extended extension-height="5" dark :color="color">
+        <v-toolbar-side-icon @click="modalStore.usuarios.visible = false">
+          <v-icon>close</v-icon>
+        </v-toolbar-side-icon>
+        <v-toolbar-title
+          class="headline white--text font-weight-light"
+        >{{ modalStore.usuarios.title }}</v-toolbar-title>
 
-          <v-spacer></v-spacer>
+        <v-spacer></v-spacer>
 
-          <v-btn class="mr-3" icon @click="save">
+        <v-tooltip bottom>
+          <v-btn slot="activator" class="mr-3" icon @click="reset">
+            <v-icon>fa fa-2x fa-eraser</v-icon>
+          </v-btn>
+          <span>Limpar tela</span>
+        </v-tooltip>
+        <v-tooltip bottom>
+          <v-btn slot="activator" class="mr-3" icon @click="save">
             <v-icon>fa fa-2x fa-check</v-icon>
           </v-btn>
-          <v-btn class="mr-3" icon>
+          <span>Salvar usuário</span>
+        </v-tooltip>
+        <v-tooltip bottom>
+          <v-btn slot="activator" class="mr-3" icon>
             <v-icon>fa fa-2x fa-cog</v-icon>
           </v-btn>
-        </v-toolbar>
+          <span>Configurações</span>
+        </v-tooltip>
+      </v-toolbar>
 
-        <v-card-text>
-          <v-container fluid grid-list-xl class="my-5">
-            <v-container fluid>
-              <v-form v-model="valid1" ref="form_basico">
-                <v-layout justify-start wrap class="bege">
-                  <v-flex xs12>
-                    <v-card flat>
-                      <v-layout justify-center wrap>
-                        <v-card-title>
-                          <span class="headline">Dados do usuario</span>
-                        </v-card-title>
-                        <v-card-text>
-                          <v-container grid-list-xl>
-                            <v-layout wrap>
-                              <v-flex xs12 md6>
-                                <v-text-field
-                                  :color="color"
-                                  label="Nome*"
-                                  v-model="usuario.nome"
-                                  :rules="nameRules"
-                                ></v-text-field>
-                              </v-flex>
-                              <v-flex xs12 md6>
-                                <v-text-field
-                                  color="primary"
-                                  label="Imagem de perfil"
-                                  prepend-icon="fa fa-lg fa-folder-open-o"
-                                  readonly
-                                  v-model="imageName"
-                                  @click="pickFile"
-                                ></v-text-field>
-                                <input
-                                  name="file"
-                                  type="file"
-                                  style="display: none"
-                                  ref="image"
-                                  accept="image/*"
-                                  @change="onFilePicked"
-                                />
-                              </v-flex>
-                              <v-flex xs12 md6>
-                                <v-text-field
-                                  :color="color"
-                                  label="E-mail*"
-                                  v-model="usuario.email"
-                                  :rules="emailRules"
-                                ></v-text-field>
-                              </v-flex>
-                              <v-flex xs12 md6>
-                                <v-text-field
-                                  :color="color"
-                                  label="Contato"
-                                  v-mask="['(##)####-####','(##)#####-####']"
-                                  v-model="usuario.contato"
-                                ></v-text-field>
-                              </v-flex>
-                              <v-flex xs12 md6>
-                                <v-text-field
-                                  :color="color"
-                                  label="Senha*"
-                                  type="password"
-                                  v-model="usuario.senha"
-                                  :rules="senhaRules"
-                                ></v-text-field>
-                              </v-flex>
-                              <v-flex xs12 md6>
-                                <v-text-field
-                                  :color="color"
-                                  label="Confirmar senha*"
-                                  type="password"
-                                  v-model="usuario.confirmaSenha"
-                                  :rules="confirmaSenhaRules"
-                                ></v-text-field>
-                              </v-flex>
-                            </v-layout>
-                          </v-container>
-                        </v-card-text>
-                      </v-layout>
-                    </v-card>
-                  </v-flex>
-                </v-layout>
-              </v-form>
-
-              <v-flex xs12 class="mt-4">
-                <v-layout justify-center>
-                  <v-icon class="mt-4 mr-2">fa fa-2x fa-key</v-icon>
-                  <h2>Acesso</h2>
-                </v-layout>
-                <v-divider class="my-3"></v-divider>
-              </v-flex>
-
-              <v-form v-model="valid1" ref="form_acesso">
-                <v-layout wrap>
-                  <v-flex xs12 md6>
-                    <v-autocomplete
-                      class="tag-input"
-                      multiple
-                      dense
-                      chips
-                      deletable-chips
-                      :color="color"
-                      label="Selecione as empresas que o usuário terá acesso*"
-                      v-model="usuario.empresas"
-                      :items="empresaStore.empresas"
-                      :menu-props="{ maxHeight: '300' }"
-                      persistent-hint
-                      :rules="empresaRules"
-                      @focus="$store.dispatch('loadEmpresas')"
-                    ></v-autocomplete>
-                  </v-flex>
-                  <v-flex xs12>
-                    <v-switch label="Selecionar tudo" :color="color" @change="selectAll"></v-switch>
-
-                    <v-layout row wrap>
-                      <v-flex xs12 sm4 md2 v-for="opcao in opcoes" :key="opcao.nome">
-                        <v-card :class="'primary--text'">
-                          <v-card-title class="subheading font-weight-bold">
-                            <span>{{ opcao.text }}</span>
-
-                            <v-spacer></v-spacer>
-
-                            <v-checkbox :color="color" @change="selectCard($event, opcao.nome)"></v-checkbox>
-                          </v-card-title>
-
-                          <v-list dense>
-                            <v-list-tile v-for="acao in acoes" :key="acao.text">
-                              <v-list-tile-action>
-                                <v-checkbox
-                                  :color="color"
-                                  v-model="acessos[opcao.nome + acao.nome]"
-                                ></v-checkbox>
-                              </v-list-tile-action>
-                              <v-list-tile-content class="align-start">{{ acao.text }}</v-list-tile-content>
-                            </v-list-tile>
-                          </v-list>
-                        </v-card>
-                      </v-flex>
-
-                      <v-flex xs12 sm4 md2>
-                        <v-card :class="'primary--text'">
-                          <v-card-title class="subheading font-weight-bold">
-                            <span>Relatórios</span>
-
-                            <v-spacer></v-spacer>
-
-                            <v-checkbox :color="color" @change="selectCard($event, 'relatorios')"></v-checkbox>
-                          </v-card-title>
-
-                          <v-list dense>
-                            <v-list-tile>
-                              <v-list-tile-action>
-                                <v-checkbox :color="color" v-model="acessos.rel_cadastros"></v-checkbox>
-                              </v-list-tile-action>
-                              <v-list-tile-content class="align-start">Cadastros</v-list-tile-content>
-                            </v-list-tile>
-                            <v-list-tile>
-                              <v-list-tile-action>
-                                <v-checkbox :color="color" v-model="acessos.rel_compras"></v-checkbox>
-                              </v-list-tile-action>
-                              <v-list-tile-content class="align-start">Compras</v-list-tile-content>
-                            </v-list-tile>
-                            <v-list-tile>
-                              <v-list-tile-action>
-                                <v-checkbox :color="color" v-model="acessos.rel_vendas"></v-checkbox>
-                              </v-list-tile-action>
-                              <v-list-tile-content class="align-start">Vendas</v-list-tile-content>
-                            </v-list-tile>
-                            <v-list-tile>
-                              <v-list-tile-action>
-                                <v-checkbox :color="color" v-model="acessos.rel_estoque"></v-checkbox>
-                              </v-list-tile-action>
-                              <v-list-tile-content class="align-start">Estoque</v-list-tile-content>
-                            </v-list-tile>
-                            <v-list-tile>
-                              <v-list-tile-action>
-                                <v-checkbox :color="color" v-model="acessos.rel_financeiro"></v-checkbox>
-                              </v-list-tile-action>
-                              <v-list-tile-content class="align-start">Financeiro</v-list-tile-content>
-                            </v-list-tile>
-                            <v-list-tile>
-                              <v-list-tile-action>
-                                <v-checkbox :color="color" v-model="acessos.rel_estat"></v-checkbox>
-                              </v-list-tile-action>
-                              <v-list-tile-content class="align-start">Estatísticas</v-list-tile-content>
-                            </v-list-tile>
-                          </v-list>
-                        </v-card>
-                      </v-flex>
-
-                      <v-flex xs12 sm4 md2>
-                        <v-card :class="'primary--text'">
-                          <v-card-title class="subheading font-weight-bold">
-                            <span>Outros</span>
-
-                            <v-spacer></v-spacer>
-
-                            <v-checkbox :color="color" @change="selectCard($event, 'outros')"></v-checkbox>
-                          </v-card-title>
-
-                          <v-list dense>
-                            <v-list-tile>
-                              <v-list-tile-action>
-                                <v-checkbox :color="color" v-model="acessos.agenda"></v-checkbox>
-                              </v-list-tile-action>
-                              <v-list-tile-content class="align-start">Agenda</v-list-tile-content>
-                            </v-list-tile>
-                            <v-list-tile>
-                              <v-list-tile-action>
-                                <v-checkbox :color="color" v-model="acessos.atividades"></v-checkbox>
-                              </v-list-tile-action>
-                              <v-list-tile-content class="align-start">Atividades</v-list-tile-content>
-                            </v-list-tile>
-                            <v-list-tile>
-                              <v-list-tile-action>
-                                <v-checkbox :color="color" v-model="acessos.configuracoes"></v-checkbox>
-                              </v-list-tile-action>
-                              <v-list-tile-content class="align-start">Configurações</v-list-tile-content>
-                            </v-list-tile>
-                          </v-list>
-                        </v-card>
-                      </v-flex>
+      <v-card-text>
+        <v-container fluid grid-list-xl class="my-5">
+          <v-container fluid>
+            <v-form v-model="valid1" ref="form_basico">
+              <v-layout justify-start wrap class="bege">
+                <v-flex xs12>
+                  <v-card flat>
+                    <v-layout justify-center wrap>
+                      <v-card-title>
+                        <span class="headline">Dados do usuario</span>
+                      </v-card-title>
+                      <v-card-text>
+                        <v-container grid-list-xl>
+                          <v-layout wrap>
+                            <v-flex xs12 md6>
+                              <v-text-field
+                                :color="color"
+                                label="Nome*"
+                                v-model="usuario.nome"
+                                :rules="nameRules"
+                              ></v-text-field>
+                            </v-flex>
+                            <v-flex xs12 md6>
+                              <v-text-field
+                                color="primary"
+                                label="Imagem de perfil"
+                                prepend-icon="fa fa-lg fa-folder-open-o"
+                                readonly
+                                v-model="imageName"
+                                @click="pickFile"
+                              ></v-text-field>
+                              <input
+                                name="file"
+                                type="file"
+                                style="display: none"
+                                ref="image"
+                                accept="image/*"
+                                @change="onFilePicked"
+                              />
+                            </v-flex>
+                            <v-flex xs12 md6>
+                              <v-text-field
+                                :color="color"
+                                label="E-mail*"
+                                v-model="usuario.email"
+                                :rules="emailRules"
+                              ></v-text-field>
+                            </v-flex>
+                            <v-flex xs12 md6>
+                              <v-text-field
+                                :color="color"
+                                label="Contato"
+                                v-mask="['(##)####-####','(##)#####-####']"
+                                v-model="usuario.contato"
+                              ></v-text-field>
+                            </v-flex>
+                            <v-flex xs12 md6>
+                              <v-text-field
+                                :color="color"
+                                label="Senha*"
+                                type="password"
+                                v-model="usuario.senha"
+                                :rules="senhaRules"
+                              ></v-text-field>
+                            </v-flex>
+                            <v-flex xs12 md6>
+                              <v-text-field
+                                :color="color"
+                                label="Confirmar senha*"
+                                type="password"
+                                v-model="usuario.confirmaSenha"
+                                :rules="confirmaSenhaRules"
+                              ></v-text-field>
+                            </v-flex>
+                          </v-layout>
+                        </v-container>
+                      </v-card-text>
                     </v-layout>
-                  </v-flex>
-                </v-layout>
-              </v-form>
-            </v-container>
+                  </v-card>
+                </v-flex>
+              </v-layout>
+            </v-form>
+
+            <v-flex xs12 class="mt-4">
+              <v-layout justify-center>
+                <v-icon class="mt-4 mr-2">fa fa-2x fa-key</v-icon>
+                <h2>Acesso</h2>
+              </v-layout>
+              <v-divider class="my-3"></v-divider>
+            </v-flex>
+
+            <v-form v-model="valid1" ref="form_acesso">
+              <v-layout wrap>
+                <v-flex xs12 md6>
+                  <v-autocomplete
+                    class="tag-input"
+                    multiple
+                    dense
+                    chips
+                    deletable-chips
+                    :color="color"
+                    label="Selecione as empresas que o usuário terá acesso*"
+                    v-model="usuario.empresas"
+                    :items="empresaStore.empresas"
+                    :menu-props="{ maxHeight: '300' }"
+                    persistent-hint
+                    :rules="empresaRules"
+                    @focus="$store.dispatch('loadEmpresas')"
+                  ></v-autocomplete>
+                </v-flex>
+                <v-flex xs12>
+                  <v-switch label="Selecionar tudo" :color="color" @change="selectAll"></v-switch>
+
+                  <v-layout row wrap>
+                    <v-flex xs12 sm4 md2 v-for="opcao in opcoes" :key="opcao.nome">
+                      <v-card :class="'primary--text'">
+                        <v-card-title class="subheading font-weight-bold">
+                          <span>{{ opcao.text }}</span>
+
+                          <v-spacer></v-spacer>
+
+                          <v-checkbox :color="color" @change="selectCard($event, opcao.nome)"></v-checkbox>
+                        </v-card-title>
+
+                        <v-list dense>
+                          <v-list-tile v-for="acao in acoes" :key="acao.text">
+                            <v-list-tile-action>
+                              <v-checkbox :color="color" v-model="acessos[opcao.nome + acao.nome]"></v-checkbox>
+                            </v-list-tile-action>
+                            <v-list-tile-content class="align-start">{{ acao.text }}</v-list-tile-content>
+                          </v-list-tile>
+                        </v-list>
+                      </v-card>
+                    </v-flex>
+
+                    <v-flex xs12 sm4 md2>
+                      <v-card :class="'primary--text'">
+                        <v-card-title class="subheading font-weight-bold">
+                          <span>Relatórios</span>
+
+                          <v-spacer></v-spacer>
+
+                          <v-checkbox :color="color" @change="selectCard($event, 'relatorios')"></v-checkbox>
+                        </v-card-title>
+
+                        <v-list dense>
+                          <v-list-tile>
+                            <v-list-tile-action>
+                              <v-checkbox :color="color" v-model="acessos.rel_cadastros"></v-checkbox>
+                            </v-list-tile-action>
+                            <v-list-tile-content class="align-start">Cadastros</v-list-tile-content>
+                          </v-list-tile>
+                          <v-list-tile>
+                            <v-list-tile-action>
+                              <v-checkbox :color="color" v-model="acessos.rel_compras"></v-checkbox>
+                            </v-list-tile-action>
+                            <v-list-tile-content class="align-start">Compras</v-list-tile-content>
+                          </v-list-tile>
+                          <v-list-tile>
+                            <v-list-tile-action>
+                              <v-checkbox :color="color" v-model="acessos.rel_vendas"></v-checkbox>
+                            </v-list-tile-action>
+                            <v-list-tile-content class="align-start">Vendas</v-list-tile-content>
+                          </v-list-tile>
+                          <v-list-tile>
+                            <v-list-tile-action>
+                              <v-checkbox :color="color" v-model="acessos.rel_estoque"></v-checkbox>
+                            </v-list-tile-action>
+                            <v-list-tile-content class="align-start">Estoque</v-list-tile-content>
+                          </v-list-tile>
+                          <v-list-tile>
+                            <v-list-tile-action>
+                              <v-checkbox :color="color" v-model="acessos.rel_financeiro"></v-checkbox>
+                            </v-list-tile-action>
+                            <v-list-tile-content class="align-start">Financeiro</v-list-tile-content>
+                          </v-list-tile>
+                          <v-list-tile>
+                            <v-list-tile-action>
+                              <v-checkbox :color="color" v-model="acessos.rel_estat"></v-checkbox>
+                            </v-list-tile-action>
+                            <v-list-tile-content class="align-start">Estatísticas</v-list-tile-content>
+                          </v-list-tile>
+                        </v-list>
+                      </v-card>
+                    </v-flex>
+
+                    <v-flex xs12 sm4 md2>
+                      <v-card :class="'primary--text'">
+                        <v-card-title class="subheading font-weight-bold">
+                          <span>Outros</span>
+
+                          <v-spacer></v-spacer>
+
+                          <v-checkbox :color="color" @change="selectCard($event, 'outros')"></v-checkbox>
+                        </v-card-title>
+
+                        <v-list dense>
+                          <v-list-tile>
+                            <v-list-tile-action>
+                              <v-checkbox :color="color" v-model="acessos.agenda"></v-checkbox>
+                            </v-list-tile-action>
+                            <v-list-tile-content class="align-start">Agenda</v-list-tile-content>
+                          </v-list-tile>
+                          <v-list-tile>
+                            <v-list-tile-action>
+                              <v-checkbox :color="color" v-model="acessos.atividades"></v-checkbox>
+                            </v-list-tile-action>
+                            <v-list-tile-content class="align-start">Atividades</v-list-tile-content>
+                          </v-list-tile>
+                          <v-list-tile>
+                            <v-list-tile-action>
+                              <v-checkbox :color="color" v-model="acessos.configuracoes"></v-checkbox>
+                            </v-list-tile-action>
+                            <v-list-tile-content class="align-start">Configurações</v-list-tile-content>
+                          </v-list-tile>
+                        </v-list>
+                      </v-card>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+              </v-layout>
+            </v-form>
           </v-container>
-        </v-card-text>
-      </v-card>
-    </v-dialog>
-  </div>
+        </v-container>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script>

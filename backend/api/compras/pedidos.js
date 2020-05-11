@@ -1,7 +1,7 @@
 const { formatToBRL } = require('brazilian-values')
 
 module.exports = app => {
-    const { existsOrError, parseNumber } = app.api.validation
+    const { existsOrError, parseNumber, formatDate } = app.api.validation
 
     const save = async (req, res) => {
         const pedido = { ...req.body }
@@ -211,6 +211,30 @@ module.exports = app => {
             .catch(e => res.status(500).send(e.toString()))
     }
 
+    const getPendentes = async (req, res) => {
+        app.db('compra_pedido')
+            .join('pessoas', 'compra_pedido.id_pessoa', 'pessoas.id')
+            .select('compra_pedido.id', 'pessoas.nome as fornecedor', 'data_pedido', 'valor_total')
+            .then(pedidos => {
+                pedidos = pedidos.map(p => {
+                    p.data_pedido = formatDate(
+                        new Date(p.data_pedido)
+                            .toISOString()
+                            .substr(0, 10)
+                    );
+                    p.valor_total = formatToBRL(p.valor_total)
+
+                    const newListPedidos = {
+                        value: p.id,
+                        text: p.fornecedor + ' | ' + p.data_pedido + ' | ' + p.valor_total
+                    }
+
+                    return newListPedidos
+                })
+                res.json(pedidos)
+            })
+    }
+
     const getBySituacao = async (req, res) => {
         if (req.params.situacao === '1') {
             try {
@@ -284,5 +308,5 @@ module.exports = app => {
         }
     }
 
-    return { save, get, getById, getBySituacao, remove }
+    return { save, getPendentes, get, getById, getBySituacao, remove }
 }

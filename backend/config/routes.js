@@ -293,6 +293,11 @@ module.exports = app => {
         .all(app.config.passport.authenticate())
         .post(grantAccess(app.api.email.testarEmail))
 
+
+
+    app.route('/pedidos/pendentes')
+        .all(app.config.passport.authenticate())
+        .get(app.api.compras.pedidos.getPendentes)
     app.route('/pedidos')
         .all(app.config.passport.authenticate())
         .post(grantAccess(app.api.compras.pedidos.save, 'pedidos'))
@@ -362,6 +367,9 @@ module.exports = app => {
         .get(grantAccess(app.api.financeiro.boletos.getBoleto, 'financeiro'))
 
 
+    app.route('/classficacoes/todas')
+        .all(app.config.passport.authenticate())
+        .get(grantAccess(app.api.financeiro.classificacoes.getAll, 'financeiro'))
     app.route('/classificacoes')
         .all(app.config.passport.authenticate())
         .post(grantAccess(app.api.financeiro.classificacoes.save, 'financeiro'))

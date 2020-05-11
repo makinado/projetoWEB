@@ -7,7 +7,7 @@
     transition="dialog-bottom-transition"
   >
     <v-card v-if="modalStore.compras.compras.add">
-      <v-toolbar fixed dark :color="color">
+      <v-toolbar dense flat extended extension-height="5" dark :color="color">
         <v-toolbar-side-icon @click="modalStore.compras.compras.add = false">
           <v-icon>close</v-icon>
         </v-toolbar-side-icon>
@@ -17,18 +17,24 @@
 
         <v-spacer></v-spacer>
 
-        <v-btn class="mr-3" icon @click="limpaTela">
-          <v-icon>fa fa-2x fa-eraser</v-icon>
-        </v-btn>
-        <v-btn class="mr-3" icon @click="modalStore.compras.download = true">
-          <v-icon>fa fa-2x fa-arrow-circle-down</v-icon>
-        </v-btn>
-        <v-btn class="mr-3" icon @click="save">
-          <v-icon>fa fa-2x fa-check</v-icon>
-        </v-btn>
-        <v-btn class="mr-3" icon>
-          <v-icon>fa fa-2x fa-cog</v-icon>
-        </v-btn>
+        <v-tooltip bottom>
+          <v-btn slot="activator" class="mr-3" icon @click="limpaTela">
+            <v-icon>fa fa-2x fa-eraser</v-icon>
+          </v-btn>
+          <span>Limpar tela</span>
+        </v-tooltip>
+        <v-tooltip bottom>
+          <v-btn slot="activator" class="mr-3" icon @click="save">
+            <v-icon>fa fa-2x fa-check</v-icon>
+          </v-btn>
+          <span>Salvar compra</span>
+        </v-tooltip>
+        <v-tooltip bottom>
+          <v-btn slot="activator" class="mr-3" icon>
+            <v-icon>fa fa-2x fa-cog</v-icon>
+          </v-btn>
+          <span>Configurações</span>
+        </v-tooltip>
       </v-toolbar>
 
       <v-card-text>
@@ -37,7 +43,7 @@
             <v-text-field label="id" v-model="compra.id" v-show="false"></v-text-field>
             <v-text-field v-model="compra.id_empresa" v-show="false"></v-text-field>
             <v-layout wrap>
-              <v-flex xs12 md3>
+              <v-flex xs12 md2>
                 <v-autocomplete
                   class="tag-input"
                   dense
@@ -71,18 +77,20 @@
                   </template>
                 </v-autocomplete>
               </v-flex>
-              <!-- <v-flex xs12 md3> //DESENVOLVIMENTO FUTURO
-              <v-autocomplete
-              class="tag-input"
+              <v-flex xs12 md3>
+                <v-autocomplete
+                  class="tag-input"
                   chips
-                dense
-                :color="color"
-                label="Pedido"
-                :items="pedidos"
-                v-model="compra.id_pedido"
-                no-data-text="Parece que não há pedidos pendentes"
-              ></v-autocomplete>
-              </v-flex>-->
+                  dense
+                  deletable-chips
+                  :color="color"
+                  label="Pedido"
+                  :items="comprasStore.pedidos"
+                  v-model="compra.id_pedido"
+                  no-data-text="Parece que não há pedidos pendentes"
+                  @focus="$store.dispatch('loadPedidos')"
+                ></v-autocomplete>
+              </v-flex>
               <v-spacer></v-spacer>
             </v-layout>
           </v-form>
@@ -468,7 +476,10 @@ export default {
       }
     }
   },
-  components: { FinanceiroVue: () => import("../material/Financeiro") },
+  components: {
+    FinanceiroVue: () => import("../material/Financeiro"),
+    SelectEmpresa: () => import("../empresas/SelectEmpresa")
+  },
   data() {
     return {
       menu: false,

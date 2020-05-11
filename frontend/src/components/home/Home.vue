@@ -123,6 +123,7 @@
       <v-flex sm6 xs12 md6 lg3>
         <router-link to="/vendas">
           <StatsCard
+            @click="$store.commit('setFilter', { data_inicial: painel.data_inicial, data_final: painel.data_final })"
             color="red"
             icon="fa fa-shopping-cart"
             title="Vendas realizadas"

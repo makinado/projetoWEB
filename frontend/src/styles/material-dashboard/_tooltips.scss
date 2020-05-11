@@ -21,14 +21,12 @@
     vertical-align: $tooltip-arrow-align;
     content: "";
   }
-
   &.top:after {
     border-top: $tooltip-border solid $white;
     border-right: $tooltip-border solid transparent;
     border-bottom: 0;
     border-left: $tooltip-border solid transparent;
   }
-
   &.bottom:after{
     top: -$tooltip-border;
     border-top: 0;
