@@ -7,7 +7,7 @@
     transition="dialog-bottom-transition"
   >
     <v-card v-if="modalStore.vendas.vendas.visible">
-      <v-toolbar dense flat extended extension-height="5" dark :color="color">
+      <v-toolbar dense flat extended fixed extension-height="5" dark :color="color">
         <v-toolbar-side-icon @click="modalStore.vendas.vendas.visible = false">
           <v-icon>close</v-icon>
         </v-toolbar-side-icon>

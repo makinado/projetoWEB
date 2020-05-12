@@ -7,7 +7,7 @@
     transition="dialog-bottom-transition"
   >
     <v-card v-if="modalStore.compras.compras.importar">
-      <v-toolbar dense flat extended extension-height="5" dark :color="color">
+      <v-toolbar dense flat extended fixed extension-height="5" dark :color="color">
         <v-toolbar-side-icon @click="modalStore.compras.compras.importar = false">
           <v-icon>close</v-icon>
         </v-toolbar-side-icon>
@@ -121,25 +121,20 @@
               <td>{{ data.item.nfeProc.NFe.infNFe.total.ICMSTot.vNF }}</td>
               <td>
                 <v-tooltip v-if="data.item.situacao === 2" bottom>
-                  <b-button
+                  <v-btn
                     slot="activator"
-                    variant="secundary"
+                    icon
                     @click.prevent="addPessoa(data.item.nfeProc.NFe.infNFe.emit)"
                     class="mr-1"
                   >
                     <i class="fa fa-lg fa-plus-circle"></i>
-                  </b-button>
+                  </v-btn>
                   <span>Adicionar fornecedor</span>
                 </v-tooltip>
                 <v-tooltip bottom>
-                  <b-button
-                    slot="activator"
-                    variant="secundary"
-                    @click.prevent="removeArq(data.item)"
-                    class="mr-1"
-                  >
+                  <v-btn slot="activator" icon @click.prevent="removeArq(data.item)" class="mr-1">
                     <i class="fa fa-lg fa-trash"></i>
-                  </b-button>
+                  </v-btn>
                   <span>Remover arquivo</span>
                 </v-tooltip>
               </td>
@@ -207,6 +202,8 @@
                     prepend-icon="fa fa-lg fa-plus-circle"
                     @click:prepend="addProduto(data.item)"
                     auto-select-first
+                    @focus="$store.dispatch('loadProdutos')"
+                    @change="vincularProduto(data.item)"
                   ></v-autocomplete>
                 </v-flex>
               </td>
@@ -244,15 +241,15 @@
               <td>{{ data.item.prod.valor_custo }}</td>
               <!-- <td>
                 <v-tooltip bottom>
-                  <b-button
+                  <v-btn
                     v-if="data.item.id"
                     slot="activator"
-                    variant="secundary"
+                    icon
                     @click.prevent="vincularProduto(data.item)"
                     class="mr-1"
                   >
                     <i class="fa fa-lg fa-check"></i>
-                  </b-button>
+                  </v-btn>
                   <span>Vincular produto</span>
                 </v-tooltip>
               </td>-->
@@ -272,7 +269,7 @@
 <script>
 import { VMoney } from "v-money";
 
-import { urlBD, saveLog, showError, parseNumber } from "@/global";
+import { urlBD, saveLog, showError, showSuccess, parseNumber } from "@/global";
 import axios from "axios";
 import { mapState } from "vuex";
 import { formatToBRL, formatToCNPJ } from "brazilian-values";
@@ -568,28 +565,21 @@ export default {
         .catch(showError);
     },
     async vincularProduto(produto) {
-      if (!produto.id) return showError("Produto não selecionado");
-      if (!produto.id_fornecedor)
-        return showError("Fornecedor do produto não cadastrado");
-      if (!produto.prod.cProd)
-        return showError(
-          "Código do produto do fornecedor não encontrado no XML"
-        );
+      if (!produto.id || !produto.id_fornecedor || !produto.prod.cProd) return;
 
       const prod = {
         id_produto_empresa: produto.id,
         id_fornecedor: produto.id_fornecedor,
         id_produto_fornecedor: produto.prod.cProd,
-        qtde_embalagem: produto.prod.qtde_embalagem || "0,00"
+        qtde_embalagem: produto.prod.qtde_embalagem || "0,00",
+        cfop_produto_fornecedor: produto.prod.CFOP
       };
 
-      const url = `${urlBD}/compras/vinculacao`;
-
       axios
-        .post(url, prod)
+        .post(`${urlBD}/compras/vinculacao`, prod)
         .then(res => {
           produto.situacao = 1;
-          this.$toasted.global.defaultSuccess();
+          showSuccess("Produto vinculado com sucesso!");
         })
         .catch(showError);
     },
@@ -599,12 +589,12 @@ export default {
       const qtde = parseNumber(produto.qtde_embalagem);
       const valor_unitario = parseNumber(produto.vUnCom);
       const soma =
-        parseNumber(produto.valor_frete) +
-        parseNumber(produto.valor_seguro) +
-        parseNumber(item.imposto.valor_ipi) +
-        parseNumber(item.imposto.valor_st) -
-        parseNumber(produto.valor_desconto) +
-        parseNumber(produto.perc_add) / 100;
+        parseNumber(produto.valor_frete || "0,00") +
+        parseNumber(produto.valor_seguro || "0,00") +
+        parseNumber(item.imposto.valor_ipi || "0,00") +
+        parseNumber(item.imposto.valor_st || "0,00") -
+        parseNumber(produto.valor_desconto || "0,00") +
+        parseNumber(produto.perc_add || "0,00") / 100;
 
       produto.valor_custo =
         qtde != 0
@@ -684,10 +674,7 @@ export default {
         return axios.post(url, pessoaAtt).catch(showError);
       });
 
-      await Promise.all(requests).then(arrayOfResponses => {
-        this.$store.dispatch("loadPessoas").then(() => this.upload());
-      });
-
+      await Promise.all(requests).then(arrayOfResponses => this.upload());
       this.isLoadingCad = false;
     },
     async cadProdutos() {
@@ -722,9 +709,7 @@ export default {
         return axios.post(url, produtoAtt).catch(showError);
       });
 
-      await Promise.all(requests).then(arrayOfResponses => {
-        this.$store.dispatch("loadProdutos").then(() => this.upload());
-      });
+      await Promise.all(requests).then(arrayOfResponses => this.upload());
       this.isLoadingCad = false;
     },
     async addPessoa(fornec) {
@@ -764,9 +749,6 @@ export default {
     },
     async loadTela(compra) {
       this.$store.dispatch("loadFornecs");
-      this.$store.dispatch("loadProdutos");
-      this.$store.dispatch("loadDocumentos");
-      this.$store.dispatch("loadContas");
     },
     save() {
       const filesUpload = [];

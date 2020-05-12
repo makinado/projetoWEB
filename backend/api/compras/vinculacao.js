@@ -10,9 +10,9 @@ module.exports = app => {
         }
 
         try {
-            existsOrError(vinculacao.id_produto_empresa, 'Informe o produto que deseja vincular')
             existsOrError(vinculacao.id_fornecedor, 'Informe o fornecedor do produto')
             existsOrError(vinculacao.id_produto_fornecedor, 'Informe o código do produto de seu fornecedor')
+            existsOrError(vinculacao.id_produto_empresa, 'Informe o produto que deseja vincular')
 
         } catch (e) {
             return res.status(400).send(e.toString())

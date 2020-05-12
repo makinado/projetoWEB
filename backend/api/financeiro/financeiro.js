@@ -260,6 +260,29 @@ module.exports = app => {
             .catch(e => res.status(500).send(e.toString()))
     }
 
+    const getConta = async (req, res) => {
+        app.db('financeiro')
+            .join('empresas', 'financeiro.id_empresa', 'empresas.id')
+            .join('pessoas', 'financeiro.id_pessoa', 'pessoas.id')
+            .leftJoin('documentos as doc_origem', 'financeiro.documento_origem', 'doc_origem.id')
+            .leftJoin('documentos as doc_baixa', 'financeiro.documento_baixa', 'doc_baixa.id')
+            .leftJoin('classificacao', 'financeiro.classificacao', 'classificacao.id')
+            .leftJoin('conta', 'financeiro.id_conta', 'conta.id')
+            .select(
+                '*',
+                'empresas.nome as empresa',
+                'pessoas.nome as pessoa',
+                'doc_origem.nome as documento_origem',
+                'doc_baixa.nome as documento_baixa',
+                'classificacao.descricao as classificacao',
+                'conta.nome as conta',
+            )
+            .where({ 'financeiro.id': req.params.id })
+            .first()
+            .then(financ => res.json(financ))
+            .catch(e => { console.log(e); res.status(500).send(e.toString()) })
+    }
+
     const remove = async (req, res) => {
         app.db.transaction(async function (trx) {
             return app.db('financeiro')
@@ -313,5 +336,5 @@ module.exports = app => {
         })
     }
 
-    return { save, save_pagamento, get, getById, remove, remove_pagamento }
+    return { save, save_pagamento, get, getById, getConta, remove, remove_pagamento }
 }

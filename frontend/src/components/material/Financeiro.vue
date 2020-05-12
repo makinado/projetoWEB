@@ -78,20 +78,19 @@
         <td>
           <v-flex xs8>
             <v-autocomplete
-                  class="tag-input"
-                  dense
-                  chips
-                  :color="color"
-                  label="Documento"
-                  v-model="data.item.documento_origem"
-                  :items="financeiroStore.documentos"
-                  prepend-icon="fa fa-lg fa-plus-circle"
-                  @click:prepend="[financeiroStore.documento = null, modalStore.documentos.visible = true]"
-                  @focus="$store.dispatch('loadDocumentos')"
-                  no-data-text="Nenhum documento encontrado"
-                  deletable-chips
-                >
-                </v-autocomplete>
+              class="tag-input"
+              dense
+              chips
+              :color="color"
+              label="Documento"
+              v-model="data.item.documento_origem"
+              :items="financeiroStore.documentos"
+              prepend-icon="fa fa-lg fa-plus-circle"
+              @click:prepend="[financeiroStore.documento = null, modalStore.documentos.visible = true]"
+              @focus="$store.dispatch('loadDocumentos')"
+              no-data-text="Nenhum documento encontrado"
+              deletable-chips
+            ></v-autocomplete>
           </v-flex>
         </td>
         <td>
@@ -99,7 +98,7 @@
             v-model="data.item.pago"
             :color="color"
             hide-details
-            @click.native="[!data.expanded && data.item.pago ? [data.expanded = true, loadPagamento(data.item)] : limpaPagamento(data), calcTotalFinanc()]"
+            @change="[!data.expanded && data.item.pago ? [data.expanded = true, loadPagamento(data.item)] : limpaPagamento(data), calcTotalFinanc()]"
           ></v-switch>
         </td>
         <td>
@@ -196,8 +195,7 @@
                   @focus="$store.dispatch('loadDocumentos')"
                   no-data-text="Nenhum documento encontrado"
                   clearable
-                >
-                </v-autocomplete>
+                ></v-autocomplete>
               </v-flex>
               <v-flex xs12 md2>
                 <v-text-field
@@ -410,10 +408,10 @@ export default {
     },
     limpaPagamento(data) {
       data.expanded = false;
-      data.item.data_baixa = "";
-      data.item.documento_baixa = "";
-      data.item.num_documento_baixa = "";
-      data.item.observacao = "";
+      delete data.item.data_baixa;
+      delete data.item.documento_baixa;
+      delete data.item.num_documento_baixa;
+      delete data.item.observacao;
     },
     deleteParcela(parcela) {
       if (parcela) {

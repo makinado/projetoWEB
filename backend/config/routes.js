@@ -360,6 +360,9 @@ module.exports = app => {
     app.route('/financeiro/pagamento/:id')
         .all(app.config.passport.authenticate())
         .delete(grantAccess(app.api.financeiro.financeiro.remove_pagamento, 'financeiro'))
+    app.route('/verFinanceiro/:id')
+        .all(app.config.passport.authenticate())
+        .get(grantAccess(app.api.financeiro.financeiro.getConta, 'financeiro'))
 
 
     app.route('/boletos')

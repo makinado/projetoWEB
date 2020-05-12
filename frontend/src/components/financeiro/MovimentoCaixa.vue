@@ -307,7 +307,7 @@
                             <v-card-text>
                               <template v-if="data.item.origem == 'COMPRA'">
                                 <h4>Origem - {{ data.item.origem }}</h4>
-                                <h4>Empresa - {{ data.item.empresa }}</h4>
+                                <h4>Classificação - {{ data.item.classificacao }}</h4>
                                 <h4>Fornecedor - {{ data.item.dados.fornecedor }}</h4>
                                 <h4>Nota fiscal - {{ data.item.dados.nota_fiscal }}</h4>
                                 <h4>Data de lançamento - {{ formatDate(new Date(data.item.dados.data_lancamento).toISOString().substr(0, 10)) }}</h4>
@@ -315,7 +315,7 @@
                               </template>
                               <template v-else-if="data.item.origem == 'VENDA'">
                                 <h4>Origem - {{ data.item.origem }}</h4>
-                                <h4>Empresa - {{ data.item.empresa }}</h4>
+                                <h4>Classificação - {{ data.item.classificacao }}</h4>
                                 <h4>Cliente - {{ data.item.dados.cliente }}</h4>
                                 <h4>Vendedor - {{ data.item.dados.vendedor }}</h4>
                                 <h4>Nota fiscal - {{ data.item.dados.nota_fiscal }}</h4>

@@ -115,6 +115,10 @@ const routes = [{
     path: "/rel_estat",
     component: () => import('@/components/relatorios/Estatisticas')
 }, {
+    name: 'Upgrade',
+    path: "/upgrade",
+    component: () => import('@/components/upgrade/Upgrade')
+}, {
     name: 'Page not Found',
     path: "*",
     component: () => import('@/components/template/PageNotFound')

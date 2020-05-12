@@ -10,12 +10,18 @@ module.exports = app => {
     const save = async (req, res) => {
         const files = Object.values({ ...req.body })
 
+        // console.log(req.body[0].produtos[0])
+        // return
+
+        var arquivosOK = true, produtosOK = true, financeiroOK = true
+
         files.forEach(async file => {
             try {
                 //valida dados da compra/produtos/financeiro
                 existsOrError(file.id_empresa, 'Informe a empresa da compra')
                 if (file.situacao != 1) throw `XML ${file.dados.fornecedor} inválido, ${file.situacao == 2 ? 'Fornecedor não cadastrado' : 'XML já importado'}`
             } catch (e) {
+                arquivosOK = false
                 return res.status(400).send(e)
             }
 
@@ -26,22 +32,27 @@ module.exports = app => {
                     existsOrError(produto.fornec, `Produto ${produto.prod.xProd || ""} sem fornecedor, cadastre-o antes de continuar`)
 
                 } catch (e) {
+                    produtosOK = false
                     return res.status(400).send(e)
                 }
             })
             file.financeiro.map(parcela => {
                 try {
                     if (parcela.pago) {
-                        existsOrError(parcela.data_baixa, `Data do pagamento não preenchida na parcela ${parcea.nDup || ""}`)
-                        existsOrError(parcela.documento_baixa, `Documento não preenchido na parcela ${parcea.nDup || ""}`)
+                        existsOrError(parcela.id_conta, `Conta de pagamento não informada na parcela ${parcela.parcelas || ""}`)
+                        existsOrError(parcela.data_baixa, `Data do pagamento não preenchida na parcela ${parcela.parcelas || ""}`)
+                        existsOrError(parcela.documento_baixa, `Documento não preenchido na parcela ${parcela.parcelas || ""}`)
                     }
                 } catch (e) {
+                    financeiroOK = false
                     return res.status(400).send(e)
                 }
             })
 
             return file
         })
+
+        if (!arquivosOK || !produtosOK || !financeiroOK) return
 
         files.map(async xml => {
             const compra = {
@@ -93,6 +104,7 @@ module.exports = app => {
                                 valor_unitario: parseNumber(produto.prod.vUnCom || "0,00"),
                                 valor_total: parseNumber(produto.prod.vProd || "0,00"),
                                 valor_desconto: parseNumber(produto.prod.valor_desconto || "0,00"),
+                                valor_custo: parseNumber(produto.prod.valor_custo || "0,00"),
                                 perc_custo_adicional: parseNumber(produto.prod.perc_add || "0,00"),
                                 grupo_tributacao: produto.imposto.grupo_tributacao,
                                 origem: produto.imposto.origem,
@@ -116,7 +128,6 @@ module.exports = app => {
                                 valor_ipi: parseNumber(produto.imposto.valor_ipi || "0,00"),
                                 perc_pis: parseNumber(produto.imposto.perc_pis || "0,00"),
                                 perc_cofins: parseNumber(produto.imposto.perc_cofins || "0,00"),
-                                perc_custo_adicional: parseNumber(produto.imposto.perc_custo_adicional || "0,00"),
                             }
 
                             movim_estoque.push({
@@ -127,29 +138,58 @@ module.exports = app => {
                                 id_movimentacao: id[0],
                                 origem: 'COMPRA',
                                 quantidade: newProd.quantidade == 0 ? newProd.qcom : newProd.quantidade * newProd.qcom,
+
                             })
 
                             return newProd
                         })
 
+                        const movim_conta = []
                         const financeiro = xml.financeiro.map(parcela => {
                             const newFinanc = {
                                 id_movimento_origem: id[0],
                                 id_empresa: xml.id_empresa,
-                                tipo_conta: 2, //pagar
-                                pago: parcela.pago || false,
                                 id_pessoa: compra.id_pessoa,
+                                tipo_conta: 1, //pagar
+                                parcela: parcela.parcelas,
+                                
                                 documento_origem: parcela.documento_origem,
-                                num_documento_origem: parcela.nota_fiscal,
+                                num_documento_origem: compra.nota_fiscal,
                                 documento_baixa: parcela.documento_baixa,
                                 num_documento_baixa: parcela.num_documento_baixa,
+
                                 data_criacao: new Date().toISOString().substr(0, 10),
                                 data_emissao: compra.data_notafiscal.substr(0, 10),
-                                data_vencimento: parcela.dVenc,
+                                data_vencimento: parcela.data_vencimento,
                                 data_baixa: parcela.pago ? parcela.data_baixa : null,
-                                valor_parcela: parseNumber(parcela.vDup || "0,00"),
-                                valor_pago: parcela.pago ? parseNumber(parcela.vDup || "0,00") : 0
+
+                                pago: parcela.pago || false,
+                                id_conta: parcela.id_conta,
+                                valor_pago: parcela.pago ? parseNumber(parcela.valor_pago || "0,00") : 0,
+
+                                valor_parcela: parseNumber(parcela.valor_parcela || "0,00"),
+                                valor_acrescimo: parcela.pago ? parseNumber(parcela.valor_acrescimo || "0,00") : 0,
+                                valor_desconto: parcela.pago ? parseNumber(parcela.valor_desconto || "0,00") : 0,
+                                valor_total: compra.valor_total,
+
+                                observacao: parcela.observacao
                             }
+
+                            if (newFinanc.pago)
+                                movim_conta.push({
+                                    id_empresa: xml.id_empresa,
+                                    id_conta: parcela.id_conta,
+                                    id_movimento_origem: id[0],
+                                    data_lancamento: new Date(),
+                                    data_emissao: compra.data_notafiscal,
+                                    id_documento: parcela.documento_origem,
+                                    num_documento: compra.nota_fiscal,
+                                    observacao: parcela.observacao,
+                                    origem: "COMPRA",
+                                    dc: 'D',
+                                    valor: parseNumber(parcela.valor_pago)
+                                })
+
                             return newFinanc
                         })
 
@@ -161,6 +201,10 @@ module.exports = app => {
                                     .then(function () {
                                         return app.db.batchInsert('financeiro', financeiro)
                                             .transacting(trx)
+                                            .then(function () {
+                                                return app.db.batchInsert('conta_movimento', movim_conta)
+                                                    .transacting(trx)
+                                            })
                                     })
                             })
 
@@ -183,7 +227,7 @@ module.exports = app => {
         try {
             existsOrError(files, 'Nenhum arquivo XML selecionado')
 
-            let xmls = new Array()
+            let xmls = []
             seq = 0
             files.forEach(async file => {
                 parser.parseString(fs.readFileSync(`uploads/xml/${file}`, 'UTF-8'), async function (err, data) {

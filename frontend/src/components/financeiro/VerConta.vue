@@ -146,7 +146,7 @@ export default {
     },
     async loadConta(conta) {
       if (!conta) return;
-      const url = `${urlBD}/financeiro/${conta.id}`;
+      const url = `${urlBD}/verFinanceiro/${conta.id}`;
       axios
         .get(url)
         .then(res => {
