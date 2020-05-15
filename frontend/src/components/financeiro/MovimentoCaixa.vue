@@ -283,10 +283,15 @@
                                 </v-tooltip>
                                 <v-tooltip bottom>
                                   <v-btn
+                                    v-if="
+                                      data.item.origem != 'COMPRA' &&
+                                      data.item.origem != 'VENDA' &&
+                                      data.item.origem != 'FINANCEIRO'
+                                    "
                                     slot="activator"
                                     icon
                                     dark
-                                    @click.prevent="[modalStore.financeiro.deleteMovimento = true, financeiroStore.movim = data.item]"
+                                    @click.prevent="[confirmaExclusao = true, financeiroStore.movim = data.item]"
                                     class="mr-1"
                                     :disabled="(data.item.tipoStr === 'Entrada' || data.item.tipoStr === 'Saída') || (data.item.origem === 'Implantação de saldo' && movimContaItens.length > 1)"
                                   >
@@ -307,7 +312,7 @@
                             <v-card-text>
                               <template v-if="data.item.origem == 'COMPRA'">
                                 <h4>Origem - {{ data.item.origem }}</h4>
-                                <h4>Classificação - {{ data.item.classificacao }}</h4>
+                                <h4>Classificação - {{ data.item.classificacao || 'Movimento não classificado' }}</h4>
                                 <h4>Fornecedor - {{ data.item.dados.fornecedor }}</h4>
                                 <h4>Nota fiscal - {{ data.item.dados.nota_fiscal }}</h4>
                                 <h4>Data de lançamento - {{ formatDate(new Date(data.item.dados.data_lancamento).toISOString().substr(0, 10)) }}</h4>
@@ -315,11 +320,21 @@
                               </template>
                               <template v-else-if="data.item.origem == 'VENDA'">
                                 <h4>Origem - {{ data.item.origem }}</h4>
-                                <h4>Classificação - {{ data.item.classificacao }}</h4>
+                                <h4>Classificação - {{ data.item.classificacao || 'Movimento não classificado' }}</h4>
                                 <h4>Cliente - {{ data.item.dados.cliente }}</h4>
                                 <h4>Vendedor - {{ data.item.dados.vendedor }}</h4>
                                 <h4>Nota fiscal - {{ data.item.dados.nota_fiscal }}</h4>
                                 <h4>Data de lançamento - {{ formatDate(new Date(data.item.dados.data_criacao).toISOString().substr(0, 10)) }}</h4>
+                                <h4>Observações - {{ data.item.observacao || "Nenhuma observação" }}</h4>
+                              </template>
+                              <template v-else-if="data.item.origem == 'FINANCEIRO'">
+                                <h4>Origem - {{ data.item.origem }}</h4>
+                                <h4>Classificação - {{ data.item.classificacao || 'Movimento não classificado' }}</h4>
+                                <h4>Pessoa - {{ data.item.dados.pessoa }}</h4>
+                                <h4>Documento e número - {{ data.item.dados.documento_origem }} - {{ data.item.dados.num_documento_origem }}</h4>
+                                <h4>Data do pagamento - {{ formatDate(new Date(data.item.dados.data_baixa).toISOString().substr(0, 10)) }}</h4>
+                                <h4>Valor do pagamento - {{ data.item.dados.valor_pago | currency }}</h4>
+                                <h4>Valor total - {{ data.item.dados.valor_total | currency }}</h4>
                                 <h4>Observações - {{ data.item.observacao || "Nenhuma observação" }}</h4>
                               </template>
                               <template v-else>
@@ -353,12 +368,7 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog
-      v-model="modalStore.financeiro.deleteMovimento"
-      persistent
-      max-width="500px"
-      v-if="financeiroStore.movim"
-    >
+    <v-dialog v-model="confirmaExclusao" persistent max-width="500px" v-if="financeiroStore.movim">
       <v-card>
         <v-card-title>
           <span class="headline">Excluir movimentação de conta</span>
@@ -366,11 +376,7 @@
         <v-card-text>Excluir movimento {{ financeiroStore.movim.id }} no valor de {{ financeiroStore.movim.valor }} ?</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn
-            color="blue darken-1"
-            flat
-            @click="modalStore.financeiro.deleteMovimento = false"
-          >Fechar</v-btn>
+          <v-btn color="blue darken-1" flat @click="confirmaExclusao = false">Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
       </v-card>
@@ -441,6 +447,7 @@ export default {
       menu1: false,
       menu2: false,
       menu3: false,
+      confirmaExclusao: false,
       movimContaItens: [],
       movimConta: {},
       count: 0,
@@ -491,7 +498,7 @@ export default {
   watch: {
     "$store.state.modalStore.financeiro.movimento.visible": function() {
       if (this.modalStore.financeiro.movimento.visible) {
-        this.limpaTela();
+        this.reset();
       }
     },
     paginationMovim() {
@@ -499,18 +506,18 @@ export default {
     }
   },
   methods: {
+    formatDate(date) {
+      if (!date) return null;
+
+      const [year, month, day] = date.split("-");
+      return `${day}/${month}/${year}`;
+    },
     getColor(tipo) {
       if (tipo === "C") return "green";
       else return "red";
     },
-    limpaTela() {
-      this.reset();
-      this.$store.dispatch("loadDocumentos");
-      this.$store.dispatch("loadEmpresas");
-    },
     reset() {
       this.movim = {};
-      this.isBank = false;
       this.tabIndex = "tab-1";
       this.$refs.form ? this.$refs.form.reset() : "";
 
@@ -537,6 +544,7 @@ export default {
         axios
           .get(url)
           .then(res => {
+            console.log(res.data.data);
             this.count = res.data.count;
             this.paginationMovim.rowsPerPage = res.data.limit;
             this.movimContaItens = res.data.data.map(movim => {
@@ -582,7 +590,7 @@ export default {
             `Usuário ${this.usuarioStore.currentUsuario.nome} fez uma movimentação no caixa ${this.financeiroStore.conta.nome}`
           );
 
-          this.limpaTela();
+          this.reset();
         })
         .catch(showError);
     },
@@ -592,10 +600,10 @@ export default {
       axios
         .delete(url)
         .then(res => {
-          this.limpaTela();
+          this.reset();
 
           this.$toasted.global.defaultSuccess();
-          this.modalStore.produtos.estoque.deleteMovim = false;
+          this.confirmaExclusao = false;
 
           saveLog(
             new Date(),

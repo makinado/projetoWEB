@@ -33,7 +33,7 @@ module.exports = app => {
         const count = parseInt(result.count)
 
         app.db('log')
-            .join('usuarios', 'usuarios.id', 'log.id')
+            .leftJoin('usuarios', 'log.id_usuario', 'usuarios.id')
             .select('log.id', 'usuarios.nome as usuario', 'data', 'hora', 'tela', 'tipo', 'detalhe')
             .limit(limit).offset(page * limit - limit)
             .where(async (qb) => {
@@ -68,7 +68,6 @@ module.exports = app => {
                         qb.orWhere('log.id_usuario', '=', req.query.usuario);
                     }
                     if (req.query.tipo_acao) {
-                        console.log(req.query.tipo_acao)
                         if (req.query.tipo_acao == 1) {
                             qb.where('log.tipo', '=', 'GRAVAÇÃO');
                         } else if (req.query.tipo_acao == 2) {

@@ -1,6 +1,6 @@
 <template>
   <v-dialog v-model="modalStore.financeiro.financ.visualizar" lazy persistent max-width="1000px">
-    <v-card v-if="modalStore.financeiro.financ.visualizar">
+    <v-card id="card" v-if="modalStore.financeiro.financ.visualizar">
       <v-card-text>
         <v-container grid-list-xl>
           <v-form v-model="valid" ref="form">
@@ -84,7 +84,7 @@
         </v-container>
       </v-card-text>
       <v-card-actions>
-        <v-btn color="blue darken-1" flat>Imprimir</v-btn>
+        <v-btn color="blue darken-1" flat @click="print">Imprimir</v-btn>
         <v-spacer></v-spacer>
         <v-btn
           color="blue darken-1"
@@ -103,6 +103,8 @@ import axios from "axios";
 import { urlBD, showError, formatDate } from "@/global";
 import { mapState } from "vuex";
 import { formatToBRL } from "brazilian-values";
+
+import Printd from "printd";
 
 export default {
   directives: { money: VMoney },
@@ -137,6 +139,10 @@ export default {
     };
   },
   methods: {
+    print() {
+      const printd = new Printd();
+      printd.print(this.$el, ".d-print-table");
+    },
     async limpaTela() {
       this.reset();
       this.loadConta(this.financeiroStore.financ);
@@ -151,6 +157,7 @@ export default {
         .get(url)
         .then(res => {
           this.conta = res.data;
+          console.log(this.conta);
 
           this.conta.tipo_conta =
             this.conta.tipo_conta == 1 ? "PAGAR" : "RECEBER";

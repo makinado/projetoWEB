@@ -104,7 +104,6 @@ module.exports = app => {
                                 return newProd
                             })
 
-                            const movim_conta = []
                             if (venda.tipo == 2) {
                                 await app.db('financeiro').where({ id_movimento_origem: venda.id }).delete().transacting(trx)
                                 await app.db('conta_movimento').where({ id_movimento_origem: venda.id }).delete().transacting(trx)
@@ -131,20 +130,6 @@ module.exports = app => {
                                         data_baixa: parcela.pago ? parcela.data_baixa : null,
                                         data_vencimento: parcela.data
                                     }
-                                    if (newFinanc.pago)
-                                        movim_conta.push({
-                                            id_empresa: venda.id_empresa,
-                                            id_conta: parcela.id_conta,
-                                            id_movimento_origem: venda.id,
-                                            data_emissao: new Date(),
-                                            data_emissao: venda.data_emissao,
-                                            id_documento: parcela.documento_origem,
-                                            num_documento: venda.nota_fiscal,
-                                            observacao: venda.observacao,
-                                            origem: "VENDA",
-                                            dc: 'C',
-                                            valor: newFinanc.valor_pago
-                                        })
 
                                     return newFinanc
                                 })
@@ -158,8 +143,27 @@ module.exports = app => {
                                         .then(function () {
                                             if (financeiro)
                                                 return app.db.batchInsert('financeiro', financeiro)
+                                                    .returning('*')
                                                     .transacting(trx)
-                                                    .then(function () {
+                                                    .then(function (financs) {
+                                                        const movim_conta = []
+                                                        financs.map(financ => {
+                                                            if (newFinanc.pago)
+                                                                movim_conta.push({
+                                                                    id_empresa: venda.id_empresa,
+                                                                    id_conta: financ.id_conta,
+                                                                    id_movimento_origem: venda.id,
+                                                                    id_movimento_financeiro: financ.id,
+                                                                    data_emissao: new Date(),
+                                                                    data_emissao: venda.data_baixa,
+                                                                    id_documento: financ.documento_origem,
+                                                                    num_documento: venda.nota_fiscal,
+                                                                    observacao: venda.observacao,
+                                                                    origem: "VENDA",
+                                                                    dc: 'C',
+                                                                    valor: financ.valor_pago
+                                                                })
+                                                        })
                                                         return app.db.batchInsert('conta_movimento', movim_conta)
                                                             .transacting(trx)
                                                     })
@@ -214,7 +218,6 @@ module.exports = app => {
                                 return newProd
                             })
 
-                            const movim_conta = []
                             if (venda.tipo == 2) {
                                 financeiro = financeiro.map(parcela => {
                                     const newFinanc = {
@@ -238,20 +241,6 @@ module.exports = app => {
                                         data_baixa: parcela.pago ? parcela.data_baixa : null,
                                         data_vencimento: parcela.data
                                     }
-                                    if (newFinanc.pago)
-                                        movim_conta.push({
-                                            id_empresa: venda.id_empresa,
-                                            id_conta: parcela.id_conta,
-                                            id_movimento_origem: id[0],
-                                            data_emissao: new Date(),
-                                            data_emissao: venda.data_baixa,
-                                            id_documento: parcela.documento_origem,
-                                            num_documento: venda.nota_fiscal,
-                                            observacao: venda.observacao,
-                                            origem: "VENDA",
-                                            dc: 'C',
-                                            valor: parseNumber(parcela.valor_pago)
-                                        })
 
                                     return newFinanc
                                 })
@@ -265,8 +254,27 @@ module.exports = app => {
                                         .then(function () {
                                             if (financeiro)
                                                 return app.db.batchInsert('financeiro', financeiro)
+                                                    .returning('*')
                                                     .transacting(trx)
-                                                    .then(function () {
+                                                    .then(function (financs) {
+                                                        const movim_conta = []
+                                                        financs.map(financ => {
+                                                            if (newFinanc.pago)
+                                                                movim_conta.push({
+                                                                    id_empresa: venda.id_empresa,
+                                                                    id_conta: financ.id_conta,
+                                                                    id_movimento_origem: id[0],
+                                                                    id_movimento_financeiro: financ.id,
+                                                                    data_emissao: new Date(),
+                                                                    data_emissao: venda.data_baixa,
+                                                                    id_documento: financ.documento_origem,
+                                                                    num_documento: venda.nota_fiscal,
+                                                                    observacao: venda.observacao,
+                                                                    origem: "VENDA",
+                                                                    dc: 'C',
+                                                                    valor: financ.valor_pago
+                                                                })
+                                                        })
                                                         return app.db.batchInsert('conta_movimento', movim_conta)
                                                             .transacting(trx)
                                                     })

@@ -47,6 +47,7 @@ module.exports = app => {
                 'empresas.nome as empresa',
                 'conta_movimento.dc',
                 'conta_movimento.id_movimento_origem',
+                'conta_movimento.id_movimento_financeiro',
                 'conta_movimento.origem',
                 'conta_movimento.data_lancamento',
                 'conta_movimento.valor',
@@ -83,6 +84,20 @@ module.exports = app => {
                                 'vend.nome as vendedor'
                             )
                             .where({ 'venda.id': m.id_movimento_origem }).first()
+                    } else if (m.origem == 'FINANCEIRO' && m.id_movimento_financeiro) {
+                        m.dados = await app.db('financeiro')
+                            .join('pessoas', 'financeiro.id_pessoa', 'pessoas.id')
+                            .join('documentos', 'financeiro.documento_origem', 'documentos.id')
+                            .select(
+                                'financeiro.id',
+                                'documentos.nome as documento_origem',
+                                'financeiro.num_documento_origem',
+                                'financeiro.data_baixa',
+                                'financeiro.valor_pago',
+                                'financeiro.valor_total',
+                                'pessoas.nome as pessoa',
+                            )
+                            .where({ 'financeiro.id': m.id_movimento_financeiro }).first()
                     }
                     return m
                 }))
@@ -96,6 +111,15 @@ module.exports = app => {
     }
 
     const remove = async (req, res) => {
+
+        try {
+            const origem = await app.db('conta_movimento')
+                .where({ id: req.params.id }).first()
+            if (origem.id_movimento_origem || origem.id_movimento_financeiro) throw 'Há movimentos associados a este registro'
+        } catch (e) {
+            return res.status(400).send(e)
+        }
+
         try {
             const movim = await app.db('conta_movimento')
                 .where({ id: req.params.id }).delete()
@@ -103,7 +127,7 @@ module.exports = app => {
 
             res.status(200).send()
         } catch (e) {
-            return res.status(400).send(e.toString())
+            return res.status(500).send(e.toString())
         }
     }
 

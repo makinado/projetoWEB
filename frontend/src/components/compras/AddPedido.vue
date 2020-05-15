@@ -533,8 +533,6 @@ export default {
     async loadTela(pedido) {
       if (!pedido) return;
 
-      this.$store.dispatch("loadFornecs");
-      this.$store.dispatch("loadProdutos");
       let url = `${urlBD}/pedidos`;
       if (pedido.id) {
         axios
@@ -587,7 +585,7 @@ export default {
         produto.quantidade = formatToBRL(produto.quantidade);
         produto.valor_desconto = formatToBRL(produto.valor_desconto);
         produto.valor_unitario = formatToBRL(produto.valor_unitario);
-        produto.valor_total = produto.valor_total;
+        produto.valor_total = formatToBRL(produto.valor_total);
         produto.sequencia = i++;
 
         return produto;

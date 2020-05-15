@@ -462,7 +462,7 @@
                     dark
                     @click.prevent="[confirmaExclusao = true, financeiroStore.financ = data.item]"
                     class="mr-1"
-                    v-if="usuarioStore.currentUsuario.financeiro_delete"
+                    v-if="usuarioStore.currentUsuario.financeiro_delete && data.item.pago == 'PENDENTE'"
                   >
                     <i class="fa fa-lg fa-trash"></i>
                   </v-btn>

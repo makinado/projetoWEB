@@ -116,6 +116,14 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
+            const origem = await app.db('produto_movimento_estoque')
+                .where({ id: req.params.id }).first()
+            if (origem.id_movimentacao) throw 'Há movimentos associados a este registro'
+        } catch (e) {
+            return res.status(400).send(e)
+        }
+
+        try {
             const movim = await app.db('produto_movimento_estoque')
                 .where({ id: req.params.id }).delete()
             existsOrError(movim, 'Movimento não encontrado')

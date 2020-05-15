@@ -240,7 +240,7 @@
                           </td>
                           <td>{{ data.item.origem }}</td>
                           <td>{{ data.item.data_movimentacao }}</td>
-                          <td>{{ data.item.quantidade }}</td>
+                          <td>{{ data.item.quantidade | decimal }}</td>
                           <td>{{ data.item.saldo | decimal }}</td>
                           <td>{{ data.item.custo_medio | currency }}</td>
                           <td>{{ data.item.total | currency }}</td>
@@ -264,6 +264,10 @@
                                 </v-tooltip>
                                 <v-tooltip bottom>
                                   <v-btn
+                                    v-if="
+                                      data.item.origem != 'COMPRA' &&
+                                      data.item.origem != 'VENDA' 
+                                    "
                                     slot="activator"
                                     icon
                                     dark

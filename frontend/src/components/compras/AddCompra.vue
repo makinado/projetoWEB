@@ -43,7 +43,7 @@
             <v-text-field label="id" v-model="compra.id" v-show="false"></v-text-field>
             <v-text-field v-model="compra.id_empresa" v-show="false"></v-text-field>
             <v-layout wrap>
-              <v-flex xs12 md2>
+              <v-flex xs12 md3>
                 <v-autocomplete
                   class="tag-input"
                   dense

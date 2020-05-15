@@ -1,6 +1,6 @@
 const { isCNPJ } = require('brazilian-values')
 module.exports = app => {
-    const { existsOrError, parseNumber } = app.api.validation
+    const { existsOrError, notExistsOrError, parseNumber } = app.api.validation
 
     const save = async (req, res) => {
         const vinculacao = { ...req.body }
@@ -9,10 +9,22 @@ module.exports = app => {
             vinculacao.id = req.params.id
         }
 
+
+
         try {
             existsOrError(vinculacao.id_fornecedor, 'Informe o fornecedor do produto')
             existsOrError(vinculacao.id_produto_fornecedor, 'Informe o código do produto de seu fornecedor')
             existsOrError(vinculacao.id_produto_empresa, 'Informe o produto que deseja vincular')
+            const vinculacaoDB = await app.db('compra_vinculacao')
+                .select('id')
+                .where({
+                    id_fornecedor: vinculacao.id_fornecedor,
+                    id_produto_fornecedor: vinculacao.id_produto_fornecedor,
+                    id_produto_empresa: vinculacao.id_produto_empresa
+                }).first()
+            if (!vinculacao.id) {
+                notExistsOrError(vinculacaoDB, 'Vinculação já realizada')
+            }
 
         } catch (e) {
             return res.status(400).send(e.toString())
@@ -20,16 +32,22 @@ module.exports = app => {
 
         vinculacao.qtde_embalagem = parseNumber(vinculacao.qtde_embalagem || "0,00")
 
+        // await app.db('compra_vinculacao').where({
+        //     id_fornecedor: vinculacao.id_fornecedor,
+        //     id_produto_fornecedor: vinculacao.id_produto_fornecedor,
+        // }).delete()
+
         if (vinculacao.id) {
             app.db('compra_vinculacao')
                 .update(vinculacao)
                 .where({ id: vinculacao.id })
-                .then(_ => res.status(204).send())
+                .then(id => res.json({ id: vinculacao.id }))
                 .catch(e => res.status(500).send(e.toString()))
         } else {
             app.db('compra_vinculacao')
                 .insert(vinculacao)
-                .then(_ => res.status(204).send())
+                .returning('id')
+                .then(id => res.json({ id: id[0] }))
                 .catch(e => res.status(500).send(e.toString()))
         }
     }

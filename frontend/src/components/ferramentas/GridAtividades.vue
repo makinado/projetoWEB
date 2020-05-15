@@ -15,7 +15,6 @@
               max-width="600"
               offset-x
               transition="slide-y-transition"
-              @keyup.enter
               v-model="pesquisa"
             >
               <v-btn slot="activator" :color="color" icon>
@@ -201,7 +200,6 @@
             max-width="600"
             offset-x
             transition="slide-y-transition"
-            @keyup.enter
             v-model="pesquisa"
           >
             <v-btn slot="activator" :color="color" icon>

@@ -1,7 +1,7 @@
 const { formatToBRL } = require('brazilian-values')
 
 module.exports = app => {
-    const { existsOrError, parseNumber } = app.api.validation
+    const { existsOrError, notExistsOrError, parseNumber } = app.api.validation
 
     const save = async (req, res) => {
         var financeiro = Object.values({ ...req.body })
@@ -59,14 +59,15 @@ module.exports = app => {
                                 const movim_conta = {
                                     id_empresa: financ.id_empresa,
                                     id_conta: financ.id_conta,
-                                    id_movimento_origem: financ.id,
+                                    id_movimento_financeiro: financ.id,
+                                    id_movimento_origem: financ.id_movimento_origem,
                                     data_lancamento: new Date(),
                                     data_emissao: financ.data_emissao,
                                     id_classificacao: financ.classificacao,
                                     id_documento: financ.documento_baixa || null,
                                     num_documento: financ.num_documento_baixa || null,
                                     observacao: financ.observacao,
-                                    origem: "GERADO",
+                                    origem: "FINANCEIRO",
                                     dc: financ.tipo_conta == 1 ? 'D' : 'C',
                                     valor: financ.valor_pago
                                 }
@@ -90,14 +91,15 @@ module.exports = app => {
                                 const movim_conta = {
                                     id_empresa: financ.id_empresa,
                                     id_conta: financ.id_conta,
-                                    id_movimento_origem: id[0],
+                                    id_movimento_financeiro: id[0],
+                                    id_movimento_origem: financ.id_movimento_origem,
                                     data_lancamento: new Date(),
                                     data_emissao: financ.data_emissao,
                                     id_classificacao: financ.classificacao,
                                     id_documento: financ.documento_baixa || null,
                                     num_documento: financ.num_documento_baixa || null,
                                     observacao: financ.observacao,
-                                    origem: "GERADO",
+                                    origem: "FINANCEIRO",
                                     dc: financ.tipo_conta == 1 ? 'D' : 'C',
                                     valor: financ.valor_pago
                                 }
@@ -140,7 +142,7 @@ module.exports = app => {
             return pag
         })
 
-        pagamento.forEach(financ => {
+        var promises = pagamento.map(financ => {
             return app.db.transaction(async function (trx) {
                 return app.db('financeiro')
                     .update(financ).returning('*')
@@ -150,14 +152,15 @@ module.exports = app => {
                         const movim_conta = {
                             id_empresa: financ.id_empresa,
                             id_conta: financ.id_conta,
-                            id_movimento_origem: financ.id,
+                            id_movimento_financeiro: financ.id,
+                            id_movimento_origem: financ_updated.id_movimento_origem,
                             data_lancamento: new Date(),
                             data_emissao: financ_updated.data_emissao,
                             id_classificacao: financ_updated.classificacao,
                             id_documento: financ.documento_baixa,
                             num_documento: financ.num_documento_baixa,
                             observacao: financ_updated.observacao,
-                            origem: "GERADO",
+                            origem: "FINANCEIRO",
                             dc: financ.tipo_conta == 1 ? 'D' : 'C',
                             valor: financ.valor_pago
                         }
@@ -168,7 +171,9 @@ module.exports = app => {
             })
         })
 
-        return res.status(204).send()
+        Promise.all(promises)
+            .then(function (results) { return res.status(204).send() })
+            .catch(function (e) { return res.status(500).send('Erro ao efetuar o pagamento') })
     }
 
     const get = async (req, res) => {
@@ -269,7 +274,21 @@ module.exports = app => {
             .leftJoin('classificacao', 'financeiro.classificacao', 'classificacao.id')
             .leftJoin('conta', 'financeiro.id_conta', 'conta.id')
             .select(
-                '*',
+                'financeiro.id',
+                'financeiro.tipo_conta',
+                'financeiro.pago',
+                'num_documento_origem',
+                'num_documento_baixa',
+                'data_criacao',
+                'data_emissao',
+                'data_vencimento',
+                'data_baixa',
+                'valor_parcela',
+                'valor_pago',
+                'valor_acrescimo',
+                'valor_desconto',
+                'valor_total',
+                'pago',
                 'empresas.nome as empresa',
                 'pessoas.nome as pessoa',
                 'doc_origem.nome as documento_origem',
@@ -284,13 +303,22 @@ module.exports = app => {
     }
 
     const remove = async (req, res) => {
+
+        try {
+            const origem = await app.db('financeiro').select('id_movimento_origem', 'pago').where({ id: req.params.id }).first()
+            if (origem.id_movimento_origem) throw 'Há movimentos associados a este registro'
+            if (origem.pago) throw 'Não é possível exluir uma conta paga'
+        } catch (e) {
+            return res.status(400).send(e)
+        }
+
         app.db.transaction(async function (trx) {
             return app.db('financeiro')
                 .where({ id: req.params.id }).delete()
                 .transacting(trx)
                 .then(function () {
                     return app.db('conta_movimento')
-                        .where({ id_movimento_origem: req.params.id }).delete()
+                        .where({ id_movimento_financeiro: req.params.id }).delete()
                         .transacting(trx)
                         .then(trx.commit)
                         .catch(trx.rollback);
@@ -317,7 +345,7 @@ module.exports = app => {
 
         app.db.transaction(async function (trx) {
             return app.db('conta_movimento')
-                .where({ id_movimento_origem: req.params.id }).delete()
+                .where({ id_movimento_financeiro: req.params.id }).delete()
                 .transacting(trx)
                 .then(function () {
                     return app.db('financeiro')

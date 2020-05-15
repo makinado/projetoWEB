@@ -90,6 +90,7 @@ module.exports = app => {
                     .insert(compra).returning('id')
                     .transacting(trx)
                     .then(function (id) {
+                        const viculacao = []
                         const movim_estoque = []
                         const produtos = xml.produtos.map(produto => {
                             const newProd = {
@@ -137,6 +138,7 @@ module.exports = app => {
                                 data_movimentacao: compra.data_lancamento,
                                 id_movimentacao: id[0],
                                 origem: 'COMPRA',
+                                custo_unitario: newProd.valor_custo,
                                 quantidade: newProd.quantidade == 0 ? newProd.qcom : newProd.quantidade * newProd.qcom,
 
                             })
@@ -144,7 +146,6 @@ module.exports = app => {
                             return newProd
                         })
 
-                        const movim_conta = []
                         const financeiro = xml.financeiro.map(parcela => {
                             const newFinanc = {
                                 id_movimento_origem: id[0],
@@ -152,7 +153,7 @@ module.exports = app => {
                                 id_pessoa: compra.id_pessoa,
                                 tipo_conta: 1, //pagar
                                 parcela: parcela.parcelas,
-                                
+
                                 documento_origem: parcela.documento_origem,
                                 num_documento_origem: compra.nota_fiscal,
                                 documento_baixa: parcela.documento_baixa,
@@ -175,21 +176,6 @@ module.exports = app => {
                                 observacao: parcela.observacao
                             }
 
-                            if (newFinanc.pago)
-                                movim_conta.push({
-                                    id_empresa: xml.id_empresa,
-                                    id_conta: parcela.id_conta,
-                                    id_movimento_origem: id[0],
-                                    data_lancamento: new Date(),
-                                    data_emissao: compra.data_notafiscal,
-                                    id_documento: parcela.documento_origem,
-                                    num_documento: compra.nota_fiscal,
-                                    observacao: parcela.observacao,
-                                    origem: "COMPRA",
-                                    dc: 'D',
-                                    valor: parseNumber(parcela.valor_pago)
-                                })
-
                             return newFinanc
                         })
 
@@ -200,8 +186,27 @@ module.exports = app => {
                                     .transacting(trx)
                                     .then(function () {
                                         return app.db.batchInsert('financeiro', financeiro)
+                                            .returning('*')
                                             .transacting(trx)
-                                            .then(function () {
+                                            .then(function (financs) {
+                                                const movim_conta = []
+                                                financs.map(financ => {
+                                                    if (financ.pago)
+                                                        movim_conta.push({
+                                                            id_empresa: xml.id_empresa,
+                                                            id_conta: financ.id_conta,
+                                                            id_movimento_origem: id[0],
+                                                            id_movimento_financeiro: financ.id,
+                                                            data_lancamento: new Date(),
+                                                            data_emissao: compra.data_notafiscal,
+                                                            id_documento: financ.documento_origem,
+                                                            num_documento: compra.nota_fiscal,
+                                                            observacao: financ.observacao,
+                                                            origem: "COMPRA",
+                                                            dc: 'D',
+                                                            valor: financ.valor_pago
+                                                        })
+                                                })
                                                 return app.db.batchInsert('conta_movimento', movim_conta)
                                                     .transacting(trx)
                                             })
@@ -502,24 +507,8 @@ module.exports = app => {
             else if (produto.prod.CFOP && produto.prod.CFOP[0] == '6')
                 produto.prod.CFOP = produto.prod.CFOP.replace('6', '2')
 
-            produto.prod.valor_custo = formatToBRL(
-                parseNumber(produto.prod.vUnCom || "0.00", '.') +
-                parseNumber(produto.imposto.valor_st || "0,00") +
-                parseNumber(produto.imposto.valor_ipi || "0,00") +
-                parseNumber(total.ICMSTot.vFrete || "0.00", '.') / produtos.length +
-                parseNumber(total.ICMSTot.vSeg || "0.00", '.') / produtos.length
-            )
-            produto.prod.vUnCom = formatToBRL((produto.prod.vUnCom))
-            produto.prod.vProd = formatToBRL((produto.prod.vProd))
-            produto.prod.qCom = moneyToNumber(formatToBRL(parseFloat(produto.prod.qCom).toFixed(2)))
-            produto.prod.valor_frete = formatToBRL((total.ICMSTot.vFrete) / produtos.length)
-            produto.prod.valor_seguro = formatToBRL((total.ICMSTot.vSeg) / produtos.length)
-            produto.prod.valor_desconto = formatToBRL(produto.prod.vDesc ? (produto.prod.vDesc) : 0)
-            produto.prod.dif_aliquota = "0,00 %"
-            produto.prod.perc_add = "0,00 %"
-
             if (fornecDB) {
-                let produtoVinc = await app.db('compra_vinculacao').select('id_produto_empresa', 'qtde_embalagem')
+                let produtoVinc = await app.db('compra_vinculacao').select('id', 'id_produto_empresa', 'qtde_embalagem')
                     .where({ id_fornecedor: fornecDB.id, id_produto_fornecedor: produto.prod.cProd }).first()
 
                 produto.id_fornecedor = fornecDB.id
@@ -527,12 +516,34 @@ module.exports = app => {
                     produto.situacao = 2
                 } else {
                     produto.situacao = 1
+                    produto.id_vinculacao = produtoVinc.id
                     produto.id = produtoVinc.id_produto_empresa
-                    produto.qtde_embalagem = produtoVinc.qtde_embalagem
+                    produto.prod.qtde_embalagem = produtoVinc.qtde_embalagem
                 }
             } else {
                 produto.situacao = 2
             }
+
+            const valor_unitario = parseNumber(produto.prod.vUnCom || "0.00", '.')
+            const qtde = produto.prod.qtde_embalagem
+            const soma =
+                parseNumber(produto.imposto.valor_st || "0,00") +
+                parseNumber(produto.imposto.valor_ipi || "0,00") +
+                parseNumber(total.ICMSTot.vFrete || "0.00", '.') / produtos.length +
+                parseNumber(total.ICMSTot.vSeg || "0.00", '.') / produtos.length
+
+            produto.prod.valor_custo =
+                qtde != 0
+                    ? formatToBRL(valor_unitario / qtde + soma)
+                    : formatToBRL(valor_unitario + soma);
+            produto.prod.vUnCom = formatToBRL(valor_unitario)
+            produto.prod.vProd = formatToBRL(produto.prod.vProd)
+            produto.prod.qCom = moneyToNumber(formatToBRL(parseFloat(produto.prod.qCom).toFixed(2)))
+            produto.prod.valor_frete = formatToBRL((total.ICMSTot.vFrete) / produtos.length)
+            produto.prod.valor_seguro = formatToBRL((total.ICMSTot.vSeg) / produtos.length)
+            produto.prod.valor_desconto = formatToBRL(produto.prod.vDesc ? (produto.prod.vDesc) : 0)
+            produto.prod.dif_aliquota = "0,00 %"
+            produto.prod.perc_add = "0,00 %"
 
             return produto
         })

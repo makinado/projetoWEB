@@ -206,6 +206,8 @@ module.exports = app => {
                     .select('p.id', 'p.descricao', 'pped.quantidade', 'pped.valor_desconto', 'pped.valor_unitario', 'pped.valor_total')
                     .where({ id_pedido: pedido.id })
                     .catch(e => res.status(500).send(e.toString()))
+
+                console.log(pedido)
                 res.json(pedido)
             })
             .catch(e => res.status(500).send(e.toString()))

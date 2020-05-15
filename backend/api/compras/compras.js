@@ -50,6 +50,7 @@ module.exports = app => {
 
         var produtos = compra.produtos
         var financeiro = compra.financeiro
+        delete compra.id_pedido
         delete compra.produtos
         delete compra.financeiro
 
@@ -106,7 +107,6 @@ module.exports = app => {
                             await app.db('financeiro').where({ id_movimento_origem: compra.id }).delete().transacting(trx)
                             await app.db('conta_movimento').where({ id_movimento_origem: compra.id }).delete().transacting(trx)
 
-                            const movim_conta = []
                             financeiro = financeiro.map(parcela => {
                                 const newFinanc = {
                                     id_empresa: compra.id_empresa,
@@ -119,7 +119,7 @@ module.exports = app => {
 
                                     valor_parcela: parseNumber(parcela.valor_parcela || "0,00"),
                                     valor_pago: parcela.pago ? parseNumber(parcela.valor_pago) : 0,
-                                    valor_total: venda.valor_total || "0,00",
+                                    valor_total: compra.valor_total || "0,00",
 
                                     documento_origem: parcela.documento_origem,
                                     num_documento_origem: compra.nota_fiscal,
@@ -133,20 +133,6 @@ module.exports = app => {
                                     data_vencimento: parcela.data_vencimento,
                                     data_baixa: parcela.pago ? parcela.data_baixa : null,
                                 }
-                                if (newFinanc.pago)
-                                    movim_conta.push({
-                                        id_empresa: compra.id_empresa,
-                                        id_conta: parcela.id_conta,
-                                        id_movimento_origem: compra.id,
-                                        data_lancamento: new Date(),
-                                        data_emissao: compra.data_notafiscal,
-                                        id_documento: parcela.documento_origem,
-                                        num_documento: compra.nota_fiscal,
-                                        observacao: compra.observacao,
-                                        origem: "COMPRA",
-                                        dc: 'D',
-                                        valor: parseNumber(parcela.valor_pago)
-                                    })
 
                                 return newFinanc
                             })
@@ -158,8 +144,27 @@ module.exports = app => {
                                         .transacting(trx)
                                         .then(function () {
                                             return app.db.batchInsert('financeiro', financeiro)
+                                                .returning('*')
                                                 .transacting(trx)
-                                                .then(function () {
+                                                .then(function (financs) {
+                                                    const movim_conta = []
+                                                    financs.map(financ => {
+                                                        if (financ.pago)
+                                                            movim_conta.push({
+                                                                id_empresa: compra.id_empresa,
+                                                                id_conta: financ.id_conta,
+                                                                id_movimento_origem: compra.id,
+                                                                id_movimento_financeiro: financ.id,
+                                                                data_lancamento: new Date(),
+                                                                data_emissao: compra.data_notafiscal,
+                                                                id_documento: financ.documento_origem,
+                                                                num_documento: compra.nota_fiscal,
+                                                                observacao: compra.observacao,
+                                                                origem: "COMPRA",
+                                                                dc: 'D',
+                                                                valor: parseNumber(financ.valor_pago)
+                                                            })
+                                                    })
                                                     return app.db.batchInsert('conta_movimento', movim_conta)
                                                         .transacting(trx)
                                                 })
@@ -213,7 +218,6 @@ module.exports = app => {
                                 return newProd
                             })
 
-                            const movim_conta = []
                             financeiro = financeiro.map(parcela => {
                                 const newFinanc = {
                                     id_empresa: compra.id_empresa,
@@ -226,7 +230,7 @@ module.exports = app => {
 
                                     valor_parcela: parseNumber(parcela.valor_parcela || "0,00"),
                                     valor_pago: parcela.pago ? parseNumber(parcela.valor_pago) : 0,
-                                    valor_total: venda.valor_total || "0,00",
+                                    valor_total: compra.valor_total || "0,00",
 
                                     documento_origem: parcela.documento_origem,
                                     num_documento_origem: compra.nota_fiscal,
@@ -238,22 +242,8 @@ module.exports = app => {
                                     data_criacao: new Date(),
                                     data_emissao: compra.data_notafiscal,
                                     data_vencimento: parcela.data_vencimento,
-                                    data_baixa: parcela.pago ? parcela.data_baixa : null,s
+                                    data_baixa: parcela.pago ? parcela.data_baixa : null,
                                 }
-                                if (newFinanc.pago)
-                                    movim_conta.push({
-                                        id_empresa: compra.id_empresa,
-                                        id_conta: parcela.id_conta,
-                                        id_movimento_origem: id[0],
-                                        data_lancamento: new Date(),
-                                        data_emissao: compra.data_notafiscal,
-                                        id_documento: parcela.documento_origem,
-                                        num_documento: compra.nota_fiscal,
-                                        observacao: compra.observacao,
-                                        origem: "COMPRA",
-                                        dc: 'D',
-                                        valor: parseNumber(parcela.valor_pago)
-                                    })
 
                                 return newFinanc
                             })
@@ -265,8 +255,27 @@ module.exports = app => {
                                         .transacting(trx)
                                         .then(function () {
                                             return app.db.batchInsert('financeiro', financeiro)
+                                                .returning('*')
                                                 .transacting(trx)
-                                                .then(function () {
+                                                .then(function (financs) {
+                                                    const movim_conta = []
+                                                    financs.map(financ => {
+                                                        if (financ.pago)
+                                                            movim_conta.push({
+                                                                id_empresa: compra.id_empresa,
+                                                                id_conta: financ.id_conta,
+                                                                id_movimento_origem: id[0],
+                                                                id_movimento_financeiro: financ.id,
+                                                                data_lancamento: new Date(),
+                                                                data_emissao: compra.data_notafiscal,
+                                                                id_documento: financ.documento_origem,
+                                                                num_documento: compra.nota_fiscal,
+                                                                observacao: compra.observacao,
+                                                                origem: "COMPRA",
+                                                                dc: 'D',
+                                                                valor: parseNumber(financ.valor_pago)
+                                                            })
+                                                    })
                                                     return app.db.batchInsert('conta_movimento', movim_conta)
                                                         .transacting(trx)
                                                 })

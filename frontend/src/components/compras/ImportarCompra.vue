@@ -115,6 +115,22 @@
               <td v-else>
                 <v-avatar class="danger ml-2 mr-1 mb-3" size="15" />
               </td>
+              <td>
+                <v-flex xs12 md6>
+                  <v-autocomplete
+                    class="tag-input"
+                    chips
+                    dense
+                    deletable-chips
+                    :color="color"
+                    label="Pedido"
+                    :items="comprasStore.pedidos"
+                    v-model="data.item.id_pedido"
+                    no-data-text="Parece que não há pedidos pendentes"
+                    @focus="$store.dispatch('loadPedidos')"
+                  ></v-autocomplete>
+                </v-flex>
+              </td>
               <td>{{ data.item.nfeProc.NFe.infNFe.emit.CNPJ }}</td>
               <td>{{ data.item.nfeProc.NFe.infNFe.emit.xNome }}</td>
               <td>{{ data.item.nfeProc.NFe.infNFe.ide.nNF }}</td>
@@ -213,7 +229,7 @@
                   <v-text-field
                     v-model="data.item.prod.qtde_embalagem"
                     v-money="decimal"
-                    @blur="calcEmbalagens(data.item)"
+                    @blur="calcValores(data.item)"
                   ></v-text-field>
                 </v-flex>
               </td>
@@ -234,7 +250,7 @@
                   <v-text-field
                     v-model="data.item.prod.perc_add"
                     v-money="percent"
-                    @blur="addPercentual(data.item)"
+                    @blur="calcValores(data.item)"
                   ></v-text-field>
                 </v-flex>
               </td>
@@ -334,6 +350,7 @@ export default {
       files: [],
       fieldsArquivos: [
         { value: "situacao", text: "Situação", sortable: true },
+        { value: "pedido", text: "Pedido", sortable: true },
         { value: "nfeProc.NFe.infNFe.emit.CNPJ", text: "CNPJ", sortable: true },
         {
           value: "nfeProc.NFe.infNFe.emit.xNome",
@@ -530,6 +547,7 @@ export default {
 
               this.produtos = [];
               this.financeiroStore.financ = [];
+              //arquivos
               this.xmls.forEach(arquivo => {
                 arquivo.nfeProc.NFe.infNFe.emit.CNPJ = formatToCNPJ(
                   arquivo.nfeProc.NFe.infNFe.emit.CNPJ
@@ -537,12 +555,12 @@ export default {
                 arquivo.nfeProc.NFe.infNFe.total.ICMSTot.vNF = formatToBRL(
                   arquivo.nfeProc.NFe.infNFe.total.ICMSTot.vNF
                 );
-
+                //produtos
                 arquivo.nfeProc.NFe.infNFe.det.forEach(produto => {
                   this.produtos.push(produto);
                 });
                 delete arquivo.nfeProc.NFe.infNFe.det;
-
+                //financeiro
                 if (arquivo.nfeProc.NFe.infNFe.cobr) {
                   arquivo.nfeProc.NFe.infNFe.cobr.dup.forEach(item => {
                     this.financeiroStore.financ.push({
@@ -567,7 +585,8 @@ export default {
     async vincularProduto(produto) {
       if (!produto.id || !produto.id_fornecedor || !produto.prod.cProd) return;
 
-      const prod = {
+      const vinculacao = {
+        id: produto.id_vinculacao,
         id_produto_empresa: produto.id,
         id_fornecedor: produto.id_fornecedor,
         id_produto_fornecedor: produto.prod.cProd,
@@ -576,48 +595,31 @@ export default {
       };
 
       axios
-        .post(`${urlBD}/compras/vinculacao`, prod)
+        .post(`${urlBD}/compras/vinculacao`, vinculacao)
         .then(res => {
           produto.situacao = 1;
+          produto.id_vinculacao = res.data.id;
           showSuccess("Produto vinculado com sucesso!");
         })
         .catch(showError);
     },
-    async calcEmbalagens(item) {
+    async calcValores(item) {
       const produto = item.prod;
 
       const qtde = parseNumber(produto.qtde_embalagem);
       const valor_unitario = parseNumber(produto.vUnCom);
-      const soma =
+      var perc_add = parseNumber(produto.perc_add || "0,00");
+
+      var soma =
         parseNumber(produto.valor_frete || "0,00") +
         parseNumber(produto.valor_seguro || "0,00") +
         parseNumber(item.imposto.valor_ipi || "0,00") +
         parseNumber(item.imposto.valor_st || "0,00") -
-        parseNumber(produto.valor_desconto || "0,00") +
-        parseNumber(produto.perc_add || "0,00") / 100;
+        parseNumber(produto.valor_desconto || "0,00");
 
-      produto.valor_custo =
-        qtde != 0
-          ? formatToBRL(valor_unitario / qtde + soma)
-          : formatToBRL(valor_unitario + soma);
-    },
-    async addPercentual(item) {
-      const produto = item.prod;
-
-      const percentual = parseNumber(produto.perc_add);
-
-      let custo =
-        parseNumber(produto.vUnCom) +
-        parseNumber(produto.valor_frete) +
-        parseNumber(produto.valor_seguro) +
-        parseNumber(item.imposto.valor_st || "0,00") +
-        parseNumber(item.imposto.valor_ipi || "0,00");
-
-      if (percentual !== 0) {
-        custo += (percentual / 100) * custo;
-      }
-
-      produto.valor_custo = formatToBRL(custo);
+      soma = qtde != 0 ? valor_unitario / qtde + soma : valor_unitario + soma;
+      perc_add = perc_add ? (perc_add / 100) * soma : 0;
+      produto.valor_custo = formatToBRL(soma + perc_add);
     },
     async removeArq(arquivo) {
       this.xmls = this.xmls.filter(xml => {
@@ -694,10 +696,15 @@ export default {
         }
       });
 
-      const url = `${urlBD}/produtos`;
       let requests = reduced.map(async produto => {
-        if (produto.situacao !== 2) return;
-        if (!produto.fornec) return;
+        if (produto.situacao !== 2 || produto.id) {
+          throw showError(`Produto ${produto.prod.xProd} já cadastrado`);
+        }
+        if (!produto.fornec) {
+          throw showError(
+            `Fornecedor não encontrado para o produto ${produto.prod.xProd} `
+          );
+        }
 
         const produtoAtt = {
           descricao: produto.prod.xProd,
@@ -706,11 +713,12 @@ export default {
           fornecedor: produto.id_fornecedor || null
         };
 
-        return axios.post(url, produtoAtt).catch(showError);
+        return axios.post(`${urlBD}/produtos`, produtoAtt).catch(showError);
       });
 
-      await Promise.all(requests).then(arrayOfResponses => this.upload());
-      this.isLoadingCad = false;
+      await Promise.all(requests)
+        .then(arrayOfResponses => this.upload())
+        .finally(() => (this.isLoadingCad = false));
     },
     async addPessoa(fornec) {
       this.pessoaStore.pessoa = {
@@ -798,6 +806,9 @@ export default {
         .catch(showError)
         .then(() => (this.isLoadingSave = false));
     }
+  },
+  mounted() {
+    this.$store.dispatch("loadProdutos");
   }
 };
 </script>
