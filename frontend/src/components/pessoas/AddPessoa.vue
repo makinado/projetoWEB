@@ -336,7 +336,7 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="blue darken-1" flat @click="modalStore.pessoas.visible = false">Fechar</v-btn>
+        <v-btn color="blue darken-1" flat @click="[pessoaStore.pessoa = null, modalStore.pessoas.visible = false]">Fechar</v-btn>
         <v-btn color="blue darken-1" flat @click="save()">Salvar</v-btn>
       </v-card-actions>
     </v-card>
@@ -494,6 +494,7 @@ export default {
       const method = this.pessoa.id ? "put" : "post";
       const id = this.pessoa.id ? this.pessoa.id : "";
       const url = `${urlBD}/pessoas/${id}`;
+      this.pessoaStore.pessoa = this.pessoa;
 
       this.selected.includes("Cliente")
         ? (this.pessoa.cliente = true)

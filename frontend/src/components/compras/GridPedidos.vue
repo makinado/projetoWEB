@@ -565,14 +565,14 @@ export default {
     };
   },
   watch: {
-    finalizar: function() {
+    finalizar() {
       if (!this.finalizar) this.itens_selecionados = [];
     },
     params() {
       this.loadPedidos();
     },
-    "$store.state.modalStore.compras.pedidos.visible": function() {
-      if (!this.modalStore.compras.pedidos.visible) {
+    "$store.state.modalStore.compras.pedidos.visible"() {
+      if (!this.modalStore.compras.pedidos.visible && this.comprasStore.pedido != null) {
         this.loadPedidos();
       }
     }

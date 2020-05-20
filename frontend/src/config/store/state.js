@@ -248,6 +248,8 @@ export default {
         title: "Gerenciar movimento de conta"
       },
     },
-
+    feedback: {
+      add: false
+    }
   }
 }

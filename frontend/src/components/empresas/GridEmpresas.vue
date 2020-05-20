@@ -313,12 +313,12 @@ export default {
     params() {
       this.loadEmpresas();
     },
-    "$store.state.modalStore.empresas.visible": function() {
-      if (!this.modalStore.empresas.visible) {
+    "$store.state.modalStore.empresas.visible"() {
+      if (!this.modalStore.empresas.visible && this.empresaStore.empresa != null) {
         this.loadEmpresas();
       }
     },
-    "$store.state.modalStore.email.visible": function() {
+    "$store.state.modalStore.email.visible"() {
       if (!this.modalStore.email.visible) {
         this.loadEmpresas();
       }

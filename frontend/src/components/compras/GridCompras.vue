@@ -458,7 +458,10 @@ export default {
       this.loadCompras();
     },
     "$store.state.modalStore.compras.compras.importar": function() {
-      if (!this.modalStore.compras.compras.importar) {
+      if (
+        !this.modalStore.compras.compras.importar &&
+        this.comprasStore.compra != null
+      ) {
         this.loadCompras();
       }
     },

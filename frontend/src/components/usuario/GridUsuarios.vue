@@ -297,7 +297,7 @@ export default {
       this.loadUsuarios();
     },
     "$store.state.modalStore.usuarios.visible"() {
-      if (!this.modalStore.usuarios.visible) {
+      if (!this.modalStore.usuarios.visible && this.usuarioStore.usuario != null) {
         this.loadUsuarios();
       }
     }

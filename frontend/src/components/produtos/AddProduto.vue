@@ -4,16 +4,11 @@
       <v-card-title>
         <span class="headline">{{ modalStore.produtos.title }}</span>
       </v-card-title>
+
       <v-card-text>
         <v-container grid-list-xl>
           <v-text-field label="id" v-model="produto.id" v-show="false"></v-text-field>
           <v-layout row>
-            <!-- <v-layout justify-space-between v-if="modalStore.produtos.title.includes('Alterar')">
-              <h3>Produto: {{produto.descricao}}</h3>
-              <h3>Valor de venda: {{produto.valor_venda}}</h3>
-              <h3>Estoque: {{produto.qtdEstoque}}</h3>
-            </v-layout>-->
-
             <v-flex xs12>
               <v-tabs
                 v-model="tabIndex"
@@ -194,6 +189,7 @@
                                 color="primary"
                                 label="Valor unitário"
                                 v-model="produto.valor_unitario"
+                                @change="calcMargemContrib"
                               ></v-text-field>
                             </v-flex>
                             <v-flex xs12 md3>
@@ -203,7 +199,6 @@
                                 color="primary"
                                 label="Valor de custo médio"
                                 v-model="produto.valor_custo_medio"
-                                @blur="calcMargemContrib"
                               ></v-text-field>
                             </v-flex>
                             <v-flex xs12 md3>
@@ -363,11 +358,16 @@
             </v-flex>
           </v-layout>
         </v-container>
+        <small>* indica os campos obrigatórios</small>
       </v-card-text>
 
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="blue darken-1" flat @click="modalStore.produtos.visible = false">Fechar</v-btn>
+        <v-btn
+          color="blue darken-1"
+          flat
+          @click="[produtoStore.produto = null, modalStore.produtos.visible = false]"
+        >Fechar</v-btn>
         <v-btn v-if="tabIndex !== 'tab-3'" color="blue darken-1" flat @click="save()">Salvar</v-btn>
       </v-card-actions>
 
@@ -395,7 +395,7 @@ export default {
   directives: { money: VMoney },
   name: "Add-Produto",
   computed: {
-    ...mapState('app', ['color']),
+    ...mapState("app", ["color"]),
     ...mapState([
       "produtoStore",
       "pessoaStore",
@@ -403,12 +403,6 @@ export default {
       "categoriaStore",
       "modalStore"
     ]),
-    computedDateFormatted1() {
-      return formatDate(this.date1);
-    },
-    computedDateFormatted2() {
-      return formatDate(this.date2);
-    }
   },
   components: { AddGrupoTrib: () => import("./AddGrupoTrib") },
   data() {
@@ -479,21 +473,19 @@ export default {
       window.open(path, "_blank");
     },
     calcMargemContrib() {
-      let valor_custo_medio = parseFloat(
-        parseNumber(this.produto.valor_custo_medio, ",")
-      );
-      let valor_venda = parseFloat(parseNumber(this.produto.valor_venda, ","));
+      let valor_unitario = parseFloat(parseNumber(this.produto.valor_unitario));
+      let valor_venda = parseFloat(parseNumber(this.produto.valor_venda));
       let valor_lucro_bruto = parseFloat(
-        parseNumber(this.produto.valor_lucro_bruto, ",")
+        parseNumber(this.produto.valor_lucro_bruto)
       );
       let perc_margem_contribuicao = parseFloat(
-        parseNumber(this.produto.perc_margem_contribuicao, ",")
+        parseNumber(this.produto.perc_margem_contribuicao)
       );
 
-      if (valor_custo_medio !== 0 && valor_venda !== 0) {
+      if (valor_unitario !== 0 && valor_venda !== 0) {
         perc_margem_contribuicao =
-          ((valor_venda - valor_custo_medio) / valor_custo_medio) * 100;
-        valor_lucro_bruto = valor_venda - valor_custo_medio;
+          ((valor_venda - valor_unitario) / valor_unitario) * 100;
+        valor_lucro_bruto = valor_venda - valor_unitario;
       }
 
       this.produto.perc_margem_contribuicao = formatToBRL(
@@ -560,6 +552,8 @@ export default {
       this.grupos_selecionados = [];
       this.tabIndex = "tab-1";
 
+      this.ativo.push("ativo");
+
       this.$refs.form_basico ? this.$refs.form_basico.reset() : "";
       this.$refs.form_valores ? this.$refs.form_valores.reset() : "";
       this.$refs.form_fiscal ? this.$refs.form_fiscal.reset() : "";
@@ -617,27 +611,6 @@ export default {
       this.$refs.perc_ipi
         ? (this.$refs.perc_ipi.$el.getElementsByTagName("input")[0].value = 0)
         : "";
-    },
-    loadProdutos() {
-      const url = `${urlBD}/produtos/`;
-
-      axios
-        .get(url)
-        .then(res => {
-          this.produtoStore.produtos = res.data;
-          this.produtoStore.produtos = this.produtoStore.produtos.map(
-            produto => {
-              produto.valor_unitario = formatToBRL(produto.valor_unitario);
-              produto.valor_venda = formatToBRL(produto.valor_venvda);
-              produto.qtdEstoque = moneyToNumber(
-                formatToBRL(produto.qtdEstoque)
-              );
-
-              return produto;
-            }
-          );
-        })
-        .catch(showError);
     },
     async loadTela(produto) {
       if (!produto) return;
@@ -741,6 +714,7 @@ export default {
       const method = this.produto.id ? "put" : "post";
       const id = this.produto.id ? this.produto.id : "";
       const urlProdutos = `${urlBD}/produtos/${id}`;
+      this.produtoStore.produto = this.produto;
 
       this.ativo.includes("ativo")
         ? (this.produto.situacao = true)

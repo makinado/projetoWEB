@@ -431,17 +431,20 @@ export default {
     params() {
       this.loadProdutos();
     },
-    "$store.state.modalStore.produtos.visible": function() {
-      if (!this.modalStore.produtos.visible) {
+    "$store.state.modalStore.produtos.visible"() {
+      if (
+        !this.modalStore.produtos.visible &&
+        this.produtoStore.produto != null
+      ) {
         this.loadProdutos();
       }
     },
-    "$store.state.modalStore.produtos.estoque.visible": function() {
+    "$store.state.modalStore.produtos.estoque.visible"() {
       if (!this.modalStore.produtos.estoque.visible) {
         this.loadProdutos();
       }
     },
-    pesquisa: function() {
+    pesquisa() {
       if (this.pesquisa) {
         this.$store.dispatch("loadCategoriasProdutos");
         this.$store.dispatch("loadMarcas");

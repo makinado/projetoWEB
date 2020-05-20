@@ -38,10 +38,13 @@ module.exports = app => {
             })
             file.financeiro.map(parcela => {
                 try {
+                    existsOrError(parcela.valor_parcela, `Valor não informado na parcela ${parcela.parcelas || ""}`)
+                    existsOrError(parcela.data_vencimento, `Data de vencimento não informada na parcela ${parcela.parcelas || ""}`)
+                    existsOrError(parcela.documento_origem, `Documento não informado na parcela ${parcela.parcelas || ""}`)
                     if (parcela.pago) {
                         existsOrError(parcela.id_conta, `Conta de pagamento não informada na parcela ${parcela.parcelas || ""}`)
                         existsOrError(parcela.data_baixa, `Data do pagamento não preenchida na parcela ${parcela.parcelas || ""}`)
-                        existsOrError(parcela.documento_baixa, `Documento não preenchido na parcela ${parcela.parcelas || ""}`)
+                        existsOrError(parcela.documento_baixa, `Forma de pagamento não preenchida na parcela ${parcela.parcelas || ""}`)
                     }
                 } catch (e) {
                     financeiroOK = false
@@ -219,6 +222,7 @@ module.exports = app => {
             }).then(function (inserts) {
                 res.status(204).send()
             }).catch(function (error) {
+                console.log(error)
                 console.log(error.toString())
                 res.status(500).send(error.toString())
             })

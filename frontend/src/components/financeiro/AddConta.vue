@@ -4,6 +4,7 @@
       <v-card-title>
         <span class="headline">{{ modalStore.financeiro.conta.title }}</span>
       </v-card-title>
+
       <v-card-text>
         <v-container grid-list-xl>
           <v-form v-model="valid" ref="form">
@@ -60,12 +61,13 @@
           </v-form>
         </v-container>
       </v-card-text>
+
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn
           color="blue darken-1"
           flat
-          @click="modalStore.financeiro.conta.visible = false"
+          @click="[financeiroStore.conta = null, modalStore.financeiro.conta.visible = false]"
         >Fechar</v-btn>
         <v-btn color="blue darken-1" flat @click="save()">Salvar</v-btn>
       </v-card-actions>
@@ -148,6 +150,7 @@ export default {
       const method = this.conta.id ? "put" : "post";
       const id = this.conta.id ? this.conta.id : "";
       const url = `${urlBD}/conta/${id}`;
+      this.financeiroStore.conta = this.conta;
 
       if (this.isBank) {
         this.conta.cod_banco = this.banco.value;

@@ -8,7 +8,7 @@
   >
     <v-card v-if="modalStore.vendas.vendas.visible">
       <v-toolbar dense flat extended fixed extension-height="5" dark :color="color">
-        <v-toolbar-side-icon @click="modalStore.vendas.vendas.visible = false">
+        <v-toolbar-side-icon @click="[vendaStore.venda = null, modalStore.vendas.vendas.visible = false]">
           <v-icon>close</v-icon>
         </v-toolbar-side-icon>
         <v-toolbar-title
@@ -960,6 +960,7 @@ export default {
       const method = this.venda.id ? "put" : "post";
       const id = this.venda.id ? this.venda.id : "";
       const url = `${urlBD}/vendas/${id}`;
+      this.vendaStore.venda = this.venda;
 
       if (!this.venda.id_empresa) {
         this.venda.id_empresa = this.empresaStore.currentEmpresa;

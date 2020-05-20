@@ -1,6 +1,6 @@
 <template>
   <div class="estoque">
-    <v-dialog v-model="modalStore.produtos.estoque.visible" persistent max-width="1200px">
+    <v-dialog v-model="modalStore.produtos.estoque.visible" persistent max-width="1300">
       <v-card v-if="modalStore.produtos.estoque.visible">
         <v-card-title>
           <span
@@ -238,10 +238,10 @@
                               dark
                             >{{ data.item.tipo_movimentacao }}</v-chip>
                           </td>
-                          <td>{{ data.item.origem }}</td>
                           <td>{{ data.item.data_movimentacao }}</td>
                           <td>{{ data.item.quantidade | decimal }}</td>
                           <td>{{ data.item.saldo | decimal }}</td>
+                          <td>{{ data.item.custo_unitario | currency }}</td>
                           <td>{{ data.item.custo_medio | currency }}</td>
                           <td>{{ data.item.total | currency }}</td>
                           <td>
@@ -295,7 +295,7 @@
                                 <h4>Empresa - {{ data.item.empresa }}</h4>
                                 <h4>Fornecedor - {{ data.item.dados.fornecedor }}</h4>
                                 <h4>Nota fiscal - {{ data.item.dados.nota_fiscal }}</h4>
-                                <h4>Data de lançamento - {{ formatDate(new Date(data.item.dados.data_lancamento).toISOString().substr(0, 10)) }}</h4>
+                                <h4>Data da Nota fiscal - {{ formatDate(new Date(data.item.dados.data_notafiscal).toISOString().substr(0, 10)) }}</h4>
                                 <h4>Observações - {{ data.item.observacao || "Nenhuma observação" }}</h4>
                               </template>
                               <template v-else-if="data.item.origem == 'VENDA'">
@@ -411,10 +411,10 @@ export default {
       fieldsMovimEstoq: [
         { value: "id", text: "Código" },
         { value: "tipo_movimentacao", text: "Tipo", sortable: true },
-        { value: "origem", text: "Origem", sortable: true },
         { value: "data_movimentacao", text: "Data", sortable: true },
         { value: "quantidade", text: "Quantidade" },
         { value: "saldo", text: "Saldo" },
+        { value: "custo_unitario", text: "Custo unitário" },
         { value: "custo_medio", text: "Custo médio" },
         { value: "total", text: "Total" },
         { value: "actions", text: "Ações" }

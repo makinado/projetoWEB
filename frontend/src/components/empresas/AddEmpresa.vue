@@ -552,7 +552,11 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="blue darken-1" flat @click="modalStore.empresas.visible = false">Fechar</v-btn>
+        <v-btn
+          color="blue darken-1"
+          flat
+          @click="[empresaStore.empresa = null, modalStore.empresas.visible = false]"
+        >Fechar</v-btn>
         <v-btn color="blue darken-1" flat @click="save()">Salvar</v-btn>
       </v-card-actions>
     </v-card>
@@ -628,12 +632,8 @@ export default {
   watch: {
     "$store.state.modalStore.empresas.visible": function() {
       if (this.modalStore.empresas.visible) {
-        this.$store.state.isLoading = true;
         this.reset();
         this.loadEmpresa(this.empresaStore.empresa);
-        this.$store.state.isLoading = false;
-      } else {
-        this.loadEmpresas();
       }
     }
   },
@@ -743,19 +743,12 @@ export default {
         })
         .catch(showError);
     },
-    loadEmpresas() {
-      const url = `${urlBD}/empresas`;
-      axios.get(url).then(res => {
-        this.empresaStore.empresas = res.data.data;
-      });
-    },
     loadEmpresa(empresa) {
       if (empresa) {
         const url = `${urlBD}/empresas/${empresa.id}`;
         axios
           .get(url)
           .then(res => {
-            console.log(res.data);
             this.empresa = res.data;
             if (this.empresa.logo) this.imageName = this.empresa.logo;
 
@@ -857,20 +850,7 @@ export default {
       const method = this.empresa.id ? "put" : "post";
       const id = this.empresa.id ? this.empresa.id : "";
       const urlempresas = `${urlBD}/empresas/${id}`;
-
-      let data = new Date();
-      const hora = `${data.getHours()}:${data.getMinutes()}:${data.getSeconds()}`;
-      const log = {
-        id_usuario: this.usuarioStore.currentUsuario.id,
-        data: formatDate(data.toISOString().substr(0, 10)),
-        hora,
-        tipo: method === "post" ? "GRAVAÇÂO" : "ALTERAÇÃO",
-        tela: "EMPRESA",
-        detalhe:
-          method === "post"
-            ? `Empresa adicionada: ${this.empresa.nome}`
-            : `Empresa alterada: ${this.empresa.id}-${this.empresa.nome}`
-      };
+      this.empresaStore.empresa = this.empresa;
 
       if (this.imageFile) {
         const fd = new FormData();

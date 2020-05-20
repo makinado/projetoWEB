@@ -56,7 +56,9 @@ module.exports = app => {
                 'produto_movimento_estoque.data_movimentacao',
                 'produto_movimento_estoque.quantidade',
                 'produto_movimento_estoque.saldo',
+                'produto_movimento_estoque.custo_unitario',
                 'produto_movimento_estoque.custo_medio',
+                'produto_movimento_estoque.total',
                 'produto_movimento_estoque.observacao'
             )
             .limit(limit).offset(page * limit - limit)
@@ -74,7 +76,7 @@ module.exports = app => {
                             .select(
                                 'compra.id',
                                 'compra.nota_fiscal',
-                                'compra.data_lancamento',
+                                'compra.data_notafiscal',
                                 'pessoas.nome as fornecedor'
                             )
                             .where({ 'compra.id': m.id_movimentacao }).first()

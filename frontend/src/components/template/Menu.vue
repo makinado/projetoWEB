@@ -319,7 +319,7 @@
           @click.left.exact="[$store.state.drawerRight = false, navigate('/atividades',false)]"
           @click.ctrl="navigate('/atividades',true)"
         >
-          <v-list-tile-avatar >
+          <v-list-tile-avatar>
             <v-icon>fa fa-lg fa-align-left</v-icon>
           </v-list-tile-avatar>
           <v-list-tile-title class="title text-light">Atividade dos usuários</v-list-tile-title>
@@ -374,7 +374,7 @@ export default {
   data() {
     return {
       confirmar: false,
-      logo: '@/assets/logo1resized.png',
+      logo: "@/assets/logo1resized.png",
       urlBD: urlBD,
       sidebarOverlayGradiant: "rgba(27, 27, 27, 0.74),rgba(27, 27, 27, 0.74)",
       data: "",
@@ -578,14 +578,9 @@ export default {
         icon: "fa fa-info",
         items: [
           {
-            title: "Material de apoio",
+            title: "Central de ajuda",
             icon: "fa fa-book",
-            link: "/materialApoio"
-          },
-          {
-            title: "Dúvidas",
-            icon: "fa fa-question",
-            link: "/duvidas"
+            link: "/centralAjuda"
           }
         ]
       }

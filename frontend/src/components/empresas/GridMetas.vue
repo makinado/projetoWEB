@@ -274,7 +274,11 @@ export default {
       this.loadMetas();
     },
     "$store.state.modalStore.empresas.metas.visible"() {
-      if (!this.modalStore.empresas.metas.visible) this.loadMetas();
+      if (
+        !this.modalStore.empresas.metas.visible &&
+        this.empresaStore.meta != null
+      )
+        this.loadMetas();
     },
     pesquisa() {
       if (this.pesquisa) {

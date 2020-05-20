@@ -9,7 +9,7 @@
   >
     <v-card v-if="modalStore.compras.pedidos.visible">
       <v-toolbar dense flat extended fixed extension-height="5" dark :color="color">
-        <v-toolbar-side-icon @click="modalStore.compras.pedidos.visible = false">
+        <v-toolbar-side-icon @click="[comprasStore.pedido = null, modalStore.compras.pedidos.visible = false]">
           <v-icon>close</v-icon>
         </v-toolbar-side-icon>
         <v-toolbar-title
@@ -680,6 +680,7 @@ export default {
       const method = this.pedido.id ? "put" : "post";
       const id = this.pedido.id ? this.pedido.id : "";
       const urlpedidos = `${urlBD}/pedidos/${id}`;
+      this.comprasStore.pedido = this.pedido;
 
       if (!this.pedido.id_empresa) {
         this.pedido.id_empresa = this.empresaStore.currentEmpresa;

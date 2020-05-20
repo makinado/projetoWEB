@@ -24,7 +24,7 @@
                           chips
                           dense
                           :color="color"
-                          label="Tipo de meta"
+                          label="Tipo de meta*"
                           :items="['RECEITA', 'DESPESA']"
                           v-model="meta.tipo_receita_despesa"
                           :rules="tipoRules"
@@ -47,7 +47,7 @@
                             <v-text-field
                               :color="color"
                               v-model="computedDateFormatted1"
-                              label="Data"
+                              label="Data*"
                               prepend-icon="event"
                               readonly
                               v-on="on"
@@ -68,7 +68,7 @@
                         <v-text-field
                           ref="valor"
                           :color="color"
-                          label="VALOR DA META"
+                          label="VALOR DA META*"
                           v-money="money"
                           v-model="meta.valor"
                           :rules="valorRules"
@@ -78,7 +78,7 @@
                       </v-flex>
                       <v-flex xs12>
                         <v-text-field
-                          label="Nome"
+                          label="Nome*"
                           :placeholder="`Ex: Meta principal de ${new Date().getFullYear()}`"
                           v-model="meta.nome"
                           :rules="nomeRules"
@@ -210,6 +210,7 @@
                     </v-layout>
                   </v-form>
                 </v-container>
+                <small>* indica os campos obrigatórios</small>
               </v-card-text>
 
               <v-card-actions>
@@ -417,8 +418,13 @@ import { formatToBRL, formatToNumber } from "brazilian-values";
 export default {
   directives: { money: VMoney },
   computed: {
-    computedDateFormatted1() {
-      return formatDate(this.meta.data);
+    computedDateFormatted1: {
+      get() {
+        return formatDate(this.meta.data);
+      },
+      set(value) {
+        this.meta.data = formatDate(value);
+      }
     },
     ...mapState("app", ["color"]),
     ...mapState(["modalStore", "empresaStore", "usuarioStore"])
@@ -703,8 +709,6 @@ export default {
         parseNumber(vendedor.valor) *
           (parseNumber(this.getPercent(this.meta.dezembro)) / 100)
       );
-
-      console.log(vendedor);
     },
     parseValores() {
       this.meta.data = new Date(this.meta.data).toISOString().substr(0, 10);
@@ -785,6 +789,7 @@ export default {
       const method = this.meta.id ? "put" : "post";
       const id = this.meta.id ? this.meta.id : "";
       const url = `${urlBD}/empresaMetas/${id}`;
+      this.empresaStore.meta = this.meta;
 
       if (!this.meta.id_empresa) {
         this.meta.id_empresa = this.empresaStore.currentEmpresa;

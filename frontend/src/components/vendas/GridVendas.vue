@@ -119,7 +119,11 @@
                   </v-container>
                 </v-card-text>
                 <v-card-actions>
-                  <v-btn color="blue darken-1" flat @click="$store.commit('setFilter', {})">Limpar pesquisa</v-btn>
+                  <v-btn
+                    color="blue darken-1"
+                    flat
+                    @click="$store.commit('setFilter', {})"
+                  >Limpar pesquisa</v-btn>
                 </v-card-actions>
               </v-card>
             </v-menu>
@@ -271,7 +275,11 @@
               </v-container>
             </v-card-text>
             <v-card-actions>
-              <v-btn color="blue darken-1" flat @click="$store.commit('setFilter', {})">Limpar pesquisa</v-btn>
+              <v-btn
+                color="blue darken-1"
+                flat
+                @click="$store.commit('setFilter', {})"
+              >Limpar pesquisa</v-btn>
             </v-card-actions>
           </v-card>
         </v-menu>
@@ -443,7 +451,10 @@ export default {
       this.loadVendas();
     },
     "$store.state.modalStore.vendas.vendas.visible": function() {
-      if (!this.modalStore.vendas.vendas.visible) {
+      if (
+        !this.modalStore.vendas.vendas.visible &&
+        this.vendaStore.venda != null
+      ) {
         this.loadVendas();
       }
     }

@@ -202,6 +202,8 @@
               </td>
             </template>
           </v-data-table>
+
+          <small>* indica os campos obrigatórios</small>
         </v-card-text>
         <v-card-actions>
           <v-btn color="blue darken-1" flat @click="reset" :disabled="mode == 'edit'">Limpar</v-btn>
@@ -243,6 +245,7 @@ import { mapState } from "vuex";
 import { formatToBRL } from "brazilian-values";
 
 export default {
+  name: "usuario-metas",
   directives: { money: VMoney },
   computed: {
     computedDateFormatted1() {

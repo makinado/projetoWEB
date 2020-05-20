@@ -75,7 +75,7 @@ module.exports = app => {
                 });
                 res.status(200).send(newPath)
             })
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => res.status(500).send('Erro ao fazer fazer upload da imagem'))
 
     })
     app.post('/uploadXML', uploadXML.fields([{ name: 'xml' }]), function (req, res, next) {

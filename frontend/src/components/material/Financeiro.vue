@@ -271,7 +271,8 @@ export default {
   props: {
     component: { type: Object, default: null },
     title: { type: String, default: "Financeiro" },
-    showTotais: { type: Boolean, default: true }
+    showTotais: { type: Boolean, default: true },
+    addNewParcela: { type: Boolean, default: true }
   },
   components: {
     Documentos: () => import("../financeiro/AddDocumentos")
@@ -426,7 +427,7 @@ export default {
     }
   },
   mounted() {
-    this.addParcela();
+    if (this.addNewParcela) this.addParcela();
   }
 };
 </script>

@@ -8,7 +8,7 @@
   >
     <v-card v-if="modalStore.compras.compras.add">
       <v-toolbar dense flat extended fixed extension-height="5" dark :color="color">
-        <v-toolbar-side-icon @click="modalStore.compras.compras.add = false">
+        <v-toolbar-side-icon @click="[comprasStore.compra = null, modalStore.compras.compras.add = false]">
           <v-icon>close</v-icon>
         </v-toolbar-side-icon>
         <v-toolbar-title
@@ -805,6 +805,7 @@ export default {
       const method = this.compra.id ? "put" : "post";
       const id = this.compra.id ? this.compra.id : "";
       const url = `${urlBD}/compras/${id}`;
+      this.comprasStore.compra = this.compra;
 
       if (!this.compra.id_empresa) {
         this.compra.id_empresa = this.empresaStore.currentEmpresa;

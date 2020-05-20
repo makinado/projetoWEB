@@ -660,7 +660,10 @@ export default {
       this.loadFinanceiro();
     },
     "$store.state.modalStore.financeiro.financ.visible": function() {
-      if (!this.modalStore.financeiro.financ.visible) {
+      if (
+        !this.modalStore.financeiro.financ.visible &&
+        this.financeiroStore.financ != null
+      ) {
         this.loadFinanceiro();
       }
     },

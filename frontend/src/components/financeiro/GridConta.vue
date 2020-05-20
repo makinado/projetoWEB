@@ -332,12 +332,15 @@ export default {
     params() {
       this.loadContas();
     },
-    "$store.state.modalStore.financeiro.conta.visible": function() {
-      if (!this.modalStore.financeiro.conta.visible) {
+    "$store.state.modalStore.financeiro.conta.visible"() {
+      if ( 
+        !this.modalStore.financeiro.conta.visible &&
+        this.financeiroStore.conta != null
+      ) {
         this.loadContas();
       }
-    },
-    "$store.state.modalStore.financeiro.movimento.visible": function() {
+    }, 
+    "$store.state.modalStore.financeiro.movimento.visible"() {
       if (!this.modalStore.financeiro.movimento.visible) {
         this.loadContas();
       }

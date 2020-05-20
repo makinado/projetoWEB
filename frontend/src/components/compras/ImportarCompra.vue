@@ -8,7 +8,7 @@
   >
     <v-card v-if="modalStore.compras.compras.importar">
       <v-toolbar dense flat extended fixed extension-height="5" dark :color="color">
-        <v-toolbar-side-icon @click="modalStore.compras.compras.importar = false">
+        <v-toolbar-side-icon @click="[compraStore.compra = null, modalStore.compras.compras.importar = false]">
           <v-icon>close</v-icon>
         </v-toolbar-side-icon>
         <v-toolbar-title
@@ -18,7 +18,7 @@
         <v-spacer></v-spacer>
 
         <v-tooltip bottom>
-          <v-btn slot="activator" class="mr-3" icon @click="limpaTela">
+          <v-btn slot="activator" class="mr-3" icon @click="reset">
             <v-icon>fa fa-2x fa-eraser</v-icon>
           </v-btn>
           <span>Limpar tela</span>
@@ -274,6 +274,7 @@
 
           <FinanceiroVue
             :component="compra"
+            :addNewParcela="false"
             :showTotais="modalStore.compras.compras.title.includes('Alterar') ? false : true"
           />
         </v-container>
@@ -429,7 +430,7 @@ export default {
   watch: {
     "$store.state.modalStore.compras.compras.importar": function() {
       if (this.modalStore.compras.compras.importar) {
-        this.limpaTela();
+        this.reset();
       }
     },
     "$store.state.modalStore.produtos.visible": function() {
@@ -450,10 +451,6 @@ export default {
       const [year, month, day] = date.split("-");
       return `${day}/${month}/${year}`;
     },
-    async limpaTela() {
-      this.reset();
-      this.loadTela(this.comprasStore.compra);
-    },
     async reset() {
       this.xmls = [];
       this.produtos = [];
@@ -468,6 +465,9 @@ export default {
       this.files = [];
 
       this.$refs.form ? this.$refs.form.reset() : "";
+
+      this.$store.dispatch("loadProdutos");
+      this.$store.dispatch("loadFornecs");
     },
     async pickFile() {
       this.$refs.xml.click();
@@ -755,9 +755,6 @@ export default {
 
       this.modalStore.produtos.visible = true;
     },
-    async loadTela(compra) {
-      this.$store.dispatch("loadFornecs");
-    },
     save() {
       const filesUpload = [];
 
@@ -765,6 +762,7 @@ export default {
         showError("Não há nada para ser importado!");
         return;
       } else {
+        this.comprasStore.compra = this.xmls;
         this.xmls.forEach(xml => {
           let arquivo = {};
           arquivo.id_empresa = this.empresaStore.currentEmpresa;
@@ -806,9 +804,6 @@ export default {
         .catch(showError)
         .then(() => (this.isLoadingSave = false));
     }
-  },
-  mounted() {
-    this.$store.dispatch("loadProdutos");
   }
 };
 </script>

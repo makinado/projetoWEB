@@ -8,7 +8,9 @@
   >
     <v-card v-if="modalStore.usuarios.visible">
       <v-toolbar dense flat extended fixed extension-height="5" dark :color="color">
-        <v-toolbar-side-icon @click="modalStore.usuarios.visible = false">
+        <v-toolbar-side-icon
+          @click="[usuarioStore.usuario = null, modalStore.usuarios.visible = false]"
+        >
           <v-icon>close</v-icon>
         </v-toolbar-side-icon>
         <v-toolbar-title
@@ -260,6 +262,7 @@
               </v-layout>
             </v-form>
           </v-container>
+          <small>* indica os campos obrigatórios</small>
         </v-container>
       </v-card-text>
     </v-card>
@@ -608,6 +611,7 @@ export default {
       const method = this.usuario.id ? "put" : "post";
       const id = this.usuario.id ? this.usuario.id : "";
       const url = `${urlBD}/usuarios/${id}`;
+      this.usuarioStore.usuario = this.usuario;
 
       this.usuario.empresas = this.usuario.empresas.map(empresa => {
         empresa = empresa.value ? empresa.value : empresa;

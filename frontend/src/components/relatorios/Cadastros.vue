@@ -441,6 +441,7 @@ export default {
             doc.internal.pageSize.width - 120,
             35
           );
+          doc.line(20, 50, doc.internal.pageSize.width - 20, 50)
 
           //rodapé
           doc.text(this.usuarioStore.currentUsuario.nome, 40, 580);
@@ -480,6 +481,8 @@ export default {
           { title: "Valor custo", dataKey: "valor_custo_medio" }
         ];
 
+      doc.line(20, 50, doc.internal.pageSize.width - 20, 50)
+
       if (data.pessoas) {
         data.pessoas.map(pessoa => {
           if (pessoa.cpf) pessoa.cnpj = "";
@@ -492,6 +495,7 @@ export default {
 
         doc.autoTable(pessoas_columns, data.pessoas, {
           theme: "striped",
+          margin: { top: 150 },
           headStyles: { fillColor: "#B2DFDB", textColor: "black" }
         });
 

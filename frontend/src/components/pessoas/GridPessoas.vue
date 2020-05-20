@@ -352,7 +352,7 @@ export default {
       this.loadPessoas();
     },
     "$store.state.modalStore.pessoas.visible"() {
-      if (!this.modalStore.pessoas.visible) {
+      if (!this.modalStore.pessoas.visible && this.pessoaStore.pessoa != null) {
         this.loadPessoas();
       }
     },

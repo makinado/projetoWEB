@@ -83,13 +83,9 @@ const routes = [{
     path: '/pdv',
     component: () => import('@/components/vendas/pdv/PDV')
 }, {
-    name: 'Dúvidas',
-    path: "/duvidas",
-    component: () => import('@/components/ajuda/Duvidas')
-}, {
-    name: 'Material de apoio',
-    path: "/materialApoio",
-    component: () => import('@/components/ajuda/MaterialApoio')
+    name: 'Central de ajuda',
+    path: "/centralAjuda",
+    component: () => import('@/components/ajuda/CentralAjuda')
 }, {
     name: 'Relatório de cadastros',
     path: "/rel_cadastros",
