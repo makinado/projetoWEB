@@ -86,6 +86,11 @@ const routes = [{
     name: 'Central de ajuda',
     path: "/centralAjuda",
     component: () => import('@/components/ajuda/CentralAjuda')
+},
+{
+    name: 'Artigo',
+    path: '/articles/:id',
+    component: () => import('@/components/ajuda/ArtigoPorId')
 }, {
     name: 'Relatório de cadastros',
     path: "/rel_cadastros",

@@ -81,9 +81,10 @@
     </v-layout>
 
     <v-card-actions>
-      <v-spacer></v-spacer>
-      <v-btn color="blue darken-1" flat @click="stepper = 2">Voltar</v-btn>
-      <v-btn color="blue darken-1" flat @click="save">Finalizar</v-btn>
+      <v-layout class="my-4" row justify-center>
+        <v-btn class="v-btn-common" color="warning" @click="stepper = 2">Voltar</v-btn>
+        <v-btn class="v-btn-common" :color="color" @click="save">Finalizar</v-btn>
+      </v-layout>
     </v-card-actions>
   </v-card>
 </template>

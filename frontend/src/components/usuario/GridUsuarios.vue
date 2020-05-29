@@ -160,7 +160,7 @@
         :headers="fields"
         rows-per-page-text="Registros por página"
         no-results-text="Nenhum registro encontrado"
-        no-data-text="Nenhum produto cadastrado"
+        no-data-text="Nenhum usuário cadastrado"
         :rows-per-page-items="[5, 10, 20, 50, 100]"
         :total-items="count"
         :pagination.sync="pagination"
@@ -173,7 +173,7 @@
             <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
           </td>
           <td>{{ data.item.id }}</td>
-          <td>{{ data.item.nome }}</td>
+          <td @dblclick="edit(data.item)">{{ data.item.nome }}</td>
           <td>{{ data.item.email }}</td>
           <td>{{ data.item.contato }}</td>
           <td>
@@ -211,7 +211,7 @@
                     slot="activator"
                     icon
                     dark
-                    @click.prevent="[usuarioStore.usuario = data.item, modalStore.usuarios.visible = true,modalStore.usuarios.title = 'Alterar usuario']"
+                    @click.prevent="edit(data.item)"
                     class="mr-1"
                     v-if="usuarioStore.currentUsuario.usuario_update"
                   >
@@ -297,7 +297,10 @@ export default {
       this.loadUsuarios();
     },
     "$store.state.modalStore.usuarios.visible"() {
-      if (!this.modalStore.usuarios.visible && this.usuarioStore.usuario != null) {
+      if (
+        !this.modalStore.usuarios.visible &&
+        this.usuarioStore.usuario != null
+      ) {
         this.loadUsuarios();
       }
     }
@@ -348,15 +351,12 @@ export default {
     };
   },
   methods: {
-    navigate(path, newTab) {
-      if (newTab) {
-        const routeData = this.$router.resolve({ path: path });
-        window.open(routeData.href, "_blank");
-      } else {
-        this.$router.push({ path: path });
-      }
+    edit(item) {
+      this.usuarioStore.usuario = item;
+      this.modalStore.usuarios.visible = true;
+      this.modalStore.usuarios.title = "Alterar usuario";
     },
-    async loadUsuarios() {
+    loadUsuarios() {
       this.loading = true;
 
       const url = `${urlBD}/usuarios?page=${this.pagination.page}&limit=${

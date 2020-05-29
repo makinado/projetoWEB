@@ -66,7 +66,10 @@ export default {
   },
   categoriaStore: {
     categoria: null,
-    categorias: []
+    categorias: [],
+
+    categoriaArtigo: null,
+    categoriasArtigos: []
   },
   comprasStore: {
     pedido: null,
@@ -83,9 +86,9 @@ export default {
     atividade: null,
     atividades: []
   },
-  backupStore: {
-    backup: null,
-    backups: []
+  artigoStore: {
+    artigo: null,
+    artigos: []
   },
   financeiroStore: {
     financ: null,
@@ -212,7 +215,8 @@ export default {
       compras: {
         importar: false,
         add: false,
-        title: "Adicionar nota de compra"
+        title: "Adicionar nota de compra",
+        visualizar: false
       },
       download: false,
     },
@@ -228,6 +232,7 @@ export default {
       vendas: {
         visible: false,
         title: "",
+        visualizar: false
       }
     },
     financeiro: {
@@ -250,6 +255,10 @@ export default {
     },
     feedback: {
       add: false
+    },
+    artigos: {
+      add: false,
+      title: "Adicionar artigo"
     }
   }
 }

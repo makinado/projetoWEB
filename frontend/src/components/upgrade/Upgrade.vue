@@ -10,9 +10,9 @@
       </v-flex>
       <v-layout class="my-5" row wrap align-start>
         <v-flex xs12 md3>
-          <v-card class="transparent elevation-2">
+          <v-card class="card-upgrade elevation-2">
             <v-card-title primary-title>
-              <v-icon x-large class="mr-3 info--text">fa fa-star</v-icon>
+              <i class="mr-3 fa fa-3x fa-star icon-blue"></i>
               <h2>Starter</h2>
             </v-card-title>
 
@@ -42,9 +42,9 @@
           </v-card>
         </v-flex>
         <v-flex xs12 md3>
-          <v-card class="transparent elevation-7 card-selected">
+          <v-card class="card-upgrade elevation-7">
             <v-card-title primary-title>
-              <v-icon x-large class="mr-3 primary--text">fa fa-building-o</v-icon>
+              <i class="mr-3 fa fa-3x fa-building-o icon-green"></i>
               <h2>Professional</h2>
             </v-card-title>
 
@@ -74,9 +74,9 @@
           </v-card>
         </v-flex>
         <v-flex xs12 md3>
-          <v-card class="transparent elevation-2">
+          <v-card class="card-upgrade elevation-2">
             <v-card-title primary-title>
-              <v-icon x-large class="mr-3 warning--text">fa fa-briefcase</v-icon>
+              <i class="mr-3 fa fa-3x fa-briefcase icon-gold"></i>
               <h2>Gold</h2>
             </v-card-title>
 
@@ -106,9 +106,9 @@
           </v-card>
         </v-flex>
         <v-flex xs12 md3>
-          <v-card class="transparent elevation-2">
+          <v-card class="card-upgrade elevation-2">
             <v-card-title primary-title>
-              <v-icon x-large class="mr-3 danger--text">fa fa-diamond</v-icon>
+              <i class="mr-3 fa fa-3x fa-diamond icon-diamond"></i>
               <h2>Diamond</h2>
             </v-card-title>
 
@@ -152,4 +152,79 @@ export default {
 </script>
 
 <style>
+.card-upgrade {
+  position: relative;
+  display: block;
+  flex: 1 1 0px;
+  transition: transform 500ms;
+  transition-property: transform;
+}
+
+.card-upgrade:focus,
+.card-upgrade:hover {
+  cursor: pointer;
+
+  transform: scale(1.1);
+  z-index: 5;
+}
+
+@keyframes fadeInUp {
+  from {
+    transform: translate3d(0, 40px, 0);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+.animated {
+  animation-duration: 1s;
+  animation-fill-mode: both;
+  -webkit-animation-duration: 1s;
+  -webkit-animation-fill-mode: both;
+}
+
+.animatedFadeInUp {
+  opacity: 0;
+}
+
+.fadeInUp {
+  opacity: 0;
+  animation-name: fadeInUp;
+  -webkit-animation-name: fadeInUp;
+}
+
+.icon-blue {
+  color: #2f80ed;
+  display: block;
+  background: -webkit-linear-gradient(#2f80ed, #56ccf2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.icon-green {
+  color: #38ef7d;
+  display: block;
+  background: -webkit-linear-gradient(#38ef7d, #11998e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.icon-gold {
+  color: #cac531;
+  display: block;
+  background: -webkit-linear-gradient(#cac531, #f3f9a7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.icon-diamond {
+  color: #9c47fc;
+  display: block;
+  background: -webkit-linear-gradient(#9c47fc, #356ad2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 </style>

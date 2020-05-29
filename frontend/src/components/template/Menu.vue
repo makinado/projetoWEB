@@ -16,7 +16,10 @@
               <v-list-tile-avatar color="transparent" size="60">
                 <v-img :src="require('@/assets/logo1.png')" height="60" />
               </v-list-tile-avatar>
-              <v-list-tile-title class="title text-light">CampagWEB</v-list-tile-title>
+              <v-list-tile-title class="title text-light">
+                CampagWEB
+                <v-btn flat color="danger" small>ALPHA</v-btn>
+              </v-list-tile-title>
             </v-list-tile>
           </a>
 
@@ -273,20 +276,6 @@
                 </v-list-tile-content>
               </v-list-tile>
             </v-list-group>
-
-            <v-list-tile
-              v-if="usuarioStore.currentUsuario['configuracoes']"
-              :active-class="color"
-              no-action
-              to="/config"
-            >
-              <v-list-tile-action>
-                <v-icon>{{ config.icon }}</v-icon>
-              </v-list-tile-action>
-              <v-list-tile-content>
-                <v-list-tile-title>{{ config.title }}</v-list-tile-title>
-              </v-list-tile-content>
-            </v-list-tile>
           </v-list>
 
           <v-list-tile
@@ -397,12 +386,6 @@ export default {
             link: "/atividades"
           }
         ]
-      },
-      config: {
-        title: "Configurações",
-        nome: "configuracoes",
-        icon: "fa fa-cog",
-        link: "/config"
       },
       cadastros: {
         title: "Cadastros",

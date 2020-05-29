@@ -28,7 +28,7 @@
     "jspdf": "^1.5.3",
     "jspdf-autotable": "^3.2.11",
     "material-design-icons-iconfont": "^5.0.1",
-    "node-sass": "^4.13.1",
+    "node-sass": "^4.14.1",
     "npm-check-updates": "^3.1.20",
     "nprogress": "^0.2.0",
     "printd": "^1.4.1",
@@ -47,6 +47,7 @@
     "vue-toast-notification": "0.0.2",
     "vue-toasted": "1.1.24",
     "vue-viacep": "^1.0.3",
+    "vue2-editor": "^2.10.2",
     "vuetify": "^1.5.5",
     "vuex": "^3.0.1"
   },

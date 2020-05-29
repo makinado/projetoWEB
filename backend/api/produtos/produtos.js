@@ -227,6 +227,9 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
+            const movimento = await app.db('produto_movimento_estoque').select('id_produto').where({ id_produto: req.params.id }).first()
+            if (movimento.id_produto) throw 'Há movimentos de estoque associados a este produto'
+
             const exclusao = await app.db('produtos')
                 .where({ id: req.params.id }).delete()
             existsOrError(exclusao, 'produto não encontrado')

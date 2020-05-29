@@ -47,6 +47,9 @@
 </template>
 
 <script>
+import axios from "axios";
+import { urlBD } from "@/global";
+
 import { mapState } from "vuex";
 
 export default {

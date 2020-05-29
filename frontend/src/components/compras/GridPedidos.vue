@@ -333,7 +333,7 @@
                     icon
                     dark
                     class="mr-1"
-                    @click="concluirPedido"
+                    @click="[pedido = data.item, finalizar = true]"
                     v-if="usuarioStore.currentUsuario.pedidos_update"
                   >
                     <i class="fa fa-lg fa-check"></i>
@@ -341,8 +341,7 @@
                   <span>Concluir pedido</span>
                 </v-tooltip>
                 <v-tooltip bottom v-else>
-                  <v-btn slot="activator" icon
-                  dark class="mr-1">
+                  <v-btn slot="activator" icon dark class="mr-1">
                     <i class="fa fa-lg fa-info"></i>
                   </v-btn>
                   <span>Informações do pedido</span>
@@ -403,7 +402,7 @@
                   class="white--text mr-2"
                   height="200px"
                   gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)"
-                  @click="[finalizar = false, modalStore.compras.nfes.importar = true]"
+                  @click="[finalizar = false, modalStore.compras.compras.importar = true, comprasStore.compra = { id_pedido: pedido.id }]"
                 >
                   <v-card-title class="fill-height align-end">
                     <span>
@@ -420,7 +419,7 @@
                   class="white--text mr-2"
                   height="200px"
                   gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)"
-                  @click="[finalizar = false, modalStore.compras.nfes.add = true]"
+                  @click="[finalizar = false, modalStore.compras.compras.add = true, comprasStore.compra = { id_pedido: pedido.id }]"
                 >
                   <v-card-title class="fill-height align-end">
                     <span>
@@ -511,6 +510,7 @@ export default {
     return {
       valid: true,
       loading: false,
+      pedido: [],
       itens_selecionados: [],
       fields: [
         { value: "id", text: "Código", sortable: true },
@@ -572,24 +572,26 @@ export default {
       this.loadPedidos();
     },
     "$store.state.modalStore.compras.pedidos.visible"() {
-      if (!this.modalStore.compras.pedidos.visible && this.comprasStore.pedido != null) {
+      if (
+        !this.modalStore.compras.pedidos.visible &&
+        this.comprasStore.pedido != null
+      ) {
+        this.loadPedidos();
+      }
+    },
+    "$store.state.modalStore.compras.compras.add"() {
+      if (!this.modalStore.compras.compras.add) {
         this.loadPedidos();
       }
     }
   },
   methods: {
-    getWindowSize() {
-      return window.innerWidth / 2 - 150;
-    },
     getColor(situacao) {
       if (situacao === "PENDENTE") return "blue";
       else if (situacao === "CANCELADO") return "red";
       else return "green";
     },
-    concluirPedido() {
-      this.finalizar = true;
-    },
-    async loadPedidos() {
+    loadPedidos() {
       this.loading = true;
 
       const url = `${urlBD}/pedidos?page=${this.pagination.page}&limit=${
@@ -614,7 +616,7 @@ export default {
         .catch(showError)
         .finally(() => (this.loading = false));
     },
-    async remove() {
+    remove() {
       if (!this.confirmaExclusao) {
         this.confirmaExclusao = true;
         return;

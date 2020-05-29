@@ -82,14 +82,14 @@ module.exports = app => {
                             .where({ 'compra.id': m.id_movimentacao }).first()
                     } else if (m.origem == 'VENDA' && m.id_movimentacao) {
                         m.dados = await app.db('venda')
-                            .join('usuarios as vend', 'venda.id_vendedor', 'usuarios.id')
-                            .join('pessoas as cli', 'venda.id_pessoa', 'pessoas.id')
+                            .join('usuarios', 'venda.id_vendedor', 'usuarios.id')
+                            .join('pessoas', 'venda.id_pessoa', 'pessoas.id')
                             .select(
                                 'venda.id',
                                 'venda.nota_fiscal',
                                 'venda.data_criacao',
-                                'cli.nome as cliente',
-                                'vend.nome as vendedor'
+                                'pessoas.nome as cliente',
+                                'usuarios.nome as vendedor'
                             )
                             .where({ 'venda.id': m.id_movimentacao }).first()
                     }

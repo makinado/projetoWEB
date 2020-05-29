@@ -1,7 +1,7 @@
 const { formatToBRL } = require('brazilian-values')
 
 module.exports = app => {
-    const { existsOrError, parseNumber, formatDate } = app.api.validation
+    const { existsOrError, notExistsOrError, parseNumber, formatDate } = app.api.validation
 
     const save = async (req, res) => {
         const pedido = { ...req.body }
@@ -9,37 +9,43 @@ module.exports = app => {
             pedido.id = req.params.id
         }
 
+        var produtosOK = true, financeiroOK = true
+
         try {
             existsOrError(pedido.id_empresa, 'Informe a empresa da pedido')
             existsOrError(pedido.id_pessoa, 'Informe o fornecedor do pedido')
             existsOrError(pedido.data_pedido, 'Informe a data do pedido')
             existsOrError(pedido.produtos, 'Informe os produtos do pedido')
+
+            pedido.produtos.map(produto => {
+                try {
+                    existsOrError(produto.id, `Item ${produto.sequencia} não vinculado corretamente`)
+                    if (produto.quantidade == "0,00")
+                        throw `Item ${produto.sequencia} com quantidades zeradas`
+                    if (produto.valor_unitario == "R$ 0,00")
+                        throw `Item ${produto.sequencia} com valor unitário zerado`
+                } catch (e) {
+                    produtosOK = false
+                    return res.status(400).send(e)
+                }
+            })
         } catch (e) {
+            if (!produtosOK || !financeiroOK) return
             return res.status(400).send(e.toString())
         }
+
+        if (!produtosOK || !financeiroOK) return
 
         pedido.situacao = pedido.situacao ? pedido.situacao : 'PENDENTE'
         var produtos = pedido.produtos
         delete pedido.produtos
 
-        let somaProd = 0
-        produtos.map(produto => {
-            produto.valor_unitario = parseNumber(produto.valor_unitario || "0,00")
-            produto.valor_total = parseNumber(produto.valor_total || "0,00")
-            produto.quantidade = parseNumber(produto.quantidade || "0,00")
-            produto.desconto = parseNumber(produto.desconto || "0,00")
-
-            somaProd += produto.valor_unitario * produto.quantidade - produto.desconto
-        })
-        pedido.valor_produtos = somaProd
-
         pedido.valor_frete = parseNumber(pedido.valor_frete || "0,00")
         pedido.valor_seguro = parseNumber(pedido.valor_seguro || "0,00")
         pedido.outras_despesas = parseNumber(pedido.outras_despesas || "0,00")
         pedido.valor_desconto = parseNumber(pedido.valor_desconto || "0,00")
-
-        pedido.valor_total = 0
-        pedido.valor_total += somaProd + pedido.valor_frete + pedido.valor_seguro + pedido.outras_despesas - pedido.valor_desconto
+        pedido.valor_produtos = parseNumber(pedido.valor_produtos || "0,00")
+        pedido.valor_total = parseNumber(pedido.valor_total || "0,00")
 
         if (pedido.id) {
             return app.db.transaction(async function (trx) {
@@ -56,10 +62,12 @@ module.exports = app => {
                                 id_empresa: pedido.id_empresa,
                                 id_produto: produto.id,
                                 data_pedido: pedido.data_pedido,
-                                valor_desconto: produto.desconto || 0,
-                                quantidade: produto.quantidade || 0,
-                                valor_unitario: produto.valor_unitario,
-                                valor_total: produto.valor_unitario * produto.quantidade - produto.desconto
+                                valor_frete: parseNumber(produto.valor_frete || "0,00"),
+                                valor_seguro: parseNumber(produto.valor_seguro || "0,00"),
+                                valor_desconto: parseNumber(produto.valor_desconto || "0,00"),
+                                quantidade: parseNumber(produto.quantidade || "0,00"),
+                                valor_unitario: parseNumber(produto.valor_unitario || "0,00"),
+                                valor_total: parseNumber(produto.valor_total || "0,00"),
                             }
 
                             return newProd
@@ -90,10 +98,12 @@ module.exports = app => {
                                 id_empresa: pedido.id_empresa,
                                 id_produto: produto.id,
                                 data_pedido: pedido.data_pedido,
-                                valor_desconto: produto.desconto || 0,
-                                quantidade: produto.quantidade || 0,
-                                valor_unitario: produto.valor_unitario,
-                                valor_total: produto.valor_unitario * produto.quantidade - produto.desconto
+                                valor_frete: parseNumber(produto.valor_frete || "0,00"),
+                                valor_seguro: parseNumber(produto.valor_seguro || "0,00"),
+                                valor_desconto: parseNumber(produto.valor_desconto || "0,00"),
+                                quantidade: parseNumber(produto.quantidade || "0,00"),
+                                valor_unitario: parseNumber(produto.valor_unitario || "0,00"),
+                                valor_total: parseNumber(produto.valor_total || "0,00"),
                             }
 
                             return newProd
@@ -203,11 +213,9 @@ module.exports = app => {
             .then(async pedido => {
                 pedido.produtos = await app.db('produto_pedido_compra as pped')
                     .join('produtos as p', 'pped.id_produto', 'p.id')
-                    .select('p.id', 'p.descricao', 'pped.quantidade', 'pped.valor_desconto', 'pped.valor_unitario', 'pped.valor_total')
+                    .select('p.id', 'p.descricao', 'pped.quantidade', 'pped.valor_desconto', 'pped.valor_seguro', 'pped.valor_frete', 'pped.valor_unitario', 'pped.valor_total')
                     .where({ id_pedido: pedido.id })
                     .catch(e => res.status(500).send(e.toString()))
-
-                console.log(pedido)
                 res.json(pedido)
             })
             .catch(e => res.status(500).send(e.toString()))
@@ -299,9 +307,11 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
+            const compra = await app.db('compra_pedido').select('id', 'id_compra').where({ id: req.params.id })
+            notExistsOrError(compra.id_compra, 'Há compras relacionadas a esse pedido')
+
             const pedido = await app.db('compra_pedido')
                 .where({ id: req.params.id }).delete()
-
             existsOrError(pedido, 'pedido não encontrado')
 
             res.status(204).send()

@@ -180,8 +180,18 @@ module.exports = app => {
     const remove = async (req, res) => {
         try {
             const estoque = await app.db('produto_estoque')
-                .where({ id_empresa: req.params.id })
-            notExistsOrError(estoque, 'A empresa possui estoque ativo, consulte a documentação')
+                .where({ id_empresa: req.params.id }).first()
+            notExistsOrError(estoque, 'Há movimentos de estoque associados a essa empresa')
+
+            const financeiro = await app.db('financeiro').where({ id_empresa: req.params.id }).first()
+            notExistsOrError(financeiro, 'Há movimentos financeiros associados a essa empresa')
+
+            const compras = await app.db('compra').where({ id_empresa: req.params.id }).first()
+            notExistsOrError(compras, 'Há compras associadas a essa empresa')
+
+            const vendas = await app.db('venda').where({ id_empresa: req.params.id }).first()
+            notExistsOrError(vendas, 'Há vendas associadas a essa empresa')
+
 
             const empresa = await app.db('empresas')
                 .where({ id: req.params.id }).delete()

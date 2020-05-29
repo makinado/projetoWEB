@@ -32,7 +32,7 @@ export default {
     DownloadXML: () => import("./DownloadXML"),
     AddPessoa: () => import("../pessoas/AddPessoa"),
     AddProduto: () => import("../produtos/AddProduto"),
-    AddDocumento: () => import("../financeiro/AddDocumentos"),
+    AddDocumento: () => import("../financeiro/AddDocumentos")
   }
 };
 </script>

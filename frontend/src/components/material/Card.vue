@@ -8,7 +8,7 @@
         class="v-card--material__header"
         dark
       >
-        <slot v-if="!title && !text" name="header" />
+        <slot v-if="!title && !text && !  icon" name="header" />
         <span v-else>
           <v-layout class="p-2" align-center>
             <v-icon class="mx-2" v-text="icon"></v-icon>

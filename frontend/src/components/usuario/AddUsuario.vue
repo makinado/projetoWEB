@@ -31,12 +31,6 @@
           </v-btn>
           <span>Salvar usuário</span>
         </v-tooltip>
-        <v-tooltip bottom>
-          <v-btn slot="activator" class="mr-3" icon>
-            <v-icon>fa fa-2x fa-cog</v-icon>
-          </v-btn>
-          <span>Configurações</span>
-        </v-tooltip>
       </v-toolbar>
 
       <v-card-text>
@@ -248,12 +242,6 @@
                             </v-list-tile-action>
                             <v-list-tile-content class="align-start">Atividades</v-list-tile-content>
                           </v-list-tile>
-                          <v-list-tile>
-                            <v-list-tile-action>
-                              <v-checkbox :color="color" v-model="acessos.configuracoes"></v-checkbox>
-                            </v-list-tile-action>
-                            <v-list-tile-content class="align-start">Configurações</v-list-tile-content>
-                          </v-list-tile>
                         </v-list>
                       </v-card>
                     </v-flex>
@@ -412,7 +400,6 @@ export default {
         if (card == "outros") {
           this.$set(this.acessos, "agenda", true);
           this.$set(this.acessos, "atividades", true);
-          this.$set(this.acessos, "configuracoes", true);
         } else if (card == "relatorios") {
           this.$set(this.acessos, "rel_cadastros", true);
           this.$set(this.acessos, "rel_compras", true);
@@ -430,7 +417,6 @@ export default {
         if (card == "outros") {
           this.$set(this.acessos, "agenda", false);
           this.$set(this.acessos, "atividades", false);
-          this.$set(this.acessos, "configuracoes", false);
         } else if (card == "relatorios") {
           this.$set(this.acessos, "rel_cadastros", false);
           this.$set(this.acessos, "rel_compras", false);
@@ -515,7 +501,6 @@ export default {
 
         this.$set(this.acessos, "agenda", true);
         this.$set(this.acessos, "atividades", true);
-        this.$set(this.acessos, "configuracoes", true);
 
         this.$set(this.acessos, "rel_cadastros", true);
         this.$set(this.acessos, "rel_compras", true);
@@ -591,7 +576,6 @@ export default {
 
         this.$set(this.acessos, "agenda", false);
         this.$set(this.acessos, "atividades", false);
-        this.$set(this.acessos, "configuracoes", false);
 
         this.$set(this.acessos, "rel_cadastros", false);
         this.$set(this.acessos, "rel_compras", false);

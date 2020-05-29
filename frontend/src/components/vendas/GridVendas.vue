@@ -153,7 +153,7 @@
                 slot="activator"
                 class="v-btn-common"
                 :color="color"
-                @click.prevent="[vendaStore.venda = null, modalStore.vendas.vendas.visible = true, modalStore.vendas.title = 'Adicionar orçamento / venda']"
+                @click.prevent="[vendaStore.venda = null, modalStore.vendas.vendas.visible = true, modalStore.vendas.vendas.title = 'Adicionar orçamento / venda']"
                 v-if="usuarioStore.currentUsuario.vendas_create"
               >Adicionar</v-btn>
               <span>Adicionar orçamento/venda</span>
@@ -309,7 +309,7 @@
             slot="activator"
             class="v-btn-common"
             :color="color"
-            @click.prevent="[vendaStore.venda = null, modalStore.vendas.vendas.visible = true, modalStore.vendas.title = 'Adicionar orçamento / venda']"
+            @click.prevent="[vendaStore.venda = null, modalStore.vendas.vendas.visible = true, modalStore.vendas.vendas.title = 'Adicionar orçamento / venda']"
             v-if="usuarioStore.currentUsuario.vendas_create"
           >Adicionar</v-btn>
           <span>Adicionar orçamento/venda</span>
@@ -349,18 +349,47 @@
                 <v-icon>fa fa-lg fa-ellipsis-v</v-icon>
               </v-btn>
               <v-card :color="color">
-                <v-tooltip bottom>
+                <v-tooltip
+                  v-if="usuarioStore.currentUsuario.vendas_update && data.item.tipo == 'ORÇAMENTO'"
+                  bottom
+                >
                   <v-btn
                     slot="activator"
                     icon
                     dark
-                    @click.prevent="[vendaStore.venda = data.item, modalStore.vendas.vendas.visible = true, modalStore.vendas.title = 'Alterar orçamento / venda']"
+                    @click.prevent="[vendaStore.venda = { ...data.item, finalizarOrçamento: true }, modalStore.vendas.vendas.visible = true, modalStore.vendas.vendas.title = 'Alterar orçamento / venda']"
                     class="mr-1"
-                    v-if="usuarioStore.currentUsuario.vendas_update"
+                  >
+                    <i class="fa fa-lg fa-check"></i>
+                  </v-btn>
+                  <span>Concluir venda</span>
+                </v-tooltip>
+                <v-tooltip
+                  v-if="usuarioStore.currentUsuario.vendas_update && data.item.tipo == 'ORÇAMENTO'"
+                  bottom
+                >
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click.prevent="[vendaStore.venda = data.item, modalStore.vendas.vendas.visible = true, modalStore.vendas.vendas.title = 'Alterar orçamento / venda']"
+                    class="mr-1"
                   >
                     <i class="fa fa-lg fa-pencil"></i>
                   </v-btn>
                   <span>Editar orçamento</span>
+                </v-tooltip>
+                <v-tooltip v-else-if="data.item.tipo == 'VENDA'" bottom>
+                  <v-btn
+                    slot="activator"
+                    icon
+                    dark
+                    @click="vendaStore.venda = data.item, modalStore.vendas.vendas.visible = true, modalStore.vendas.vendas.title = 'Visualizar dados da venda'"
+                    class="mr-1"
+                  >
+                    <i class="fa fa-lg fa-eye"></i>
+                  </v-btn>
+                  <span>Visualizar dados da venda</span>
                 </v-tooltip>
                 <v-tooltip bottom>
                   <v-btn

@@ -41,19 +41,7 @@
                                 :rules="valorRules"
                               ></v-text-field>
                             </v-flex>
-                            <v-flex xs12 md3>
-                              <v-autocomplete
-                                dense
-                                :color="color"
-                                label="Classificação"
-                                v-model="movim.id_classificacao"
-                                :items="classificacaoStore.classificacoes"
-                                prepend-icon="fa fa-lg fa-plus-circle"
-                                @click:prepend="[financeiroStore.classificacao = null, modalStore.classificacoes.visible = true]"
-                                @input="getTipoClass(movim.id_classificacao)"
-                                @focus="$store.dispatch('loadClassificacoes')"
-                              ></v-autocomplete>
-                            </v-flex>
+
                             <v-flex xs12 md3>
                               <v-autocomplete
                                 no-data-text="Nenhum resultado"
@@ -63,6 +51,18 @@
                                 v-model="movim.dc"
                                 :items="[{ value: 'D', text: 'Débito' }, { value: 'C', text: 'Crédito' }]"
                                 :rules="tipoRules"
+                              ></v-autocomplete>
+                            </v-flex>
+                            <v-flex xs12 md3>
+                              <v-autocomplete
+                                dense
+                                :color="color"
+                                label="Classificação"
+                                v-model="movim.id_classificacao"
+                                :items="financeiroStore.classificacoes"
+                                prepend-icon="fa fa-lg fa-plus-circle"
+                                @click:prepend="[financeiroStore.classificacao = null, modalStore.classificacoes.visible = true]"
+                                @focus="$store.dispatch('loadClassificacoes', movim.dc ? (movim.dc == 'C' ? 1 : 2) : '')"
                               ></v-autocomplete>
                             </v-flex>
                             <v-flex xs12 md3>
@@ -381,6 +381,9 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <AddDocumentos />
+    <AddClassificacoes />
   </div>
 </template>
 
@@ -437,12 +440,16 @@ export default {
       }
     }
   },
-
+  components: {
+    AddDocumentos: () => import("./AddDocumentos"),
+    AddClassificacoes: () => import("./AddClassificacoes")
+  },
   data() {
     return {
       movim: {},
       valid: true,
       expand: false,
+      disable: false,
       menu: false,
       menu1: false,
       menu2: false,
@@ -560,13 +567,6 @@ export default {
       } else {
         showError("Nenhuma conta selecionada");
       }
-    },
-    getTipoClass(id) {
-      const clas = this.classificacaoStore.classificacoes.find(
-        item => item.value === id
-      );
-
-      if (clas) this.movim.dc = clas.tipo === 1 ? "C" : "D";
     },
     save() {
       if (!this.$refs.form.validate()) return;

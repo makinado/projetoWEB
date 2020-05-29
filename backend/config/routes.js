@@ -339,7 +339,7 @@ module.exports = app => {
         .get(grantAccess(app.api.compras.compras.get, 'compras'))
     app.route('/compras/:id')
         .all(app.config.passport.authenticate())
-        .put(grantAccess(app.api.compras.compras.save, 'compras'))
+        // .put(grantAccess(app.api.compras.compras.save, 'compras'))
         .get(grantAccess(app.api.compras.compras.getById, 'compras'))
         .delete(grantAccess(app.api.compras.compras.remove, 'compras'))
 
@@ -370,16 +370,16 @@ module.exports = app => {
         .get(grantAccess(app.api.financeiro.boletos.getBoleto, 'financeiro'))
 
 
-    app.route('/classficacoes/todas')
+    app.route('/classificacoes/todas')
         .all(app.config.passport.authenticate())
         .get(grantAccess(app.api.financeiro.classificacoes.getAll, 'financeiro'))
+    app.route('/classificacoes/tree')
+        .all(app.config.passport.authenticate())
+        .get(grantAccess(app.api.financeiro.classificacoes.getTree, 'financeiro'))
     app.route('/classificacoes')
         .all(app.config.passport.authenticate())
         .post(grantAccess(app.api.financeiro.classificacoes.save, 'financeiro'))
         .get(grantAccess(app.api.financeiro.classificacoes.get, 'financeiro'))
-    app.route('/classificacoes/tree')
-        .all(app.config.passport.authenticate())
-        .get(grantAccess(app.api.financeiro.classificacoes.getTree, 'financeiro'))
     app.route('/classificacoes/:id')
         .all(app.config.passport.authenticate())
         .put(grantAccess(app.api.financeiro.classificacoes.save, 'financeiro'))
@@ -430,7 +430,7 @@ module.exports = app => {
         .get(grantAccess(app.api.vendas.vendas.get, 'vendas'))
     app.route('/vendas/:id')
         .all(app.config.passport.authenticate())
-        .put(grantAccess(app.api.vendas.vendas.save, 'vendas'))
+        // .put(grantAccess(app.api.vendas.vendas.save, 'vendas'))
         .get(grantAccess(app.api.vendas.vendas.getById, 'vendas'))
         .delete(grantAccess(app.api.vendas.vendas.remove, 'vendas'))
 
@@ -480,6 +480,38 @@ module.exports = app => {
         .all(app.config.passport.authenticate())
         .get(grantAccess(app.api.relatorios.rel_estat.getData, 'rel_estat'))
 
+
+
+    app.route('/categoriasArtigos')
+        .all(app.config.passport.authenticate())
+        .get(app.api.ajuda.categorias.get)
+        .post(app.api.ajuda.categorias.save)
+
+    // Cuidado com ordem! Tem que vir antes de /categoriasArtigos/:id
+    app.route('/categoriasArtigos/tree')
+        .all(app.config.passport.authenticate())
+        .get(app.api.ajuda.categorias.getTree)
+
+    app.route('/categoriasArtigos/:id')
+        .all(app.config.passport.authenticate())
+        .get(app.api.ajuda.categorias.getById)
+        .put(app.api.ajuda.categorias.save)
+        .delete(app.api.ajuda.categorias.remove)
+
+    app.route('/artigos')
+        .all(app.config.passport.authenticate())
+        .get(app.api.ajuda.artigos.get)
+        .post(app.api.ajuda.artigos.save)
+
+    app.route('/artigos/:id')
+        .all(app.config.passport.authenticate())
+        .get(app.api.ajuda.artigos.getById)
+        .put(app.api.ajuda.artigos.save)
+        .delete(app.api.ajuda.artigos.remove)
+
+    app.route('/categoriasArtigos/:id/artigos')
+        .all(app.config.passport.authenticate())
+        .get(app.api.ajuda.artigos.getByCategory)
 
 
     app.get('/log/hoje', app.api.log.log.get)

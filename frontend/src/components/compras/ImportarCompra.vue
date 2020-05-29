@@ -8,7 +8,9 @@
   >
     <v-card v-if="modalStore.compras.compras.importar">
       <v-toolbar dense flat extended fixed extension-height="5" dark :color="color">
-        <v-toolbar-side-icon @click="[compraStore.compra = null, modalStore.compras.compras.importar = false]">
+        <v-toolbar-side-icon
+          @click="[comprasStore.compra = null, modalStore.compras.compras.importar = false]"
+        >
           <v-icon>close</v-icon>
         </v-toolbar-side-icon>
         <v-toolbar-title
@@ -604,11 +606,13 @@ export default {
         .catch(showError);
     },
     async calcValores(item) {
-      const produto = item.prod;
+      if (!item) return;
 
+      const produto = item.prod;
       const qtde = parseNumber(produto.qtde_embalagem);
       const valor_unitario = parseNumber(produto.vUnCom);
       var perc_add = parseNumber(produto.perc_add || "0,00");
+      var dif_aliquota = parseNumber(produto.dif_aliquota || "0,00");
 
       var soma =
         parseNumber(produto.valor_frete || "0,00") +
@@ -619,7 +623,8 @@ export default {
 
       soma = qtde != 0 ? valor_unitario / qtde + soma : valor_unitario + soma;
       perc_add = perc_add ? (perc_add / 100) * soma : 0;
-      produto.valor_custo = formatToBRL(soma + perc_add);
+      dif_aliquota = dif_aliquota ? (dif_aliquota / 100) * soma : 0;
+      produto.valor_custo = formatToBRL(soma + perc_add + dif_aliquota);
     },
     async removeArq(arquivo) {
       this.xmls = this.xmls.filter(xml => {
@@ -734,6 +739,7 @@ export default {
         logradouro: fornec.enderEmit.xLgr,
         complemento: fornec.enderEmit.xCpl,
         id_cidade: fornec.enderEmit.cMun,
+        inscricao_estadual: fornec.IE,
         situacao: "Ativo",
         fornecedor: true
       };

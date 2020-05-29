@@ -92,6 +92,14 @@ export default {
       state.commit('setPedidos', res.data)
     })
   },
+  async loadCategoriasArtigos(state) {
+    const url = `${urlBD}/categoriasArtigos`;
+    axios.get(url).then(res => {
+      state.commit('setCategoriasArtigos', res.data.map(c => {
+        return { value: c.id, text: c.path }
+      }))
+    }).catch(showError)
+  },
   async loadCategoriasProdutos(state) {
     const url = `${urlBD}/categorias/produtos`;
     axios.get(url).then(res => {
@@ -161,7 +169,6 @@ export default {
   async loadClassificacoes(state, tipo = "") {
     const url = `${urlBD}/classificacoes/todas?tipo=${tipo}`
     axios.get(url).then(res => {
-      console.log(res.data)
       state.commit('setClassificacoes', res.data)
     });
   },

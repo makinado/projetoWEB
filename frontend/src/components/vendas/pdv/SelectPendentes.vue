@@ -8,32 +8,26 @@
     <v-card>
       <v-card-title class="headline">Selecione um item</v-card-title>
       <v-card-text>
-        <v-container grid-list-xl>
-          <v-layout row wrap>
-            <v-flex xs12>
-              <v-data-table
-                :headers="headers"
-                :items="vendaStore.vendas"
-                hide-actions
-                :pagination.sync="pagination"
-                no-data-text="Nenhuma venda pendente"
-              >
-                <template slot="items" slot-scope="data">
-                  <tr @click="selectVenda(data.item)">
-                    <td>{{ data.item.id }}</td>
-                    <td>
-                      <v-chip :color="getColor(data.item.tipo)" dark>{{ data.item.tipo }}</v-chip>
-                    </td>
-                    <td>{{ data.item.cliente }}</td>
-                    <td>{{ data.item.vendedor }}</td>
-                    <td>{{ data.item.data_criacao| date }}</td>
-                    <td>{{ data.item.valor_total | currency }}</td>
-                  </tr>
-                </template>
-              </v-data-table>
-            </v-flex>
-          </v-layout>
-        </v-container>
+        <v-data-table
+          :headers="headers"
+          :items="vendaStore.vendas"
+          hide-actions
+          :pagination.sync="pagination"
+          no-data-text="Nenhuma venda pendente"
+        >
+          <template slot="items" slot-scope="data">
+            <tr @click="selectVenda(data.item)">
+              <td>{{ data.item.id }}</td>
+              <td>
+                <v-chip :color="getColor(data.item.tipo)" dark>{{ data.item.tipo }}</v-chip>
+              </td>
+              <td>{{ data.item.cliente }}</td>
+              <td>{{ data.item.vendedor }}</td>
+              <td>{{ data.item.data_criacao| date }}</td>
+              <td>{{ data.item.valor_total | currency }}</td>
+            </tr>
+          </template>
+        </v-data-table>
         <small>*Clique sobre a venda pendete seleciona-la</small>
       </v-card-text>
       <v-card-actions>

@@ -53,7 +53,7 @@ module.exports = app => {
                     qb.where('classificacao.tipo', '=', 2);
             })
             .orderBy('descricao')
-            .then(classificacoes => res.json(classificacoes))
+            .then(classificacoes => { res.json(classificacoes) })
             .catch(e => { console.log(e.toString()); res.status(500).send(e.toString()) })
     }
 
@@ -82,7 +82,6 @@ module.exports = app => {
     }
 
     const getById = async (req, res) => {
-        console.log('chegou')
         app.db('classificacao')
             .where({ id: req.params.id }).first()
             .then(classificacao => res.json(classificacao))

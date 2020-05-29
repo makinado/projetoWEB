@@ -228,7 +228,7 @@
         :headers="fields"
         rows-per-page-text="Registros por página"
         no-results-text="Nenhum registro encontrado"
-        no-data-text="Nenhuma pessoa encontrada"
+        no-data-text="Nenhuma pessoa cadastrada"
         :rows-per-page-items="[5, 10, 20, 50, 100]"
         :total-items="count"
         :pagination.sync="pagination"
@@ -241,7 +241,7 @@
             <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
           </td>
           <td>{{ data.item.id }}</td>
-          <td>{{ data.item.nome }}</td>
+          <td @dblclick="edit(data.item)">{{ data.item.nome }}</td>
           <td>{{ data.item.cpf }}</td>
           <td>{{ data.item.cnpj }}</td>
           <td>{{ data.item.email }}</td>
@@ -257,7 +257,7 @@
                     slot="activator"
                     icon
                     dark
-                    @click.prevent="[pessoaStore.pessoa = data.item, modalStore.pessoas.visible = true,modalStore.pessoas.title = 'Alterar pessoa']"
+                    @click.prevent="edit(data.item)"
                     class="mr-1"
                     v-if="usuarioStore.currentUsuario.pessoa_update"
                   >
@@ -410,18 +410,12 @@ export default {
     };
   },
   methods: {
-    getWindowSize() {
-      return window.innerWidth / 2 - 150;
+    edit(item) {
+      this.pessoaStore.pessoa = item;
+      this.modalStore.pessoas.visible = true;
+      this.modalStore.pessoas.title = "Alterar pessoa";
     },
-    navigate(path, newTab) {
-      if (newTab) {
-        const routeData = this.$router.resolve({ path: path });
-        window.open(routeData.href, "_blank");
-      } else {
-        this.$router.push({ path: path });
-      }
-    },
-    async loadPessoas() {
+    loadPessoas() {
       this.loading = true;
 
       const url = `${urlBD}/pessoas?page=${this.pagination.page}&limit=${
@@ -446,7 +440,7 @@ export default {
         .catch(showError)
         .finally(() => (this.loading = false));
     },
-    async remove() {
+    remove() {
       if (!this.confirmaExclusao) {
         this.confirmaExclusao = true;
         return;

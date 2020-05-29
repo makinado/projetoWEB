@@ -3,84 +3,82 @@
     <v-card id="card" v-if="modalStore.financeiro.financ.visualizar">
       <v-card-text>
         <v-container grid-list-xl>
-          <v-form v-model="valid" ref="form">
-            <v-card-title>
-              <span class="headline">Visualizar detalhes da conta</span>
-            </v-card-title>
-            <v-layout row wrap>
-              <v-flex xs12 md3>
-                <v-text-field readonly label="Código" v-model="conta.id"></v-text-field>
-              </v-flex>
-            </v-layout>
-            <v-layout row wrap>
-              <v-flex xs12 md4>
-                <v-text-field readonly label="Empresa" v-model="conta.empresa"></v-text-field>
-              </v-flex>
-              <v-flex xs12 md4>
-                <v-text-field readonly label="Pessoa" v-model="conta.pessoa"></v-text-field>
-              </v-flex>
-              <v-flex xs12 md4>
-                <v-text-field readonly label="Tipo de conta" v-model="conta.tipo_conta"></v-text-field>
-              </v-flex>
-              <v-flex xs12 md4>
-                <v-text-field readonly label="Classificação" v-model="conta.classificacao"></v-text-field>
-              </v-flex>
-              <v-flex xs12 md4>
-                <v-text-field readonly label="Documento origem" v-model="conta.documento_origem"></v-text-field>
-              </v-flex>
-              <v-flex xs12 md4>
-                <v-text-field
-                  readonly
-                  label="Número do documento"
-                  v-model="conta.num_documento_origem"
-                ></v-text-field>
-              </v-flex>
-              <v-flex xs12 md4>
-                <v-text-field readonly label="Data de criação" v-model="conta.data_criacao"></v-text-field>
-              </v-flex>
-              <v-flex xs12 md4>
-                <v-text-field readonly label="Data de emissão" v-model="conta.data_emissao"></v-text-field>
-              </v-flex>
-              <v-flex xs12 md4>
-                <v-text-field readonly label="Data de vencimento" v-model="conta.data_vencimento"></v-text-field>
-              </v-flex>
+          <v-card-title>
+            <span class="headline">Visualizar detalhes da conta</span>
+          </v-card-title>
+          <v-layout row wrap>
+            <v-flex xs12 md3>
+              <v-text-field readonly label="Código" v-model="conta.id"></v-text-field>
+            </v-flex>
+          </v-layout>
+          <v-layout row wrap>
+            <v-flex xs12 md4>
+              <v-text-field readonly label="Empresa" v-model="conta.empresa"></v-text-field>
+            </v-flex>
+            <v-flex xs12 md4>
+              <v-text-field readonly label="Pessoa" v-model="conta.pessoa"></v-text-field>
+            </v-flex>
+            <v-flex xs12 md4>
+              <v-text-field readonly label="Tipo de conta" v-model="conta.tipo_conta"></v-text-field>
+            </v-flex>
+            <v-flex xs12 md4>
+              <v-text-field readonly label="Classificação" v-model="conta.classificacao"></v-text-field>
+            </v-flex>
+            <v-flex xs12 md4>
+              <v-text-field readonly label="Documento origem" v-model="conta.documento_origem"></v-text-field>
+            </v-flex>
+            <v-flex xs12 md4>
+              <v-text-field
+                readonly
+                label="Número do documento"
+                v-model="conta.num_documento_origem"
+              ></v-text-field>
+            </v-flex>
+            <v-flex xs12 md4>
+              <v-text-field readonly label="Data de criação" v-model="conta.data_criacao"></v-text-field>
+            </v-flex>
+            <v-flex xs12 md4>
+              <v-text-field readonly label="Data de emissão" v-model="conta.data_emissao"></v-text-field>
+            </v-flex>
+            <v-flex xs12 md4>
+              <v-text-field readonly label="Data de vencimento" v-model="conta.data_vencimento"></v-text-field>
+            </v-flex>
 
-              <v-flex xs12 md6>
-                <v-text-field readonly label="Valor da parcela" v-model="conta.valor_parcela"></v-text-field>
-              </v-flex>
-              <v-flex xs12 md6>
-                <v-text-field readonly label="Valor total" v-model="conta.valor_total"></v-text-field>
-              </v-flex>
-            </v-layout>
-            <v-card-title>
-              <span
-                class="headline"
-              >Visualizar detalhes do {{ conta.tipo_conta == 'RECEBER'? 'recebimento' : 'pagamento'}}</span>
-            </v-card-title>
-            <v-layout row wrap>
-              <v-flex xs12 md4>
-                <v-text-field readonly label="Conta do pagamento" v-model="conta.conta"></v-text-field>
-              </v-flex>
-              <v-flex xs12 md4>
-                <v-text-field readonly label="Documento baixa" v-model="conta.documento_baixa"></v-text-field>
-              </v-flex>
-              <v-flex xs12 md4>
-                <v-text-field readonly label="Número documento" v-model="conta.num_documento_baixa"></v-text-field>
-              </v-flex>
-              <v-flex xs12 md3>
-                <v-text-field readonly label="Data de pagamento" v-model="conta.data_baixa"></v-text-field>
-              </v-flex>
-              <v-flex xs12 md3>
-                <v-text-field readonly label="Valor de acréscimo" v-model="conta.valor_acrescimo"></v-text-field>
-              </v-flex>
-              <v-flex xs12 md3>
-                <v-text-field readonly label="Valor de desconto" v-model="conta.valor_desconto"></v-text-field>
-              </v-flex>
-              <v-flex xs12 md3>
-                <v-text-field readonly label="Valor" v-model="conta.valor_pago"></v-text-field>
-              </v-flex>
-            </v-layout>
-          </v-form>
+            <v-flex xs12 md6>
+              <v-text-field readonly label="Valor da parcela" v-model="conta.valor_parcela"></v-text-field>
+            </v-flex>
+            <v-flex xs12 md6>
+              <v-text-field readonly label="Valor total" v-model="conta.valor_total"></v-text-field>
+            </v-flex>
+          </v-layout>
+          <v-card-title>
+            <span
+              class="headline"
+            >Visualizar detalhes do {{ conta.tipo_conta == 'RECEBER'? 'recebimento' : 'pagamento'}}</span>
+          </v-card-title>
+          <v-layout row wrap>
+            <v-flex xs12 md4>
+              <v-text-field readonly label="Conta do pagamento" v-model="conta.conta"></v-text-field>
+            </v-flex>
+            <v-flex xs12 md4>
+              <v-text-field readonly label="Documento baixa" v-model="conta.documento_baixa"></v-text-field>
+            </v-flex>
+            <v-flex xs12 md4>
+              <v-text-field readonly label="Número documento" v-model="conta.num_documento_baixa"></v-text-field>
+            </v-flex>
+            <v-flex xs12 md3>
+              <v-text-field readonly label="Data de pagamento" v-model="conta.data_baixa"></v-text-field>
+            </v-flex>
+            <v-flex xs12 md3>
+              <v-text-field readonly label="Valor de acréscimo" v-model="conta.valor_acrescimo"></v-text-field>
+            </v-flex>
+            <v-flex xs12 md3>
+              <v-text-field readonly label="Valor de desconto" v-model="conta.valor_desconto"></v-text-field>
+            </v-flex>
+            <v-flex xs12 md3>
+              <v-text-field readonly label="Valor" v-model="conta.valor_pago"></v-text-field>
+            </v-flex>
+          </v-layout>
         </v-container>
       </v-card-text>
       <v-card-actions>

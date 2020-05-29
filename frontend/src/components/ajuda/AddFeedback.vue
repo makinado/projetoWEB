@@ -57,7 +57,7 @@ import { mapState } from "vuex";
 import { urlBD, showError, showSuccess, saveLog } from "@/global";
 
 export default {
-  name: "addFeedback",
+  name: "add-feedback",
   computed: {
     ...mapState("app", ["color"]),
     ...mapState(["empresaStore", "usuarioStore", "modalStore"])

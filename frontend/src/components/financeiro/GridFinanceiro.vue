@@ -675,9 +675,6 @@ export default {
     }
   },
   methods: {
-    getWindowSize() {
-      return window.innerWidth / 2 - 150;
-    },
     getColor(situacao) {
       if (situacao === "PENDENTE") return "blue";
       else if (situacao === "CANCELADO") return "red";

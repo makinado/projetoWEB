@@ -54,6 +54,9 @@ export default {
   setUnidades(state, unidades) {
     state.produtoStore.unidades = unidades
   },
+  setCategoriasArtigos(state, categorias) {
+    state.categoriaStore.categoriasArtigos = categorias
+  },
   setCategorias(state, categorias) {
     state.categoriaStore.categorias = categorias
   },

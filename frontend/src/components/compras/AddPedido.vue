@@ -9,7 +9,9 @@
   >
     <v-card v-if="modalStore.compras.pedidos.visible">
       <v-toolbar dense flat extended fixed extension-height="5" dark :color="color">
-        <v-toolbar-side-icon @click="[comprasStore.pedido = null, modalStore.compras.pedidos.visible = false]">
+        <v-toolbar-side-icon
+          @click="[comprasStore.pedido = null, modalStore.compras.pedidos.visible = false]"
+        >
           <v-icon>close</v-icon>
         </v-toolbar-side-icon>
         <v-toolbar-title
@@ -179,24 +181,34 @@
                         <v-container grid-list-xl>
                           <v-layout wrap>
                             <v-flex xs12 md6>
-                              <v-text-field
-                                ref="valor_frete"
-                                v-model="pedido.valor_frete"
-                                :color="color"
-                                label="VALOR DO FRETE"
-                                v-money="money"
-                                @blur="calcTotalizadores"
-                              ></v-text-field>
+                              <v-tooltip bottom>
+                                <v-text-field
+                                  slot="activator"
+                                  prepend-icon="fa fa-question"
+                                  ref="valor_frete"
+                                  v-model="pedido.valor_frete"
+                                  :color="color"
+                                  label="VALOR DO FRETE"
+                                  v-money="money"
+                                  @blur="setValores"
+                                ></v-text-field>
+                                <span>Informe os produtos do pedido e preencha este campo para dividir o frete entre os produtos</span>
+                              </v-tooltip>
                             </v-flex>
                             <v-flex xs12 md6>
-                              <v-text-field
-                                ref="valor_seguro"
-                                v-model="pedido.valor_seguro"
-                                :color="color"
-                                label="VALOR DO SEGURO"
-                                v-money="money"
-                                @blur="calcTotalizadores"
-                              ></v-text-field>
+                              <v-tooltip bottom>
+                                <v-text-field
+                                  slot="activator"
+                                  prepend-icon="fa fa-question"
+                                  ref="valor_seguro"
+                                  v-model="pedido.valor_seguro"
+                                  :color="color"
+                                  label="VALOR DO SEGURO"
+                                  v-money="money"
+                                  @blur="setValores"
+                                ></v-text-field>
+                                <span>Informe os produtos do pedido e preencha este campo para dividir o seguro entre os produtos</span>
+                              </v-tooltip>
                             </v-flex>
                             <v-flex xs12 md6>
                               <v-text-field
@@ -205,7 +217,7 @@
                                 :color="color"
                                 label="VALOR DE DESCONTO"
                                 v-money="money"
-                                @blur="calcTotalizadores"
+                                @blur="[calcDesconto = false, setDesconto()]"
                               ></v-text-field>
                             </v-flex>
                             <v-flex xs12 md6>
@@ -215,7 +227,7 @@
                                 :color="color"
                                 label="VALOR DE OUTRAS DESPESAS"
                                 v-money="money"
-                                @blur="calcTotalizadores"
+                                @blur="calcTotal"
                               ></v-text-field>
                             </v-flex>
                             <v-flex xs12 md6>
@@ -262,7 +274,7 @@
                   slot="activator"
                   class="v-btn-common"
                   :color="color"
-                  @click="addProduto()"
+                  @click="addProduto"
                 >Adicionar produto</v-btn>
                 <span>Adicionar novo produto ao pedido</span>
               </v-tooltip>
@@ -319,7 +331,6 @@
               <td>
                 <v-flex xs12 md6>
                   <v-text-field
-                    ref="qtde"
                     class="mt-2"
                     v-model="data.item.quantidade"
                     v-money="decimal"
@@ -330,7 +341,6 @@
               <td>
                 <v-flex xs12 md6>
                   <v-text-field
-                    ref="qtde"
                     class="mt-2"
                     v-model="data.item.valor_unitario"
                     v-money="money"
@@ -341,12 +351,37 @@
               <td>
                 <v-flex xs12 md6>
                   <v-text-field
-                    ref="qtde"
+                    v-if="disable"
                     class="mt-2"
-                    v-model="data.item.valor_desconto"
+                    v-model="data.item.valor_seguro"
                     v-money="money"
                     @blur="[calcTotal(data.item)]"
                   ></v-text-field>
+                  <span v-else>{{ data.item.valor_seguro }}</span>
+                </v-flex>
+              </td>
+              <td>
+                <v-flex xs12 md6>
+                  <v-text-field
+                    v-if="disable"
+                    class="mt-2"
+                    v-model="data.item.valor_frete"
+                    v-money="money"
+                    @blur="[calcTotal(data.item)]"
+                  ></v-text-field>
+                  <span v-else>{{ data.item.valor_frete }}</span>
+                </v-flex>
+              </td>
+              <td>
+                <v-flex xs12 md6>
+                  <v-text-field
+                    v-if="disable"
+                    class="mt-2"
+                    v-model="data.item.valor_desconto"
+                    v-money="money"
+                    @blur="[calcDesconto = true, calcTotal(data.item)]"
+                  ></v-text-field>
+                  <span v-else>{{ data.item.valor_desconto }}</span>
                 </v-flex>
               </td>
               <td>{{ data.item.valor_total || "R$ 0,00"}}</td>
@@ -370,9 +405,15 @@
                 <v-layout row>{{ totais.valor_unitario || 'R$ 0,00' }}</v-layout>
               </td>
               <td>
+                <v-layout row>{{ totais.valor_seguro || 'R$ 0,00' }}</v-layout>
+              </td>
+              <td>
+                <v-layout row>{{ totais.valor_frete || 'R$ 0,00' }}</v-layout>
+              </td>
+              <td>
                 <v-layout row>{{ totais.valor_desconto || 'R$ 0,00' }}</v-layout>
               </td>
-              <td colspan="2">
+              <td colspan="5">
                 <v-layout row>{{ totais.valor_total || 'R$ 0,00' }}</v-layout>
               </td>
             </template>
@@ -425,7 +466,9 @@ export default {
     return {
       valid: true,
       valid1: true,
+      disable: true,
       isLoading: false,
+      calcDesconto: false,
       searchFornec: null,
       searchProduto: null,
       pedido: {},
@@ -438,7 +481,9 @@ export default {
         { value: "id", text: "Produto" },
         { value: "quantidade", text: "Quantidade", sortable: true },
         { value: "valor_unitario", text: "Valor unitário", sortable: true },
-        { value: "valor_desconto", text: "Desconto", sortable: true },
+        { value: "valor_seguro", text: "Valor seguro", sortable: false },
+        { value: "valor_frete", text: "Valor frete", sortable: false },
+        { value: "valor_desconto", text: "Valor desconto", sortable: true },
         { value: "valor_total", text: "Valor total", sortable: true },
         { value: "actions", text: "Ações" }
       ],
@@ -487,19 +532,17 @@ export default {
     }
   },
   methods: {
-    async addProduto(addProd) {
-      if (!addProd) {
-        const produto = {
-          sequencia: this.produtos_pedido.length
-        };
-        this.produtos_pedido.push(produto);
-      }
+    addProduto() {
+      const produto = {
+        sequencia: this.produtos_pedido.length
+      };
+      this.produtos_pedido.push(produto);
     },
-    async limpaTela() {
+    limpaTela() {
       this.reset();
       this.loadTela(this.comprasStore.pedido);
     },
-    async reset() {
+    reset() {
       this.pedido = {};
 
       this.totais = {};
@@ -530,9 +573,10 @@ export default {
 
       this.addProduto();
     },
-    async loadTela(pedido) {
+    loadTela(pedido) {
       if (!pedido) return;
 
+      this.$store.dispatch("loadProdutos");
       let url = `${urlBD}/pedidos`;
       if (pedido.id) {
         axios
@@ -583,6 +627,8 @@ export default {
       let i = 0;
       this.produtos_pedido = this.produtos_pedido.map(produto => {
         produto.quantidade = formatToBRL(produto.quantidade);
+        produto.valor_frete = formatToBRL(produto.valor_frete);
+        produto.valor_seguro = formatToBRL(produto.valor_seguro);
         produto.valor_desconto = formatToBRL(produto.valor_desconto);
         produto.valor_unitario = formatToBRL(produto.valor_unitario);
         produto.valor_total = formatToBRL(produto.valor_total);
@@ -592,8 +638,9 @@ export default {
       });
       delete this.pedido.produtos;
     },
-    async loadDados(item) {
-      if (!item) return;
+    loadDados(item) {
+      if (!item.id) return;
+
       const produtoFilter = this.produtoStore.produtos.filter(produto => {
         return produto.value === item.id;
       });
@@ -605,14 +652,16 @@ export default {
         return produto;
       });
     },
-    calcTotal(item) {
+    async calcTotal(item) {
       if (item) {
         this.produtos_pedido = this.produtos_pedido.filter(produto => {
           if (produto.sequencia === item.sequencia) {
             produto.valor_total = formatToBRL(
-              parseNumber(produto.quantidade || "0,00", ",") *
-                parseNumber(produto.valor_unitario || "0,00", ",") -
-                parseNumber(produto.valor_desconto || "0,00", ",")
+              parseNumber(produto.quantidade || "0,00") *
+                parseNumber(produto.valor_unitario || "0,00") +
+                parseNumber(produto.valor_seguro || "0,00") +
+                parseNumber(produto.valor_frete || "0,00") -
+                parseNumber(produto.valor_desconto || "0,00")
             );
           }
           return produto;
@@ -621,51 +670,109 @@ export default {
 
       let quantidade = 0,
         valor_unitario = 0,
+        valor_seguro = 0,
+        valor_frete = 0,
         valor_desconto = 0,
         valor_total = 0;
 
       this.produtos_pedido.forEach(produto => {
         quantidade += parseNumber(produto.quantidade || "0,00");
         valor_unitario += parseNumber(produto.valor_unitario || "0,00");
+        valor_seguro += parseNumber(produto.valor_seguro || "0,00");
+        valor_frete += parseNumber(produto.valor_frete || "0,00");
         valor_desconto += parseNumber(produto.valor_desconto || "0,00");
         valor_total += parseNumber(produto.valor_total || "0,00");
       });
       this.totais = {
         quantidade: formatToBRL(quantidade).replace("R$", ""),
         valor_unitario: formatToBRL(valor_unitario),
+        valor_seguro: formatToBRL(valor_seguro),
+        valor_frete: formatToBRL(valor_frete),
         valor_desconto: formatToBRL(valor_desconto),
         valor_total: formatToBRL(valor_total)
       };
 
-      this.calcTotalizadores();
-    },
-    async calcTotalizadores() {
-      const {
-        valor_frete,
-        valor_seguro,
-        valor_desconto,
-        outras_despesas
-      } = this.pedido;
-
-      // valor dos produtos
-      this.pedido.valor_produtos = this.totais.valor_total;
-      const valor_produtos = this.pedido.valor_produtos;
-      this.$refs.valor_produtos.$el.getElementsByTagName("input")[0].value =
-        this.pedido.valor_produtos || "";
-
-      // valor total da nota
-      this.pedido.valor_total = formatToBRL(
-        parseNumber(valor_produtos || "0,00", ",") +
-          parseNumber(valor_frete, ",") +
-          parseNumber(valor_seguro, ",") +
-          parseNumber(outras_despesas, ",") -
-          parseNumber(valor_desconto, ",")
+      this.pedido.valor_frete = this.totais.valor_frete;
+      this.pedido.valor_seguro = this.totais.valor_seguro;
+      this.pedido.valor_desconto = formatToBRL(
+        parseNumber(this.pedido.valor_desconto) +
+          parseNumber(this.totais.valor_desconto)
       );
+      this.pedido.outras_despesas = this.pedido.outras_despesas;
+      this.pedido.valor_produtos = this.totais.valor_total;
+      this.pedido.valor_total = formatToBRL(
+        parseNumber(this.totais.valor_total || "0,00") +
+          parseNumber(this.pedido.outras_despesas || "0,00")
+      );
+
+      this.$refs.valor_frete.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.pedido.valor_frete;
+      this.$refs.valor_seguro.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.pedido.valor_seguro;
+      this.$refs.valor_desconto.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.pedido.valor_desconto;
+      this.$refs.outras_despesas.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.pedido.outras_despesas;
+      this.$refs.valor_produtos.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.pedido.valor_produtos;
       this.$refs.valor_total.$el.getElementsByTagName(
         "input"
       )[0].value = this.pedido.valor_total;
     },
-    async deleteItem(item) {
+    setDesconto() {
+      this.pedido.valor_total = formatToBRL(
+        parseNumber(this.totais.valor_total || "0,00") +
+          parseNumber(this.pedido.outras_despesas || "0,00") -
+          parseNumber(this.pedido.valor_desconto || "0,00")
+      );
+      this.pedido.valor_desconto = formatToBRL(
+        parseNumber(this.pedido.valor_desconto) +
+          parseNumber(this.totais.valor_desconto)
+      );
+      this.$refs.valor_desconto.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.pedido.valor_desconto;
+      this.$refs.valor_total.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.pedido.valor_total;
+    },
+    setValores() {
+      if (
+        this.produtos_pedido.length == 0 ||
+        !this.totais.quantidade ||
+        this.totais.quantidade == "0,00"
+      )
+        return;
+      this.disable = false;
+
+      this.produtos_pedido.forEach(produto => {
+        produto.valor_frete = formatToBRL(
+          (parseNumber(this.pedido.valor_frete || "0,00") /
+            parseNumber(this.totais.quantidade || "0,00")) *
+            parseNumber(produto.quantidade || "0,00")
+        );
+        produto.valor_seguro = formatToBRL(
+          (parseNumber(this.pedido.valor_seguro || "0,00") /
+            parseNumber(this.totais.quantidade || "0,00")) *
+            parseNumber(produto.quantidade || "0,00")
+        );
+        produto.valor_total = formatToBRL(
+          parseNumber(produto.quantidade || "0,00") *
+            parseNumber(produto.valor_unitario || "0,00") +
+            parseNumber(produto.valor_seguro || "0,00") +
+            parseNumber(produto.valor_frete || "0,00") -
+            parseNumber(produto.valor_desconto || "0,00")
+        );
+      });
+
+      this.calcTotal().then(() => (this.disable = true));
+    },
+    deleteItem(item) {
       this.produtos_pedido = this.produtos_pedido.filter(produto => {
         return produto.sequencia !== item.sequencia;
       });

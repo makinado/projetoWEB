@@ -313,7 +313,7 @@
             <v-checkbox v-model="data.selected" :color="color" hide-details></v-checkbox>
           </td>
           <td>{{ data.item.id }}</td>
-          <td>{{ data.item.descricao }}</td>
+          <td @dblclick="edit(data.item)">{{ data.item.descricao }}</td>
           <td>{{ data.item.categoria }}</td>
           <td>{{ data.item.marca }}</td>
           <td>{{ data.item.valor_venda | currency }}</td>
@@ -329,7 +329,7 @@
                     slot="activator"
                     icon
                     dark
-                    @click.prevent="[produtoStore.produto = data.item, modalStore.produtos.visible = true, modalStore.produtos.title = 'Alterar produto']"
+                    @click="edit(data.item)"
                     class="mr-1"
                     v-if="usuarioStore.currentUsuario.produto_update"
                   >
@@ -506,10 +506,12 @@ export default {
     };
   },
   methods: {
-    getWindowSize() {
-      return window.innerWidth / 2 - 150;
+    edit(item) {
+      this.produtoStore.produto = item;
+      this.modalStore.produtos.visible = true;
+      this.modalStore.produtos.title = "Alterar produto";
     },
-    async loadProdutos() {
+    loadProdutos() {
       this.loading = true;
 
       const url = `${urlBD}/produtos?page=${this.pagination.page}&limit=${
@@ -532,7 +534,7 @@ export default {
         .catch(showError)
         .finally(() => (this.loading = false));
     },
-    async remove() {
+    remove() {
       if (!this.confirmaExclusao) {
         this.confirmaExclusao = true;
         return;
@@ -554,7 +556,7 @@ export default {
         });
       }
 
-      pessoas.map(async item => {
+      produtos.map(async item => {
         const url = `${urlBD}/produtos/${item.id}`;
 
         await axios

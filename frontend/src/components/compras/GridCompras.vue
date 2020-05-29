@@ -321,9 +321,8 @@
           <td>{{ data.item.id }}</td>
           <td>{{ data.item.pessoa }}</td>
           <td>
-            <v-chip :color="getColor(data.item.situacao)" dark>{{ data.item.situacao }}</v-chip>
+            <v-chip :color="getColor(data.item.nota_fiscal)" dark>{{ data.item.nota_fiscal }}</v-chip>
           </td>
-          <td>{{ data.item.nota_fiscal }}</td>
           <td>{{ data.item.data_notafiscal | date}}</td>
           <td>{{ data.item.data_lancamento | date }}</td>
           <td>{{ data.item.valor_total | currency }}</td>
@@ -333,20 +332,19 @@
                 <v-icon>fa fa-lg fa-ellipsis-v</v-icon>
               </v-btn>
               <v-card :color="color">
-                <v-tooltip v-if="!data.item.importado" bottom>
+                <v-tooltip bottom>
                   <v-btn
                     slot="activator"
                     icon
                     dark
                     class="mr-1"
-                    @click.prevent="[comprasStore.compra = data.item, modalStore.compras.compras.add = true, modalStore.compras.compras.title = 'Alterar nota fiscal de compra']"
-                    v-if="usuarioStore.currentUsuario.compras_update"
+                    @click="[comprasStore.compra = data.item, modalStore.compras.compras.add = true, modalStore.compras.compras.title = 'Visualizar dados da compra']"
                   >
-                    <i class="fa fa-lg fa-pencil"></i>
+                    <i class="fa fa-lg fa-eye"></i>
                   </v-btn>
-                  <span>Editar compra</span>
+                  <span>Visualizar dados da compra</span>
                 </v-tooltip>
-                <v-tooltip v-else bottom>
+                <v-tooltip bottom>
                   <v-btn
                     slot="activator"
                     icon
@@ -354,7 +352,7 @@
                     class="mr-1"
                     @click.prevent="gerarDANFe(data.item)"
                   >
-                    <i class="fa fa-lg fa-eye"></i>
+                    <i class="fa fa-lg fa-file-text"></i>
                   </v-btn>
                   <span>Visualizar DANFe</span>
                 </v-tooltip>
@@ -479,7 +477,6 @@ export default {
       fields: [
         { value: "id", text: "Código", sortable: true },
         { value: "pessoa", text: "Pessoa", sortable: true },
-        { value: "situacao", text: "Situação", sortable: true },
         { value: "nota_fiscal", text: "Nota fiscal", sortable: true },
         { value: "data_notafiscal", text: "Data NF-e", sortable: true },
         { value: "data_lancamento", text: "Data lançamento", sortable: true },
@@ -528,9 +525,7 @@ export default {
       return window.innerWidth / 2 - 150;
     },
     getColor(situacao) {
-      if (situacao === "CONCLUÍDA") return "green";
-      else if (situacao === "CANCELADA") return "red";
-      else return "blue";
+      return "green";
     },
     async gerarDANFe(compra) {
       if (!compra.xml) return showError("Erro, arquivo xml não encontrado!");

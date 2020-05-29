@@ -17,7 +17,6 @@
       nudge-left="12"
       offset-x
       transition="slide-y-transition"
-      slot="activator"
     >
       <v-btn icon slot="activator">
         <v-badge v-if="notificacoes.length > 0" color="danger" left>

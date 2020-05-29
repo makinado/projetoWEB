@@ -250,7 +250,7 @@ export default {
         this.pagamento.valor_pago = formatToBRL(this.valor);
       }
     },
-    loadSaldoConta() {
+    async loadSaldoConta() {
       const id = this.pagamento.id_conta;
 
       if (!id) return;

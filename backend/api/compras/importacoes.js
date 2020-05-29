@@ -30,7 +30,6 @@ module.exports = app => {
                     existsOrError(produto.id, `Produto ${produto.prod.xProd || ""} não vinculado corretamente`)
                     existsOrError(produto.prod.cProd, `Produto ${produto.prod.xProd || ""} não possui código, verifique o XML`)
                     existsOrError(produto.fornec, `Produto ${produto.prod.xProd || ""} sem fornecedor, cadastre-o antes de continuar`)
-
                 } catch (e) {
                     produtosOK = false
                     return res.status(400).send(e)
@@ -38,7 +37,8 @@ module.exports = app => {
             })
             file.financeiro.map(parcela => {
                 try {
-                    existsOrError(parcela.valor_parcela, `Valor não informado na parcela ${parcela.parcelas || ""}`)
+                    if (parcela.valor_parcela == "R$ 0,00")
+                        throw `Valor zerado na parcela ${parcela.parcelas || ""}`
                     existsOrError(parcela.data_vencimento, `Data de vencimento não informada na parcela ${parcela.parcelas || ""}`)
                     existsOrError(parcela.documento_origem, `Documento não informado na parcela ${parcela.parcelas || ""}`)
                     if (parcela.pago) {
@@ -193,18 +193,19 @@ module.exports = app => {
                                             .transacting(trx)
                                             .then(function (financs) {
                                                 const movim_conta = []
-                                                financs.map(financ => {
-                                                    if (financ.pago)
+                                                financs.map(financ_updated => {
+                                                    if (financ_updated.pago)
                                                         movim_conta.push({
                                                             id_empresa: xml.id_empresa,
-                                                            id_conta: financ.id_conta,
+                                                            id_conta: financ_updated.id_conta,
                                                             id_movimento_origem: id[0],
-                                                            id_movimento_financeiro: financ.id,
+                                                            id_movimento_financeiro: financ_updated.id,
+                                                            id_classificacao: financ_updated.classificacao,
                                                             data_lancamento: new Date(),
                                                             data_emissao: compra.data_notafiscal,
-                                                            id_documento: financ.documento_origem,
-                                                            num_documento: compra.nota_fiscal,
-                                                            observacao: financ.observacao,
+                                                            id_documento: financ_updated.documento_baixa,
+                                                            num_documento: financ_updated.num_documento_baixa,
+                                                            observacao: compra.observacao,
                                                             origem: "COMPRA",
                                                             dc: 'D',
                                                             valor: financ.valor_pago
@@ -533,8 +534,8 @@ module.exports = app => {
             const soma =
                 parseNumber(produto.imposto.valor_st || "0,00") +
                 parseNumber(produto.imposto.valor_ipi || "0,00") +
-                parseNumber(total.ICMSTot.vFrete || "0.00", '.') / produtos.length +
-                parseNumber(total.ICMSTot.vSeg || "0.00", '.') / produtos.length
+                parseNumber(produto.prod.vFrete || "0.00", '.') +
+                parseNumber(produto.prod.vSeg || "0.00", '.')
 
             produto.prod.valor_custo =
                 qtde != 0
@@ -543,9 +544,11 @@ module.exports = app => {
             produto.prod.vUnCom = formatToBRL(valor_unitario)
             produto.prod.vProd = formatToBRL(produto.prod.vProd)
             produto.prod.qCom = moneyToNumber(formatToBRL(parseFloat(produto.prod.qCom).toFixed(2)))
-            produto.prod.valor_frete = formatToBRL((total.ICMSTot.vFrete) / produtos.length)
-            produto.prod.valor_seguro = formatToBRL((total.ICMSTot.vSeg) / produtos.length)
-            produto.prod.valor_desconto = formatToBRL(produto.prod.vDesc ? (produto.prod.vDesc) : 0)
+            // produto.prod.valor_frete = formatToBRL((total.ICMSTot.vFrete) / produtos.length)
+            // produto.prod.valor_seguro = formatToBRL((total.ICMSTot.vSeg) / produtos.length)
+            produto.prod.valor_frete = formatToBRL(produto.prod.vFrete || 0)
+            produto.prod.valor_seguro = formatToBRL(produto.prod.vSeg || 0)
+            produto.prod.valor_desconto = formatToBRL(produto.prod.vDesc || 0)
             produto.prod.dif_aliquota = "0,00 %"
             produto.prod.perc_add = "0,00 %"
 

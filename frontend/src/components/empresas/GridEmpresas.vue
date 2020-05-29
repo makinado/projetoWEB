@@ -91,7 +91,7 @@
                 slot="activator"
                 class="v-btn-common"
                 :color="color"
-                @click.prevent="[ empresaStore.empresa = null,modalStore.empresas.visible = true,modalStore.empresas.title = 'Adicionar empresa']"
+                @click="[ empresaStore.empresa = null,modalStore.empresas.visible = true,modalStore.empresas.title = 'Adicionar empresa']"
                 v-if="usuarioStore.currentUsuario.empresa_create"
               >Adicionar</v-btn>
               <span>Adicionar empresa</span>
@@ -185,7 +185,7 @@
             slot="activator"
             class="v-btn-common"
             :color="color"
-            @click.prevent="[empresaStore.empresa = null,modalStore.empresas.visible = true,modalStore.empresas.title = 'Adicionar empresa']"
+            @click="[empresaStore.empresa = null,modalStore.empresas.visible = true,modalStore.empresas.title = 'Adicionar empresa']"
             v-if="usuarioStore.currentUsuario.empresa_create"
           >Adicionar</v-btn>
           <span>Adicionar empresa</span>
@@ -214,7 +214,7 @@
           </td>
           <td>{{ data.item.id }}</td>
           <td>{{ data.item.cnpj }}</td>
-          <td>{{ data.item.nome }}</td>
+          <td @dblclick="edit(data.item)">{{ data.item.nome }}</td>
           <td>{{ data.item.email }}</td>
           <td>{{ data.item.contato }}</td>
           <td>
@@ -228,7 +228,7 @@
                     slot="activator"
                     icon
                     dark
-                    @click.prevent="[empresaStore.empresa = data.item, modalStore.empresas.visible = true, modalStore.empresas.title = 'Alterar empresa']"
+                    @click="edit(data.item)"
                     class="mr-1"
                     v-if="usuarioStore.currentUsuario.empresa_update"
                   >
@@ -241,7 +241,7 @@
                     slot="activator"
                     icon
                     dark
-                    @click.prevent="[confirmaExclusao = true,empresaStore.empresa = data.item]"
+                    @click="[confirmaExclusao = true,empresaStore.empresa = data.item]"
                     class="mr-1"
                     v-if="usuarioStore.currentUsuario.empresa_delete"
                   >
@@ -254,7 +254,7 @@
                     slot="activator"
                     icon
                     dark
-                    @click.prevent="[modalStore.email.visible = true, modalStore.email.para = data.item.email]"
+                    @click="[modalStore.email.visible = true, modalStore.email.para = data.item.email]"
                   >
                     <i class="fa fa-lg fa-envelope"></i>
                   </v-btn>
@@ -314,7 +314,10 @@ export default {
       this.loadEmpresas();
     },
     "$store.state.modalStore.empresas.visible"() {
-      if (!this.modalStore.empresas.visible && this.empresaStore.empresa != null) {
+      if (
+        !this.modalStore.empresas.visible &&
+        this.empresaStore.empresa != null
+      ) {
         this.loadEmpresas();
       }
     },
@@ -379,8 +382,10 @@ export default {
         this.$router.push({ path: path });
       }
     },
-    async reset() {
-      this.filter = {};
+    edit(item) {
+      this.empresaStore.empresa = item;
+      this.modalStore.empresas.visible = true;
+      this.modalStore.empresas.title = "Alterar empresa";
     },
     async loadEmpresas() {
       this.loading = true;

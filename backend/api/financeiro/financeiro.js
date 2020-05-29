@@ -55,7 +55,7 @@ module.exports = app => {
                         .where({ id: financ.id })
                         .then(async () => {
                             if (financ.pago) {
-                                await app.db('conta_movimento').where({ id_movimento_origem: financ.id }).delete()
+                                await app.db('conta_movimento').where({ id_movimento_financeiro: financ.id }).delete()
                                 const movim_conta = {
                                     id_empresa: financ.id_empresa,
                                     id_conta: financ.id_conta,
@@ -153,13 +153,13 @@ module.exports = app => {
                             id_empresa: financ.id_empresa,
                             id_conta: financ.id_conta,
                             id_movimento_financeiro: financ.id,
-                            id_movimento_origem: financ_updated.id_movimento_origem,
+                            id_movimento_origem: financ_updated[0].id_movimento_origem,
                             data_lancamento: new Date(),
-                            data_emissao: financ_updated.data_emissao,
-                            id_classificacao: financ_updated.classificacao,
+                            data_emissao: financ_updated[0].data_emissao,
+                            id_classificacao: financ_updated[0].classificacao,
                             id_documento: financ.documento_baixa,
                             num_documento: financ.num_documento_baixa,
-                            observacao: financ_updated.observacao,
+                            observacao: financ_updated[0].observacao,
                             origem: "FINANCEIRO",
                             dc: financ.tipo_conta == 1 ? 'D' : 'C',
                             valor: financ.valor_pago
@@ -306,29 +306,29 @@ module.exports = app => {
 
         try {
             const origem = await app.db('financeiro').select('id_movimento_origem', 'pago').where({ id: req.params.id }).first()
-            if (origem.id_movimento_origem) throw 'Há movimentos associados a este registro'
-            if (origem.pago) throw 'Não é possível exluir uma conta paga'
+            notExistsOrError(origem.id_movimento_origem, 'Há movimentos associados a este registro')
+            notExistsOrError(origem.pago, 'Não é possível exluir uma conta paga')
+
+            app.db.transaction(async function (trx) {
+                return app.db('financeiro')
+                    .where({ id: req.params.id }).delete()
+                    .transacting(trx)
+                    .then(function () {
+                        return app.db('conta_movimento')
+                            .where({ id_movimento_financeiro: req.params.id }).delete()
+                            .transacting(trx)
+                            .then(trx.commit)
+                            .catch(trx.rollback);
+                    }).then(function (inserts) {
+                        res.status(204).send()
+                    }).catch(function (error) {
+                        console.log(error.toString())
+                        res.status(500).send(error.toString())
+                    });
+            })
         } catch (e) {
             return res.status(400).send(e)
         }
-
-        app.db.transaction(async function (trx) {
-            return app.db('financeiro')
-                .where({ id: req.params.id }).delete()
-                .transacting(trx)
-                .then(function () {
-                    return app.db('conta_movimento')
-                        .where({ id_movimento_financeiro: req.params.id }).delete()
-                        .transacting(trx)
-                        .then(trx.commit)
-                        .catch(trx.rollback);
-                }).then(function (inserts) {
-                    res.status(204).send()
-                }).catch(function (error) {
-                    console.log(error.toString())
-                    res.status(500).send(error.toString())
-                });
-        })
     }
 
     const remove_pagamento = async (req, res) => {

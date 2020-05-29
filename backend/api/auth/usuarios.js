@@ -231,31 +231,39 @@ module.exports = app => {
     }
 
     const remove = async (req, res) => {
-        app.dbUsers.transaction(async function (trx) {
-            return app.dbUsers('usuarios')
-                .where({ id: req.params.id }).delete()
-                .transacting(trx)
-                .then(function () {
-                    return app.dbUsers('acesso')
-                        .where({ id_usuario: req.params.id }).delete()
-                        .transacting(trx)
-                        .then(function () {
-                            return app.db('usuarios').where({ id: req.params.id }).delete()
-                                .then(function () {
-                                    return app.db('usuario_empresas').where({ id_usuario: req.params.id }).delete()
-                                })
-                        })
-                })
-                .then(trx.commit)
-                .catch(trx.rollback);
-        }).then(function (inserts) {
-            res.status(204).send()
-        }).catch(function (error) {
-            console.log(error.toString())
-            res.status(500).send(error.toString())
-        });
+        try {
+            const log = await app.db('log').where({ id_usuario: req.params.id }).first()
+            notExistsOrError(log, 'Há atividades associadas a esse usuário')
 
+            const vendas = await app.db('venda').where({ id_vendedor: req.params.id }).first()
+            notExistsOrError(vendas, 'Há vendas associadas a essa pessoa')
 
+            app.dbUsers.transaction(async function (trx) {
+                return app.dbUsers('usuarios')
+                    .where({ id: req.params.id }).delete()
+                    .transacting(trx)
+                    .then(function () {
+                        return app.dbUsers('acesso')
+                            .where({ id_usuario: req.params.id }).delete()
+                            .transacting(trx)
+                            .then(function () {
+                                return app.db('usuarios').where({ id: req.params.id }).delete()
+                                    .then(function () {
+                                        return app.db('usuario_empresas').where({ id_usuario: req.params.id }).delete()
+                                    })
+                            })
+                    })
+                    .then(trx.commit)
+                    .catch(trx.rollback);
+            }).then(function (inserts) {
+                res.status(204).send()
+            }).catch(function (error) {
+                console.log(error.toString())
+                res.status(500).send(error.toString())
+            });
+        } catch (e) {
+            return res.status(400).send(e.toString())
+        }
     }
 
     const recoverPassword = async (req, res) => {

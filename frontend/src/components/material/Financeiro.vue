@@ -11,7 +11,7 @@
       <v-layout align-end>
         <span>Edite valores diretamente na tabela</span>
         <v-spacer></v-spacer>
-        <v-tooltip bottom>
+        <v-tooltip bottom v-if="addNewParcela">
           <v-btn
             slot="activator"
             class="v-btn-common"
@@ -39,7 +39,7 @@
         <td>
           <v-text-field
             v-if="disable"
-            v-model.number="data.item.valor_parcela"
+            v-model="data.item.valor_parcela"
             v-money="money"
             @blur="[data.item.edit = true, attGridParc()]"
           ></v-text-field>
@@ -69,7 +69,7 @@
               <v-date-picker
                 :color="color"
                 v-model="data.item.dataNotFormated"
-                @blur="[data.item.menu = false, data.item.data_vencimento = formatDate(data.item.dataNotFormated)]"
+                @input="[data.item.menu = false, data.item.data_vencimento = formatDate(data.item.dataNotFormated)]"
                 locale="pt-br"
               ></v-date-picker>
             </v-menu>
@@ -115,7 +115,12 @@
             <span>Editar dados do pagamento</span>
           </v-tooltip>
           <v-tooltip bottom>
-            <v-btn slot="activator" icon class="mr-1" @click="deleteParcela(data.item)">
+            <v-btn
+              slot="activator"
+              icon
+              class="mr-1"
+              @click="deleteParcela(data.item)"
+            >
               <i class="fa fa-lg fa-trash"></i>
             </v-btn>
             <span>Excluir parcela</span>
@@ -144,7 +149,7 @@
                   @focus="$store.dispatch('loadContas')"
                 ></v-autocomplete>
               </v-flex>
-              <v-flex xs12 md2>
+              <v-flex xs12 md3>
                 <v-text-field
                   label="Saldo em conta"
                   placeholder="Selecione a conta para carregar o saldo"
@@ -425,9 +430,6 @@ export default {
 
       this.calcTotalFinanc();
     }
-  },
-  mounted() {
-    if (this.addNewParcela) this.addParcela();
   }
 };
 </script>

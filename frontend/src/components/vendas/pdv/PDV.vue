@@ -21,7 +21,7 @@
         <v-stepper-content class="m-0 p-0" step="1">
           <v-layout row wrap>
             <v-flex xs12 md1>
-              <Card title="Opções" :color="color">
+              <Card icon="fa fa-lg fa-ellipsis-v" :color="color">
                 <PDVOpcoes :isMobile="isMobile" />
               </Card>
             </v-flex>

@@ -137,7 +137,7 @@
             color="info"
             icon="fa fa-user-o"
             title="Usuários online"
-            :value="usuariosOnline"
+            :value="usuariosOnline || 1"
           />
         </router-link>
       </v-flex>

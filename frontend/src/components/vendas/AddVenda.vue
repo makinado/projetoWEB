@@ -8,28 +8,30 @@
   >
     <v-card v-if="modalStore.vendas.vendas.visible">
       <v-toolbar dense flat extended fixed extension-height="5" dark :color="color">
-        <v-toolbar-side-icon @click="[vendaStore.venda = null, modalStore.vendas.vendas.visible = false]">
+        <v-toolbar-side-icon
+          @click="[vendaStore.venda = null, modalStore.vendas.vendas.visible = false]"
+        >
           <v-icon>close</v-icon>
         </v-toolbar-side-icon>
         <v-toolbar-title
           class="headline white--text font-weight-light"
-        >{{ modalStore.vendas.title }}</v-toolbar-title>
+        >{{ modalStore.vendas.vendas.title }}</v-toolbar-title>
 
         <v-spacer></v-spacer>
 
-        <v-tooltip bottom>
+        <v-tooltip bottom v-if="!modalStore.vendas.vendas.title.includes('Visualizar')">
           <v-btn slot="activator" class="mr-3" icon @click="limpaTela">
             <v-icon>fa fa-2x fa-eraser</v-icon>
           </v-btn>
           <span>Limpar tela</span>
         </v-tooltip>
-        <v-tooltip bottom>
+        <v-tooltip bottom v-if="!modalStore.vendas.vendas.title.includes('Visualizar')">
           <v-btn slot="activator" class="mr-3" icon @click="save">
             <v-icon>fa fa-2x fa-check</v-icon>
           </v-btn>
           <span>Salvar orçamento/venda</span>
         </v-tooltip>
-        <v-tooltip bottom>
+        <v-tooltip bottom v-if="!modalStore.vendas.vendas.title.includes('Visualizar')">
           <v-btn slot="activator" class="mr-3" icon>
             <v-icon>fa fa-2x fa-cog</v-icon>
           </v-btn>
@@ -538,7 +540,7 @@
           <FinanceiroVue
             v-if="venda.tipo == 2"
             :component="venda"
-            :showTotais="modalStore.vendas.title.includes('Alterar') ? false : true"
+            :showTotais="!modalStore.vendas.vendas.title.includes('Visualizar')"
           />
         </v-container>
       </v-card-text>
@@ -743,6 +745,7 @@ export default {
           .get(`${url}/${venda.id}`)
           .then(res => {
             this.venda = res.data;
+            if (venda.finalizarOrçamento) this.venda.tipo = 2;
 
             this.parseValores();
             this.calcTotal();

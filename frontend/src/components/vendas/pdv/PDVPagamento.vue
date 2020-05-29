@@ -2,38 +2,36 @@
   <Card title="Formas de pagamento" :color="color">
     <v-card-title class="headline">
       <v-layout justify-center>
-        <span class="mr-5">Valor {{ pagamento.valor || 'R$ 0,00'}}</span>
-        <span>Troco {{ pagamento.troco || 'R$ 0,00'}}</span>
+        <span class="mr-5">A pagar: {{ valor | currency}}</span>
+        <span>Troco: {{ troco | currency}}</span>
       </v-layout>
     </v-card-title>
     <v-card-text>
       <v-container grid-list-xl>
         <v-form v-model="valid" ref="form">
           <v-layout row wrap>
-            <v-flex xs12 md4>
+            <v-flex xs12 md3>
               <v-autocomplete
                 class="tag-input"
                 chips
                 deletable-chips
                 dense
                 :color="color"
-                :items="financeiroStore.documentos"
+                label="Forma de pagamento*"
                 v-model="pagamento.documento_baixa"
-                placeholder="Forma de pagamento"
+                :items="financeiroStore.documentos"
+                no-data-text="Nenhum documento encontrado"
                 prepend-icon="fa fa-lg fa-plus-circle"
-                @click:prepend="[modalStore.documentos.visible = true]"
-                no-data-text="Nenhum resultado"
-                auto-select-first
-                @input="$refs.valor_pago.focus()"
+                @click:prepend="[financeiroStore.documento = null, modalStore.documentos.visible = true]"
+                :rules="docRules"
                 return-object
-                :rules="documentoRules"
                 @focus="$store.dispatch('loadDocumentos')"
               ></v-autocomplete>
             </v-flex>
             <v-flex xs12 md2 class="mt-2">
               <v-text-field
                 ref="valor_pago"
-                label="VALOR PAGO"
+                label="VALOR PAGO*"
                 v-model="pagamento.valor_pago"
                 v-money="money"
                 @input="calcTroco"
@@ -44,8 +42,8 @@
             <v-flex xs12 md2 class="mt-2">
               <v-text-field
                 ref="parcelas"
-                label="Parcelas"
-                v-model="pagamento.parcelas"
+                label="Parcelas*"
+                v-model.number="pagamento.parcelas"
                 @keyup.enter="addPagamento"
                 :rules="parcelasRules"
               ></v-text-field>
@@ -67,7 +65,7 @@
                   <v-text-field
                     :color="color"
                     v-model="computedDateFormatted"
-                    label="Data do pagamento"
+                    label="Data do pagamento*"
                     prepend-icon="event"
                     readonly
                     v-on="on"
@@ -82,7 +80,8 @@
                 ></v-date-picker>
               </v-menu>
             </v-flex>
-            <v-flex xs12 md2>
+            <v-spacer></v-spacer>
+            <v-flex xs12 md3>
               <v-tooltip bottom class="mt-3">
                 <v-btn
                   slot="activator"
@@ -117,8 +116,42 @@
           <td>
             <v-chip :color="color" dark>{{ data.item.forma_pagamento }}</v-chip>
           </td>
-          <td>{{ data.item.valor_pago || "R$ 0,00" }}</td>
-          <td>{{ data.item.data_baixa | date }}</td>
+          <td>
+            <v-flex xs8>
+              <v-text-field v-if="disable" v-model="data.item.valor_pago" v-money="money"></v-text-field>
+              <span v-else>{{ data.item.valor_pago || "R$ 0,00"}}</span>
+            </v-flex>
+          </td>
+          <td>
+            <v-flex xs8>
+              <v-menu
+                v-model="data.item.menu1"
+                :close-on-content-click="false"
+                :nudge-right="40"
+                transition="scale-transition"
+                offset-y
+                full-width
+                max-width="290px"
+                min-width="290px"
+              >
+                <template v-slot:activator="{ on }">
+                  <v-text-field
+                    :color="color"
+                    v-model="data.item.data_baixa"
+                    prepend-icon="event"
+                    readonly
+                    v-on="on"
+                  ></v-text-field>
+                </template>
+                <v-date-picker
+                  :color="color"
+                  v-model="data.item.dataNotFormated"
+                  @input="[data.item.menu1 = false, data.item.data_baixa = formatDate(data.item.dataNotFormated)]"
+                  locale="pt-br"
+                ></v-date-picker>
+              </v-menu>
+            </v-flex>
+          </td>
           <td>
             <v-tooltip bottom>
               <v-btn slot="activator" icon color="warning" dark class="mr-1" @click.prevent>
@@ -145,9 +178,10 @@
     </v-card-text>
 
     <v-card-actions>
-      <v-spacer></v-spacer>
-      <v-btn color="blue darken-1" flat @click="stepper = 1">Voltar</v-btn>
-      <v-btn color="blue darken-1" flat @click="stepper = 3">Continuar</v-btn>
+      <v-layout class="my-4" row justify-center>
+        <v-btn class="v-btn-common" color="warning" @click="stepper = 1">Voltar</v-btn>
+        <v-btn class="v-btn-common" :color="color" @click="stepper = 3">Continuar</v-btn>
+      </v-layout>
     </v-card-actions>
   </Card>
 </template>
@@ -157,7 +191,7 @@ import { mapState } from "vuex";
 import { VMoney } from "v-money";
 
 import axios from "axios";
-import { urlBD, showError, saveLog, parseNumber, formatDate } from "@/global";
+import { urlBD, showError, saveLog, parseNumber } from "@/global";
 import { formatToBRL } from "brazilian-values";
 
 export default {
@@ -174,10 +208,10 @@ export default {
     ]),
     computedDateFormatted: {
       get() {
-        return formatDate(this.pagamento.data_baixa);
+        return this.formatDate(this.pagamento.data_baixa);
       },
       set(value) {
-        this.pagamento.data_baixa = formatDate(value);
+        this.pagamento.data_baixa = this.formatDate(value);
       }
     },
     stepper: {
@@ -215,8 +249,11 @@ export default {
   data() {
     return {
       valid: true,
+      disable: false,
       menu: false,
       pagamento: {},
+      valor: 0,
+      troco: 0,
       expand: true,
       fields: [
         { value: "sequencia", text: "Item" },
@@ -232,7 +269,7 @@ export default {
         precision: 2,
         masked: false
       },
-      documentoRules: [v => !!v || "Forma de pagamento é obrigatória"],
+      docRules: [v => !!v || "Forma de pagamento é obrigatória"],
       valorRules: [
         v => !!v || "Valor pago é obrigatório",
         v => (!!v && v !== "R$ 0,00") || "Valor pago não pode ser 0,00"
@@ -240,25 +277,36 @@ export default {
       dataRules: [v => !!v || "Data é obrigatória"],
       parcelasRules: [
         v => !!v || "Parcela é obrigatória",
-        v => (!!v && parseInt(v)) || "Informe um número inteiro neste campo"
+        v =>
+          (!!v && v === parseInt(v)) || "Informe um número inteiro neste campo"
       ]
     };
   },
   methods: {
-    reset() {
+    formatDate(date) {
+      if (!date) return null;
+
+      const [year, month, day] = date.split("-");
+      return `${day}/${month}/${year}`;
+    },
+    async reset() {
       this.$refs.form ? this.$refs.form.resetValidation() : null;
+
+      this.valor =
+        parseNumber(this.venda.totais.valor_total) -
+        parseNumber(this.pagamento.valor_pago || "0,00");
+      this.troco = 0;
+
       this.pagamento = {
-        valor: formatToBRL(
-          parseNumber(this.venda.totais.valor_total) -
-            parseNumber(this.pagamento.valor_pago || "R$ 0,00")
-        ),
-        troco: 0,
+        valor_pago: this.valor,
         parcelas: 1,
         data_baixa: new Date().toISOString().substr(0, 10)
       };
 
       this.$refs.valor_pago
-        ? (this.$refs.valor_pago.$el.getElementsByTagName("input")[0].value = 0)
+        ? (this.$refs.valor_pago.$el.getElementsByTagName(
+            "input"
+          )[0].value = this.venda.totais.valor_total)
         : null;
     },
     calcTroco() {
@@ -275,15 +323,19 @@ export default {
         : null;
     },
     addPagamento() {
-      let pagamento = {
+      if (!this.$refs.form.validate()) return;
+      this.disable = false;
+
+      var pagamento = {
         sequencia: this.financeiro.length + 1,
-        ...this.pagamento,
+        valor_pago: this.pagamento.valor_pago,
+        data_baixa: this.formatDate(this.pagamento.data_baixa),
         forma_pagamento: this.pagamento.documento_baixa.text,
         documento_baixa: this.pagamento.documento_baixa.value
       };
 
       if (this.pagamento.parcelas > 1) {
-        for (let i = 1; i <= this.pagamento.parcelas; i++) {
+        for (let i = 0; i < this.pagamento.parcelas; i++) {
           this.financeiro.push({
             ...pagamento,
             sequencia: this.financeiro.length + 1,
@@ -292,13 +344,13 @@ export default {
             ),
             data_baixa: pagamento.data_baixa
           });
-
           let data_baixa = new Date(pagamento.data_baixa);
           data_baixa.setMonth(data_baixa.getMonth() + 1);
           pagamento.data_baixa = data_baixa.toISOString().substr(0, 10);
         }
       } else this.financeiro.push(pagamento);
-      this.reset();
+
+      this.reset().then(() => (this.disable = true));
     },
     deletePagamento(pag) {
       if (!pag) return;
@@ -306,9 +358,7 @@ export default {
       this.$set(
         this.pagamento,
         "valor",
-        formatToBRL(
-          parseNumber(this.pagamento.valor) + parseNumber(pag.valor_pago)
-        )
+        formatToBRL(this.valor + parseNumber(pag.valor_pago))
       );
 
       this.financeiro = this.financeiro.filter(item => {

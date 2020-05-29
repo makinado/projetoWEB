@@ -243,6 +243,15 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
+            const financeiro = await app.db('financeiro').where({ id_pessoa: req.params.id }).first()
+            notExistsOrError(financeiro, 'Há movimentos financeiros associados a essa pessoa')
+
+            const compras = await app.db('compra').where({ id_pessoa: req.params.id }).first()
+            notExistsOrError(compras, 'Há compras associadas a essa pessoa')
+
+            const vendas = await app.db('venda').where({ id_pessoa: req.params.id }).first()
+            notExistsOrError(vendas, 'Há vendas associadas a essa pessoa')
+
             const exclusao = await app.db('pessoas')
                 .where({ id: req.params.id }).delete()
             existsOrError(exclusao, 'Pessoa não encontrada')
