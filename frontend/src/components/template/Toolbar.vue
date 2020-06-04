@@ -13,7 +13,7 @@
       bottom
       left
       min-width="300"
-      max-width="300"
+      max-width="500"
       nudge-left="12"
       offset-x
       transition="slide-y-transition"
@@ -40,16 +40,16 @@
           class="my-2"
           v-for="(item, index) in notificacoes"
           :key="index"
-          @click="clickEvent(item.title, item.link)"
+          @click="clickEvent(item)"
         >
           <v-list-tile-action>
-            <v-btn icon :color="item.color" dark>
+            <v-btn icon :color="cores[index]" dark>
               <v-icon>fa fa-lg fa-bell</v-icon>
             </v-btn>
           </v-list-tile-action>
           <v-layout column>
-            <v-list-tile-title>{{ item.title }}</v-list-tile-title>
-            <small>{{ item.text }}</small>
+            <v-list-tile-title>{{ item.titulo }}</v-list-tile-title>
+            <small class="overline">{{ item.conteudo }}</small>
           </v-layout>
         </v-list-tile>
       </v-list>
@@ -69,11 +69,7 @@
         <v-icon>fa fa-lg fa-user</v-icon>
       </v-btn>
       <v-list>
-        <v-list-tile
-          v-for="(item, index) in items"
-          :key="index"
-          @click="clickEvent(item.title, item.link)"
-        >
+        <v-list-tile v-for="(item, index) in items" :key="index" @click="clickEvent(item)">
           <v-list-tile-action>
             <v-btn icon :color="color">
               <v-icon>{{item.icon}}</v-icon>
@@ -106,7 +102,7 @@ export default {
   },
   data() {
     return {
-      title: null,
+      cores: ["danger", "success", "info", "warning"],
       items: [
         { icon: "fa fa-lg fa-user", title: "Perfil", link: "/usuario" },
         { icon: "fa fa-lg fa-cog", title: "Configurações", link: "/" },
@@ -115,9 +111,10 @@ export default {
     };
   },
   methods: {
-    clickEvent(title, link) {
-      if (title != "Sair") {
-        this.navigate(link);
+    clickEvent(item) {
+      if (item.title != "Sair") {
+        this.notificacoes = this.notificacoes.filter(n => n.id != item.id);
+        this.navigate(item.link);
       } else {
         this.logout();
       }

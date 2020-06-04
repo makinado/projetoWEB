@@ -88,6 +88,9 @@ module.exports = app => {
     app.post('/recoverPassword', app.api.auth.usuarios.recoverPassword)
 
 
+    app.get('/notificacoes', app.api.notificacoes.get)
+
+
     app.route('/empresas/todas')
         .all(app.config.passport.authenticate())
         .get(app.api.empresas.empresas.getAll)
@@ -288,10 +291,10 @@ module.exports = app => {
 
     app.route('/email')
         .all(app.config.passport.authenticate())
-        .post(grantAccess(app.api.email.enviarEmail))
+        .post((app.api.email.enviarEmail))
     app.route('/testarEmail')
         .all(app.config.passport.authenticate())
-        .post(grantAccess(app.api.email.testarEmail))
+        .post((app.api.email.testarEmail))
 
 
 
@@ -430,7 +433,7 @@ module.exports = app => {
         .get(grantAccess(app.api.vendas.vendas.get, 'vendas'))
     app.route('/vendas/:id')
         .all(app.config.passport.authenticate())
-        // .put(grantAccess(app.api.vendas.vendas.save, 'vendas'))
+        .put(grantAccess(app.api.vendas.vendas.save, 'vendas'))
         .get(grantAccess(app.api.vendas.vendas.getById, 'vendas'))
         .delete(grantAccess(app.api.vendas.vendas.remove, 'vendas'))
 

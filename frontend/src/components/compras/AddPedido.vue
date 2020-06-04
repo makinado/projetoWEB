@@ -181,34 +181,24 @@
                         <v-container grid-list-xl>
                           <v-layout wrap>
                             <v-flex xs12 md6>
-                              <v-tooltip bottom>
-                                <v-text-field
-                                  slot="activator"
-                                  prepend-icon="fa fa-question"
-                                  ref="valor_frete"
-                                  v-model="pedido.valor_frete"
-                                  :color="color"
-                                  label="VALOR DO FRETE"
-                                  v-money="money"
-                                  @blur="setValores"
-                                ></v-text-field>
-                                <span>Informe os produtos do pedido e preencha este campo para dividir o frete entre os produtos</span>
-                              </v-tooltip>
+                              <v-text-field
+                                ref="valor_frete"
+                                v-model="pedido.valor_frete"
+                                :color="color"
+                                label="VALOR DO FRETE"
+                                v-money="money"
+                                @blur="calcTotal"
+                              ></v-text-field>
                             </v-flex>
                             <v-flex xs12 md6>
-                              <v-tooltip bottom>
-                                <v-text-field
-                                  slot="activator"
-                                  prepend-icon="fa fa-question"
-                                  ref="valor_seguro"
-                                  v-model="pedido.valor_seguro"
-                                  :color="color"
-                                  label="VALOR DO SEGURO"
-                                  v-money="money"
-                                  @blur="setValores"
-                                ></v-text-field>
-                                <span>Informe os produtos do pedido e preencha este campo para dividir o seguro entre os produtos</span>
-                              </v-tooltip>
+                              <v-text-field
+                                ref="valor_seguro"
+                                v-model="pedido.valor_seguro"
+                                :color="color"
+                                label="VALOR DO SEGURO"
+                                v-money="money"
+                                @blur="calcTotal"
+                              ></v-text-field>
                             </v-flex>
                             <v-flex xs12 md6>
                               <v-text-field
@@ -217,7 +207,7 @@
                                 :color="color"
                                 label="VALOR DE DESCONTO"
                                 v-money="money"
-                                @blur="[calcDesconto = false, setDesconto()]"
+                                @blur="calcTotal"
                               ></v-text-field>
                             </v-flex>
                             <v-flex xs12 md6>
@@ -269,6 +259,15 @@
             <v-layout align-end>
               <span>Edite valores e quantidades do produto diretamente na tabela</span>
               <v-spacer></v-spacer>
+              <v-tooltip bottom>
+                <v-btn
+                  slot="activator"
+                  class="v-btn-common"
+                  color="warning"
+                  @click="setFreteSeguro"
+                >Ratear frete e seguro</v-btn>
+                <span>Ratear os valores de frete e seguro nos produtos para somar no custo</span>
+              </v-tooltip>
               <v-tooltip bottom class="ml-3">
                 <v-btn
                   slot="activator"
@@ -348,30 +347,8 @@
                   ></v-text-field>
                 </v-flex>
               </td>
-              <td>
-                <v-flex xs12 md6>
-                  <v-text-field
-                    v-if="disable"
-                    class="mt-2"
-                    v-model="data.item.valor_seguro"
-                    v-money="money"
-                    @blur="[calcTotal(data.item)]"
-                  ></v-text-field>
-                  <span v-else>{{ data.item.valor_seguro }}</span>
-                </v-flex>
-              </td>
-              <td>
-                <v-flex xs12 md6>
-                  <v-text-field
-                    v-if="disable"
-                    class="mt-2"
-                    v-model="data.item.valor_frete"
-                    v-money="money"
-                    @blur="[calcTotal(data.item)]"
-                  ></v-text-field>
-                  <span v-else>{{ data.item.valor_frete }}</span>
-                </v-flex>
-              </td>
+              <td>{{ data.item.valor_frete || "0,00"}}</td>
+              <td>{{ data.item.valor_seguro || "0,00"}}</td>
               <td>
                 <v-flex xs12 md6>
                   <v-text-field
@@ -398,22 +375,13 @@
               <td colspan="2">
                 <h5>TOTAIS</h5>
               </td>
-              <td>
+              <td colspan="4">
                 <v-layout row>{{ totais.quantidade || '0,00' }}</v-layout>
-              </td>
-              <td>
-                <v-layout row>{{ totais.valor_unitario || 'R$ 0,00' }}</v-layout>
-              </td>
-              <td>
-                <v-layout row>{{ totais.valor_seguro || 'R$ 0,00' }}</v-layout>
-              </td>
-              <td>
-                <v-layout row>{{ totais.valor_frete || 'R$ 0,00' }}</v-layout>
               </td>
               <td>
                 <v-layout row>{{ totais.valor_desconto || 'R$ 0,00' }}</v-layout>
               </td>
-              <td colspan="5">
+              <td colspan="2">
                 <v-layout row>{{ totais.valor_total || 'R$ 0,00' }}</v-layout>
               </td>
             </template>
@@ -478,7 +446,7 @@ export default {
       produtos: [],
       fields: [
         { value: "sequencia", text: "Item" },
-        { value: "id", text: "Produto" },
+        { value: "id", text: "Produto", fixed: true, sortable: false },
         { value: "quantidade", text: "Quantidade", sortable: true },
         { value: "valor_unitario", text: "Valor unitário", sortable: true },
         { value: "valor_seguro", text: "Valor seguro", sortable: false },
@@ -520,15 +488,12 @@ export default {
     };
   },
   watch: {
-    "$store.state.modalStore.compras.pedidos.visible": function() {
+    "$store.state.modalStore.compras.pedidos.visible"(val) {
       if (this.modalStore.compras.pedidos.visible) {
         this.limpaTela();
       }
-    },
-    "$store.state.modalStore.produtos.visible": function() {
-      if (!this.modalStore.produtos.visible) {
-        this.$store.dispatch("loadProdutos");
-      }
+
+      document.querySelector("html").style.overflow = val ? "hidden" : null;
     }
   },
   methods: {
@@ -659,8 +624,6 @@ export default {
             produto.valor_total = formatToBRL(
               parseNumber(produto.quantidade || "0,00") *
                 parseNumber(produto.valor_unitario || "0,00") +
-                parseNumber(produto.valor_seguro || "0,00") +
-                parseNumber(produto.valor_frete || "0,00") -
                 parseNumber(produto.valor_desconto || "0,00")
             );
           }
@@ -677,32 +640,23 @@ export default {
 
       this.produtos_pedido.forEach(produto => {
         quantidade += parseNumber(produto.quantidade || "0,00");
-        valor_unitario += parseNumber(produto.valor_unitario || "0,00");
-        valor_seguro += parseNumber(produto.valor_seguro || "0,00");
-        valor_frete += parseNumber(produto.valor_frete || "0,00");
         valor_desconto += parseNumber(produto.valor_desconto || "0,00");
         valor_total += parseNumber(produto.valor_total || "0,00");
       });
       this.totais = {
         quantidade: formatToBRL(quantidade).replace("R$", ""),
-        valor_unitario: formatToBRL(valor_unitario),
-        valor_seguro: formatToBRL(valor_seguro),
-        valor_frete: formatToBRL(valor_frete),
         valor_desconto: formatToBRL(valor_desconto),
         valor_total: formatToBRL(valor_total)
       };
 
-      this.pedido.valor_frete = this.totais.valor_frete;
-      this.pedido.valor_seguro = this.totais.valor_seguro;
-      this.pedido.valor_desconto = formatToBRL(
-        parseNumber(this.pedido.valor_desconto) +
-          parseNumber(this.totais.valor_desconto)
-      );
       this.pedido.outras_despesas = this.pedido.outras_despesas;
       this.pedido.valor_produtos = this.totais.valor_total;
       this.pedido.valor_total = formatToBRL(
         parseNumber(this.totais.valor_total || "0,00") +
-          parseNumber(this.pedido.outras_despesas || "0,00")
+          parseNumber(this.pedido.outras_despesas || "0,00") +
+          parseNumber(this.pedido.valor_frete || "0,00") +
+          parseNumber(this.pedido.valor_seguro || "0,00") -
+          parseNumber(this.pedido.valor_desconto || "0,00")
       );
 
       this.$refs.valor_frete.$el.getElementsByTagName(
@@ -724,33 +678,11 @@ export default {
         "input"
       )[0].value = this.pedido.valor_total;
     },
-    setDesconto() {
-      this.pedido.valor_total = formatToBRL(
-        parseNumber(this.totais.valor_total || "0,00") +
-          parseNumber(this.pedido.outras_despesas || "0,00") -
-          parseNumber(this.pedido.valor_desconto || "0,00")
-      );
-      this.pedido.valor_desconto = formatToBRL(
-        parseNumber(this.pedido.valor_desconto) +
-          parseNumber(this.totais.valor_desconto)
-      );
-      this.$refs.valor_desconto.$el.getElementsByTagName(
-        "input"
-      )[0].value = this.pedido.valor_desconto;
-      this.$refs.valor_total.$el.getElementsByTagName(
-        "input"
-      )[0].value = this.pedido.valor_total;
-    },
-    setValores() {
-      if (
-        this.produtos_pedido.length == 0 ||
-        !this.totais.quantidade ||
-        this.totais.quantidade == "0,00"
-      )
-        return;
+    setFreteSeguro() {
       this.disable = false;
 
       this.produtos_pedido.forEach(produto => {
+        if (!produto.id || produto.quantidade == "0,00") return;
         produto.valor_frete = formatToBRL(
           (parseNumber(this.pedido.valor_frete || "0,00") /
             parseNumber(this.totais.quantidade || "0,00")) *
@@ -761,12 +693,17 @@ export default {
             parseNumber(this.totais.quantidade || "0,00")) *
             parseNumber(produto.quantidade || "0,00")
         );
-        produto.valor_total = formatToBRL(
-          parseNumber(produto.quantidade || "0,00") *
-            parseNumber(produto.valor_unitario || "0,00") +
-            parseNumber(produto.valor_seguro || "0,00") +
-            parseNumber(produto.valor_frete || "0,00") -
-            parseNumber(produto.valor_desconto || "0,00")
+
+        var perc_add = parseNumber(produto.perc_custo_adicional || "0,00");
+        var dif_aliquota = parseNumber(produto.dif_aliquota || "0,00");
+
+        perc_add = perc_add ? (perc_add / 100) * soma : 0;
+        dif_aliquota = dif_aliquota ? (dif_aliquota / 100) * soma : 0;
+        produto.valor_custo = formatToBRL(
+          (parseNumber(produto.valor_total) +
+            parseNumber(produto.valor_frete || "0,00") +
+            parseNumber(produto.valor_seguro || "0,00")) /
+            parseNumber(produto.quantidade || "0,00")
         );
       });
 

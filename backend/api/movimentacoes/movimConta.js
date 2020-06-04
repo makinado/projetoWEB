@@ -74,14 +74,12 @@ module.exports = app => {
                             .where({ 'compra.id': m.id_movimento_origem }).first()
                     } else if (m.origem == 'VENDA' && m.id_movimento_origem) {
                         m.dados = await app.db('venda')
-                            .join('usuarios', 'venda.id_vendedor', 'usuarios.id')
                             .join('pessoas', 'venda.id_pessoa', 'pessoas.id')
                             .select(
                                 'venda.id',
                                 'venda.nota_fiscal',
                                 'venda.data_criacao',
                                 'pessoas.nome as cliente',
-                                'usuarios.nome as vendedor'
                             )
                             .where({ 'venda.id': m.id_movimento_origem }).first()
                     } else if (m.origem == 'FINANCEIRO' && m.id_movimento_financeiro) {

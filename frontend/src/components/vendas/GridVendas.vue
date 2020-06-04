@@ -339,9 +339,12 @@
             <v-chip :color="getColor(data.item.tipo)" dark>{{ data.item.tipo }}</v-chip>
           </td>
           <td>{{ data.item.cliente }}</td>
-          <td>{{ data.item.vendedor }}</td>
+          <td>
+            <span v-if="data.item.vendedores.length == 1">{{ data.item.vendedores[0].usuario }}</span>
+            <span v-else>{{ data.item.vendedores.length }} vendedores</span>
+          </td>
           <td>{{ data.item.documento_fiscal }}</td>
-          <td>{{ data.item.data_emissao| date }}</td>
+          <td>{{ data.item.data_criacao| date }}</td>
           <td>{{ data.item.valor_total | currency }}</td>
           <td>
             <v-menu offset-y left>
@@ -498,9 +501,9 @@ export default {
         { value: "id", text: "Código", sortable: true },
         { value: "tipo", text: "Tipo", sortable: true },
         { value: "cliente", text: "Cliente", sortable: true },
-        { value: "vendedor", text: "Vendedor", sortable: true },
+        { value: "vendedores", text: "Vendedores", sortable: true },
         { value: "documento_fiscal", text: "Documento fiscal", sortable: true },
-        { value: "data_emissao", text: "Data emissão" },
+        { value: "data_criacao", text: "Data venda" },
         { value: "valor_total", text: "Valor total" },
         { value: "actions", text: "Ações" }
       ],

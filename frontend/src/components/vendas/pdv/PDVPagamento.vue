@@ -6,6 +6,7 @@
         <span>Troco: {{ troco | currency}}</span>
       </v-layout>
     </v-card-title>
+
     <v-card-text>
       <v-container grid-list-xl>
         <v-form v-model="valid" ref="form">
@@ -28,7 +29,7 @@
                 @focus="$store.dispatch('loadDocumentos')"
               ></v-autocomplete>
             </v-flex>
-            <v-flex xs12 md2 class="mt-2">
+            <v-flex xs12 md3 class="mt-2">
               <v-text-field
                 ref="valor_pago"
                 label="VALOR PAGO*"
@@ -51,7 +52,7 @@
             <v-flex xs12 md2 class="mt-2">
               <v-menu
                 ref="date"
-                v-model="menu"
+                v-model="menu1"
                 :close-on-content-click="false"
                 :nudge-right="40"
                 lazy
@@ -64,8 +65,8 @@
                 <template v-slot:activator="{ on }">
                   <v-text-field
                     :color="color"
-                    v-model="computedDateFormatted"
-                    label="Data do pagamento*"
+                    v-model="computedDateFormatted1"
+                    label="Data de vencimento*"
                     prepend-icon="event"
                     readonly
                     v-on="on"
@@ -74,27 +75,11 @@
                 </template>
                 <v-date-picker
                   :color="color"
-                  v-model="pagamento.data_baixa"
-                  @input="menu = false"
+                  v-model="pagamento.data_vencimento"
+                  @input="menu1 = false"
                   locale="pt-br"
                 ></v-date-picker>
               </v-menu>
-            </v-flex>
-            <v-spacer></v-spacer>
-            <v-flex xs12 md3>
-              <v-tooltip bottom class="mt-3">
-                <v-btn
-                  slot="activator"
-                  class="v-btn-common"
-                  :color="color"
-                  @click="addPagamento"
-                >Adicionar</v-btn>
-                <span>Adicionar nova forma de pagamento</span>
-              </v-tooltip>
-              <v-tooltip bottom class="mt-3">
-                <v-btn slot="activator" class="v-btn-common" color="warning" @click="reset">Limpar</v-btn>
-                <span>Reseta os campos</span>
-              </v-tooltip>
             </v-flex>
           </v-layout>
         </v-form>
@@ -102,6 +87,21 @@
     </v-card-text>
 
     <v-card-text>
+      <v-layout row justify-end>
+        <v-tooltip bottom class="mt-3">
+          <v-btn
+            slot="activator"
+            class="v-btn-common"
+            :color="color"
+            @click="addPagamento"
+          >Adicionar</v-btn>
+          <span>Adicionar nova forma de pagamento</span>
+        </v-tooltip>
+        <v-tooltip bottom class="mt-3">
+          <v-btn slot="activator" class="v-btn-common" color="warning" @click="reset">Limpar</v-btn>
+          <span>Reseta os campos</span>
+        </v-tooltip>
+      </v-layout>
       <v-data-table
         class="mt-3"
         :headers="fields"
@@ -214,6 +214,14 @@ export default {
         this.pagamento.data_baixa = this.formatDate(value);
       }
     },
+    computedDateFormatted1: {
+      get() {
+        return this.formatDate(this.pagamento.data_vencimento);
+      },
+      set(value) {
+        this.pagamento.data_vencimento = this.formatDate(value);
+      }
+    },
     stepper: {
       get() {
         return this.modalStore.vendas.pdv.stepper;
@@ -251,6 +259,7 @@ export default {
       valid: true,
       disable: false,
       menu: false,
+      menu1: false,
       pagamento: {},
       valor: 0,
       troco: 0,
@@ -300,7 +309,8 @@ export default {
       this.pagamento = {
         valor_pago: this.valor,
         parcelas: 1,
-        data_baixa: new Date().toISOString().substr(0, 10)
+        data_baixa: new Date().toISOString().substr(0, 10),
+        data_vencimento: new Date().toISOString().substr(0, 10)
       };
 
       this.$refs.valor_pago
@@ -330,9 +340,12 @@ export default {
         sequencia: this.financeiro.length + 1,
         valor_pago: this.pagamento.valor_pago,
         data_baixa: this.formatDate(this.pagamento.data_baixa),
+        data_vencimento: this.formatDate(this.pagamento.data_vencimento),
         forma_pagamento: this.pagamento.documento_baixa.text,
         documento_baixa: this.pagamento.documento_baixa.value
       };
+
+      debugger;
 
       if (this.pagamento.parcelas > 1) {
         for (let i = 0; i < this.pagamento.parcelas; i++) {
@@ -342,11 +355,19 @@ export default {
             valor_pago: formatToBRL(
               parseNumber(this.pagamento.valor_pago) / this.pagamento.parcelas
             ),
-            data_baixa: pagamento.data_baixa
+            data_baixa: pagamento.data_baixa,
+            data_vencimento: pagamento.data_vencimento
           });
           let data_baixa = new Date(pagamento.data_baixa);
-          data_baixa.setMonth(data_baixa.getMonth() + 1);
-          pagamento.data_baixa = data_baixa.toISOString().substr(0, 10);
+          let data_vencimento = new Date(pagamento.data_vencimento);
+          pagamento.data_baixa = data_baixa
+            .setMonth(data_baixa.getMonth() + 1)
+            .toISOString()
+            .substr(0, 10);
+          pagamento.data_vencimento = data_vencimento
+            .setMonth(data_vencimento.getMonth() + 1)
+            .toISOString()
+            .substr(0, 10);
         }
       } else this.financeiro.push(pagamento);
 

@@ -1,27 +1,18 @@
-// const schedule = require('node-schedule')
+const schedule = require('node-schedule')
 
-// module.exports = app => {
-//     schedule.scheduleJob('*/1 * * * *', async function () {
-//         const events = await app.db('produtos').count('id').first()
+module.exports = (app) => {
+    schedule.scheduleJob('0 */4 * * *', async function () {
+        if (!app.db) return
 
-//         const { Stat } = app.api.stat
+        const hoje = new Date()
+        const amanha = new Date(hoje.setDate(hoje.getDate() + 1))
 
-//         const lastStat = await Stat.findOne({}, {},
-//             { sort: { 'createdAt': -1 } })
+        const eventos = await app.db('eventos_agenda').where({ data: new Date() }).orWhere({ data: amanha, avisar: true })
 
-//         const stat = new Stat({
-//             usuarios: usuariosCount.count,
-//             pessoas: pessoasCount.count,
-//             produtos: produtosCount.count,
-//             createdAt: new Date()
-//         })
+        app.db.batchInsert('notificacoes', eventos.map(e => {
+            if (e.data == amanha && !e.avisar && concluido) return
 
-//         const changeUsuarios = !lastStat || stat.usuarios !== lastStat.usuarios
-//         const changePessoas = !lastStat || stat.pessoas !== lastStat.pessoas
-//         const changeProdutos = !lastStat || stat.produtos !== lastStat.produtos
-
-//         if (changeUsuarios || changePessoas || changeProdutos) {
-//             stat.save().then(() => console.log('[Stats] Estatíticas atualizadas!'))
-//         }
-//     })
-// }
+            return { titulo: e.descricao, conteudo: e.observacao, link: '/agenda' }
+        })).then(() => console.log('eventos adicionados em notificacoes'))
+    })
+}

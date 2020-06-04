@@ -1,5 +1,4 @@
 module.exports = app => {
-
     const get = async (req, res) => {
         try {
             const contasPagar = await app.db('financeiro').sum('valor_total').where({ tipo_conta: 1, pago: false }).whereBetween('financeiro.data_vencimento', [req.query.data_inicial, req.query.data_final])
@@ -16,11 +15,11 @@ module.exports = app => {
                 ]
             ]
 
-            if (req.query.view == 'year') {
-                req.query.view = 'month'
-            } else {
-                req.query.view = 'day'
-            }
+            // if (req.query.view == 'year') {
+            //     req.query.view = 'month'
+            // } else {
+            //     req.query.view = 'day'
+            // }
 
             // const graficoFinanceiro = [
             //     await app.db('financeiro')

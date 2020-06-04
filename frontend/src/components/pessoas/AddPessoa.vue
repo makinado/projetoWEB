@@ -4,6 +4,7 @@
       <v-card-title>
         <span class="headline">{{ modalStore.pessoas.title }}</span>
       </v-card-title>
+
       <v-card-text>
         <v-container grid-list-md>
           <v-form v-model="valid" ref="form">
@@ -22,47 +23,65 @@
               </v-flex>
             </v-layout>
 
-            <v-layout wrap>
-              <v-flex xs12 md6 v-show="pessoa.tipo === 'Jurídica'">
-                <v-text-field
-                  :color="color"
-                  label="CNPJ*"
-                  v-mask="'##.###.###/####-##'"
-                  v-model="pessoa.cnpj"
-                  :rules="cnpjRules"
-                ></v-text-field>
-              </v-flex>
-              <v-flex xs12 md6 v-show="pessoa.tipo === 'Jurídica'">
-                <v-text-field
-                  :color="color"
-                  label="Razão social*"
-                  v-model="pessoa.nome"
-                  @blur="[pessoa.fantasia = pessoa.nome, $refs.fantasia.value = pessoa.nome]"
-                  :rules="nameRules"
-                ></v-text-field>
-              </v-flex>
-              <v-flex xs12 md6 v-show="pessoa.tipo === 'Jurídica'">
-                <v-text-field
-                  ref="fantasia"
-                  :color="color"
-                  label="Fantasia"
-                  v-model="pessoa.fantasia"
-                  :rules="fantasiaRules"
-                ></v-text-field>
-              </v-flex>
-              <v-flex xs12 md6 v-show="pessoa.tipo === 'Física'">
-                <v-text-field
-                  :color="color"
-                  label="CPF*"
-                  v-mask="'###.###.###-##'"
-                  v-model="pessoa.cpf"
-                  :rules="cpfRules"
-                ></v-text-field>
-              </v-flex>
-              <v-flex xs12 md6 v-if="pessoa.tipo === 'Física'">
-                <v-text-field :color="color" label="Nome*" v-model="pessoa.nome" :rules="nameRules"></v-text-field>
-              </v-flex>
-            </v-layout>
+            <transition name="slide" mode="out-in">
+              <v-layout wrap>
+                <v-flex xs12 md6 v-show="pessoa.tipo === 'Jurídica'">
+                  <v-text-field
+                    :color="color"
+                    label="CNPJ*"
+                    v-mask="'##.###.###/####-##'"
+                    v-model="pessoa.cnpj"
+                    :rules="cnpjRules"
+                  ></v-text-field>
+                </v-flex>
+                <v-flex xs12 md6 v-show="pessoa.tipo === 'Jurídica'">
+                  <v-text-field
+                    :color="color"
+                    label="Razão social*"
+                    v-model="pessoa.nome"
+                    @blur="[pessoa.fantasia = pessoa.nome, $refs.fantasia.value = pessoa.nome]"
+                    :rules="nameRules"
+                  ></v-text-field>
+                </v-flex>
+                <v-flex xs12 md6 v-show="pessoa.tipo === 'Jurídica'">
+                  <v-text-field
+                    ref="fantasia"
+                    :color="color"
+                    label="Fantasia"
+                    v-model="pessoa.fantasia"
+                    :rules="fantasiaRules"
+                  ></v-text-field>
+                </v-flex>
+                <v-flex xs12 md6 v-show="pessoa.tipo === 'Jurídica'">
+                  <v-text-field
+                    :color="color"
+                    label="Inscrição estadual"
+                    v-model="pessoa.inscricao_estadual"
+                    :rules="inscRules"
+                  ></v-text-field>
+                </v-flex>
+                <v-flex xs12 md6 v-show="pessoa.tipo === 'Física'">
+                  <v-text-field
+                    :color="color"
+                    label="CPF*"
+                    v-mask="'###.###.###-##'"
+                    v-model="pessoa.cpf"
+                    :rules="cpfRules"
+                  ></v-text-field>
+                </v-flex>
+                <v-flex xs12 md6 v-show="pessoa.tipo === 'Física'">
+                  <v-text-field :color="color" label="RG" v-model="pessoa.rg"></v-text-field>
+                </v-flex>
+                <v-flex xs12 v-if="pessoa.tipo === 'Física'">
+                  <v-text-field
+                    :color="color"
+                    label="Nome*"
+                    v-model="pessoa.nome"
+                    :rules="nameRules"
+                  ></v-text-field>
+                </v-flex>
+              </v-layout>
+            </transition>
           </v-form>
 
           <v-layout wrap>
@@ -122,7 +141,7 @@
                               ></v-checkbox>
                             </v-flex>
                           </v-layout>
-                          <v-layout v-else justify-space-between align-center>
+                          <v-layout v-else justify-center align-center>
                             <v-checkbox
                               :color="color"
                               v-model="selected"
@@ -206,6 +225,35 @@
                                 v-model="pessoa.contato2"
                                 :rules="foneRules"
                               ></v-text-field>
+                            </v-flex>
+                            <v-flex xs12 md6>
+                              <v-menu
+                                v-model="menu"
+                                :close-on-content-click="false"
+                                :nudge-right="40"
+                                transition="scale-transition"
+                                offset-y
+                                full-width
+                                max-width="290px"
+                                min-width="290px"
+                              >
+                                <template v-slot:activator="{ on }">
+                                  <v-text-field
+                                    :color="color"
+                                    v-model="computedDateFormatted"
+                                    label="Data de nascimento"
+                                    prepend-icon="event"
+                                    readonly
+                                    v-on="on"
+                                  ></v-text-field>
+                                </template>
+                                <v-date-picker
+                                  :color="color"
+                                  v-model="pessoa.data_nascimento"
+                                  @input="menu = false"
+                                  locale="pt-br"
+                                ></v-date-picker>
+                              </v-menu>
                             </v-flex>
                           </v-layout>
                         </v-form>
@@ -304,24 +352,18 @@
                             <v-flex xs12 md6>
                               <v-text-field
                                 :color="color"
-                                label="Inscrição estadual"
-                                v-model="pessoa.inscricao_estadual"
-                                :rules="inscRules"
-                              ></v-text-field>
-                            </v-flex>
-                            <v-flex xs12 md6>
-                              <v-text-field
-                                :color="color"
                                 label="Inscrição municipal"
                                 v-model="pessoa.inscricao_municipal"
                               ></v-text-field>
                             </v-flex>
-                            <v-textarea
-                              :color="color"
-                              label="Alguma observação?"
-                              box
-                              v-model="pessoa.observacao"
-                            ></v-textarea>
+                            <v-flex xs12>
+                              <v-textarea
+                                :color="color"
+                                label="Alguma observação?"
+                                box
+                                v-model="pessoa.observacao"
+                              ></v-textarea>
+                            </v-flex>
                           </v-layout>
                         </v-form>
                       </v-container>
@@ -334,9 +376,14 @@
         </v-container>
         <small>* indica os campos obrigatórios</small>
       </v-card-text>
+
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="blue darken-1" flat @click="[pessoaStore.pessoa = null, modalStore.pessoas.visible = false]">Fechar</v-btn>
+        <v-btn
+          color="blue darken-1"
+          flat
+          @click="[pessoaStore.pessoa = null, modalStore.pessoas.visible = false]"
+        >Fechar</v-btn>
         <v-btn color="blue darken-1" flat @click="save()">Salvar</v-btn>
       </v-card-actions>
     </v-card>
@@ -345,7 +392,7 @@
 
 <script>
 import axios from "axios";
-import { urlBD, showError, saveLog } from "@/global";
+import { urlBD, showError, saveLog, formatDate } from "@/global";
 import { mapState, mapActions } from "vuex";
 
 import ViaCep from "vue-viacep";
@@ -360,6 +407,7 @@ export default {
       valid1: true,
       valid2: true,
       valid3: true,
+      menu: false,
       tabIndex: "",
       pessoa: {},
       selected: [],
@@ -412,7 +460,20 @@ export default {
   },
   computed: {
     ...mapState("app", ["color"]),
-    ...mapState(["pessoaStore", "usuarioStore", "modalStore", "categoriaStore"])
+    ...mapState([
+      "pessoaStore",
+      "usuarioStore",
+      "modalStore",
+      "categoriaStore"
+    ]),
+    computedDateFormatted: {
+      get() {
+        return formatDate(this.pessoa.data_nascimento);
+      },
+      set(value) {
+        this.pessoa.data_nascimento = formatDate(value);
+      }
+    }
   },
   watch: {
     "$store.state.modalStore.pessoas.visible": function() {

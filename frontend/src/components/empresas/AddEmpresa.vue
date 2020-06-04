@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="modalStore.empresas.visible" lazy persistent max-width="900px">
+  <v-dialog v-model="modalStore.empresas.visible" lazy persistent max-width="1200px">
     <v-card v-if="modalStore.empresas.visible">
       <v-card-title>
         <span class="headline">{{ modalStore.empresas.title }}</span>
@@ -416,6 +416,22 @@
                             <v-flex xs12 md4>
                               <v-text-field :color="color" label="Série" v-model="empresa.serie"></v-text-field>
                             </v-flex>
+                            <v-flex xs12 md6>
+                              <v-textarea
+                                :color="color"
+                                label="Informações complementares NF-e"
+                                box
+                                v-model="empresa.informacao_complementar_nfe"
+                              ></v-textarea>
+                            </v-flex>
+                            <v-flex xs12 md6>
+                              <v-textarea
+                                :color="color"
+                                label="Informações complementares NFC-e"
+                                box
+                                v-model="empresa.informacao_complementar_nfce"
+                              ></v-textarea>
+                            </v-flex>
                           </v-layout>
                         </v-form>
                       </v-container>
@@ -429,6 +445,64 @@
                       <v-container grid-list-xl>
                         <v-form v-model="valid4" ref="form_config">
                           <v-layout wrap>
+                            <v-flex xs12 md6>
+                              <v-autocomplete
+                                no-data-text="Nenhum resultado"
+                                :color="color"
+                                label="Base para cálculo de valores dos produtos"
+                                v-model="empresa.custo_ou_medio"
+                                :items="[{ value: 1, text: 'Valor unitário' }, { value: 2, text: 'Custo médio' }]"
+                                dense
+                              >
+                                <v-tooltip slot="append" bottom>
+                                  <v-icon slot="activator">fa fa-lg fa-question-circle</v-icon>
+                                  <span>
+                                    Valor unitário - O sistema utilizará o valor unitário dos produtos para os cálculos e relatórios
+                                    <br />
+                                  </span>
+                                  <br />
+                                  <span>
+                                    Custo médio - O sistema utilizará o custo médio dos produtos para os cálculos e relatórios
+                                    <br />
+                                  </span>
+                                </v-tooltip>
+                              </v-autocomplete>
+                            </v-flex>
+                            <v-flex xs12 md6>
+                              <v-autocomplete
+                                no-data-text="Nenhum resultado"
+                                :color="color"
+                                label="Gerar comissão"
+                                v-model="empresa.comissao_faturamento_recebimento"
+                                :items="[{ value: 1, text: 'Faturamento' }, { value: 2, text: 'Recebimento' }]"
+                                dense
+                              >
+                                <v-tooltip slot="append" bottom>
+                                  <v-icon slot="activator">fa fa-lg fa-question-circle</v-icon>
+                                  <span>
+                                    Faturamento - Ao gerar a venda o sistema realizará o cálculo de comissão
+                                    <br />
+                                  </span>
+                                  <br />
+                                  <span>
+                                    Recebimento - Ao receber os valores referentes a venda o sistema realizará o cálculo de comissão
+                                    <br />
+                                  </span>
+                                </v-tooltip>
+                              </v-autocomplete>
+                            </v-flex>
+                            <v-flex xs12>
+                              <v-checkbox
+                                :color="color"
+                                label="Atualizar preço de venda do produto"
+                                v-model="empresa.atualiza_precovenda_compra"
+                              >
+                                <v-tooltip slot="append" bottom>
+                                  <v-icon slot="activator">fa fa-lg fa-question-circle</v-icon>
+                                  <span>Ao realizar uma compra o sistema calculará o preço de venda para o produto</span>
+                                </v-tooltip>
+                              </v-checkbox>
+                            </v-flex>
                             <v-flex xs12 md6>
                               <v-text-field
                                 :color="color"
@@ -517,26 +591,11 @@
                                     class="v-btn-common"
                                     :color="color"
                                     @click="testarEmail"
+                                    :loading="isLoading"
                                   >testar conexão</v-btn>
                                   <span>Teste a conexão com o seu servidor enviando um e-mail</span>
                                 </v-tooltip>
                               </v-layout>
-                            </v-flex>
-                            <v-flex xs12 md6>
-                              <v-textarea
-                                :color="color"
-                                label="Informações complementares NF-e"
-                                box
-                                v-model="empresa.informacao_complementar_nfe"
-                              ></v-textarea>
-                            </v-flex>
-                            <v-flex xs12 md6>
-                              <v-textarea
-                                :color="color"
-                                label="Informações complementares NFC-e"
-                                box
-                                v-model="empresa.informacao_complementar_nfce"
-                              ></v-textarea>
                             </v-flex>
                           </v-layout>
                         </v-form>
@@ -582,6 +641,7 @@ export default {
       valid2: true,
       valid3: true,
       valid4: true,
+      isLoading: false,
       imageName: "",
       imageUrl: "",
       imageFile: "",
@@ -639,16 +699,18 @@ export default {
   },
   methods: {
     testarEmail() {
-      if (this.$refs.form_config.validate()) {
-        const url = `${urlBD}/testarEmail`;
+      if (!this.$refs.form_config.validate()) return;
 
-        axios
-          .post(url, this.empresa)
-          .then(() => {
-            this.$toasted.global.defaultSuccess();
-          })
-          .catch(showError);
-      }
+      this.isLoading = true;
+      const url = `${urlBD}/testarEmail`;
+
+      axios
+        .post(url, this.empresa)
+        .then(() => {
+          this.$toasted.global.defaultSuccess();
+        })
+        .catch(showError)
+        .finally(() => (this.isLoading = false));
     },
     pickFile() {
       this.$refs.image.click();

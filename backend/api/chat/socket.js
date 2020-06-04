@@ -14,7 +14,7 @@ module.exports = (io, app) => {
         return newList
     }
 
-
+    exports = onlineUsersExport = {}
     let onlineUsers = {}
 
     io.on('connection', (socket) => {
@@ -22,14 +22,11 @@ module.exports = (io, app) => {
             io.emit('onlineUsers', onlineUsers)
         }
 
-        const reloadClients = () => {
-            io.emit('reload')
-        }
-
         socket.on('login', user => {
             user.socketId = socket.id
             user.online = true
             onlineUsers = addUser(onlineUsers, user)
+            onlineUsersExport = addUser(onlineUsersExport, user)
             socket.user = user
 
             emitOnlineUsers()
@@ -39,6 +36,7 @@ module.exports = (io, app) => {
             // usuario fez logout do sistema
             if ("user" in socket) {
                 onlineUsers = removeUser(onlineUsers, socket.user.nome)
+                onlineUsersExport = removeUser(onlineUsersExport, socket.user.nome)
 
                 emitOnlineUsers()
             }
@@ -49,6 +47,7 @@ module.exports = (io, app) => {
             // usuario fechou o browser
             if ("user" in socket) {
                 onlineUsers = removeUser(onlineUsers, socket.user.nome)
+                onlineUsersExport = removeUser(onlineUsersExport, socket.user.nome)
 
                 emitOnlineUsers()
             }

@@ -29,17 +29,10 @@ export default {
     Content,
     ThemeOptions,
     Chat,
-    FullScreenLoading: () => import("./components/template/FullScreenLoading"),
-    DialogLoading: () => import("./components/template/DialogLoading")
+    FullScreenLoading: () => import("./components/template/FullScreenLoading")
   },
   computed: {
-    ...mapState([
-      "TemplateVisible",
-      "usuarioStore",
-      "empresaStore",
-      "fullLoading",
-      "dialogLoading"
-    ])
+    ...mapState(["TemplateVisible", "usuarioStore", "empresaStore"])
   },
   data: function() {
     return {

@@ -1,6 +1,6 @@
 <template>
   <div class="add-comissao">
-    <v-dialog v-model="modalStore.usuarios.comissoes.visible" persistent max-width="1000px">
+    <v-dialog v-model="modalStore.usuarios.comissoes.visible" persistent max-width="1200px">
       <v-card v-if="modalStore.usuarios.comissoes.visible">
         <v-card-title>{{ modalStore.usuarios.comissoes.title }}</v-card-title>
         <v-card-text>
@@ -8,59 +8,80 @@
             <v-form v-model="valid" ref="form">
               <v-text-field v-model="comissao.id" v-show="false"></v-text-field>
               <v-layout wrap>
-                <v-flex xs12 md4>
+                <v-flex xs12 md3>
                   <v-autocomplete
                     :color="color"
                     label="Tipo*"
-                    :items="[{ value: 1, text: 'Comissão sobre o produto'}, { value: 2, text: 'Comissão sobre a venda'}, { value: 3, text: 'Comissão sobre o lucro da empresa'}]"
+                    :items="[{ value: 1, text: 'Comissão sobre o produto'}, { value: 2, text: 'Comissão sobre a venda'}]"
                     v-model="comissao.tipo"
                     dense
-                    @change="$refs.perc_comissao.focus()"
+                    @change="$refs.perc_comissao_vista.focus()"
+                    clearable
+                    :rules="tipoRules"
                   >
                     <v-tooltip slot="append" bottom>
                       <v-icon slot="activator">fa fa-lg fa-question-circle</v-icon>
                       <span>
-                        1- Comissão sobre o produto* Preencha o percentual no cadastro do produto.
+                        Comissão sobre o produto - Comissão sobre o percentual de comissão do produto
                         <br />
                       </span>
                       <span>
-                        2 - Comissão sobre a venda* Preencha os campos a seguir
+                        Comissão sobre a venda - Comissão sobre o valor total da venda
                         <br />
                       </span>
-                      <span>3 - Comissão sobre o lucro* Preencha os campos a seguir</span>
                     </v-tooltip>
                   </v-autocomplete>
                 </v-flex>
-                <v-flex xs12 md4>
+                <v-flex xs12 md3>
                   <v-text-field
-                    ref="perc_comissao"
+                    ref="ordem"
                     :color="color"
-                    label="Percentual*"
-                    v-model="comissao.perc_comissao"
-                    v-money="percent"
-                    :disabled="comissao.tipo == 1"
-                  ></v-text-field>
-                </v-flex>
-                <v-flex xs12 md4>
-                  <v-text-field
-                    ref="perc_representante"
-                    :color="color"
-                    label="Percentual de representante"
-                    v-model="comissao.perc_representante"
-                    v-money="percent"
-                    :disabled="comissao.tipo == 1"
-                    @keyup.enter="save"
+                    label="Ordem*"
+                    v-model.number="comissao.ordem"
+                    @keyup.enter="$refs.perc_comissao_vista.focus()"
+                    :rules="ordemRules"
                   >
                     <v-tooltip slot="append" bottom>
                       <v-icon slot="activator">fa fa-lg fa-question-circle</v-icon>
-                      <span>Segundo vendedor</span>
+                      <span>
+                        Representa a posição do vendedor no momento da venda. Ex:
+                        <br />1 - Primeiro vendedor
+                        <br />2 - Segundo vendedor
+                        <br />3 - Terceiro vendedor
+                      </span>
                     </v-tooltip>
                   </v-text-field>
+                </v-flex>
+                <v-flex xs12 md3>
+                  <v-text-field
+                    ref="perc_comissao_vista"
+                    :color="color"
+                    label="Percentual a vista*"
+                    v-model="comissao.perc_comissao_vista"
+                    v-money="percent"
+                    :rules="percRules"
+                  ></v-text-field>
+                </v-flex>
+                <v-flex xs12 md3>
+                  <v-text-field
+                    ref="perc_comissao_prazo"
+                    :color="color"
+                    label="Percentual a prazo"
+                    v-model="comissao.perc_comissao_prazo"
+                    v-money="percent"
+                  ></v-text-field>
+                </v-flex>
+                <v-flex xs12>
+                  <v-switch label="Ativa" v-model="comissao.ativa" :color="color"></v-switch>
                 </v-flex>
               </v-layout>
             </v-form>
           </v-container>
           <v-flex xs12>
+            <span>
+              Dúvidas sobre o cálculo de comissões no sistema? consulte a documentação
+              <router-link to="/centralAjuda">aqui</router-link>
+            </span>
             <v-data-table
               :items="usuarioStore.comissoes"
               :headers="fields"
@@ -70,36 +91,40 @@
               :pagination.sync="pagination"
             >
               <template slot="items" slot-scope="data">
-                <tr :class="{'success_light': data.index === usuarioStore.comissoes.length -1}">
-                  <td>{{ data.item.id }}</td>
-                  <td>
-                    <v-chip
-                      :color="getColor(data.item.tipo)"
-                      dark
-                    >{{ data.item.tipo == 1 ? 'Produto' : data.item.tipo == 2 ? 'Venda' : 'Lucro da empresa' }}</v-chip>
-                  </td>
-                  <td>{{ data.item.usuario }}</td>
-                  <td>{{ data.item.data | date }}</td>
-                  <td>{{ data.item.perc_comissao }}</td>
-                  <td>
-                    <v-btn icon @click.prevent="edit(data.item)" class="mr-1">
-                      <i class="fa fa-lg fa-pencil"></i>
-                    </v-btn>
-                    <v-btn
-                      icon
-                      @click.prevent="[confirmaExlusao = true, usuarioStore.comissao = data.item]"
-                      class="mr-1"
-                    >
-                      <i class="fa fa-lg fa-trash"></i>
-                    </v-btn>
-                  </td>
-                </tr>
+                <td>
+                  <v-chip
+                    :color="getColor(data.item.ativa)"
+                    dark
+                  >{{ data.item.ativa == true ? 'Ativa' : 'Não ativa' }}</v-chip>
+                </td>
+                <td>
+                  <v-chip
+                    :color="getColor(data.item.tipo)"
+                    dark
+                  >{{ data.item.tipo == 1 ? 'Produto' : 'Venda' }}</v-chip>
+                </td>
+                <td>{{ data.item.ordem }}</td>
+                <td>{{ data.item.data | dateTime }}</td>
+                <td>{{ data.item.perc_comissao_vista }}</td>
+                <td>
+                  <v-btn icon @click.prevent="edit(data.item)" class="mr-1">
+                    <i class="fa fa-lg fa-pencil"></i>
+                  </v-btn>
+                  <v-btn
+                    icon
+                    @click.prevent="[confirmaExlusao = true, usuarioStore.comissao = data.item]"
+                    class="mr-1"
+                  >
+                    <i class="fa fa-lg fa-trash"></i>
+                  </v-btn>
+                </td>
               </template>
             </v-data-table>
-
-            <span>A comissão considerada ativa pelo sistema será sempre a ultima*</span>
           </v-flex>
+
+          <small>* indica os campos obrigatórios</small>
         </v-card-text>
+
         <v-card-actions>
           <v-btn color="blue darken-1" flat @click="reset">Limpar</v-btn>
           <v-spacer></v-spacer>
@@ -118,7 +143,7 @@
         <v-card-title>
           <span class="headline">Excluir comissão</span>
         </v-card-title>
-        <v-card-text>Excluir comissão {{ usuarioStore.comissao.id }} de {{ usuarioStore.comissao.perc_comissao }} ?</v-card-text>
+        <v-card-text>Excluir comissão {{ usuarioStore.comissao.id }} de {{ usuarioStore.comissao.perc_comissao_vista }} ?</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="blue darken-1" flat @click="confirmaExlusao = false">Fechar</v-btn>
@@ -141,7 +166,7 @@ export default {
   directives: { money: VMoney },
   computed: {
     ...mapState("app", ["color"]),
-    ...mapState(["usuarioStore", "usuarioStore", "modalStore"])
+    ...mapState(["usuarioStore", "modalStore"])
   },
   data() {
     return {
@@ -154,11 +179,11 @@ export default {
         suffix: " %"
       },
       fields: [
-        { value: "id", text: "Código", sortable: false },
-        { value: "tipo", text: "Tipo", sortable: false },
-        { value: "usuario", text: "Usuário", sortable: false },
-        { value: "data", text: "Data início", sortable: false },
-        { value: "perc_comissão", text: "Percentual", sortable: false },
+        { value: "ativa", text: "Ativa?", sortable: true },
+        { value: "tipo", text: "Tipo", sortable: true },
+        { value: "ordem", text: "Ordem", sortable: true },
+        { value: "data", text: "Data início", sortable: true },
+        { value: "perc_comissão", text: "Percentual", sortable: true },
         { value: "actions", text: "Ações" }
       ],
       pagination: {
@@ -170,9 +195,15 @@ export default {
       },
       valid: true,
       confirmaExlusao: false,
-      nameRules: [
-        v => !!v || "Nome é obrigatório",
-        v => (!!v && v.length >= 3) || "Nome deve ter no mínimo 3 caracteres"
+      tipoRules: [v => !!v || "Tipo é obrigatório"],
+      ordemRules: [
+        v => !!v || "Ordem é obrigatória",
+        v =>
+          (!!v && v === parseInt(v)) || "Informe um número inteiro neste campo"
+      ],
+      percRules: [
+        v => !!v || "Percentual a vista é obrigatório",
+        v => (!!v && v !== "0,00 %") || "Percentual a vista não pode ser 0,00 %"
       ]
     };
   },
@@ -183,22 +214,28 @@ export default {
   },
   methods: {
     getColor(tipo) {
-      if (tipo == 1) return "info";
-      else if (tipo == 2) return "success";
-      else return "danger";
+      if (tipo === 1) return "info";
+      else if (tipo === 2) return "warning";
+      else if (tipo === true) return "success";
+      else if (tipo === false) return "danger";
+      return "danger";
     },
     reset() {
-      this.comissao = {};
       this.mode = "save";
-      this.$refs.form ? this.$refs.form.reset() : "";
+      this.$refs.form ? this.$refs.form.resetValidation() : "";
 
-      this.$refs.perc_comissao
-        ? (this.$refs.perc_comissao.$el.getElementsByTagName(
+      this.comissao = {
+        ordem: 1,
+        ativa: true
+      };
+
+      this.$refs.perc_comissao_vista
+        ? (this.$refs.perc_comissao_vista.$el.getElementsByTagName(
             "input"
           )[0].value = 0)
         : null;
-      this.$refs.perc_representante
-        ? (this.$refs.perc_representante.$el.getElementsByTagName(
+      this.$refs.perc_comissao_prazo
+        ? (this.$refs.perc_comissao_prazo.$el.getElementsByTagName(
             "input"
           )[0].value = 0)
         : null;
@@ -209,26 +246,31 @@ export default {
       this.mode = "edit";
 
       this.comissao = item;
-      this.$refs.perc_comissao.$el.getElementsByTagName(
+      this.$refs.perc_comissao_vista.$el.getElementsByTagName(
         "input"
-      )[0].value = this.comissao.perc_comissao;
-      this.$refs.perc_representante.$el.getElementsByTagName(
+      )[0].value = this.comissao.perc_comissao_vista;
+      this.$refs.perc_comissao_prazo.$el.getElementsByTagName(
         "input"
-      )[0].value = this.comissao.perc_representante;
+      )[0].value = this.comissao.perc_comissao_prazo;
     },
     loadComissoes(comissao) {
       if (!comissao.id_usuario) return;
 
-      const url = `${urlBD}/usuarioComissoes/${comissao.id_usuario}`;
+      const url = `${urlBD}/usuarioComissoes/${comissao.id_usuario}?order=${this.pagination.sortBy}&desc=${this.pagination.descending}`;
       axios.get(url).then(res => {
         this.comissao.id_usuario = comissao.id_usuario;
         this.usuarioStore.comissoes = res.data;
       });
     },
     async save() {
+      if (!this.$refs.form.validate()) return;
+
       const method = this.comissao.id ? "put" : "post";
       const id = this.comissao.id ? this.comissao.id : "";
       const urlcomissoes = `${urlBD}/usuarioComissoes/${id}`;
+
+      if (!this.comissao.id_usuario)
+        this.comissao.id_usuario = this.usuarioStore.currentUsuario.id;
 
       await axios[method](urlcomissoes, this.comissao)
         .then(() => {
@@ -261,7 +303,7 @@ export default {
             new Date(),
             "EXCLUSÃO",
             "COMISSÕES",
-            `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu a comissão ${this.usuarioStore.comissao.nome}`
+            `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu a comissão ${this.usuarioStore.comissao.id} do tipo ${this.usuarioStore.comissao.tipo} e percentual ${this.usuarioStore.comissao.perc_comissao_vista}`
           );
         })
         .catch(showError);

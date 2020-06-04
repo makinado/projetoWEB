@@ -212,7 +212,8 @@ module.exports = app => {
 
     const getAll = async (req, res) => {
         app.db('produtos')
-            .select('id as value', 'descricao as text', 'ncm', 'valor_unitario', 'valor_venda')
+            .select('id as value', 'descricao as text', 'perc_comissao', 'valor_unitario', 'valor_venda')
+            .orderBy('descricao')
             .then(async produtos => {
                 produtos = produtos.map(produto => {
                     produto.valor_unitario = formatToBRL(produto.valor_unitario)

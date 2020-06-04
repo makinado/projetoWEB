@@ -31,7 +31,7 @@
                       <v-container grid-list-xl>
                         <v-form ref="form" v-model="valid">
                           <v-layout wrap>
-                            <v-flex xs12 md3>
+                            <v-flex xs12 md4>
                               <v-text-field
                                 ref="valor"
                                 color="primary"
@@ -42,7 +42,7 @@
                               ></v-text-field>
                             </v-flex>
 
-                            <v-flex xs12 md3>
+                            <v-flex xs12 md4>
                               <v-autocomplete
                                 no-data-text="Nenhum resultado"
                                 dense
@@ -51,21 +51,26 @@
                                 v-model="movim.dc"
                                 :items="[{ value: 'D', text: 'Débito' }, { value: 'C', text: 'Crédito' }]"
                                 :rules="tipoRules"
+                                clearable
+                                @change="delete movim.id_classificacao"
                               ></v-autocomplete>
                             </v-flex>
-                            <v-flex xs12 md3>
+                            <v-flex xs12 md4>
                               <v-autocomplete
                                 dense
                                 :color="color"
                                 label="Classificação"
                                 v-model="movim.id_classificacao"
-                                :items="financeiroStore.classificacoes"
+                                :items="classificacaoStore.classificacoes"
+                                no-data-text="Selecione o tipo de movimentação para carregar as classificações"
                                 prepend-icon="fa fa-lg fa-plus-circle"
                                 @click:prepend="[financeiroStore.classificacao = null, modalStore.classificacoes.visible = true]"
-                                @focus="$store.dispatch('loadClassificacoes', movim.dc ? (movim.dc == 'C' ? 1 : 2) : '')"
+                                item-text="path"
+                                clearable
+                                @focus="getTipoConta"
                               ></v-autocomplete>
                             </v-flex>
-                            <v-flex xs12 md3>
+                            <v-flex xs12 md4>
                               <v-autocomplete
                                 dense
                                 :color="color"
@@ -75,9 +80,10 @@
                                 prepend-icon="fa fa-lg fa-plus-circle"
                                 @click:prepend="[financeiroStore.documento = null, modalStore.documentos.visible = true]"
                                 @focus="$store.dispatch('loadDocumentos')"
+                                clearable
                               ></v-autocomplete>
                             </v-flex>
-                            <v-flex xs12 md3>
+                            <v-flex xs12 md4>
                               <v-text-field
                                 :color="color"
                                 label="Número documento"
@@ -523,6 +529,14 @@ export default {
       if (tipo === "C") return "green";
       else return "red";
     },
+    getTipoConta() {
+      if (!this.movim.dc) {
+        this.$store.commit("setClassificacoes", []);
+        return;
+      }
+
+      this.$store.dispatch("loadClassificacoes", this.movim.dc == "C" ? 1 : 2);
+    },
     reset() {
       this.movim = {};
       this.tabIndex = "tab-1";
@@ -551,7 +565,6 @@ export default {
         axios
           .get(url)
           .then(res => {
-            console.log(res.data.data);
             this.count = res.data.count;
             this.paginationMovim.rowsPerPage = res.data.limit;
             this.movimContaItens = res.data.data.map(movim => {

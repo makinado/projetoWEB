@@ -11,18 +11,28 @@ module.exports = app => {
         try {
             existsOrError(comissao.tipo, 'Tipo da comissão não informado')
             existsOrError(comissao.id_usuario, 'Vendedor não informado')
-            existsOrError(comissao.perc_comissao, 'Percentual de comissão não informado')
+            existsOrError(comissao.ordem, 'Ordem do vendedor não informada')
+            existsOrError(comissao.perc_comissao_vista, 'Percentual de comissão não informado')
 
-            if (comissao.perc_comissao == '0,00')
+            if (comissao.perc_comissao_vista == '0,00')
                 throw 'Percentual de comissão não informado'
 
-            comissao.perc_comissao = parseNumber(comissao.perc_comissao)
-            comissao.data = new Date()
+            const comissaoDB = await app.db('usuario_comissao').select('id').where({ tipo: comissao.tipo, id_usuario: comissao.id_usuario, ordem: comissao.ordem, ativa: true }).first()
+            if (!comissao.id) {
+                notExistsOrError(comissaoDB, 'Já existe uma comissão ativa com estes dados')
+            }
         } catch (e) {
             return res.status(400).send(e.toString())
         }
 
-        comissao.perc_representante = parseNumber(comissao.perc_representante)
+        const desativarComissao = await app.db('usuario_comissao').select('tipo').where({ id_usuario: comissao.id_usuario, ativa: true }).whereNot({ tipo: comissao.tipo }).first()
+        if (desativarComissao) {
+            await app.db('usuario_comissao').update({ ativa: false }).where({ tipo: desativarComissao.tipo, ativa: true })
+        }
+
+        comissao.perc_comissao_vista = parseNumber(comissao.perc_comissao_vista)
+        comissao.data = new Date()
+        comissao.perc_comissao_prazo = parseNumber(comissao.perc_comissao_prazo)
         delete comissao.usuario
 
         if (comissao.id)
@@ -52,10 +62,10 @@ module.exports = app => {
             .join('usuarios', 'usuario_comissao.id_usuario', 'usuarios.id')
             .select('usuario_comissao.*', 'usuarios.nome as usuario')
             .where({ id_usuario: req.params.id })
-            .orderBy('usuarios.nome')
+            .orderBy(req.query.order || 'data', req.query.desc || "asc")
             .then(async comissoes => {
                 comissoes = comissoes.map(c => {
-                    c.perc_comissao = formatToBRL(c.perc_comissao || 0).replace('R$', '') + " %"
+                    c.perc_comissao_vista = formatToBRL(c.perc_comissao_vista || 0).replace('R$', '') + " %"
 
                     return c
                 })

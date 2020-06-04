@@ -17,6 +17,10 @@ export default {
       state.TemplateVisible = false
     }
   },
+  setNotificacoes(state, notificacoes) {
+    console.log(notificacoes)
+    state.notificacoes = notificacoes
+  },
   setEmpresa(state, empresa) {
     state.empresaStore.currentEmpresa = empresa
   },
@@ -82,7 +86,7 @@ export default {
     state.vendaStore.vendas = vendas
   },
   setClassificacoes(state, classificacoes) {
-    state.financeiroStore.classificacoes = classificacoes
+    state.classificacaoStore.classificacoes = classificacoes
   },
   setPDVProdutos(state, produtos) {
     state.vendaStore.pdv.produtos = produtos.map(p => {

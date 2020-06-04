@@ -74,9 +74,13 @@ module.exports = app => {
             .orderBy('usuarios.nome')
             .then(async metas => {
                 metas = await Promise.all(metas.map(async m => {
-                    const valor_vendas = await app.db('venda').sum('valor_total').where({ id_vendedor: m.id_usuario })
-                    m.concluido_valor = valor_vendas[0].sum || 0
-                    m.concluido_porc = parseNumber(valor_vendas[0].sum || "0,00", '.') * 100 / parseNumber(m.valor, '.')
+                    const valor_vendas = await app.db('venda')
+                        .join('usuario_vendas', 'usuario_vendas.id_venda', 'venda.id')
+                        .sum('venda.valor_total')
+                        .groupBy('id_usuario')
+                        .where({ 'usuario_vendas.id_usuario': m.id_usuario })
+                    m.concluido_valor = valor_vendas[0] ? valor_vendas[0].sum : 0
+                    m.concluido_porc = valor_vendas[0] ? parseNumber(valor_vendas[0].sum || "0,00", '.') * 100 / parseNumber(m.valor, '.') : 0
 
                     m.valor = formatToBRL(m.valor)
 

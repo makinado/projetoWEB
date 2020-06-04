@@ -563,7 +563,8 @@ export default {
       "data_final",
       new Date().toISOString().substr(0, 10)
     );
-    this.handleGraficos();
+    // this.handleGraficos();
+    this.$store.dispatch("loadNotificacoes");
   }
 };
 </script>

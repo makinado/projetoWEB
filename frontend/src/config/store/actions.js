@@ -44,6 +44,11 @@ export default {
       store.dispatch('loadProdutos')
     }).catch(showError)
   },
+  async loadNotificacoes(state) {
+    axios.get(`${urlBD}/notificacoes`).then(res => {
+      state.commit('setNotificacoes', res.data)
+    })
+  },
   async loadEmpresas(state) {
     const url = `${urlBD}/empresas/todas`;
     axios.get(url).then(res => {

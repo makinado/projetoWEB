@@ -12,11 +12,6 @@
             class="headline"
           >Realizar {{ tipo_conta == 1 ? 'pagamento' : 'recebimento' }} no valor de {{ valor | currency }}</span>
         </v-flex>
-        <v-flex xs12>
-          <font color="red">
-            <small>O valor {{ tipo_conta == 1 ? 'pago' : 'recebido' }} será o valor original da parcela</small>
-          </font>
-        </v-flex>
       </v-card-title>
       <v-card-text>
         <v-container grid-list-xl>
@@ -127,6 +122,7 @@
                   label="Valor pago"
                   v-money="money"
                   :rules="valorRules"
+                  disabled
                 ></v-text-field>
               </v-flex>
             </v-layout>
@@ -254,7 +250,7 @@ export default {
       const id = this.pagamento.id_conta;
 
       if (!id) return;
-      
+
       this.saldo = formatToBRL(
         this.financeiroStore.contas.find(conta => conta.value == id)
           .saldo_atual || 0

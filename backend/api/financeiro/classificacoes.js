@@ -43,9 +43,36 @@ module.exports = app => {
         }
     }
 
+    const withPath = classificacoes => {
+        const getParent = (classificacoes, id_pai) => {
+            const parent = classificacoes.filter(parent => parent.value === id_pai)
+            return parent.length ? parent[0] : null
+        }
+
+        const classificacoesWithPath = classificacoes.map(classificacao => {
+            let path = classificacao.text
+            let parent = getParent(classificacoes, classificacao.id_pai)
+
+            while (parent) {
+                path = `${parent.text} > ${path}`
+                parent = getParent(classificacoes, parent.id_pai)
+            }
+
+            return { ...classificacao, path }
+        })
+
+        classificacoesWithPath.sort((a, b) => {
+            if (a.path < b.path) return -1
+            if (a.path > b.path) return 1
+            return 0
+        })
+
+        return classificacoesWithPath
+    }
+
     const getAll = async (req, res) => {
         app.db('classificacao')
-            .select('id as value', 'descricao as text')
+            .select('id as value', 'descricao as text', 'id_pai')
             .where(async (qb) => {
                 if (req.query.tipo == 1)
                     qb.where('classificacao.tipo', '=', 1);
@@ -53,7 +80,7 @@ module.exports = app => {
                     qb.where('classificacao.tipo', '=', 2);
             })
             .orderBy('descricao')
-            .then(classificacoes => { res.json(classificacoes) })
+            .then(classificacoes => res.json(withPath(classificacoes)))
             .catch(e => { console.log(e.toString()); res.status(500).send(e.toString()) })
     }
 
@@ -66,7 +93,7 @@ module.exports = app => {
                     qb.where('classificacao.tipo', '=', 2);
             })
             .orderBy('descricao')
-            .then(classificacoes => res.json(classificacoes))
+            .then(classificacoes => res.json((classificacoes)))
             .catch(e => { console.log(e.toString()); res.status(500).send(e.toString()) })
     }
 

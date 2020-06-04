@@ -3,7 +3,6 @@
     v-model="modalStore.vendas.vendas.visible"
     fullscreen
     persistent
-    hide-overlay
     transition="dialog-bottom-transition"
   >
     <v-card v-if="modalStore.vendas.vendas.visible">
@@ -55,6 +54,7 @@
                   :items="[{ value: 1, text: 'Orçamento' }, { value: 2, text: 'Venda' }]"
                   v-model="venda.tipo"
                   deletable-chips
+                  @change="venda.tipo == 2 ? setDataCriacao() : setDataContato()"
                   :rules="tipoRules"
                 >
                   <v-tooltip slot="prepend" bottom>
@@ -115,7 +115,37 @@
                       <v-card-text>
                         <v-container grid-list-xl>
                           <v-layout wrap>
-                            <v-flex xs12 md6>
+                            <v-flex v-if="venda.tipo == 2" xs12>
+                              <v-menu
+                                v-model="menu"
+                                :close-on-content-click="false"
+                                :nudge-right="40"
+                                transition="scale-transition"
+                                offset-y
+                                full-width
+                                max-width="290px"
+                                min-width="290px"
+                              >
+                                <template v-slot:activator="{ on }">
+                                  <v-text-field
+                                    :color="color"
+                                    v-model="computedDateFormatted2"
+                                    label="Data da venda"
+                                    prepend-icon="event"
+                                    readonly
+                                    v-on="on"
+                                  ></v-text-field>
+                                </template>
+                                <v-date-picker
+                                  @input="menu = false"
+                                  scrollable
+                                  :color="color"
+                                  v-model="venda.data_criacao"
+                                  locale="pt-br"
+                                ></v-date-picker>
+                              </v-menu>
+                            </v-flex>
+                            <v-flex v-if="venda.tipo == 1" xs12 md6>
                               <v-menu
                                 v-model="menu"
                                 :close-on-content-click="false"
@@ -145,7 +175,7 @@
                                 ></v-date-picker>
                               </v-menu>
                             </v-flex>
-                            <v-flex xs12 md6>
+                            <v-flex v-if="venda.tipo == 1" xs12 md6>
                               <v-menu
                                 lazy
                                 v-model="menu1"
@@ -176,34 +206,20 @@
                                 ></v-date-picker>
                               </v-menu>
                             </v-flex>
-                            <v-flex xs12 md6>
+                            <v-flex xs12>
                               <v-autocomplete
                                 class="tag-input"
                                 chips
                                 dense
                                 :color="color"
-                                label="Vendedor*"
+                                label="Vendedores*"
                                 :items="usuarioStore.currentUsuarios"
                                 prepend-icon="fa fa-lg fa-plus-circle"
                                 @click:prepend="[usuarioStore.usuario = null, modalStore.usuarios.visible = true]"
-                                v-model="venda.id_vendedor"
+                                v-model="vendedores"
                                 :rules="vendedorRules"
                                 @focus="$store.dispatch('loadUsuarios')"
-                                deletable-chips
-                              ></v-autocomplete>
-                            </v-flex>
-                            <v-flex xs12 md6>
-                              <v-autocomplete
-                                class="tag-input"
-                                chips
-                                dense
-                                :color="color"
-                                label="Representante"
-                                :items="usuarioStore.currentUsuarios"
-                                prepend-icon="fa fa-lg fa-plus-circle"
-                                @click:prepend="[usuarioStore.usuario = null, modalStore.usuarios.visible = true]"
-                                v-model="venda.id_representante"
-                                @focus="$store.dispatch('loadUsuarios')"
+                                multiple
                                 deletable-chips
                               ></v-autocomplete>
                             </v-flex>
@@ -317,7 +333,7 @@
                                 :color="color"
                                 label="VALOR DO FRETE"
                                 v-money="money"
-                                @blur="calcTotalizadores"
+                                @blur="calcTotal"
                               ></v-text-field>
                             </v-flex>
                             <v-flex xs12 md6>
@@ -327,7 +343,7 @@
                                 :color="color"
                                 label="VALOR DO SEGURO"
                                 v-money="money"
-                                @blur="calcTotalizadores"
+                                @blur="calcTotal"
                               ></v-text-field>
                             </v-flex>
                             <v-flex xs12 md6>
@@ -337,7 +353,7 @@
                                 :color="color"
                                 label="VALOR DE DESCONTO"
                                 v-money="money"
-                                @blur="calcTotalizadores"
+                                @blur="calcTotal"
                               ></v-text-field>
                             </v-flex>
                             <v-flex xs12 md6>
@@ -347,7 +363,7 @@
                                 :color="color"
                                 label="VALOR DE OUTRAS DESPESAS"
                                 v-money="money"
-                                @blur="calcTotalizadores"
+                                @blur="calcTotal"
                               ></v-text-field>
                             </v-flex>
                             <v-flex xs12 md6>
@@ -386,32 +402,44 @@
               </v-layout>
               <v-divider></v-divider>
             </v-flex>
+
+            <v-layout align-end>
+              <v-spacer></v-spacer>
+
+              <v-tooltip bottom>
+                <v-autocomplete
+                  slot="activator"
+                  class="tag-input"
+                  deletable-chips
+                  dense
+                  chips
+                  v-model="venda.id_tabela_preco"
+                  label="Tabela de preços"
+                  :items="vendaStore.tabelas"
+                  no-data-text="Nenhuma tabela cadastrada ou nenhuma empresa selecionada"
+                  prepend-icon="fa fa-lg fa-plus-circle"
+                  @click:prepend="modalStore.tabelas.visible = true"
+                  @change="aplicarTabela"
+                  return-object
+                  @focus="$store.dispatch('loadTabelas')"
+                ></v-autocomplete>
+                <span>Desconto aplicado sobre o valor total de cada produto</span>
+              </v-tooltip>
+            </v-layout>
             <v-layout align-end>
               <span>Edite valores e quantidades do produto diretamente na tabela</span>
 
               <v-spacer></v-spacer>
 
-              <v-flex xs12 md2 class="p-0">
-                <v-tooltip bottom>
-                  <v-autocomplete
-                    slot="activator"
-                    class="tag-input"
-                    deletable-chips
-                    dense
-                    chips
-                    v-model="venda.id_tabela_preco"
-                    label="Tabela de preços"
-                    :items="vendaStore.tabelas"
-                    no-data-text="Nenhuma tabela cadastrada ou nenhuma empresa selecionada"
-                    prepend-icon="fa fa-lg fa-plus-circle"
-                    @click:prepend="modalStore.tabelas.visible = true"
-                    @change="aplicarTabela"
-                    return-object
-                    @focus="$store.dispatch('loadTabelas')"
-                  ></v-autocomplete>
-                  <span>Desconto aplicado sobre o valor total de cada produto</span>
-                </v-tooltip>
-              </v-flex>
+              <v-tooltip bottom>
+                <v-btn
+                  slot="activator"
+                  class="v-btn-common"
+                  color="warning"
+                  @click="setFreteSeguro"
+                >Ratear frete e seguro</v-btn>
+                <span>Ratear os valores de frete e seguro nos produtos para somar no custo</span>
+              </v-tooltip>
               <v-tooltip bottom class="ml-3">
                 <v-btn
                   slot="activator"
@@ -434,101 +462,100 @@
             no-data-text="Nenhum produto adicionado"
           >
             <template slot="items" slot-scope="data">
-              <td>{{ data.item.sequencia }}</td>
-              <td>
-                <v-flex xs10>
-                  <v-autocomplete
-                    class="tag-input"
-                    chips
-                    deletable-chips
-                    v-model="data.item.id"
-                    label="Selecione"
-                    :items="produtoStore.produtos"
-                    prepend-icon="fa fa-lg fa-plus-circle"
-                    @click:prepend="modalStore.produtos.visible = true"
-                    @change="[loadDados(data.item)]"
-                    auto-select-first
-                    :search-input.sync="searchProduto"
-                    dense
-                    no-data-text="Nenhum produto cadastrado"
-                    @focus="$store.dispatch('loadProdutos')"
-                  >
-                    <template v-slot:no-data>
-                      <v-btn
-                        color="secondary"
-                        flat
-                        small
-                        v-if="searchProduto"
-                        @click="$store.dispatch('addProduto', { descricao: searchProduto })"
-                      >
-                        <span>
-                          <v-icon>fa fa-lg fa-plus-circle</v-icon>
-                          {{ searchProduto }}
-                        </span>
-                      </v-btn>
-                    </template>
-                  </v-autocomplete>
-                </v-flex>
-              </td>
-              <td>{{ data.item.qtdEstoque | decimal}}</td>
-              <td>
-                <v-flex xs12 md6>
-                  <v-text-field
-                    ref="qtde"
-                    class="mt-2"
-                    v-model="data.item.quantidade"
-                    v-money="decimal"
-                    @blur="[calcTotal(data.item)]"
-                  ></v-text-field>
-                </v-flex>
-              </td>
-              <td>
-                <v-flex xs12 md6>
-                  <v-text-field
-                    ref="qtde"
-                    v-if="disable"
-                    class="mt-2"
-                    v-model="data.item.valor_venda"
-                    v-money="money"
-                    @blur="[calcTotal(data.item)]"
-                  ></v-text-field>
-                  <span v-else>{{ data.item.valor_venda | currency }}</span>
-                </v-flex>
-              </td>
-              <td>
-                <v-flex xs12 md6>
-                  <v-text-field
-                    ref="qtde"
-                    class="mt-2"
-                    v-if="disable"
-                    v-model="data.item.valor_desconto"
-                    v-money="money"
-                    @blur="[calcTotal(data.item)]"
-                  ></v-text-field>
-                  <span v-else>{{ data.item.valor_desconto | currency }}</span>
-                </v-flex>
-              </td>
-              <td>{{ data.item.valor_total || 'R$ 0,00'}}</td>
-              <td>
-                <v-tooltip bottom>
-                  <v-btn slot="activator" icon class="mr-1" @click="deleteItem(data.item)">
-                    <i class="fa fa-lg fa-trash"></i>
-                  </v-btn>
-                  <span>Excluir produto</span>
-                </v-tooltip>
-              </td>
+              <tr>
+                <td>{{ data.item.sequencia }}</td>
+                <td>
+                  <v-flex xs10>
+                    <v-autocomplete
+                      class="tag-input"
+                      chips
+                      deletable-chips
+                      v-model="data.item.id"
+                      label="Selecione"
+                      :items="produtoStore.produtos"
+                      prepend-icon="fa fa-lg fa-plus-circle"
+                      @click:prepend="modalStore.produtos.visible = true"
+                      @change="[loadDados(data.item)]"
+                      auto-select-first
+                      :search-input.sync="searchProduto"
+                      dense
+                      no-data-text="Nenhum produto cadastrado"
+                      @focus="$store.dispatch('loadProdutos')"
+                    >
+                      <template v-slot:no-data>
+                        <v-btn
+                          color="secondary"
+                          flat
+                          small
+                          v-if="searchProduto"
+                          @click="$store.dispatch('addProduto', { descricao: searchProduto })"
+                        >
+                          <span>
+                            <v-icon>fa fa-lg fa-plus-circle</v-icon>
+                            {{ searchProduto }}
+                          </span>
+                        </v-btn>
+                      </template>
+                    </v-autocomplete>
+                  </v-flex>
+                </td>
+                <td>{{ data.item.qtdEstoque | decimal}}</td>
+                <td>{{ data.item.perc_comissao | percent}}</td>
+                <td>
+                  <v-flex xs12 md6>
+                    <v-text-field
+                      class="mt-2"
+                      v-model="data.item.quantidade"
+                      v-money="decimal"
+                      @blur="[calcTotal(data.item)]"
+                    ></v-text-field>
+                  </v-flex>
+                </td>
+                <td>
+                  <v-flex xs12 md6>
+                    <v-text-field
+                      v-if="disable"
+                      class="mt-2"
+                      v-model="data.item.valor_venda"
+                      v-money="money"
+                      @blur="[calcTotal(data.item)]"
+                    ></v-text-field>
+                    <span v-else>{{ data.item.valor_venda }}</span>
+                  </v-flex>
+                </td>
+                <td>
+                  <v-flex xs12 md6>
+                    <v-text-field
+                      class="mt-2"
+                      v-if="disable"
+                      v-model="data.item.valor_desconto"
+                      v-money="money"
+                      @blur="[calcTotal(data.item)]"
+                    ></v-text-field>
+                    <span v-else>{{ data.item.valor_desconto | currency }}</span>
+                  </v-flex>
+                </td>
+                <td>{{ data.item.valor_seguro || "R$ 0,00" }}</td>
+                <td>{{ data.item.valor_frete || "R$ 0,00" }}</td>
+                <td>{{ data.item.valor_total || 'R$ 0,00'}}</td>
+                <td>
+                  <v-tooltip bottom>
+                    <v-btn slot="activator" icon class="mr-1" @click="deleteItem(data.item)">
+                      <i class="fa fa-lg fa-trash"></i>
+                    </v-btn>
+                    <span>Excluir produto</span>
+                  </v-tooltip>
+                </td>
+              </tr>
             </template>
             <template slot="footer">
-              <td colspan="3">
+              <td colspan="4">
                 <h5>TOTAIS</h5>
               </td>
-              <td>
+              <td colspan="2">
                 <v-layout row>{{ totais.quantidade || '0,00' }}</v-layout>
               </td>
-              <td>
-                <v-layout row>{{ totais.valor_venda || 'R$ 0,00' }}</v-layout>
-              </td>
-              <td>
+              <td colspan="4">
                 <v-layout row>{{ totais.valor_desconto || 'R$ 0,00' }}</v-layout>
               </td>
               <td colspan="2">
@@ -541,6 +568,7 @@
             v-if="venda.tipo == 2"
             :component="venda"
             :showTotais="!modalStore.vendas.vendas.title.includes('Visualizar')"
+            :valor_total="venda.valor_total"
           />
         </v-container>
       </v-card-text>
@@ -591,19 +619,30 @@ export default {
       set(value) {
         this.venda.data_agendamento = value;
       }
+    },
+    computedDateFormatted2: {
+      get() {
+        return formatDate(this.venda.data_criacao);
+      },
+      set(value) {
+        this.venda.data_criacao = value;
+      }
     }
   },
   watch: {
-    "$store.state.modalStore.vendas.vendas.visible": function() {
+    "$store.state.modalStore.vendas.vendas.visible"(val) {
       if (this.modalStore.vendas.vendas.visible) {
         this.limpaTela();
       }
+
+      document.querySelector("html").style.overflow = val ? "hidden" : null;
     }
   },
   components: { FinanceiroVue: () => import("../material/Financeiro") },
   data() {
     return {
       venda: {},
+      vendedores: [],
       produtos_venda: [],
       cliente: {},
       clienteFilter: null,
@@ -635,11 +674,14 @@ export default {
       },
       fieldsProdutos: [
         { value: "sequencia", text: "Item" },
-        { value: "produto", text: "Produto" },
+        { value: "produto", text: "Produto", fixed: true, sortable: false },
         { value: "qtdEstoque", text: "Estoque disponível" },
+        { value: "perc_comissao", text: "Comissão" },
         { value: "quantidade", text: "Quantidade" },
         { value: "valor_venda", text: "Valor venda" },
         { value: "valor_desconto", text: "Valor desconto" },
+        { value: "valor_frete", text: "Valor frete" },
+        { value: "valor_seguro", text: "Valor seguro" },
         { value: "valor_total", text: "Valor total" },
         { value: "actions", text: "Ações" }
       ],
@@ -658,7 +700,7 @@ export default {
       ],
       empRules: [v => !!v || "Empresa é obrigatória"],
       clienteRules: [v => !!v || "Cliente é obrigatório"],
-      vendedorRules: [v => !!v || "Vendedor é obrigatório"],
+      vendedorRules: [v => !!v || "Selecione ao menos um vendedor"],
       tipoRules: [v => !!v || "Tipo é obrigatório"],
       dataRules: [v => !!v || "Datas são obrigatórias"]
     };
@@ -668,6 +710,12 @@ export default {
       if (status === "OK") return "green";
       else if (status === "Venda impossibilitada") return "red";
       else return "yellow darken";
+    },
+    setDataCriacao() {
+      this.venda.data_criacao = new Date().toISOString().substr(0, 10);
+    },
+    setDataContato() {
+      this.venda.data_contato = new Date().toISOString().substr(0, 10);
     },
     formatDate(date) {
       if (!date) return null;
@@ -693,18 +741,13 @@ export default {
       this.calcTotal();
     },
     reset() {
-      this.produto = {};
-      this.produtos_venda = [];
-      this.venda = {};
-      this.financeiroStore.financ = [];
-
-      this.venda.id_vendedor = this.usuarioStore.currentUsuario.id;
-
-      this.cliente = {};
-      this.totais = {};
-
       this.$refs.form ? this.$refs.form.reset() : "";
       this.$refs.form1 ? this.$refs.form1.reset() : "";
+
+      this.vendedores = [this.usuarioStore.currentUsuario.id];
+
+      this.produtos_venda = [];
+      this.financeiroStore.financ = [];
 
       this.$refs.valor_frete
         ? (this.$refs.valor_frete.$el.getElementsByTagName(
@@ -754,18 +797,27 @@ export default {
           .catch(showError);
       }
     },
-    loadDados(item) {
+    async loadDados(item) {
+      if (!item.id) return;
+
+      this.disable = false;
+
       const produtoFilter = this.produtoStore.produtos.find(produto => {
         return produto.value === item.id;
       });
 
-      this.produtos_venda = this.produtos_venda.map(produto => {
+      this.produtos_venda = await this.produtos_venda.map(produto => {
         if (produto.sequencia === item.sequencia) {
+          console.log(produtoFilter);
+
           produto.valor_venda = produtoFilter.valor_venda;
           produto.qtdEstoque = produtoFilter.qtdEstoque;
+          produto.perc_comissao = produtoFilter.perc_comissao;
         }
         return produto;
       });
+
+      this.disable = true;
     },
     parseValores() {
       this.venda.data_contato = new Date(this.venda.data_contato)
@@ -869,32 +921,6 @@ export default {
       });
       this.calcTotal().then(() => (this.disable = true));
     },
-    calcTotalizadores() {
-      const {
-        valor_frete,
-        valor_seguro,
-        valor_desconto,
-        outras_despesas
-      } = this.venda;
-
-      // valor dos produtos
-      this.venda.valor_produtos = this.totais.valor_total;
-      const valor_produtos = this.venda.valor_produtos;
-      this.$refs.valor_produtos.$el.getElementsByTagName("input")[0].value =
-        this.venda.valor_produtos || "";
-
-      // valor total da nota
-      this.venda.valor_total = formatToBRL(
-        parseNumber(valor_produtos || "0,00") +
-          parseNumber(valor_frete) +
-          parseNumber(valor_seguro) +
-          parseNumber(outras_despesas) -
-          parseNumber(valor_desconto)
-      );
-      this.$refs.valor_total.$el.getElementsByTagName(
-        "input"
-      )[0].value = this.venda.valor_total;
-    },
     async calcTotal(item) {
       if (item) {
         this.produtos_venda = this.produtos_venda.filter(produto => {
@@ -910,50 +936,78 @@ export default {
       }
 
       let quantidade = 0,
-        valor_venda = 0,
         valor_desconto = 0,
         valor_total = 0;
 
       this.produtos_venda.forEach(produto => {
         quantidade += parseNumber(produto.quantidade || "0,00");
-        valor_venda += parseNumber(produto.valor_venda || "0,00");
         valor_desconto += parseNumber(produto.valor_desconto || "0,00");
         valor_total += parseNumber(produto.valor_total || "0,00");
       });
       this.totais = {
         quantidade: formatToBRL(quantidade).replace("R$", ""),
-        valor_venda: formatToBRL(valor_venda),
         valor_desconto: formatToBRL(valor_desconto),
         valor_total: formatToBRL(valor_total)
       };
 
-      this.calcTotalizadores();
-    },
-    calcTotalizadores() {
-      const {
-        valor_frete,
-        valor_seguro,
-        valor_desconto,
-        outras_despesas
-      } = this.venda;
-
-      // valor dos produtos
       this.venda.valor_produtos = this.totais.valor_total;
-      const valor_produtos = this.venda.valor_produtos;
-      this.$refs.valor_produtos.$el.getElementsByTagName("input")[0].value =
-        this.venda.valor_produtos || "";
-
-      // valor total da nota
       this.venda.valor_total = formatToBRL(
-        parseNumber(valor_produtos || "0,00") +
-          parseNumber(valor_frete) +
-          parseNumber(valor_seguro) +
-          parseNumber(outras_despesas) -
-          parseNumber(valor_desconto)
+        parseNumber(this.totais.valor_total || "0,00") +
+          parseNumber(this.venda.outras_despesas || "0,00") +
+          parseNumber(this.venda.valor_frete || "0,00") +
+          parseNumber(this.venda.valor_seguro || "0,00") -
+          parseNumber(this.venda.valor_desconto || "0,00")
       );
+
+      this.$refs.valor_frete.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.venda.valor_frete;
+      this.$refs.valor_seguro.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.venda.valor_seguro;
+      this.$refs.valor_desconto.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.venda.valor_desconto;
+      this.$refs.outras_despesas.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.venda.outras_despesas;
+      this.$refs.valor_produtos.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.venda.valor_produtos;
       this.$refs.valor_total.$el.getElementsByTagName(
         "input"
       )[0].value = this.venda.valor_total;
+    },
+    setFreteSeguro() {
+      this.disable = false;
+
+      this.produtos_venda.forEach(produto => {
+        if (!produto.id || produto.quantidade == "0,00") return;
+        produto.valor_frete = formatToBRL(
+          (parseNumber(this.venda.valor_frete || "0,00") /
+            parseNumber(this.totais.quantidade || "0,00")) *
+            parseNumber(produto.quantidade || "0,00")
+        );
+        produto.valor_seguro = formatToBRL(
+          (parseNumber(this.venda.valor_seguro || "0,00") /
+            parseNumber(this.totais.quantidade || "0,00")) *
+            parseNumber(produto.quantidade || "0,00")
+        );
+
+        var perc_add = parseNumber(produto.perc_custo_adicional || "0,00");
+        var dif_aliquota = parseNumber(produto.dif_aliquota || "0,00");
+
+        perc_add = perc_add ? (perc_add / 100) * soma : 0;
+        dif_aliquota = dif_aliquota ? (dif_aliquota / 100) * soma : 0;
+        produto.valor_custo = formatToBRL(
+          (parseNumber(produto.valor_total) +
+            parseNumber(produto.valor_frete || "0,00") +
+            parseNumber(produto.valor_seguro || "0,00")) /
+            parseNumber(produto.quantidade || "0,00")
+        );
+      });
+
+      this.calcTotal().then(() => (this.disable = true));
     },
     save() {
       if (!this.$refs.form.validate() || !this.$refs.form1.validate()) return;
@@ -970,6 +1024,7 @@ export default {
       }
 
       this.venda.produtos = this.produtos_venda;
+      this.venda.vendedores = this.vendedores;
       if (this.venda.tipo == 2)
         this.venda.financeiro = this.financeiroStore.financ;
 

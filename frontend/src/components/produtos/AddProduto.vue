@@ -149,12 +149,7 @@
                               </v-tooltip>
                             </v-flex>
                             <v-flex xs12>
-                              <v-checkbox
-                                v-model="ativo"
-                                label="Ativo?"
-                                color="primary"
-                                value="ativo"
-                              ></v-checkbox>
+                              <v-switch label="Ativo" v-model="produto.ativo" :color="color"></v-switch>
                             </v-flex>
                           </v-layout>
                         </v-form>
@@ -176,7 +171,6 @@
                                 color="primary"
                                 label="Valor de venda"
                                 v-model="produto.valor_venda"
-                                @blur="calcMargemContrib"
                                 :rules="valorVendaRules"
                               ></v-text-field>
                             </v-flex>
@@ -208,7 +202,7 @@
                                 color="primary"
                                 label="Margem de contribuição"
                                 v-model="produto.perc_margem_contribuicao"
-                                @blur="calcValorVenda"
+                                @blur="calcMargemContrib"
                               ></v-text-field>
                             </v-flex>
                             <v-flex xs12 md3>
@@ -402,7 +396,7 @@ export default {
       "usuarioStore",
       "categoriaStore",
       "modalStore"
-    ]),
+    ])
   },
   components: { AddGrupoTrib: () => import("./AddGrupoTrib") },
   data() {
@@ -418,7 +412,6 @@ export default {
       grupos_selecionados: [],
       cfops: [],
       tabIndex: "tab-1",
-      ativo: [],
       fields: [
         { value: "id", text: "Código", sortable: true },
         { value: "descricao", text: "Descricao", sortable: true },
@@ -473,70 +466,32 @@ export default {
       window.open(path, "_blank");
     },
     calcMargemContrib() {
-      let valor_unitario = parseFloat(parseNumber(this.produto.valor_unitario));
-      let valor_venda = parseFloat(parseNumber(this.produto.valor_venda));
-      let valor_lucro_bruto = parseFloat(
-        parseNumber(this.produto.valor_lucro_bruto)
-      );
-      let perc_margem_contribuicao = parseFloat(
-        parseNumber(this.produto.perc_margem_contribuicao)
+      var valor_unitario = parseNumber(this.produto.valor_unitario);
+      var valor_venda = parseNumber(this.produto.valor_venda);
+      var perc_margem_contribuicao = parseNumber(
+        this.produto.perc_margem_contribuicao
       );
 
-      if (valor_unitario !== 0 && valor_venda !== 0) {
-        perc_margem_contribuicao =
-          ((valor_venda - valor_unitario) / valor_unitario) * 100;
-        valor_lucro_bruto = valor_venda - valor_unitario;
-      }
-
-      this.produto.perc_margem_contribuicao = formatToBRL(
-        perc_margem_contribuicao
-      );
-      this.$refs.perc_margem_contribuicao.$el.getElementsByTagName(
-        "input"
-      )[0].value = moneyToNumber(this.produto.perc_margem_contribuicao) + " %";
-
-      this.produto.valor_lucro_bruto = formatToBRL(valor_lucro_bruto);
-      this.$refs.valor_lucro_bruto.$el.getElementsByTagName(
-        "input"
-      )[0].value = this.produto.valor_lucro_bruto;
-    },
-    calcValorVenda() {
-      let valor_custo_medio = parseFloat(
-        parseNumber(this.produto.valor_custo_medio, ",")
-      );
-      let valor_venda = parseFloat(parseNumber(this.produto.valor_venda, ","));
-      let valor_lucro_bruto = parseFloat(
-        parseNumber(this.produto.valor_lucro_bruto, ",")
-      );
-      let perc_margem_contribuicao = parseFloat(
-        parseNumber(this.produto.perc_margem_contribuicao, ",")
-      );
-
-      if (valor_custo_medio !== 0 && perc_margem_contribuicao !== 0) {
+      if (valor_unitario !== 0 && perc_margem_contribuicao !== 0) {
         valor_venda =
-          valor_custo_medio +
-          valor_custo_medio * (perc_margem_contribuicao / 100);
-        valor_lucro_bruto = valor_venda - valor_custo_medio;
+          valor_unitario + valor_unitario * (perc_margem_contribuicao / 100);
+        var valor_lucro_bruto = valor_venda - valor_unitario;
       }
 
       this.produto.valor_venda = formatToBRL(valor_venda);
+      this.produto.valor_lucro_bruto = formatToBRL(valor_lucro_bruto);
       this.$refs.valor_venda.$el.getElementsByTagName(
         "input"
       )[0].value = this.produto.valor_venda;
 
-      this.produto.valor_lucro_bruto = formatToBRL(valor_lucro_bruto);
       this.$refs.valor_lucro_bruto.$el.getElementsByTagName(
         "input"
       )[0].value = this.produto.valor_lucro_bruto;
     },
     calcComissao() {
-      let perc_comissao = parseFloat(
-        parseNumber(this.produto.perc_comissao, ",")
-      );
-      let valor_venda = parseFloat(parseNumber(this.produto.valor_venda, ","));
-      let valor_comissao = parseFloat(
-        parseNumber(this.produto.valor_comissao, ",")
-      );
+      let perc_comissao = parseFloat(parseNumber(this.produto.perc_comissao));
+      let valor_venda = parseFloat(parseNumber(this.produto.valor_venda));
+      let valor_comissao = parseFloat(parseNumber(this.produto.valor_comissao));
 
       valor_comissao = valor_venda * (perc_comissao / 100);
 
@@ -546,17 +501,17 @@ export default {
       )[0].value = this.produto.valor_comissao;
     },
     reset() {
-      this.produto = {};
+      this.$refs.form_basico ? this.$refs.form_basico.reset() : "";
+      this.$refs.form_valores ? this.$refs.form_valores.reset() : "";
+      this.$refs.form_fiscal ? this.$refs.form_fiscal.reset() : "";
+
+      this.produto = {
+        ativo: true
+      };
       this.tributacao_estado = {};
       this.grupos_trib = [];
       this.grupos_selecionados = [];
       this.tabIndex = "tab-1";
-
-      this.ativo.push("ativo");
-
-      this.$refs.form_basico ? this.$refs.form_basico.reset() : "";
-      this.$refs.form_valores ? this.$refs.form_valores.reset() : "";
-      this.$refs.form_fiscal ? this.$refs.form_fiscal.reset() : "";
 
       this.$refs.estoque_min
         ? (this.$refs.estoque_min.$el.getElementsByTagName(
@@ -615,12 +570,10 @@ export default {
     async loadTela(produto) {
       if (!produto) return;
 
-      if (this.pessoaStore.fornecedores.length == 0) {
-        this.$store.dispatch("loadFornecs");
-        this.$store.dispatch("loadCategoriasProdutos");
-        this.$store.dispatch("loadMarcas");
-        this.$store.dispatch("loadUnidades");
-      }
+      this.$store.dispatch("loadFornecs");
+      this.$store.dispatch("loadCategoriasProdutos");
+      this.$store.dispatch("loadMarcas");
+      this.$store.dispatch("loadUnidades");
 
       let url = `${urlBD}/produtos`;
       if (produto.id) {
@@ -632,7 +585,6 @@ export default {
               formatToBRL(this.produto.qtdEstoque)
             );
             this.parseValores();
-
             this.grupos_selecionados = produto.grupos_produto;
           })
           .catch(showError);
@@ -641,7 +593,6 @@ export default {
       }
     },
     parseValores() {
-      if (this.produto.situacao) this.ativo.push("ativo");
       this.produto.estoque_min = formatToBRL(this.produto.estoque_min);
       this.produto.estoque_max = formatToBRL(this.produto.estoque_max);
       this.produto.valor_unitario = formatToBRL(this.produto.valor_unitario);
@@ -716,9 +667,6 @@ export default {
       const urlProdutos = `${urlBD}/produtos/${id}`;
       this.produtoStore.produto = this.produto;
 
-      this.ativo.includes("ativo")
-        ? (this.produto.situacao = true)
-        : (this.produto.situacao = false);
       this.produto.grupos = this.grupos_selecionados;
 
       axios[method](urlProdutos, this.produto)

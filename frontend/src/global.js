@@ -4,7 +4,7 @@ import store from './config/store/state'
 
 export const usuarioKey = 'campag-vuetify123'
 // export const urlBD = 'https://35.247.196.105/'          // production
-export const urlBD = 'http://192.168.0.104:3000'              // LOCAL NETWORK
+export const urlBD = 'http://192.168.0.21:3000'              // LOCAL NETWORK
 // export const urlBD = 'http://localhost:3000'              // LOCAL
 
 Vue.directive('uppercase', {
