@@ -25,14 +25,14 @@ module.exports = app => {
             return res.status(400).send(e.toString())
         }
 
-        const desativarComissao = await app.db('usuario_comissao').select('tipo').where({ id_usuario: comissao.id_usuario, ativa: true }).whereNot({ tipo: comissao.tipo }).first()
+        const desativarComissao = await app.db('usuario_comissao').select('id_usuario', 'tipo').where({ id_usuario: comissao.id_usuario, ativa: true }).whereNot({ tipo: comissao.tipo }).first()
         if (desativarComissao) {
-            await app.db('usuario_comissao').update({ ativa: false }).where({ tipo: desativarComissao.tipo, ativa: true })
+            await app.db('usuario_comissao').update({ ativa: false }).where({ id_usuario: desativarComissao.id_usuario, tipo: desativarComissao.tipo, ativa: true })
         }
 
         comissao.perc_comissao_vista = parseNumber(comissao.perc_comissao_vista)
-        comissao.data = new Date()
         comissao.perc_comissao_prazo = parseNumber(comissao.perc_comissao_prazo)
+        comissao.data = new Date()
         delete comissao.usuario
 
         if (comissao.id)
@@ -51,7 +51,7 @@ module.exports = app => {
     const get = async (req, res) => {
         app.db('usuario_comissao')
             .join('usuarios', 'usuario_comissao.id_usuario', 'usuarios.id')
-            .select('usuario_comissao.id', 'usuarios.nome as usuario', 'data', 'valor')
+            .select('usuario_comissao.id', 'usuarios.nome as usuario', 'data', 'perc_comissao_vista', 'valor')
             .orderBy('usuarios.nome')
             .then(comissoes => res.json(comissoes))
             .catch(e => { console.log(e); res.status(500).send(e) })

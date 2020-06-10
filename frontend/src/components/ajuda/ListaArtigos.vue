@@ -1,10 +1,11 @@
 <template>
   <div class="articles-by-category">
-    <ul>
+    <ul class="transition-lazy-in-lazy-out">
       <li v-for="article in articles" :key="article.id">
         <ArticleItem :article="article" />
       </li>
     </ul>
+
     <div class="load-more">
       <v-btn
         v-if="loadMore"
@@ -24,7 +25,16 @@ import { mapState } from "vuex";
 
 export default {
   name: "ArticlesByCategory",
-  computed: { ...mapState("app", ["color"]), ...mapState(["modalStore"]) },
+  computed: {
+    ...mapState("app", ["color"]),
+    ...mapState(["modalStore", "artigoStore"]),
+    params() {
+      return {
+        ...this.modalStore.artigos.add,
+        ...this.artigoStore.filter
+      };
+    }
+  },
   components: {
     ArticleItem: () => import("./ArtigoItem")
   },
@@ -36,15 +46,6 @@ export default {
       loadMore: true
     };
   },
-  methods: {
-    loadArtigos() {
-      const url = `${urlBD}/artigos?limit=${this.limit}`;
-      axios(url).then(res => {
-        this.articles = res.data.data;
-        this.limit += 10;
-      });
-    }
-  },
   watch: {
     $route(to) {
       this.category.id = to.params.id;
@@ -55,14 +56,22 @@ export default {
       this.$store.dispatch("loadCategoriasArtigos");
       this.loadArtigos();
     },
-    "$store.state.modalStore.artigos.add"() {
-      if (!this.modalStore.artigos.add) {
-        this.loadArtigos();
-      }
+    params() {
+      this.loadArtigos();
+    }
+  },
+  methods: {
+    loadArtigos() {
+      const url = `${urlBD}/artigos?limit=${this.limit}&nome=${this.artigoStore
+        .filter.nome || ""}&categoria=${this.artigoStore.filter.categoria ||
+        ""}`;
+      axios(url).then(res => {
+        this.articles = res.data.data;
+        this.limit += 10;
+      });
     }
   },
   mounted() {
-    this.$store.dispatch("loadCategoriasArtigos");
     this.loadArtigos();
   }
 };

@@ -555,7 +555,7 @@
               <td colspan="2">
                 <v-layout row>{{ totais.quantidade || '0,00' }}</v-layout>
               </td>
-              <td colspan="4">
+              <td colspan="3">
                 <v-layout row>{{ totais.valor_desconto || 'R$ 0,00' }}</v-layout>
               </td>
               <td colspan="2">
@@ -746,6 +746,8 @@ export default {
 
       this.vendedores = [this.usuarioStore.currentUsuario.id];
 
+      this.venda = {};
+      this.totais = {};
       this.produtos_venda = [];
       this.financeiroStore.financ = [];
 

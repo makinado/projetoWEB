@@ -87,7 +87,7 @@ export default {
     reset(artigo) {
       this.artigo = {};
       this.$refs.form ? this.$refs.form.reset() : null;
-      if (!artigo.id) return;
+      if (!artigo) return;
 
       axios
         .get(`${urlBD}/artigos/${artigo.id}`)

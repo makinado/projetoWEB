@@ -393,8 +393,8 @@
         <v-card-text v-else>
           <v-flex xs12>Excluir {{ comprasStore.compra.length }} compras?</v-flex>
           <v-flex xs12>
-            <font color="red" v-if="confirmacao">
-              <small>Você selecionou compras já concluidas, confirma exclusão?</small>
+            <font color="red">
+              <small>Atenção! essa é uma operação que afetará as seguintes áreas do sistema - metas, estoque, produtos, financeiro e contas. Deseja continuar?</small>
             </font>
           </v-flex>
         </v-card-text>
@@ -567,42 +567,48 @@ export default {
         return;
       }
 
-      let compras = [];
+      let itens = [];
 
       if (!this.comprasStore.compra.id) {
-        compras = this.comprasStore.compra.map(item => {
+        itens = this.comprasStore.compra.map(item => {
           return {
             id: item.id,
             valor_total: item.valor_total
           };
         });
       } else {
-        compras.push({
+        itens.push({
           id: this.comprasStore.compra.id,
           valor_total: this.comprasStore.compra.valor_total
         });
       }
 
-      compras.map(async item => {
+      itens.map(item => {
         const url = `${urlBD}/compras/${item.id}`;
-        await axios
-          .delete(url)
-          .then(() => {
-            this.$toasted.global.defaultSuccess();
-            this.confirmaExclusao = false;
-            this.itens_selecionados = [];
 
-            this.loadCompras();
+        setTimeout(async () => {
+          await axios
+            .delete(url)
+            .then(() => {
+              showSuccess("Compra excluída com sucesso!");
+              this.itens_selecionados = [];
+              this.confirmaExclusao = false;
 
-            saveLog(
-              new Date(),
-              "EXCLUSÃO",
-              "COMPRAS",
-              `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu a compra ${item.id} no valor de ${item.valor_total}`
-            );
-          })
-          .catch(showError);
+              saveLog(
+                new Date(),
+                "EXCLUSÃO",
+                "COMPRAS",
+                `Usuário ${
+                  this.usuarioStore.currentUsuario.nome
+                } excluiu a compra ${item.id} no valor de ${item.valor_total |
+                  currency}`
+              );
+            })
+            .catch(showError);
+        }, 1000);
       });
+
+      this.loadCompras();
     }
   },
   mounted() {

@@ -2,6 +2,7 @@ const { formatToBRL } = require('brazilian-values')
 
 module.exports = app => {
     const { existsOrError, notExistsOrError, parseNumber } = app.api.validation
+    const vendaController = require('../vendas/vendas')
 
     const save = async (req, res) => {
         var financeiro = Object.values({ ...req.body })
@@ -26,19 +27,14 @@ module.exports = app => {
 
                 financ.data_criacao = financ.data_criacao ? financ.data_criacao : new Date()
                 financ.data_baixa = financ.data_baixa ? financ.data_baixa : null
-                financ.valor_parcela = parseNumber(financ.valor)
+                financ.valor_parcela = parseNumber(financ.valor_parcela)
                 financ.valor_desconto = parseNumber(financ.valor_desconto || "0,00")
                 financ.valor_acrescimo = parseNumber(financ.valor_acrescimo || "0,00")
                 financ.valor_pago = financ.pago ? parseNumber(financ.valor_pago) : 0
-                financ.valor_total = parseNumber(financ.valor_total)
+                financ.valor_total = parseNumber(financ.valor_total || "0,00")
+                financ.parcela = financ.parcelas
 
-                delete financ.edit
-                delete financ.menu
-                delete financ.menu1
-                delete financ.data
-                delete financ.dataNotFormated
-                delete financ.saldo_atual
-                delete financ.valor
+                delete financ.parcelas
 
                 return financ
             })
@@ -46,6 +42,12 @@ module.exports = app => {
             return res.status(400).send(e.toString())
         }
 
+        const configComissaoEmpresa = await app.db('empresas').select('comissao_faturamento_recebimento as gerarComissao').where({ id: financeiro[0].id_empresa }).first().then(e => e.gerarComissao)
+        if (configComissaoEmpresa == 2) {
+            var result = await Promise.resolve(vendaController(app).gerarComissoes(configComissaoEmpresa, null, null, null, financeiro))
+
+            comissoes = result.comissoes
+        }
 
         financeiro.forEach(financ => {
             if (financ.id) {
@@ -55,7 +57,9 @@ module.exports = app => {
                         .where({ id: financ.id })
                         .then(async () => {
                             if (financ.pago) {
+                                await app.db('comisao').where({ id_financeiro: financ.id }).delete()
                                 await app.db('conta_movimento').where({ id_movimento_financeiro: financ.id }).delete()
+
                                 const movim_conta = {
                                     id_empresa: financ.id_empresa,
                                     id_conta: financ.id_conta,
@@ -71,7 +75,13 @@ module.exports = app => {
                                     dc: financ.tipo_conta == 1 ? 'D' : 'C',
                                     valor: financ.valor_pago
                                 }
-                                return app.db('conta_movimento').insert(movim_conta).transacting(trx)
+
+                                return app.db.batchInsert('comissao', comissoes)
+                                    .transacting(trx)
+                                    .then(function () {
+                                        return app.db('conta_movimento').insert(movim_conta)
+                                            .transacting(trx)
+                                    })
                             }
                         })
                         .then(trx.commit)
@@ -103,7 +113,13 @@ module.exports = app => {
                                     dc: financ.tipo_conta == 1 ? 'D' : 'C',
                                     valor: financ.valor_pago
                                 }
-                                return app.db('conta_movimento').insert(movim_conta).transacting(trx)
+
+                                return app.db.batchInsert('comissao', comissoes)
+                                    .transacting(trx)
+                                    .then(function () {
+                                        return app.db('conta_movimento').insert(movim_conta)
+                                            .transacting(trx)
+                                    })
                             }
                         })
                         .then(trx.commit)
@@ -142,6 +158,13 @@ module.exports = app => {
             return pag
         })
 
+        const configComissaoEmpresa = await app.db('empresas').select('comissao_faturamento_recebimento as gerarComissao').where({ id: pagamento[0].id_empresa }).first().then(e => e.gerarComissao)
+        if (configComissaoEmpresa == 2) {
+            var result = await Promise.resolve(vendaController(app).gerarComissoes(configComissaoEmpresa, null, null, null, pagamento))
+
+            comissoes = result.comissoes
+        }
+
         var promises = pagamento.map(financ => {
             return app.db.transaction(async function (trx) {
                 return app.db('financeiro')
@@ -164,16 +187,20 @@ module.exports = app => {
                             dc: financ.tipo_conta == 1 ? 'D' : 'C',
                             valor: financ.valor_pago
                         }
-                        return app.db('conta_movimento').insert(movim_conta).transacting(trx)
-                    })
-                    .then(trx.commit)
-                    .catch(trx.rollback);
+
+                        return app.db.batchInsert('comissao', comissoes)
+                            .transacting(trx)
+                            .then(function () {
+                                return app.db('conta_movimento').insert(movim_conta)
+                                    .transacting(trx)
+                            })
+                    }).then(trx.commit).catch(trx.rollback);
             })
         })
 
         Promise.all(promises)
             .then(function (results) { return res.status(204).send() })
-            .catch(function (e) { return res.status(500).send('Erro ao efetuar o pagamento') })
+            .catch(function (e) { console.log(e); return res.status(500).send('Erro ao efetuar o pagamento') })
     }
 
     const get = async (req, res) => {
@@ -189,6 +216,7 @@ module.exports = app => {
             .leftJoin('documentos', 'financeiro.documento_origem', 'documentos.id')
             .select(
                 'financeiro.id',
+                'financeiro.id_movimento_origem',
                 'empresas.nome as empresa',
                 'pessoas.nome as pessoa',
                 'tipo_conta',
@@ -309,7 +337,7 @@ module.exports = app => {
             notExistsOrError(origem.id_movimento_origem, 'Há movimentos associados a este registro')
             notExistsOrError(origem.pago, 'Não é possível exluir uma conta paga')
 
-            app.db.transaction(async function (trx) {
+            await app.db.transaction(async function (trx) {
                 return app.db('financeiro')
                     .where({ id: req.params.id }).delete()
                     .transacting(trx)
@@ -344,23 +372,27 @@ module.exports = app => {
         }
 
         app.db.transaction(async function (trx) {
-            return app.db('conta_movimento')
-                .where({ id_movimento_financeiro: req.params.id }).delete()
+            return app.db('comisao').where({ id_financeiro: financ.id }).delete()
                 .transacting(trx)
                 .then(function () {
-                    return app.db('financeiro')
-                        .update(financ)
-                        .where({ id: req.params.id })
+                    return app.db('conta_movimento')
+                        .where({ id_movimento_financeiro: req.params.id }).delete()
                         .transacting(trx)
-                        .then(trx.commit)
-                        .catch(trx.rollback);
+                        .then(function () {
+                            return app.db('financeiro')
+                                .update(financ)
+                                .where({ id: req.params.id })
+                                .transacting(trx)
+                                .then(trx.commit)
+                                .catch(trx.rollback);
 
-                }).then(function (inserts) {
-                    res.status(204).send()
-                }).catch(function (error) {
-                    console.log(error.toString())
-                    res.status(500).send(error.toString())
-                });
+                        }).then(function (inserts) {
+                            res.status(204).send()
+                        }).catch(function (error) {
+                            console.log(error.toString())
+                            res.status(500).send(error.toString())
+                        });
+                })
         })
     }
 

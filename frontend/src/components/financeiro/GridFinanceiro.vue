@@ -486,8 +486,11 @@
         <v-card-text v-else>
           <v-flex xs12>Excluir {{ financeiroStore.financ.length }} contas?</v-flex>
           <v-flex xs12>
-            <font color="red" v-if="confirmacao">
-              <small>Você selecionou contas já concluidas, confirma exclusão?</small>
+            <font color="red" v-if="!confirmacao">
+              <small>Atenção! essa é uma operação que afetará as seguintes áreas do sistema - financeiro e contas. Deseja continuar?</small>
+            </font>
+            <font color="red" v-else-if="confirmacao">
+              <small>Atenção! você está prestes a excluir uma conta financeira já concluída. Deseja continuar?</small>
             </font>
           </v-flex>
         </v-card-text>
@@ -534,7 +537,7 @@
 
 <script>
 import axios from "axios";
-import { urlBD, showError, formatDate, saveLog } from "@/global";
+import { urlBD, showError, showSuccess, formatDate, saveLog } from "@/global";
 import { mapState } from "vuex";
 
 import { formatToBRL } from "brazilian-values";
@@ -684,7 +687,7 @@ export default {
       else return "red";
     },
     concluirConta() {
-      // console.log(this.financeiroStore.financ);
+      console.log(this.financeiroStore.financ);
       this.modalStore.financeiro.financ.pagamento = true;
     },
     cancelarConta() {
@@ -722,10 +725,10 @@ export default {
         return;
       }
 
-      var financs = [];
+      var itens = [];
 
       if (!this.financeiroStore.financ.id) {
-        financs = this.financeiroStore.financ.map(item => {
+        itens = this.financeiroStore.financ.map(item => {
           return {
             id: item.id,
             valor_parcela: item.valor_parcela,
@@ -733,41 +736,43 @@ export default {
           };
         });
       } else {
-        financs.push({
+        itens.push({
           id: this.financeiroStore.financ.id,
           valor_parcela: this.financeiroStore.financ.valor_parcela,
           pago: this.financeiroStore.financ.pago
         });
       }
 
-      const aux = financs.filter(item => item.pago == "CONCLUÍDA");
+      const aux = itens.filter(item => item.pago == "CONCLUÍDA");
       if (aux.length > 0 && !this.confirmacao) {
         this.confirmacao = true;
         return;
       }
 
-      financs.map(async item => {
+      itens.map(item => {
         const url = `${urlBD}/financeiro/${item.id}`;
-        await axios
-          .delete(url)
-          .then(() => {
-            this.$toasted.global.defaultSuccess();
-            this.confirmaExclusao = false;
-            this.itens_selecionados = [];
-            this.confirmacao = false;
 
-            this.loadFinanceiro();
-            this.confirmaExclusao = false;
+        setTimeout(async () => {
+          await axios
+            .delete(url)
+            .then(() => {
+              showSuccess("Financeiro excluído com sucesso!");
+              this.itens_selecionados = [];
+              this.confirmaExclusao = false;
+              this.confirmacao = false;
 
-            saveLog(
-              new Date(),
-              "EXCLUSÃO",
-              "FINANCEIRO",
-              `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu a parcela ${item.id} no valor de ${item.valor_parcela}`
-            );
-          })
-          .catch(showError);
+              saveLog(
+                new Date(),
+                "EXCLUSÃO",
+                "FINANCEIRO",
+                `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu a parcela ${item.id} no valor de ${item.valor_parcela}`
+              );
+            })
+            .catch(showError);
+        }, 1000);
       });
+
+      this.loadFinanceiro();
     },
     async remove_pagamento() {
       var financs = [];

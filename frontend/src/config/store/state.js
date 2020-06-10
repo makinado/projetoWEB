@@ -31,7 +31,9 @@ export default {
     metas: [],
 
     comissao: {},
-    comissoes: []
+    comissoes: [],
+
+    comissoesGeradas: []
   },
   pessoaStore: {
     pessoa: null,
@@ -88,7 +90,9 @@ export default {
   },
   artigoStore: {
     artigo: null,
-    artigos: []
+    artigos: [],
+
+    filter: {}
   },
   financeiroStore: {
     financ: null,
@@ -258,7 +262,10 @@ export default {
     },
     artigos: {
       add: false,
-      title: "Adicionar artigo"
+      title: "Adicionar artigo",
+
+      categoria: false,
+      categoriaTitle: "Adicionar categoria"
     }
   }
 }

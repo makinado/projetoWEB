@@ -8,9 +8,7 @@
       :ratio="ratio"
       :responsive-options="responsiveOptions"
       :type="type"
-      
     />
-
     <slot />
 
     <slot slot="actions" name="actions" />

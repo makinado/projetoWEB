@@ -287,6 +287,13 @@ module.exports = app => {
         .get(grantAccess(app.api.usuarios.usuarioComissoes.getById, 'usuario'))
         .delete(grantAccess(app.api.usuarios.usuarioComissoes.remove, 'usuario'))
 
+    app.route('/comissoesByVenda/:id_usuario/:id_venda')
+        .all(app.config.passport.authenticate())
+        .get(grantAccess(app.api.usuarios.comissoes.getByVenda, 'usuario'))
+    app.route('/comissoesByUsuario/:id_usuario')
+        .all(app.config.passport.authenticate())
+        .get(grantAccess(app.api.usuarios.comissoes.getById, 'usuario'))
+
 
 
     app.route('/email')

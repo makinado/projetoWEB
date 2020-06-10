@@ -18,7 +18,6 @@ export default {
     }
   },
   setNotificacoes(state, notificacoes) {
-    console.log(notificacoes)
     state.notificacoes = notificacoes
   },
   setEmpresa(state, empresa) {
@@ -28,7 +27,6 @@ export default {
     state.usuarioStore.currentPerfil = perfil
   },
   setEmpresas(state, empresas) {
-    console.log(empresas)
     state.empresaStore.empresas = empresas
   },
   setUsuarios(state, usuarios) {

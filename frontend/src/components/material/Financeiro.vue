@@ -581,8 +581,11 @@ export default {
     getColor(valor) {
       if (!this.component) return;
 
-
-      if (!this.component.valor_total || !valor || valor === this.component.valor_total)
+      if (
+        !this.component.valor_total ||
+        !valor ||
+        valor === this.component.valor_total
+      )
         return "green";
       else return "red";
     },
@@ -608,6 +611,7 @@ export default {
           this.financeiroStore.financ.push({
             ...this.financeiro,
             parcelas: i + 1,
+            valor_total: this.financeiro.valor_total,
             valor_parcela: formatToBRL(
               parseNumber(this.financeiro.valor_total) /
                 this.financeiro.parcelas
@@ -625,6 +629,7 @@ export default {
               parseNumber(this.financeiro.valor_total) /
                 this.financeiro.parcelas
             ),
+            valor_total: this.financeiro.valor_total,
             data_vencimento: i == 0 ? this.financeiro.data_vencimento : data,
             documento_origem: this.financeiro.documento_origem,
             num_documento_origem: this.financeiro.num_documento_origem

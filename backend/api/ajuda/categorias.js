@@ -38,8 +38,8 @@ module.exports = app => {
                 .where({ id_parent: req.params.id })
             notExistsOrError(subcategory, 'Categoria possui subcategorias.')
 
-            const articles = await app.dbUsers('articles')
-                .where({ categoryId: req.params.id })
+            const articles = await app.dbUsers('artigos')
+                .where({ id_categoria: req.params.id })
             notExistsOrError(articles, 'Categoria possui artigos.')
 
             const rowsDeleted = await app.dbUsers('categorias')
@@ -48,7 +48,7 @@ module.exports = app => {
 
             res.status(204).send()
         } catch (msg) {
-            res.status(400).send(msg)
+            return res.status(400).send(msg.toString())
         }
     }
 

@@ -8,6 +8,7 @@
           sub="Gerencie os cadastros do sistema"
         />
       </v-flex>
+
       <v-flex xs12>
         <Card :color="color" title="Selecione as opções para a emissão do relatório">
           <v-form ref="form" v-model="valid">
@@ -25,7 +26,20 @@
                   :items="cadastros"
                   :rules="cadRules"
                   :menu-props="{ maxHeight: '500' }"
-                  @change="loadCategorias"
+                  @change="loadFiltros"
+                ></v-autocomplete>
+              </v-flex>
+              <v-flex xs12 md2>
+                <v-autocomplete
+                  class="tag-input"
+                  dense
+                  chips
+                  deletable-chips
+                  :color="color"
+                  label="Sexo"
+                  v-model="filter.sexo"
+                  :items="filter.sexos"
+                  no-data-text="Filtro de sexo não permitido"
                 ></v-autocomplete>
               </v-flex>
               <v-flex xs12 md2>
@@ -65,18 +79,6 @@
                   v-model="filter.unidade"
                   :items="produtoStore.unidades"
                   no-data-text="Filtro de unidade não permitido ou nada cadastrado"
-                ></v-autocomplete>
-              </v-flex>
-              <v-flex xs12 md2>
-                <v-autocomplete
-                  class="tag-input"
-                  dense
-                  chips
-                  deletable-chips
-                  :color="color"
-                  label="Ordenar por"
-                  v-model="filter.ordem"
-                  :items="ordens"
                 ></v-autocomplete>
               </v-flex>
             </v-layout>
@@ -145,6 +147,16 @@
                   ></v-date-picker>
                 </v-menu>
               </v-flex>
+              <v-flex xs12 md2>
+                <v-autocomplete
+                  dense
+                  clearable
+                  :color="color"
+                  label="Ordenar por"
+                  v-model="filter.ordem"
+                  :items="ordens"
+                ></v-autocomplete>
+              </v-flex>
             </v-layout>
           </v-form>
 
@@ -202,14 +214,12 @@ export default {
         this.filter.data_final = value;
       }
     },
-    nomeEmpresa: {
-      get() {
-        if (!this.empresaStore.currentEmpresa)
-          return "Todas as empresas estão selecionadas";
-        return this.empresaStore.currentEmpresas.find(
-          e => e.value == this.empresaStore.currentEmpresa
-        ).text;
-      }
+    nomeEmpresa() {
+      if (!this.empresaStore.currentEmpresa)
+        return "Todas as empresas estão selecionadas";
+      return this.empresaStore.currentEmpresas.find(
+        emp => emp.value == this.empresaStore.currentEmpresa
+      ).text;
     }
   },
   watch: {
@@ -299,8 +309,7 @@ export default {
       ],
       ordens: [
         { value: "id", text: "Código" },
-        { value: "nome", text: "Nome" },
-        { value: "uf", text: "UF" }
+        { value: "nome", text: "Nome/Descrição" }
       ],
       valid: true,
       categoriaVisible: true,
@@ -321,15 +330,17 @@ export default {
 
       this.$refs.form ? this.$refs.form.reset() : "";
     },
-    loadCategorias() {
+    loadFiltros() {
       if (
         this.filter.cadastros.includes("cliente") ||
         this.filter.cadastros.includes("fornecedor") ||
         this.filter.cadastros.includes("transportadora")
       ) {
         this.$store.dispatch("loadCategoriasPessoas");
+        this.filter.sexos = ["Masculino", "Feminino"];
       } else {
         this.categoriaStore.categorias = [];
+        this.filter.sexos = [];
         if (this.filter.cadastros.includes("produto")) {
           this.$store.dispatch("loadCategoriasProdutos");
           this.$store.dispatch("loadMarcas");
@@ -341,17 +352,18 @@ export default {
         }
       }
     },
-
     async emit(type) {
       if (!this.$refs.form.validate() || !type) return;
 
       this.isLoading = true;
 
       const url = `${urlBD}/rel_cadastros?categoria=${this.filter.categoria ||
-        ""}&marca=${this.filter.marca || ""}&unidade=${this.filter.unidade ||
-        ""}&ordem=${this.filter.ordem || ""}&cadastros=${this.filter
-        .cadastros || ""}&data_type=${this.filter.data_type}&data_inicial=${this
-        .filter.data_inicial || ""}&data_final=${this.filter.data_final || ""}`;
+        ""}&sexo=${this.filter.sexo || ""}&marca=${this.filter.marca ||
+        ""}&unidade=${this.filter.unidade || ""}&ordem=${this.filter.ordem ||
+        ""}&cadastros=${this.filter.cadastros || ""}&data_type=${
+        this.filter.data_type
+      }&data_inicial=${this.filter.data_inicial || ""}&data_final=${this.filter
+        .data_final || ""}`;
 
       axios
         .post(url)
@@ -368,55 +380,6 @@ export default {
         .then(() => (this.isLoading = false));
     },
     emitPDF(data) {
-      var splitRegex = /\r\n|\r|\n/g;
-      jsPDF.API.textEx = function(text, x, y, hAlign, vAlign) {
-        var fontSize = this.internal.getFontSize() / this.internal.scaleFactor;
-
-        // As defined in jsPDF source code
-        var lineHeightProportion = 1.15;
-
-        var splittedText = null;
-        var lineCount = 1;
-        if (
-          vAlign === "middle" ||
-          vAlign === "bottom" ||
-          hAlign === "center" ||
-          hAlign === "right"
-        ) {
-          splittedText =
-            typeof text === "string" ? text.split(splitRegex) : text;
-
-          lineCount = splittedText.length || 1;
-        }
-
-        // Align the top
-        y += fontSize * (2 - lineHeightProportion);
-
-        if (vAlign === "middle") y -= (lineCount / 2) * fontSize;
-        else if (vAlign === "bottom") y -= lineCount * fontSize;
-
-        if (hAlign === "center" || hAlign === "right") {
-          var alignSize = fontSize;
-          if (hAlign === "center") alignSize *= 0.5;
-
-          if (lineCount > 1) {
-            for (var iLine = 0; iLine < splittedText.length; iLine++) {
-              this.text(
-                splittedText[iLine],
-                x - this.getStringUnitWidth(splittedText[iLine]) * alignSize,
-                y
-              );
-              y += fontSize * lineHeightProportion;
-            }
-            return this;
-          }
-          x -= this.getStringUnitWidth(text) * alignSize;
-        }
-
-        this.text(text, x, y);
-        return this;
-      };
-
       const addHeadersFooters = doc => {
         const pageCount = doc.internal.getNumberOfPages();
 
@@ -431,7 +394,10 @@ export default {
           doc.setFontSize(12);
           doc.text(
             "Relatório de cadastros",
-            doc.internal.pageSize.width / 2 - 60,
+            doc.internal.pageSize.width / 2 -
+              (doc.getStringUnitWidth("Relatório de cadastros") *
+                doc.internal.getFontSize()) /
+                2,
             20
           );
           doc.setFontSize(8);
@@ -441,9 +407,9 @@ export default {
             doc.internal.pageSize.width - 120,
             35
           );
-          doc.line(20, 50, doc.internal.pageSize.width - 20, 50)
+          doc.line(20, 50, doc.internal.pageSize.width - 20, 50);
 
-          //rodapé
+          // rodapé
           doc.text(this.usuarioStore.currentUsuario.nome, 40, 580);
           doc.text(
             String(i) + " de " + String(pageCount),
@@ -457,8 +423,7 @@ export default {
         pessoas_columns = [
           { title: "Código", dataKey: "id" },
           { title: "Nome", dataKey: "nome" },
-          { title: "CPF", dataKey: "cpf" },
-          { title: "CNPJ", dataKey: "cnpj" },
+          { title: "CPF/CNPJ", dataKey: "cpf_cnpj" },
           { title: "Categoria", dataKey: "categoria" },
           { title: "Email", dataKey: "email" },
           { title: "Contato", dataKey: "contato" }
@@ -468,69 +433,116 @@ export default {
           { title: "Nome", dataKey: "nome" },
           { title: "E-mail", dataKey: "email" },
           { title: "Contato", dataKey: "contato" },
-          { title: "Permissões", dataKey: "tipo" }
+          { title: "Vendas", dataKey: "valor_vendas" },
+          { title: "Comissões", dataKey: "valor_comissoes" }
         ],
         produtos_columns = [
-          { title: "Código", dataKey: "id" },
+          { title: "Codigo", dataKey: "id" },
           { title: "Descrição", dataKey: "descricao" },
           { title: "Categoria", dataKey: "categoria" },
           { title: "Marca", dataKey: "marca" },
-          { title: "Unidade", dataKey: "unidade" },
-          { title: "Valor unitário", dataKey: "valor_unitario" },
-          { title: "Valor venda", dataKey: "valor_venda" },
-          { title: "Valor custo", dataKey: "valor_custo_medio" }
+          { title: "Unid", dataKey: "unidade" },
+          { title: "Vlr unit.", dataKey: "valor_unitario" },
+          { title: "Vlr venda", dataKey: "valor_venda" },
+          { title: "Vlr custo", dataKey: "valor_custo_medio" }
         ];
-
-      doc.line(20, 50, doc.internal.pageSize.width - 20, 50)
 
       if (data.pessoas) {
         data.pessoas.map(pessoa => {
-          if (pessoa.cpf) pessoa.cnpj = "";
-          else pessoa.cpf = "";
+          if (pessoa.cpf) pessoa.cpf_cnpj = pessoa.cpf;
+          else pessoa.cpf_cnpj = pessoa.cnpj;
 
           if (!pessoa.categoria) pessoa.categoria = "";
 
           return pessoa;
         });
 
+        doc.setFontSize(12);
+        doc.text(
+          "Totalizadores",
+          doc.internal.pageSize.width / 2 -
+            (doc.getStringUnitWidth("Totalizadores") *
+              doc.internal.getFontSize()) /
+              2,
+          80
+        );
+        doc.autoTable(
+          [
+            { title: "Clientes", dataKey: "clientes" },
+            { title: "Fornecedores", dataKey: "fornecedores" },
+            { title: "Transportadoras", dataKey: "transportadoras" },
+            { title: "Ativos", dataKey: "ativos" },
+            { title: "Inativos", dataKey: "inativos" },
+            { title: "Em análise", dataKey: "emAnalise" }
+          ],
+          [data.stats],
+          {
+            theme: "striped",
+            margin: { top: 90 },
+            headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+          }
+        );
         doc.autoTable(pessoas_columns, data.pessoas, {
           theme: "striped",
-          margin: { top: 150 },
           headStyles: { fillColor: "#B2DFDB", textColor: "black" }
         });
-
-        doc.addPage();
-        doc.setFontSize(16);
-        doc.text(`Total de clientes: ${data.stats.clientes}`, 40, 100);
-        doc.text(`Total de fornecedores: ${data.stats.fornecedores}`, 40, 120);
-        doc.text(
-          `Total de transportadoras: ${data.stats.transportadoras}`,
-          40,
-          140
-        );
-        doc.text(
-          `Total de pessoas ativas: ${data.stats.ativos}`,
-          doc.internal.pageSize.width / 2 - 60,
-          100
-        );
-        doc.text(
-          `Total de pessoas inativas: ${data.stats.inativos}`,
-          doc.internal.pageSize.width / 2 - 60,
-          120
-        );
-        doc.text(
-          `Total de pessoas em análise: ${data.stats.emAnalise}`,
-          doc.internal.pageSize.width / 2 - 60,
-          140
-        );
       } else if (data.usuarios) {
+        doc.setFontSize(12);
+        doc.text(
+          "Totalizadores",
+          doc.internal.pageSize.width / 2 -
+            (doc.getStringUnitWidth("Totalizadores") *
+              doc.internal.getFontSize()) /
+              2,
+          80
+        );
+        doc.autoTable(
+          [{ title: "Usuários", dataKey: "usuarios" }],
+          [data.stats],
+          {
+            theme: "striped",
+            margin: { top: 90 },
+            headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+          }
+        );
         doc.autoTable(usuarios_columns, data.usuarios, {
           theme: "striped",
           headStyles: { fillColor: "#B2DFDB", textColor: "black" }
         });
       } else if (data.produtos) {
+        data.produtos.map(produto => {
+          if (!produto.valor_venda) produto.valor_venda = "0.00";
+          if (!produto.valor_unitario) produto.valor_unitario = "0.00";
+          if (!produto.valor_custo_medio) produto.valor_custo_medio = "0.00";
+
+          return produto;
+        });
+
+        doc.setFontSize(12);
+        doc.text(
+          "Totalizadores",
+          doc.internal.pageSize.width / 2 -
+            (doc.getStringUnitWidth("Totalizadores") *
+              doc.internal.getFontSize()) /
+              2,
+          80
+        );
+        doc.autoTable(
+          [
+            { title: "Produtos", dataKey: "produtos" },
+            { title: "Ativos", dataKey: "ativos" },
+            { title: "Inativos", dataKey: "inativos" }
+          ],
+          [data.stats],
+          {
+            theme: "striped",
+            margin: { top: 90 },
+            headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+          }
+        );
         doc.autoTable(produtos_columns, data.produtos, {
           theme: "striped",
+          margin: { top: 90 },
           headStyles: { fillColor: "#B2DFDB", textColor: "black" }
         });
       }

@@ -606,14 +606,13 @@ export default {
       }
     },
     reset() {
-      this.compra = {};
-      this.produto = {};
-      this.produtos_compra = [];
-      this.totais = {};
-      this.financeiroStore.financ = [];
-
       this.$refs.form ? this.$refs.form.reset() : "";
       this.$refs.form1 ? this.$refs.form1.reset() : "";
+
+      this.compra = {};
+      this.totais = {};
+      this.produtos_compra = [];
+      this.financeiroStore.financ = [];
 
       this.$refs.valor_frete
         ? (this.$refs.valor_frete.$el.getElementsByTagName(

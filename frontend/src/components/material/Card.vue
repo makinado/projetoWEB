@@ -215,9 +215,6 @@ export default {
   methods: {
     handleClick(action) {
       // required significa que posso chamar o método do componente pai diretamente
-
-      // console.log(action);
-
       if (action.required) {
         if (action.param) return this.$parent[action.method](action.param);
         return this.$parent[action.method]().then(() =>

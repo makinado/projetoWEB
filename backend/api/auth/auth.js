@@ -1,5 +1,6 @@
 const jwt = require('jwt-simple')
 const bcrypt = require('bcrypt-nodejs')
+const client = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
 
 module.exports = app => {
     const { existsOrError, notExistsOrError, equalsOrError } = app.api.validation
@@ -72,6 +73,7 @@ module.exports = app => {
             existsOrError(usuario.nome, 'Nome não informado')
             existsOrError(usuario.email, 'E-mail não informado')
             existsOrError(usuario.senha, 'Senha não informada')
+            existsOrError(usuario.contato, 'Contato não informado')
             existsOrError(usuario.confirmaSenha, 'Confirmação de senha não informada')
             equalsOrError(usuario.senha, usuario.confirmaSenha,
                 'Senhas não conferem')
@@ -88,12 +90,6 @@ module.exports = app => {
         } catch (e) {
             return res.status(400).send(e)
         }
-
-        // todo
-        // criar nova base para o usuario master
-        // criar a empresa na base
-        // criar o usuario na base
-        // alimentar a tabela usuario_empresas
 
         const empresa = {
             cnpj: usuario.cnpj,
@@ -224,14 +220,22 @@ module.exports = app => {
                 })
                 .then(trx.commit)
                 .catch(trx.rollback);
+        }).then(_ => {
+            if (usuario.contato) {
+                client.messages.create({
+                    from: 'whatsapp:+14155238886',
+                    body: `Olá ${usuario.nome}, aproveite o seu período de teste grátis. \n\nGostaríamos de lebra-lo que o sistema possui uma central de ajuda para dúvidas comuns e estaremos aqui para tirar suas dúvidas em relação ao sistema, obrigado.`,
+                    to: `whatsapp:+55${usuario.contato}`
+                }).then(message => console.log(message.sid)).catch(e => console.log(e))
+            }
+
+            return res.status(204).send()
+        }).catch(async e => {
+            app.db.destroy()
+            await app.dbUsers.raw(`DROP DATABASE ${usuario.nome_base}`)
+            console.log(e);
+            return res.status(500).send('Ocorreu um erro durante o processo, tente novamente mais tarde')
         })
-            .then(_ => res.status(204).send())
-            .catch(async e => {
-                app.db.destroy()
-                await app.dbUsers.raw(`DROP DATABASE ${usuario.nome_base}`)
-                console.log(e);
-                return res.status(500).send('Ocorreu um erro durante o processo, tente novamente mais tarde')
-            })
     }
 
     const validateToken = async (req, res) => {

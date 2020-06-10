@@ -91,6 +91,8 @@ export default {
         .then(() => {
           this.$toasted.global.defaultSuccess();
           this.confirmaExclusao = false;
+
+          this.$emit("loadArtigos");
         })
         .catch(showError);
     }

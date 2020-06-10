@@ -13,6 +13,7 @@
                 class="tag-input"
                 dense
                 chips
+                deletable-chips
                 :color="color"
                 label="Selecione um modo de visualização"
                 v-model="mode"
@@ -168,6 +169,7 @@
           event-color="red lighten-1"
           locale="pt-br"
           width="370"
+          @click:date="[$router.push('/agenda'), $route.params.data = datePicker]"
         >
           <v-layout row wrap justify-end>
             <v-btn class="mb-3" :color="color" @click="navigate('/agenda')">ver tudo</v-btn>
@@ -175,8 +177,31 @@
         </v-date-picker>
       </v-flex>
 
-      <v-flex md12 sm12 lg4>
+      <v-flex v-if="mode == 'month'" xs12>
         <ChartCard
+          :data="graficoFinanceiro.data"
+          :options="graficoFinanceiro.options"
+          ratio="ct-double-octave"
+          color="info"
+          type="Line"
+        >
+          <h4 class="title font-weight-light">Financeiro</h4>
+          <p
+            class="category d-inline-flex font-weight-light"
+          >Acompanhe as despesas e receitas da empresa</p>
+
+          <template slot="actions">
+            <v-switch
+              :label="painel.valorFinanc ? 'Quantidade' : 'Dinheiro'"
+              :color="color"
+              v-model="painel.valorFinanc"
+            ></v-switch>
+          </template>
+        </ChartCard>
+      </v-flex>
+      <v-flex v-else sm12 lg4>
+        <ChartCard
+          ref="chartFinanceiro"
           :data="graficoFinanceiro.data"
           :options="graficoFinanceiro.options"
           color="info"
@@ -187,13 +212,39 @@
             class="category d-inline-flex font-weight-light"
           >Acompanhe as despesas e receitas da empresa</p>
 
-          <!-- <template slot="actions">
-            <v-icon class="mr-2" small>fa fa-clock-o</v-icon>
-            <span class="caption grey--text font-weight-light">Agora mesmo</span>
-          </template>-->
+          <template slot="actions">
+            <v-switch
+              :label="painel.valorFinanc ? 'Quantidade' : 'Dinheiro'"
+              :color="color"
+              v-model="painel.valorFinanc"
+            ></v-switch>
+          </template>
         </ChartCard>
       </v-flex>
-      <v-flex md12 sm12 lg4>
+
+      <v-flex v-if="mode == 'month'" xs12>
+        <ChartCard
+          :data="graficoVendas.data"
+          :options="graficoVendas.options"
+          ratio="ct-double-octave"
+          color="red"
+          type="Bar"
+        >
+          <h4 class="title font-weight-light">Vendas</h4>
+          <p
+            class="category d-inline-flex font-weight-light"
+          >Acompanhe as vendas realizadas no sistema</p>
+
+          <template slot="actions">
+            <v-switch
+              :label="painel.valorVenda ? 'Quantidade' : 'Dinheiro'"
+              :color="color"
+              v-model="painel.valorVenda"
+            ></v-switch>
+          </template>
+        </ChartCard>
+      </v-flex>
+      <v-flex v-else sm12 lg4>
         <ChartCard
           :data="graficoVendas.data"
           :options="graficoVendas.options"
@@ -205,13 +256,36 @@
             class="category d-inline-flex font-weight-light"
           >Acompanhe as vendas realizadas no sistema</p>
 
+          <template slot="actions">
+            <v-switch
+              :label="painel.valorVenda ? 'Quantidade' : 'Dinheiro'"
+              :color="color"
+              v-model="painel.valorVenda"
+            ></v-switch>
+          </template>
+        </ChartCard>
+      </v-flex>
+
+      <v-flex v-if="mode == 'month'" xs12>
+        <ChartCard
+          :data="graficoCadastros.data"
+          :options="graficoCadastros.options"
+          ratio="ct-double-octave"
+          color="green"
+          type="Bar"
+        >
+          <h3 class="title font-weight-light">Cadastro de pessoas</h3>
+          <p
+            class="category d-inline-flex font-weight-light"
+          >Acompanhe as pessoas cadastradas no sistema</p>
+
           <!-- <template slot="actions">
             <v-icon class="mr-2" small>fa fa-clock-o</v-icon>
             <span class="caption grey--text font-weight-light">Agora mesmo</span>
           </template>-->
         </ChartCard>
       </v-flex>
-      <v-flex md12 sm12 lg4>
+      <v-flex v-else sm12 lg4>
         <ChartCard
           :data="graficoCadastros.data"
           :options="graficoCadastros.options"
@@ -295,9 +369,6 @@
 import { urlBD, showError, formatDate } from "@/global";
 import axios from "axios";
 import { mapState } from "vuex";
-import Chart from "chart.js";
-import chartist_tooltip from "chartist-plugin-tooltips";
-import chartist_pointlabel from "chartist-plugin-pointlabels";
 
 import { formatToBRL } from "brazilian-values";
 
@@ -383,8 +454,8 @@ export default {
           },
           axisY: {
             onlyInteger: true
-          },
-          plugins: [this.$chartist.plugins.tooltip()]
+          }
+          // // plugins: [this.$chartist.plugins.tooltip()]
         }
       },
       graficoFinanceiro: {
@@ -397,17 +468,28 @@ export default {
             tension: 0
           }),
           low: 0,
-          high: 10000, // creative tim: we recommend you to set the high sa the biggest value + something for a better look
+          high: 99999, // creative tim: we recommend you to set the high sa the biggest value + something for a better look
           chartPadding: {
             top: 0,
             right: 0,
             bottom: 0,
             left: 0
           },
-          axisY: {
-            onlyInteger: true
+          axisX: {
+            labelOffset: {
+              x: -8
+            }
           },
-          plugins: [this.$chartist.plugins.tooltip()]
+          axisY: {
+            onlyInteger: true,
+            scaleMinSpace: 1
+          },
+          plugins: [
+            this.$chartist.plugins.tooltip({
+              currency: "R$ ",
+              appendToBody: true
+            })
+          ]
         }
       },
       graficoVendas: {
@@ -420,7 +502,7 @@ export default {
             tension: 0
           }),
           low: 0,
-          high: 50, // creative tim: we recommend you to set the high sa the biggest value + something for a better look
+          high: 99999, // creative tim: we recommend you to set the high sa the biggest value + something for a better look
           chartPadding: {
             top: 0,
             right: 0,
@@ -430,7 +512,12 @@ export default {
           axisY: {
             onlyInteger: true
           },
-          plugins: [this.$chartist.plugins.tooltip()]
+          plugins: [
+            this.$chartist.plugins.tooltip({
+              currency: "R$ ",
+              appendToBody: true
+            })
+          ]
         }
       },
       graficoCadastros: {
@@ -449,17 +536,17 @@ export default {
             tension: 0
           }),
           low: 0,
-          high: 300, // creative tim: we recommend you to set the high sa the biggest value + something for a better look
+          high: 99999, // creative tim: we recommend you to set the high sa the biggest value + something for a better look
           chartPadding: {
             top: 0,
             right: 0,
             bottom: 0,
             left: 0
           },
-          plugins: [this.$chartist.plugins.tooltip()],
           axisY: {
             onlyInteger: true
-          }
+          },
+          plugins: [this.$chartist.plugins.tooltip()]
         }
       },
       metasUsuario: [],
@@ -508,7 +595,7 @@ export default {
         }
       }
     },
-    loadStats() {
+    async loadStats() {
       this.$store.state.isLoading = true;
 
       axios
@@ -523,10 +610,68 @@ export default {
             vendas: res.data.vendas
           };
 
-          this.graficoFluxoCaixa.data.series = res.data.graficoFluxoCaixa || [];
-          this.graficoFinanceiro.data.series = res.data.graficoFinanceiro || [];
-          this.graficoVendas.data.series = res.data.graficoVendas || [];
+          // var maxFluxo = 0;
+          // this.graficoFluxoCaixa.data.series = res.data.graficoFluxoCaixa || [];
+          // if (res.data.graficoFluxoCaixa[0].length > 0) {
+          //   max = res.data.graficoFluxoCaixa[0].reduce((a, b) =>
+          //     Math.max(a, b)
+          //   );
+          //   this.graficoFluxoCaixa.options.high = max + 5;
+          // }
+
+          var maxPagar = 0;
+          var maxReceber = 0;
+          this.graficoFinanceiro.data.series = res.data.graficoFinanceiro.map(
+            series => {
+              return series.map(item => item.sum);
+            }
+          );
+          if (
+            this.graficoFinanceiro.data.series[0].length > 0 &&
+            this.graficoFinanceiro.data.series[1].length > 0
+          ) {
+            maxPagar = this.graficoFinanceiro.data.series[0].reduce((a, b) =>
+              Math.max(a, b)
+            );
+            maxReceber = this.graficoFinanceiro.data.series[1].reduce((a, b) =>
+              Math.max(a, b)
+            );
+
+            this.graficoFinanceiro.options.high =
+              (maxPagar > maxReceber ? maxPagar : maxReceber) + 300;
+          } else if (this.graficoFinanceiro.data.series[0].length > 0) {
+            maxPagar = res.data.graficoFinanceiro[0].reduce((a, b) =>
+              Math.max(a, b)
+            );
+            this.graficoFinanceiro.options.high = maxPagar + 300;
+          } else {
+            maxReceber = res.data.graficoFinanceiro[1].reduce((a, b) =>
+              Math.max(a, b)
+            );
+            this.graficoFinanceiro.options.high = maxReceber + 300;
+          }
+
+          var maxVenda = 0;
+          this.graficoVendas.data.series = res.data.graficoVendas.map(
+            series => {
+              return series.map(item => item.sum);
+            }
+          );
+          if (this.graficoVendas.data.series[0].length > 0) {
+            maxVenda = this.graficoVendas.data.series[0].reduce((a, b) =>
+              Math.max(a, b)
+            );
+            this.graficoVendas.options.high = maxVenda + 300;
+          }
+
+          var maxCad = 0;
           this.graficoCadastros.data.series = res.data.graficoCadastros || [];
+          if (this.graficoCadastros.data.series[0].length > 0) {
+            maxCad = res.data.graficoCadastros[0].reduce((a, b) =>
+              Math.max(a, b)
+            );
+            this.graficoCadastros.options.high = maxCad + 5;
+          }
 
           axios.get(`${urlBD}/eventos_agenda`).then(res => {
             this.arrayEvents = res.data.map(evento => {
@@ -563,7 +708,7 @@ export default {
       "data_final",
       new Date().toISOString().substr(0, 10)
     );
-    // this.handleGraficos();
+    this.handleGraficos();
     this.$store.dispatch("loadNotificacoes");
   }
 };
@@ -577,5 +722,7 @@ export default {
   padding: 0px 10px;
   border-radius: 5px;
   cursor: pointer;
+
+  transition: all 0.2s linear;
 }
 </style>

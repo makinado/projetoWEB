@@ -377,11 +377,21 @@ export default {
     computedDateFormatted() {
       return formatDate(this.movim.data_movimentacao);
     },
-    computedDateFormatted1() {
-      return formatDate(this.date1);
+    computedDateFormatted1: {
+      get() {
+        return formatDate(this.date1);
+      },
+      set(value) {
+        this.date1 = formatDate(value);
+      }
     },
-    computedDateFormatted2() {
-      return formatDate(this.date2);
+    computedDateFormatted2: {
+      get() {
+        return formatDate(this.date2);
+      },
+      set(value) {
+        this.date2 = formatDate(value);
+      }
     }
   },
   data() {
@@ -533,16 +543,15 @@ export default {
         this.movimEstoque.dataIni = this.date1;
         this.movimEstoque.dataFim = this.date2;
 
-        let url = `${urlBD}/movimEstoque/${this.produtoStore.produto.id}?page=${
-          this.paginationMovim.page
-        }
+        const url = `${urlBD}/movimEstoque/${
+          this.produtoStore.produto.id
+        }?page=${this.paginationMovim.page}
         &limit=${this.paginationMovim.rowsPerPage}&orderBy=${this
           .paginationMovim.sortBy || ""}&desc=${
           this.paginationMovim.descending ? "desc" : "asc"
-        }`;
+        }&data_inicial=${this.movimEstoque.dataIni || ""}&data_final=${this
+          .movimEstoque.dataFim || ""}`;
 
-        if (this.movimEstoque.dataIni && this.movimEstoque.dataIni)
-          url += `&data_inicial=${this.movimEstoque.dataIni}&data_final=${this.movimEstoque.dataFim}`;
         axios
           .get(url)
           .then(res => {

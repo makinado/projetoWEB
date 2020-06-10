@@ -340,14 +340,13 @@ export default {
       );
     },
     reset() {
+      this.$refs.form ? this.$refs.form.reset() : "";
+      this.$refs.form1 ? this.$refs.form1.reset() : "";
+
       this.financ = {};
-      this.pessoa = {};
       this.totaisFinanc = {};
       this.financeiroStore.financ = [];
       this.classificacaoStore.classificacoes = [];
-
-      this.$refs.form ? this.$refs.form.reset() : "";
-      this.$refs.form1 ? this.$refs.form1.reset() : "";
 
       this.$refs.valor_total
         ? (this.$refs.valor_total.$el.getElementsByTagName(
@@ -439,13 +438,12 @@ export default {
       const method = this.financ.id ? "put" : "post";
       const id = this.financ.id ? this.financ.id : "";
       const url = `${urlBD}/financeiro/${id}`;
-      this.financeiroStore.financ = this.financ;
 
       if (!this.financ.id_empresa) {
         this.financ.id_empresa = this.empresaStore.currentEmpresa;
       }
 
-      const financeiro = this.financeiro.map(item => {
+      const financeiro = this.financeiroStore.financ.map(item => {
         return { ...this.financ, ...item };
       });
 

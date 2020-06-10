@@ -1,7 +1,116 @@
 const { formatToBRL } = require('brazilian-values')
 
+
+
 module.exports = app => {
     const { existsOrError, parseNumber, formatDate } = app.api.validation
+
+    async function gerarComissoes(tipoComissao, venda = null, vendedores = null, produtos = null, financeiro = null) {
+        if (!tipoComissao) return
+
+        const comissoes = []
+        if (tipoComissao == 1) {
+            vendedores = await Promise.all(vendedores.map(async (vend, i) => {
+                const configComissao = await app.db('usuario_comissao').where({ id_usuario: vend, ordem: i + 1, ativa: true }).first()
+
+                var base_comissao
+                var perc_comissao
+                if (configComissao && configComissao.tipo == 2) { // tipo venda
+                    base_comissao = venda.valor_total
+                    perc_comissao = configComissao.perc_comissao_vista
+                } else {
+                    var produto_comissao = 0, valor_comissao = 0
+                    produtos.map((produto) => {
+                        if (parseNumber(produto.perc_comissao || "0.00", '.') != 0) {
+                            produto_comissao += produto.valor_total
+                            valor_comissao += parseNumber(produto.perc_comissao || "0.00", '.') / 100 * produto.valor_total
+                        }
+                    })
+
+                    if (configComissao && configComissao.tipo == 1) { // comissao tipo produto
+                        base_comissao = produto_comissao
+                        perc_comissao = configComissao.perc_comissao_vista
+                    } else if (produto_comissao != 0) { // comissao do produto
+                        base_comissao = produto_comissao
+                        perc_comissao = valor_comissao / produto_comissao * 100
+                    }
+                }
+
+                comissoes.push({
+                    id_usuario: vend,
+                    id_venda: venda.id,
+                    data_comissao: venda.data_criacao,
+                    base_comissao: base_comissao,
+                    perc_comissao: perc_comissao,
+                    valor_comissao: perc_comissao / 100 * base_comissao
+                })
+
+                return { id_usuario: vend, id_venda: venda.id }
+            }))
+        } else {
+            for (let i = 0; i < financeiro.length; i++) {
+
+                if (!financeiro[i].id_movimento_origem) return
+
+                if (!vendedores && financeiro[i].id_movimento_origem) {
+                    vendedores = await app.db('venda')
+                        .join('usuario_vendas', 'venda.id', 'usuario_vendas.id_venda')
+                        .select('usuario_vendas.id_usuario', 'usuario_vendas.id_venda')
+                        .where({ 'venda.id': financeiro[i].id_movimento_origem })
+                }
+
+                if (!produtos && financeiro[i].id_movimento_origem) {
+                    produtos = await app.db('produto_venda')
+                        .where({ id_venda: financeiro[i].id_movimento_origem })
+                }
+
+                vendedores = await Promise.all(vendedores.map(async (vend, i) => {
+                    vend = vend.id_usuario ? vend.id_usuario : vend
+                    if (financeiro[i].pago) {
+                        const configComissao = await app.db('usuario_comissao').where({ id_usuario: vend, ordem: i + 1, ativa: true }).first()
+
+                        var base_comissao
+                        var perc_comissao
+                        if (configComissao && configComissao.tipo == 2) { // tipo venda
+                            base_comissao = financeiro[i].valor_pago
+                            perc_comissao = configComissao.perc_comissao_vista
+                        } else {
+                            var produto_comissao = 0, valor_comissao = 0
+                            produtos.map((produto) => {
+                                if (parseNumber(produto.perc_comissao || "0.00", '.') != 0) {
+                                    produto_comissao += produto.valor_total
+                                    valor_comissao += parseNumber(produto.perc_comissao || "0.00", '.') / 100 * produto.valor_total
+                                }
+                            })
+
+                            if (configComissao && configComissao.tipo == 1) { // comissao tipo produto
+                                base_comissao = produto_comissao / financeiro[i].length
+                                perc_comissao = configComissao.perc_comissao_vista
+                            } else if (produto_comissao != 0) { // comissao do produto
+                                base_comissao = produto_comissao / financeiro[i].length
+                                perc_comissao = valor_comissao / produto_comissao * 100
+                            }
+                        }
+
+                        comissoes.push({
+                            id_usuario: vend,
+                            id_venda: financeiro[i].id_movimento_origem,
+                            id_financeiro: financeiro[i].id,
+                            data_comissao: financeiro[i].data_baixa,
+                            base_comissao: base_comissao,
+                            perc_comissao: perc_comissao,
+                            valor_comissao: perc_comissao / 100 * base_comissao
+                        })
+
+                    }
+
+                    return { id_usuario: vend, id_venda: financeiro[i].id_movimento_origem }
+                }))
+            }
+        }
+
+        return { comissoes, vendedores }
+    }
 
     const save = async (req, res) => {
         const venda = { ...req.body }
@@ -62,6 +171,8 @@ module.exports = app => {
             venda.perc_desconto = venda.id_tabela_preco.percentual
             venda.id_tabela_preco = venda.id_tabela_preco.value
         }
+
+        var comissoes = []
         var vendedores = venda.vendedores
         var produtos = venda.produtos
         var financeiro = venda.financeiro
@@ -69,299 +180,311 @@ module.exports = app => {
         delete venda.produtos
         delete venda.financeiro
 
-        try {
-            venda.valor_frete = parseNumber(venda.valor_frete || "0,00")
-            venda.valor_seguro = parseNumber(venda.valor_seguro || "0,00")
-            venda.outras_despesas = parseNumber(venda.outras_despesas || "0,00")
-            venda.valor_desconto = parseNumber(venda.valor_desconto || "0,00")
-            venda.perc_desconto = parseNumber(venda.perc_desconto || "0,00")
-            venda.valor_produtos = parseNumber(venda.valor_produtos || "0,00")
-            venda.valor_total = parseNumber(venda.valor_total || "0,00")
-            venda.data_agendamento = venda.data_agendamento || null
+        venda.valor_frete = parseNumber(venda.valor_frete || "0,00")
+        venda.valor_seguro = parseNumber(venda.valor_seguro || "0,00")
+        venda.outras_despesas = parseNumber(venda.outras_despesas || "0,00")
+        venda.valor_desconto = parseNumber(venda.valor_desconto || "0,00")
+        venda.perc_desconto = parseNumber(venda.perc_desconto || "0,00")
+        venda.valor_produtos = parseNumber(venda.valor_produtos || "0,00")
+        venda.valor_total = parseNumber(venda.valor_total || "0,00")
+        venda.data_agendamento = venda.data_agendamento || null
 
-            if (venda.id) {
-                return app.db.transaction(async function (trx) {
-                    return app.db('venda')
-                        .update(venda)
-                        .where({ id: venda.id })
-                        .transacting(trx)
-                        .then(async function () {
-                            await app.db('produto_venda').where({ id_venda: venda.id }).delete().transacting(trx)
-                            await app.db('produto_movimento_estoque').where({ id_movimentacao: venda.id }).delete().transacting(trx)
+        const configComissaoEmpresa = await app.db('empresas').select('comissao_faturamento_recebimento as gerarComissao').where({ id: venda.id_empresa }).first().then(e => e.gerarComissao)
 
-                            const movim_estoque = []
-                            produtos = produtos.map(produto => {
-                                const newProd = {
-                                    id_venda: venda.id,
-                                    id_empresa: venda.id_empresa,
-                                    id_produto: produto.id,
-                                    sequencia: produto.sequencia,
+        if (venda.id) {
+            return app.db.transaction(async function (trx) {
+                return app.db('venda')
+                    .update(venda)
+                    .where({ id: venda.id })
+                    .transacting(trx)
+                    .then(async function () {
+                        await app.db('produto_venda').where({ id_venda: venda.id }).delete().transacting(trx)
+                        await app.db('produto_movimento_estoque').where({ id_movimentacao: venda.id }).delete().transacting(trx)
 
-                                    quantidade: parseNumber(produto.quantidade || "0,00"),
-                                    valor_venda: parseNumber(produto.valor_venda || "0,00"),
-                                    valor_unitario: parseNumber(produto.valor_unitario || "0,00"),
-                                    valor_desconto: parseNumber(produto.valor_desconto || "0,00"),
-                                    perc_desconto: venda.perc_desconto,
-                                    valor_total: parseNumber(produto.valor_total || "0,00"),
-                                }
+                        const movim_estoque = []
+                        produtos = produtos.map(produto => {
+                            const newProd = {
+                                id_venda: venda.id,
+                                id_empresa: venda.id_empresa,
+                                id_produto: produto.id,
+                                sequencia: produto.sequencia,
 
-                                if (venda.tipo == 2) {
-                                    movim_estoque.push({
-                                        id_empresa: venda.id_empresa,
-                                        id_produto: produto.id,
-                                        tipo_movimentacao: 1,
-                                        data_movimentacao: venda.data_criacao,
-                                        origem: "VENDA",
-                                        id_movimentacao: venda.id,
-                                        quantidade: parseNumber(produto.quantidade || "0,00"),
-                                        observacao: venda.observacao
-                                    })
-                                }
+                                quantidade: parseNumber(produto.quantidade || "0,00"),
+                                valor_venda: parseNumber(produto.valor_venda || "0,00"),
+                                valor_unitario: parseNumber(produto.valor_unitario || "0,00"),
+                                valor_desconto: parseNumber(produto.valor_desconto || "0,00"),
+                                perc_desconto: venda.perc_desconto,
+                                valor_total: parseNumber(produto.valor_total || "0,00"),
 
-                                return newProd
-                            })
+                                perc_comissao: produto.perc_comissao || "0.00"
+                            }
 
                             if (venda.tipo == 2) {
-                                await app.db('financeiro').where({ id_movimento_origem: venda.id }).delete().transacting(trx)
-                                await app.db('conta_movimento').where({ id_movimento_origem: venda.id }).delete().transacting(trx)
-
-                                financeiro = financeiro.map(parcela => {
-                                    const newFinanc = {
-                                        id_empresa: venda.id_empresa,
-                                        id_pessoa: venda.id_pessoa,
-                                        tipo_conta: 2,
-                                        id_movimento_origem: venda.id,
-                                        pago: parcela.pago,
-                                        parcela: parcela.parcelas,
-                                        observacao: venda.observacao,
-
-                                        valor_parcela: parseNumber(parcela.valor_parcela || "0,00"),
-                                        valor_pago: parcela.pago ? parseNumber(parcela.valor_pago) : 0,
-                                        valor_total: venda.valor_total || "0,00",
-
-                                        documento_origem: parcela.documento_origem,
-                                        num_documento_origem: venda.nota_fiscal,
-
-                                        documento_baixa: parcela.pago ? parcela.documento_baixa : null,
-                                        num_documento_baixa: parcela.pago ? parcela.num_documento_baixa : null,
-                                        id_conta: parcela.pago ? parcela.id_conta : null,
-
-                                        data_criacao: new Date(),
-                                        data_emissao: venda.data_emissao,
-                                        data_vencimento: parcela.data,
-                                        data_baixa: parcela.pago ? parcela.data_baixa : null
-                                    }
-
-                                    return newFinanc
+                                movim_estoque.push({
+                                    id_empresa: venda.id_empresa,
+                                    id_produto: produto.id,
+                                    tipo_movimentacao: 1,
+                                    data_movimentacao: venda.data_criacao,
+                                    origem: "VENDA",
+                                    id_movimentacao: venda.id,
+                                    quantidade: parseNumber(produto.quantidade || "0,00"),
+                                    observacao: venda.observacao
                                 })
                             }
 
-                            return app.db.batchInsert('produto_venda', produtos)
-                                .transacting(trx)
-                                .then(function () {
-                                    return app.db.batchInsert('produto_movimento_estoque', movim_estoque)
-                                        .transacting(trx)
-                                        .then(function () {
-                                            if (financeiro)
-                                                return app.db.batchInsert('financeiro', financeiro)
-                                                    .returning('*')
-                                                    .transacting(trx)
-                                                    .then(function (financs) {
-                                                        const movim_conta = []
-                                                        financs.map(financ_updated => {
-                                                            if (financ_updated.pago)
-                                                                movim_conta.push({
-                                                                    id_empresa: venda.id_empresa,
-                                                                    id_conta: financ_updated.id_conta,
-                                                                    id_movimento_origem: venda.id,
-                                                                    id_movimento_financeiro: financ_updated.id,
-                                                                    id_classificacao: financ_updated.classificacao,
-                                                                    data_lancamento: new Date(),
-                                                                    data_emissao: venda.data_baixa,
-                                                                    id_documento: financ_updated.documento_baixa,
-                                                                    num_documento: financ_updated.num_documento_baixa,
-                                                                    observacao: venda.observacao,
-                                                                    origem: "VENDA",
-                                                                    dc: 'C',
-                                                                    valor: financ_updated.valor_pago
-                                                                })
-                                                        })
-                                                        return app.db.batchInsert('conta_movimento', movim_conta)
-                                                            .transacting(trx)
-                                                    })
-                                        })
-                                })
-
+                            return newProd
                         })
-                        .then(trx.commit)
-                        .catch(trx.rollback);
-                }).then(function (inserts) {
-                    res.status(204).send()
-                }).catch(function (error) {
-                    console.log(error.toString())
-                    res.status(500).send(error.toString())
-                });
 
-            } else {
-                return app.db.transaction(async function (trx) {
-                    return app.db('venda')
-                        .insert(venda).returning('id')
-                        .transacting(trx)
-                        .then(async function (id) {
-                            const movim_estoque = []
-                            const comissoes = []
-                            produtos = await Promise.all(produtos.map(async produto => {
-                                const newProd = {
-                                    id_venda: id[0],
-                                    id_empresa: venda.id_empresa,
-                                    id_produto: produto.id,
-                                    sequencia: produto.sequencia,
+                        if (venda.tipo == 2) {
+                            await app.db('financeiro').where({ id_movimento_origem: venda.id }).delete().transacting(trx)
+                            await app.db('conta_movimento').where({ id_movimento_origem: venda.id }).delete().transacting(trx)
+                            await app.db('comissao').where({ id_venda: venda.id }).delete().transacting(trx)
+                            await app.db('usuario_vendas').where({ id_venda: venda.id }).delete().transacting(trx)
 
-                                    quantidade: parseNumber(produto.quantidade || "0,00"),
-                                    valor_venda: parseNumber(produto.valor_venda || "0,00"),
-                                    valor_unitario: parseNumber(produto.valor_unitario || "0,00"),
-                                    valor_desconto: parseNumber(produto.valor_desconto || "0,00"),
-                                    perc_desconto: venda.perc_desconto,
-                                    valor_total: parseNumber(produto.valor_total || "0,00"),
-                                }
+                            // comissao no faturamento
+                            if (configComissaoEmpresa == 1) {
+                                var result = await Promise.resolve(gerarComissoes(configComissaoEmpresa, { ...venda }, vendedores, produtos))
 
-                                if (venda.tipo == 2) {
-                                    movim_estoque.push({
-                                        id_empresa: venda.id_empresa,
-                                        id_produto: produto.id,
-                                        tipo_movimentacao: 1,
-                                        data_movimentacao: venda.data_criacao,
-                                        origem: "VENDA",
-                                        id_movimentacao: id[0],
-                                        quantidade: parseNumber(produto.quantidade || "0,00"),
-                                        observacao: venda.observacao
-                                    })
-
-                                    const empresa = await app.db('empresas').select('comissao_faturamento_recebimento as gerarComissao').where({ id: venda.id_empresa }).first()
-                                    if (empresa.gerarComissao == 1) {
-                                        vendedores = await Promise.all(vendedores.map(async (vend, i) => {
-                                            const configComissao = await app.db('usuario_comissao').where({ id_usuario: vend, ordem: i + 1, ativa: true }).first()
-
-                                            var base_comissao
-                                            var perc_comissao
-                                            if (configComissao && configComissao.tipo == 2) { // tipo venda
-                                                base_comissao = venda.valor_total
-                                                perc_comissao = configComissao.perc_comissao_vista
-                                            } else if (configComissao && configComissao.tipo == 1) { // tipo produto
-                                                var produto_comissao = parseNumber(produto.perc_comissao, '.') / 100 * parseNumber(produto.valor_total)
-                                                base_comissao = produto_comissao * (configComissao.perc_comissao_vista / 100)
-                                                perc_comissao = configComissao.perc_comissao_vista
-                                            } else if (produto.perc_comissao != 0) { // comissao do produto
-                                                base_comissao = parseNumber(produto.perc_comissao, '.') / 100 * parseNumber(produto.valor_total)
-                                                perc_comissao = parseNumber(produto.perc_comissao, '.')
-                                            }
-
-                                            comissoes.push({
-                                                id_usuario: vend,
-                                                id_venda: id[0],
-                                                data_comissao: venda.data_criacao,
-                                                base_comissao: base_comissao,
-                                                perc_comissao: perc_comissao,
-                                                valor_comissao: perc_comissao / 100 * base_comissao
-                                            })
-
-                                            console.log(comissoes)
-
-                                            return { id_usuario: vend, id_venda: id[0] }
-                                        }))
-                                    }
-                                }
-
-                                return newProd
-                            }))
-
-                            if (venda.tipo == 2) {
-                                financeiro = financeiro.map(parcela => {
-                                    const newFinanc = {
-                                        id_empresa: venda.id_empresa,
-                                        id_pessoa: venda.id_pessoa,
-                                        tipo_conta: 2,
-                                        id_movimento_origem: id[0],
-                                        pago: parcela.pago,
-                                        parcela: parcela.parcelas,
-                                        observacao: venda.observacao,
-
-                                        valor_parcela: parseNumber(parcela.valor_parcela || "0,00"),
-                                        valor_pago: parcela.pago ? parseNumber(parcela.valor_pago) : 0,
-                                        valor_total: venda.valor_total || "0,00",
-
-                                        documento_origem: parcela.documento_origem,
-                                        num_documento_origem: venda.nota_fiscal,
-
-                                        documento_baixa: parcela.pago ? parcela.documento_baixa : null,
-                                        num_documento_baixa: parcela.pago ? parcela.num_documento_baixa : null,
-                                        id_conta: parcela.pago ? parcela.id_conta : null,
-
-                                        data_criacao: new Date(),
-                                        data_emissao: venda.data_emissao,
-                                        data_vencimento: parcela.data,
-                                        data_baixa: parcela.pago ? parcela.data_baixa : null
-                                    }
-
-                                    return newFinanc
-                                })
+                                comissoes = result.comissoes
+                                vendedores = result.vendedores
                             }
 
-                            return app.db.batchInsert('produto_venda', produtos)
-                                .transacting(trx)
-                                .then(function () {
-                                    return app.db.batchInsert('produto_movimento_estoque', movim_estoque)
-                                        .transacting(trx)
-                                        .then(function () {
-                                            return app.db.batchInsert('usuario_vendas', vendedores)
-                                                .transacting(trx)
-                                                .then(function () {
-                                                    return app.db.batchInsert('comissao', comissoes)
-                                                        .transacting(trx)
-                                                        .then(function () {
-                                                            return app.db.batchInsert('financeiro', financeiro)
-                                                                .returning('*')
-                                                                .transacting(trx)
-                                                                .then(function (financs) {
-                                                                    const movim_conta = []
-                                                                    financs.map(financ_updated => {
-                                                                        if (financ_updated.pago)
-                                                                            movim_conta.push({
-                                                                                id_empresa: venda.id_empresa,
-                                                                                id_conta: financ_updated.id_conta,
-                                                                                id_movimento_origem: id[0],
-                                                                                id_movimento_financeiro: financ_updated.id,
-                                                                                id_classificacao: financ_updated.classificacao,
-                                                                                data_lancamento: new Date(),
-                                                                                data_emissao: venda.data_baixa,
-                                                                                id_documento: financ_updated.documento_baixa,
-                                                                                num_documento: financ_updated.num_documento_baixa,
-                                                                                observacao: venda.observacao,
-                                                                                origem: "VENDA",
-                                                                                dc: 'C',
-                                                                                valor: financ_updated.valor_pago
-                                                                            })
-                                                                    })
-                                                                    return app.db.batchInsert('conta_movimento', movim_conta)
-                                                                        .transacting(trx)
-                                                                })
+
+                            financeiro = financeiro.map(parcela => {
+                                const newFinanc = {
+                                    id_empresa: venda.id_empresa,
+                                    id_pessoa: venda.id_pessoa,
+                                    tipo_conta: 2,
+                                    id_movimento_origem: venda.id,
+                                    pago: parcela.pago,
+                                    parcela: parcela.parcelas,
+                                    observacao: venda.observacao,
+
+                                    valor_parcela: parseNumber(parcela.valor_parcela || "0,00"),
+                                    valor_pago: parcela.pago ? parseNumber(parcela.valor_pago) : 0,
+                                    valor_total: venda.valor_total || "0,00",
+
+                                    documento_origem: parcela.documento_origem,
+                                    num_documento_origem: venda.nota_fiscal,
+
+                                    documento_baixa: parcela.pago ? parcela.documento_baixa : null,
+                                    num_documento_baixa: parcela.pago ? parcela.num_documento_baixa : null,
+                                    id_conta: parcela.pago ? parcela.id_conta : null,
+
+                                    data_criacao: venda.data_criacao,
+                                    data_emissao: venda.data_emissao,
+                                    data_vencimento: parcela.data_vencimento,
+                                    data_baixa: parcela.pago ? parcela.data_baixa : null
+                                }
+
+                                return newFinanc
+                            })
+                        }
+
+                        return app.db.batchInsert('produto_venda', produtos)
+                            .transacting(trx)
+                            .then(function () {
+                                return app.db.batchInsert('produto_movimento_estoque', movim_estoque)
+                                    .transacting(trx)
+                                    .then(function () {
+                                        return app.db.batchInsert('financeiro', financeiro)
+                                            .returning('*')
+                                            .transacting(trx)
+                                            .then(async function (financs) {
+                                                const movim_conta = []
+                                                if (configComissaoEmpresa == 2 && comissoes.length == 0) {
+                                                    var result = await Promise.resolve(gerarComissoes(configComissaoEmpresa, {}, vendedores, produtos, financs))
+
+                                                    comissoes = result.comissoes
+                                                    vendedores = result.vendedores
+                                                }
+
+
+                                                financs.map(financ_updated => {
+                                                    if (financ_updated.pago)
+                                                        movim_conta.push({
+                                                            id_empresa: venda.id_empresa,
+                                                            id_conta: financ_updated.id_conta,
+                                                            id_movimento_origem: venda.id,
+                                                            id_movimento_financeiro: financ_updated.id,
+                                                            id_classificacao: financ_updated.classificacao,
+                                                            data_lancamento: new Date(),
+                                                            data_emissao: venda.data_baixa,
+                                                            id_documento: financ_updated.documento_baixa,
+                                                            num_documento: financ_updated.num_documento_baixa,
+                                                            observacao: venda.observacao,
+                                                            origem: "VENDA",
+                                                            dc: 'C',
+                                                            valor: financ_updated.valor_pago
                                                         })
                                                 })
-                                        })
-                                })
 
+                                                return app.db.batchInsert('usuario_vendas', vendedores)
+                                                    .transacting(trx)
+                                                    .then(function () {
+                                                        return app.db.batchInsert('comissao', comissoes)
+                                                            .transacting(trx)
+                                                            .then(function () {
+                                                                return app.db.batchInsert('conta_movimento', movim_conta)
+                                                                    .transacting(trx)
+                                                            })
+                                                    })
+                                            })
+                                    })
+                            })
+
+                    })
+                    .then(trx.commit)
+                    .catch(trx.rollback);
+            }).then(function (inserts) {
+                res.status(204).send()
+            }).catch(function (error) {
+                console.log(error.toString())
+                res.status(500).send(error)
+            });
+
+        } else {
+            return app.db.transaction(async function (trx) {
+                return app.db('venda')
+                    .insert(venda).returning('id')
+                    .transacting(trx)
+                    .then(async function (id) {
+                        const movim_estoque = []
+                        produtos = produtos.map((produto) => {
+                            const newProd = {
+                                id_venda: id[0],
+                                id_empresa: venda.id_empresa,
+                                id_produto: produto.id,
+                                sequencia: produto.sequencia,
+
+                                quantidade: parseNumber(produto.quantidade || "0,00"),
+                                valor_venda: parseNumber(produto.valor_venda || "0,00"),
+                                valor_unitario: parseNumber(produto.valor_unitario || "0,00"),
+                                valor_desconto: parseNumber(produto.valor_desconto || "0,00"),
+                                valor_total: parseNumber(produto.valor_total || "0,00"),
+
+                                perc_comissao: produto.perc_comissao || "0.00"
+                            }
+
+                            if (venda.tipo == 2) {
+                                movim_estoque.push({
+                                    id_empresa: venda.id_empresa,
+                                    id_produto: produto.id,
+                                    tipo_movimentacao: 1,
+                                    data_movimentacao: venda.data_criacao,
+                                    origem: "VENDA",
+                                    id_movimentacao: id[0],
+                                    quantidade: parseNumber(produto.quantidade || "0,00"),
+                                    observacao: venda.observacao
+                                })
+                            }
+
+                            return newProd
                         })
-                        .then(trx.commit)
-                        .catch(trx.rollback);
-                }).then(function (inserts) {
-                    res.status(204).send()
-                }).catch(function (error) {
-                    console.log(error.toString())
-                    res.status(500).send(error.toString())
-                });
-            }
-        } catch (e) {
-            res.status(500).send(e.toString())
+
+                        if (venda.tipo == 2) {
+                            // comissao no faturamento
+                            if (configComissaoEmpresa == 1) {
+                                var result = await Promise.resolve(gerarComissoes(configComissaoEmpresa, { id: id[0], ...venda }, vendedores, produtos))
+
+                                comissoes = result.comissoes
+                                vendedores = result.vendedores
+                            }
+
+
+                            financeiro = financeiro.map(parcela => {
+                                const newFinanc = {
+                                    id_empresa: venda.id_empresa,
+                                    id_pessoa: venda.id_pessoa,
+                                    tipo_conta: 2,
+                                    id_movimento_origem: id[0],
+                                    pago: parcela.pago,
+                                    parcela: parcela.parcelas,
+                                    observacao: venda.observacao,
+
+                                    valor_parcela: parseNumber(parcela.valor_parcela || "0,00"),
+                                    valor_pago: parcela.pago ? parseNumber(parcela.valor_pago) : 0,
+                                    valor_total: venda.valor_total || "0,00",
+
+                                    documento_origem: parcela.documento_origem,
+                                    num_documento_origem: venda.nota_fiscal,
+
+                                    documento_baixa: parcela.pago ? parcela.documento_baixa : null,
+                                    num_documento_baixa: parcela.pago ? parcela.num_documento_baixa : null,
+                                    id_conta: parcela.pago ? parcela.id_conta : null,
+
+                                    data_criacao: venda.data_criacao,
+                                    data_emissao: venda.data_emissao,
+                                    data_vencimento: parcela.data_vencimento,
+                                    data_baixa: parcela.pago ? parcela.data_baixa : null
+                                }
+
+                                return newFinanc
+                            })
+                        }
+
+                        return app.db.batchInsert('produto_venda', produtos)
+                            .transacting(trx)
+                            .then(function () {
+                                return app.db.batchInsert('produto_movimento_estoque', movim_estoque)
+                                    .transacting(trx)
+                                    .then(function () {
+                                        return app.db.batchInsert('financeiro', financeiro)
+                                            .returning('*')
+                                            .transacting(trx)
+                                            .then(async function (financs) {
+                                                const movim_conta = []
+                                                //comissao no recebimento
+                                                if (configComissaoEmpresa == 2 && comissoes.length == 0) {
+                                                    var result = await Promise.resolve(gerarComissoes(configComissaoEmpresa, {}, vendedores, produtos, financs))
+
+                                                    comissoes = result.comissoes
+                                                    vendedores = result.vendedores
+                                                }
+
+                                                financs.map(async financ_updated => {
+                                                    if (financ_updated.pago) {
+                                                        movim_conta.push({
+                                                            id_empresa: venda.id_empresa,
+                                                            id_conta: financ_updated.id_conta,
+                                                            id_movimento_origem: id[0],
+                                                            id_movimento_financeiro: financ_updated.id,
+                                                            id_classificacao: financ_updated.classificacao,
+                                                            data_lancamento: new Date(),
+                                                            data_emissao: venda.data_baixa,
+                                                            id_documento: financ_updated.documento_baixa,
+                                                            num_documento: financ_updated.num_documento_baixa,
+                                                            observacao: venda.observacao,
+                                                            origem: "VENDA",
+                                                            dc: 'C',
+                                                            valor: financ_updated.valor_pago
+                                                        })
+                                                    }
+                                                })
+
+                                                return app.db.batchInsert('usuario_vendas', vendedores)
+                                                    .transacting(trx)
+                                                    .then(function () {
+                                                        return app.db.batchInsert('comissao', comissoes)
+                                                            .transacting(trx)
+                                                            .then(function () {
+                                                                return app.db.batchInsert('conta_movimento', movim_conta)
+                                                                    .transacting(trx)
+                                                            })
+                                                    })
+                                            })
+                                    })
+                            })
+
+                    })
+                    .then(trx.commit)
+                    .catch(trx.rollback);
+            }).then(function (inserts) {
+                res.status(204).send()
+            }).catch(function (error) {
+                console.log(error.toString())
+                res.status(500).send(error)
+            });
         }
     }
 
@@ -391,7 +514,6 @@ module.exports = app => {
                 if (req.query.empresa) {
                     qb.where('venda.id_empresa', '=', req.query.empresa);
                 }
-
                 if (req.query.tipo == 2) {
                     // pesquisa avançada
                     if (req.query.fornecedor) {
@@ -548,50 +670,35 @@ module.exports = app => {
     }
 
     const remove = async (req, res) => {
-        try {
-            return app.db.transaction(async function (trx) {
-                return app.db('venda')
-                    .where({ id: req.params.id }).delete()
-                    .transacting(trx)
-                    .then(function () {
-                        return app.db('produto_venda')
-                            .where({ id_venda: req.params.id }).delete()
-                            .transacting(trx)
-                            .then(function () {
-                                return app.db('produto_movimento_estoque')
-                                    .where({ id_movimentacao: req.params.id }).delete()
-                                    .transacting(trx)
-                                    .then(function () {
-                                        return app.db('usuario_vendas')
-                                            .where({ id_venda: req.params.id }).delete()
-                                            .transacting(trx)
-                                            .then(function () {
-                                                return app.db('financeiro')
-                                                    .where({ id_movimento_origem: req.params.id }).delete()
-                                                    .transacting(trx)
-                                                    .then(function () {
-                                                        return app.db('conta_movimento')
-                                                            .where({ id_movimento_origem: req.params.id }).delete()
-                                                            .transacting(trx)
-                                                    })
+        await app.db.transaction(async function (trx) {
+            return app.db('venda')
+                .where({ id: req.params.id }).delete()
+                .transacting(trx)
+                .then(function () {
+                    return app.db('financeiro')
+                        .where({ id_movimento_origem: req.params.id }).delete()
+                        .transacting(trx)
+                        .then(function () {
+                            return app.db('produto_movimento_estoque')
+                                .where({ id_movimentacao: req.params.id }).delete()
+                                .transacting(trx)
+                                .then(function () {
+                                    return app.db('conta_movimento')
+                                        .where({ id_movimento_origem: req.params.id }).delete()
+                                        .transacting(trx)
+                                })
+                        })
 
-                                            })
-                                    })
-                            })
-
-                    })
-                    .then(trx.commit)
-                    .catch(trx.rollback);
-            }).then(function (inserts) {
-                res.status(204).send()
-            }).catch(function (error) {
-                console.log(error.toString())
-                res.status(500).send(error.toString())
-            });
-        } catch (e) {
-            return res.status(400).send(e.toString())
-        }
+                })
+                .then(trx.commit)
+                .catch(trx.rollback)
+        }).then(function (inserts) {
+            res.status(204).send()
+        }).catch(function (error) {
+            console.log(error.toString())
+            res.status(500).send(error)
+        });
     }
 
-    return { save, get, getOrcamentos, getVendas, getById, remove }
+    return { save, get, getOrcamentos, getVendas, getById, remove, gerarComissoes }
 }

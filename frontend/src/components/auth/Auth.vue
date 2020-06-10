@@ -108,8 +108,18 @@
                         prepend-icon="fa fa-envelope"
                         label="E-mail"
                         :color="color"
-                        @keyup.enter="$refs.senha.focus()"
+                        @keyup.enter="$refs.contato.focus()"
                         :rules="emailRules"
+                      ></v-text-field>
+                      <v-text-field
+                        ref="contato"
+                        v-model="usuario.contato"
+                        prepend-icon="fa fa-phone"
+                        label="Contato pessoal"
+                        v-mask="['(##) ####-####', '(##) #####-####']"
+                        :color="color"
+                        @keyup.enter="$refs.senha.focus()"
+                        :rules="contatoRules"
                       ></v-text-field>
                       <v-text-field
                         ref="senha"
@@ -145,7 +155,7 @@
                           <span>Google</span>
                         </v-btn>
                       </v-layout>
-                    </v-flex> -->
+                    </v-flex>-->
                   </v-tab-item>
 
                   <v-tab-item value="2">
@@ -270,9 +280,7 @@ export default {
       emailOptionalRules: [
         v => (v ? /.+@.+\..+/.test(v) || "E-mail inválido" : true)
       ],
-      contatoRules: [
-        v => (v ? v.length == 14 || v.length == 15 || "Contato inválido" : true)
-      ],
+      contatoRules: [v => (!!v && v.length >= 14) || "Contato inválido"],
       cnpjRules: [v => (!!v && isCNPJ(v)) || "CNPJ inválido"]
     };
   },

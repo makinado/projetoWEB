@@ -1,3 +1,5 @@
+const queries = require('./queries')
+
 module.exports = app => {
     const get = async (req, res) => {
         try {
@@ -15,40 +17,57 @@ module.exports = app => {
                 ]
             ]
 
-            // if (req.query.view == 'year') {
-            //     req.query.view = 'month'
-            // } else {
-            //     req.query.view = 'day'
-            // }
+            req.query.view = req.query.view == 'year' ? 'month' : 'day'
+            const limit = req.query.view == 'month' ? 12 : 31
 
-            // const graficoFinanceiro = [
-            //     await app.db('financeiro')
-            //         .sum('valor_total')
-            //         .where({ tipo_conta: 1 })
-            //         .groupByRaw(`date_trunc('${req.query.view || 'month'}', financeiro.data_criacao)`)
-            //         .then(contas => contas.map(conta => conta.sum)),
-            //     await app.db('financeiro')
-            //         .sum('valor_total')
-            //         .where({ tipo_conta: 2 })
-            //         .groupByRaw(`date_trunc('${req.query.view || 'month'}', financeiro.data_criacao)`)
-            //         .then(contas => contas.map(conta => conta.sum))
-            // ]
+            const graficoFinanceiro = [
+                await app.db
+                    .raw(queries.chartFinanc({ view: req.query.view, tipo_conta: 2 }))
+                    .then(contas => {
+                        const filtered = []
+                        for (let i = 0; i < limit; i++) {
+                            filtered[i] = contas.rows.find(conta => conta.data_venc == i) || { sum: 0 }
+                        }
 
-            // console.log(graficoFinanceiro)
+                        return filtered
+                    }),
+                await app.db
+                    .raw(queries.chartFinanc({ view: req.query.view, tipo_conta: 1 }))
+                    .then(contas => {
+                        const filtered = []
+                        for (let i = 0; i < limit; i++) {
+                            filtered[i] = contas.rows.find(conta => conta.data_venc == i) || { sum: 0 }
+                        }
 
-            const response = {
+                        return filtered
+                    })
+            ]
+
+            const graficoVendas = [
+                await app.db
+                    .raw(queries.chartVenda({ view: req.query.view }))
+                    .then(vendas => {
+                        const filtered = []
+                        for (let i = 0; i < limit; i++) {
+                            filtered[i] = vendas.rows.find(conta => conta.data_criacao == i) || { sum: 0 }
+                        }
+
+                        return filtered
+                    })
+            ]
+
+            return res.json({
                 contasPagar: contasPagar[0].sum || 0,
                 contasReceber: contasReceber[0].sum || 0,
                 vendas: vendas[0] ? vendas[0].count : 0,
                 graficoCadastros,
-            }
-
-            // console.log(response)
-
-            return res.json(response)
+                graficoFinanceiro,
+                graficoVendas
+            })
 
         } catch (e) {
-            return res.status(500).send(e.toString())
+            console.log(e.toString())
+            return res.status(500).send('Erro ao buscar gráfico financeiro')
         }
     }
 

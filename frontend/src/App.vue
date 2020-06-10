@@ -6,8 +6,6 @@
     <Content v-else />
     <ThemeOptions v-if="TemplateVisible" />
     <Chat v-if="TemplateVisible" />
-
-    <DialogLoading />
   </v-app>
 </template>
 

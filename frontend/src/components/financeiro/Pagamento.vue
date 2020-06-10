@@ -224,13 +224,11 @@ export default {
         : "";
     },
     async loadTela(financ) {
-      this.$store.dispatch("loadContas");
-      this.$store.dispatch("loadDocumentos");
-
       if (!financ) return;
 
       if (!Array.isArray(financ)) {
         this.pagamento.id = financ.id;
+        this.pagamento.id_movimento_origem = financ.id_movimento_origem;
         this.pagamento.valor_pago = financ.valor_parcela;
         this.pagamento.tipo_conta = financ.tipo_conta == "RECEBER" ? 2 : 1;
       } else {
@@ -273,8 +271,10 @@ export default {
           };
         });
       } else {
-        this.financs.push(this.pagamento);
+        this.financs = [this.pagamento];
       }
+
+      console.log(this.financs);
 
       axios
         .post(url, this.financs)

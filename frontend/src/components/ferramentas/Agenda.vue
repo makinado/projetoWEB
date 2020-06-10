@@ -46,7 +46,6 @@
             :color="color"
             :now="today"
             :value="today"
-            @change="updateCalendar"
           >
             <template slot="day" slot-scope="{ date }">
               <template v-for="evento in eventsMap[date]">
@@ -149,7 +148,7 @@
                         flat
                         color="secondary"
                         @click="[confirmaExclusao = true, eventoStore.evento = evento]"
-                      >Excluir</v-btn>
+                      >{{ new Date() == today ? 'Concluir' : 'Excluir'}}</v-btn>
                       <v-btn
                         flat
                         color="secondary"
@@ -165,6 +164,7 @@
       </v-flex>
 
       <AddEvento />
+
       <v-dialog v-model="confirmaExclusao" persistent max-width="500px" v-if="eventoStore.evento">
         <v-card>
           <v-card-title>
@@ -207,7 +207,7 @@ export default {
   data() {
     return {
       type: "month",
-      start: "01-01-2017",
+      start: "01-01-2010",
       end: "31-12-2025",
       confirmaExclusao: false,
       options: [
@@ -217,25 +217,6 @@ export default {
         { text: "Mês", value: "month" }
       ],
       eventos: [],
-      events: [
-        {
-          descricao: "Weekly Meeting",
-          data: "2020-02-11",
-          hora: "09:00",
-          duration: 45
-        },
-        {
-          descricao: "Thomas' Birthday",
-          data: "2020-02-12",
-          hora: null
-        },
-        {
-          descricao: "Mash Potatoes",
-          data: "2020-02-13",
-          hora: "12:30",
-          duration: 180
-        }
-      ],
       today: new Date().toISOString().substr(0, 10)
     };
   },
@@ -261,14 +242,12 @@ export default {
           this.loadEventos();
         })
         .catch(showError);
-    },
-    updateCalendar() {
-      // this.currentMes =
-      console.log(this.$refs.calendar);
     }
   },
   mounted() {
     this.loadEventos();
+    this.start = this.$route.params.data || null;
+    this.end = this.$route.params.data || null;
   }
 };
 </script>
@@ -291,6 +270,7 @@ export default {
   left: 4px;
   margin-right: 8px;
   position: relative;
+  color: #FFF;
 
   &.with-time {
     position: absolute;

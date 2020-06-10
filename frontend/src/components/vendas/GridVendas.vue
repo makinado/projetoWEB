@@ -428,12 +428,27 @@
     <v-dialog v-model="confirmaExclusao" persistent max-width="500px" v-if="vendaStore.venda">
       <v-card>
         <v-card-title>
-          <span class="headline">Excluir orçamento</span>
+          <span class="headline">Excluir parcela</span>
         </v-card-title>
-        <v-card-text>Excluir venda {{ vendaStore.venda.id }} ?</v-card-text>
+        <v-card-text
+          v-if="!Array.isArray(vendaStore.venda)"
+        >Cancelar conta {{ vendaStore.venda.id }} no valor de {{ vendaStore.venda.valor_total | currency }}?</v-card-text>
+        <v-card-text v-else>
+          <v-flex xs12>Excluir {{ vendaStore.venda.length }} vendas?</v-flex>
+          <v-flex xs12>
+            <font color="red">
+              <small>Atenção! essa é uma operação que afetará as seguintes áreas do sistema - comissões, metas, financeiro e contas. Deseja continuar?</small>
+            </font>
+          </v-flex>
+        </v-card-text>
+
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" flat @click="confirmaExclusao = false">Fechar</v-btn>
+          <v-btn
+            color="blue darken-1"
+            flat
+            @click="[confirmaExclusao = false, confirmacao = false]"
+          >Fechar</v-btn>
           <v-btn color="blue darken-1" flat @click="remove()">Confirmar</v-btn>
         </v-card-actions>
       </v-card>
@@ -443,7 +458,7 @@
 
 <script>
 import axios from "axios";
-import { urlBD, showError, formatDate, saveLog } from "@/global";
+import { urlBD, showError, showSuccess, formatDate, saveLog } from "@/global";
 import { mapState } from "vuex";
 
 import { formatToBRL } from "brazilian-values";
@@ -482,7 +497,7 @@ export default {
     params() {
       this.loadVendas();
     },
-    "$store.state.modalStore.vendas.vendas.visible": function() {
+    "$store.state.modalStore.vendas.vendas.visible"() {
       if (
         !this.modalStore.vendas.vendas.visible &&
         this.vendaStore.venda != null
@@ -491,7 +506,7 @@ export default {
       }
     }
   },
-  data: function() {
+  data() {
     return {
       valid: true,
       loading: false,
@@ -508,10 +523,10 @@ export default {
         { value: "actions", text: "Ações" }
       ],
       pagination: {
-        descending: false,
+        descending: true,
         page: 1,
         rowsPerPage: 20, // -1 for All,
-        sortBy: "situacao",
+        sortBy: "data_criacao",
         totalItems: 0
       },
       count: 0,
@@ -563,6 +578,7 @@ export default {
       axios
         .get(url)
         .then(res => {
+          console.log(res.data.data);
           this.vendaStore.vendas = res.data.data;
           this.count = res.data.count;
           this.pagination.rowsPerPage = res.data.limit;
@@ -571,6 +587,11 @@ export default {
         .finally(() => (this.loading = false));
     },
     async remove() {
+      if (!this.confirmaExclusao) {
+        this.confirmaExclusao = true;
+        return;
+      }
+
       let itens = [];
 
       if (!this.vendaStore.venda.id) {
@@ -587,26 +608,29 @@ export default {
         });
       }
 
-      itens.map(async item => {
+      await itens.map(item => {
         const url = `${urlBD}/vendas/${item.id}`;
-        await axios
-          .delete(url)
-          .then(() => {
-            this.$toasted.global.defaultSuccess();
-            this.confirmaExclusao = false;
-            this.itens_selecionados = [];
 
-            this.loadVendas();
+        setTimeout(async () => {
+          await axios
+            .delete(url)
+            .then(() => {
+              showSuccess("Venda excluída com sucesso!");
+              this.itens_selecionados = [];
+              this.confirmaExclusao = false;
 
-            saveLog(
-              new Date(),
-              "EXCLUSÃO",
-              "VENDAS",
-              `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu a venda ${item.id} no valor de ${item.valor_total}`
-            );
-          })
-          .catch(showError);
+              saveLog(
+                new Date(),
+                "EXCLUSÃO",
+                "VENDAS",
+                `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu a venda ${item.id} no valor de ${item.valor_total}`
+              );
+            })
+            .catch(showError);
+        }, 1500);
       });
+
+      this.loadVendas();
     }
   },
   mounted() {

@@ -255,6 +255,16 @@
                                 ></v-date-picker>
                               </v-menu>
                             </v-flex>
+                            <v-flex xs12 md6>
+                              <v-autocomplete
+                                dense
+                                :color="color"
+                                label="Sexo"
+                                v-model="pessoa.sexo"
+                                :items="['Masculino','Feminino']"
+                                clearable
+                              ></v-autocomplete>
+                            </v-flex>
                           </v-layout>
                         </v-form>
                       </v-container>
@@ -343,6 +353,7 @@
                     </v-card-text>
                   </v-card>
                 </v-tab-item>
+
                 <v-tab-item value="tab-3">
                   <v-card flat>
                     <v-card-text>
@@ -523,6 +534,10 @@ export default {
           .get(`${url}/${pessoa.id}`)
           .then(res => {
             this.pessoa = res.data;
+
+            this.pessoa.data_nascimento = new Date(this.pessoa.data_nascimento)
+              .toISOString()
+              .substr(0, 10);
             this.pessoa.cliente ? this.selected.push("Cliente") : "";
             this.pessoa.fornecedor ? this.selected.push("Fornecedor") : "";
             this.pessoa.transportadora

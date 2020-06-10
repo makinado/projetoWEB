@@ -59,6 +59,15 @@ module.exports = app => {
             .leftJoin('usuarios', 'artigos.id_usuario', 'usuarios.id')
             .select('artigos.id', 'artigos.nome', 'artigos.descricao', 'artigos.image_url', 'usuarios.nome as autor')
             .limit(limit).offset(page * limit - limit)
+            .orderBy('nome')
+            .where(qb => {
+                if (req.query.nome) {
+                    qb.where('artigos.nome', 'ilike', `%${req.query.nome}%`);
+                }
+                if (req.query.categoria) {
+                    qb.where('artigos.id_categoria', '=', req.query.categoria);
+                }
+            })
             .then(articles => res.json({ data: articles, count, limit }))
             .catch(err => { console.log(err); res.status(500).send(err) })
     }
@@ -85,7 +94,7 @@ module.exports = app => {
             .limit(limit).offset(page * limit - limit)
             .whereRaw('?? = ??', ['u.id', 'a.userId'])
             .whereIn('categoryId', ids)
-            .orderBy('a.id', 'desc')
+            .orderBy('nome')
             .then(articles => res.json(articles))
             .catch(err => res.status(500).send(err))
     }

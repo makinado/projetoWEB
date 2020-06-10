@@ -43,7 +43,7 @@
           @click="clickEvent(item)"
         >
           <v-list-tile-action>
-            <v-btn icon :color="cores[index]" dark>
+            <v-btn icon :color="getColor()" dark>
               <v-icon>fa fa-lg fa-bell</v-icon>
             </v-btn>
           </v-list-tile-action>
@@ -113,7 +113,12 @@ export default {
   methods: {
     clickEvent(item) {
       if (item.title != "Sair") {
-        this.notificacoes = this.notificacoes.filter(n => n.id != item.id);
+        this.$store.commit(
+          "setNotificacoes",
+          this.notificacoes.filter(n => {
+            return n.id != item.id;
+          })
+        );
         this.navigate(item.link);
       } else {
         this.logout();
@@ -147,6 +152,11 @@ export default {
       this.$store.commit("setUsuario", null);
 
       this.$router.push({ path: "/auth" });
+    },
+    getColor() {
+      const cores = ["primmary", "secondary", "info", "warning", "danger"];
+
+      return cores[Math.floor(Math.random() * 5)];
     }
   }
 };

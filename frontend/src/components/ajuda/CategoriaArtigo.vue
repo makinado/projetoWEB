@@ -1,23 +1,33 @@
 <template>
   <div class="add-categoria">
-    <v-dialog v-model="modalStore.categorias.visible" persistent max-width="900px">
-      <v-card v-if="modalStore.categorias.visible">
-        <v-card-title>{{ modalStore.categorias.title }}</v-card-title>
+    <v-dialog v-model="modalStore.artigos.categoria" persistent max-width="900px">
+      <v-card v-if="modalStore.artigos.categoria">
+        <v-card-title>{{ modalStore.artigos.categoriaTitle }}</v-card-title>
         <v-card-text>
           <v-container grid-list-md>
             <v-form v-model="valid" ref="form">
               <v-text-field v-model="categoria.id" v-show="false"></v-text-field>
               <v-layout wrap>
-                <v-flex xs12>
+                <v-flex xs12 md6>
                   <v-text-field
                     :color="color"
-                    label="Descrição*"
-                    v-model="categoria.descricao"
+                    label="Nome*"
+                    v-model="categoria.nome"
                     v-uppercase
                     :rules="descRules"
                     autofocus
                     @keyup.enter="save"
                   ></v-text-field>
+                </v-flex>
+                <v-flex xs12 md6>
+                  <v-autocomplete
+                    label="Filho de"
+                    :items="categoriaStore.categoriasArtigos"
+                    v-model="categoria.id_parent"
+                    clearable
+                    dense
+                    @focus="$store.dispatch('loadCategoriasArtigos')"
+                  ></v-autocomplete>
                 </v-flex>
               </v-layout>
             </v-form>
@@ -34,11 +44,12 @@
             >
               <template slot="items" slot-scope="data">
                 <td>{{ data.item.id }}</td>
-                <td>{{ data.item.descricao }}</td>
+                <td>{{ data.item.nome }}</td>
+                <td>{{ data.item.id_parent }}</td>
                 <td>
                   <v-btn
                     icon
-                    @click.prevent="[categoria = data.item, modalStore.categorias.visible = true, modalStore.categorias.title = modalStore.categorias.title.replace('Adicionar','Alterar')]"
+                    @click.prevent="[categoria = data.item, modalStore.artigos.categoria = true, modalStore.artigos.categoriaTitle = modalStore.artigos.categoriaTitle.replace('Adicionar','Alterar')]"
                     class="mr-1"
                   >
                     <i class="fa fa-lg fa-pencil"></i>
@@ -60,8 +71,8 @@
           <v-btn
             color="blue darken-1"
             flat
-            @click="modalStore.categorias.title.includes('Alterar') ? reset() : modalStore.categorias.visible = false"
-          >{{ modalStore.categorias.title.includes('Alterar') ? 'Cancelar': 'Fechar' }}</v-btn>
+            @click="modalStore.artigos.categoriaTitle.includes('Alterar') ? reset() : modalStore.artigos.categoria = false"
+          >{{ modalStore.artigos.categoriaTitle.includes('Alterar') ? 'Cancelar': 'Fechar' }}</v-btn>
           <v-btn color="blue darken-1" flat @click="save()">Salvar</v-btn>
         </v-card-actions>
       </v-card>
@@ -77,7 +88,7 @@
         <v-card-title>
           <span class="headline">Excluir categoria</span>
         </v-card-title>
-        <v-card-text>Excluir {{ categoriaStore.categoria.descricao }} ?</v-card-text>
+        <v-card-text>Excluir {{ categoriaStore.categoria.nome }} ?</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="blue darken-1" flat @click="confirmaExclusao = false">Fechar</v-btn>
@@ -90,7 +101,7 @@
 
 <script>
 import axios from "axios";
-import { urlBD, showError, formatDate, saveLog } from "@/global";
+import { urlBD, showError } from "@/global";
 import { mapState } from "vuex";
 
 export default {
@@ -100,22 +111,22 @@ export default {
       categoria: {},
       fields: [
         { value: "id", text: "Código", sortable: true },
-        { value: "descricao", text: "Descricao", sortable: true },
+        { value: "nome", text: "Nome", sortable: true },
+        { value: "id_parent", text: "Filho de", sortable: true },
         { value: "actions", text: "Ações" }
       ],
       pagination: {
         descending: false,
         page: 1,
         rowsPerPage: 5, // -1 for All,
-        sortBy: "descricao",
+        sortBy: "nome",
         totalItems: 0
       },
       valid: true,
       confirmaExclusao: false,
       descRules: [
-        v => !!v || "Descrição é obrigatória",
-        v =>
-          (!!v && v.length >= 3) || "Descrição deve ter no mínimo 3 caracteres"
+        v => !!v || "Nome é obrigatório",
+        v => (!!v && v.length >= 3) || "Nome deve ter no mínimo 3 caracteres"
       ]
     };
   },
@@ -124,8 +135,8 @@ export default {
     ...mapState(["modalStore", "categoriaStore", "usuarioStore"])
   },
   watch: {
-    "$store.state.modalStore.categorias.visible": function() {
-      if (this.modalStore.categorias.visible) this.reset();
+    "$store.state.modalStore.artigos.categoria": function() {
+      if (this.modalStore.artigos.categoria) this.reset();
     }
   },
   methods: {
@@ -134,30 +145,13 @@ export default {
       this.categoria = {};
       this.$refs.form ? this.$refs.form.reset() : "";
 
-      this.modalStore.categorias.title = this.modalStore.categorias.title.replace(
+      this.modalStore.artigos.categoriaTitle = this.modalStore.artigos.categoriaTitle.replace(
         "Alterar",
         "Adicionar"
       );
     },
     loadCategorias() {
-      this.categoriaStore.categorias = [];
-      if (this.modalStore.categorias.title.includes("produto")) {
-        this.loadCategoriasProdutos();
-      } else {
-        this.loadCategoriasPessoas();
-      }
-    },
-    loadCategoriasProdutos() {
-      const url = `${urlBD}/categorias/produtos`;
-      axios
-        .get(url)
-        .then(res => {
-          this.categoriaStore.categorias = res.data;
-        })
-        .catch(showError);
-    },
-    loadCategoriasPessoas() {
-      const url = `${urlBD}/categorias/pessoas`;
+      const url = `${urlBD}/categoriasArtigos`;
       axios
         .get(url)
         .then(res => {
@@ -168,31 +162,23 @@ export default {
     save() {
       if (!this.$refs.form.validate()) return;
 
-      if (this.modalStore.categorias.title.includes("produto"))
+      if (this.modalStore.artigos.categoriaTitle.includes("produto"))
         this.categoria.tipo = 2;
       else this.categoria.tipo = 1;
 
       const method = this.categoria.id ? "put" : "post";
       const id = this.categoria.id ? this.categoria.id : "";
-      const urlCategorias = `${urlBD}/categorias/${id}`;
+      const urlCategorias = `${urlBD}/categoriasArtigos/${id}`;
 
       axios[method](urlCategorias, this.categoria)
         .then(() => {
           this.$toasted.global.defaultSuccess();
-          saveLog(
-            new Date(),
-            method === "post" ? "GRAVAÇÃO" : "ALTERAÇÃO",
-            "CATEGORIAS",
-            `Usuário ${this.usuarioStore.currentUsuario.nome} ${
-              method === "post" ? "ADICIONOU" : "ALTEROU"
-            } a categoria ${this.categoria.descricao}`
-          );
           this.reset();
         })
         .catch(showError);
     },
     async remove() {
-      const urlCategorias = `${urlBD}/categorias/${this.categoriaStore.categoria.id}`;
+      const urlCategorias = `${urlBD}/categoriasArtigos/${this.categoriaStore.categoria.id}`;
 
       await axios
         .delete(urlCategorias)
@@ -201,13 +187,6 @@ export default {
           this.confirmaExclusao = false;
 
           this.reset();
-
-          saveLog(
-            new Date(),
-            "EXCLUSÃO",
-            "CATEGORIAS",
-            `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu a categoria ${this.categoriaStore.categoria.descricao}`
-          );
         })
         .catch(showError);
     }

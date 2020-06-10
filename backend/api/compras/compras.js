@@ -344,50 +344,40 @@ module.exports = app => {
     }
 
     const remove = async (req, res) => {
+        await app.db.transaction(async function (trx) {
+            return app.db('compra_pedido')
+                .update({ nota_fiscal: null, situacao: 'PENDENTE', id_compra: null })
+                .where({ id_compra: req.params.id })
+                .transacting(trx)
+                .then(function () {
+                    return app.db('compra')
+                        .where({ id: req.params.id }).delete()
+                        .transacting(trx)
+                        .then(function () {
+                            return app.db('produto_movimento_estoque')
+                                .where({ id_movimentacao: req.params.id }).delete()
+                                .transacting(trx)
+                                .then(function () {
+                                    return app.db('financeiro')
+                                        .where({ id_movimento_origem: req.params.id }).delete()
+                                        .transacting(trx)
+                                        .then(function () {
+                                            return app.db('conta_movimento')
+                                                .where({ id_movimento_origem: req.params.id }).delete()
+                                                .transacting(trx)
+                                        })
+                                })
+                        })
 
-        try {
-            return app.db.transaction(async function (trx) {
-                return app.db('compra_pedido')
-                    .update({ nota_fiscal: null, situacao: 'PENDENTE', id_compra: null })
-                    .where({ id_compra: req.params.id })
-                    .transacting(trx)
-                    .then(function () {
-                        return app.db('compra')
-                            .where({ id: req.params.id }).delete()
-                            .transacting(trx)
-                            .then(function () {
-                                return app.db('produto_compra')
-                                    .where({ id_compra: req.params.id }).delete()
-                                    .transacting(trx)
-                                    .then(function () {
-                                        return app.db('produto_movimento_estoque')
-                                            .where({ id_movimentacao: req.params.id }).delete()
-                                            .transacting(trx)
-                                            .then(function () {
-                                                return app.db('financeiro')
-                                                    .where({ id_movimento_origem: req.params.id }).delete()
-                                                    .transacting(trx)
-                                                    .then(function () {
-                                                        return app.db('conta_movimento')
-                                                            .where({ id_movimento_origem: req.params.id }).delete()
-                                                            .transacting(trx)
-                                                    })
-                                            })
-                                    })
-                            })
-
-                    })
-                    .then(trx.commit)
-                    .catch(trx.rollback);
-            }).then(function (inserts) {
-                res.status(204).send()
-            }).catch(function (error) {
-                console.log(error.toString())
-                res.status(500).send(error.toString())
-            });
-        } catch (e) {
-            return res.status(400).send(e.toString())
-        }
+                })
+                .then(trx.commit)
+                .catch(trx.rollback);
+        }).then(function (inserts) {
+            res.status(204).send()
+        }).catch(function (error) {
+            console.log(error.toString())
+            res.status(500).send(error.toString())
+        });
     }
 
     return { save, get, getById, remove }
