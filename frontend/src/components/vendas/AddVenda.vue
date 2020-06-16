@@ -1019,7 +1019,6 @@ export default {
       const method = this.venda.id ? "put" : "post";
       const id = this.venda.id ? this.venda.id : "";
       const url = `${urlBD}/vendas/${id}`;
-      this.vendaStore.venda = this.venda;
 
       if (!this.venda.id_empresa) {
         this.venda.id_empresa = this.empresaStore.currentEmpresa;
@@ -1029,6 +1028,8 @@ export default {
       this.venda.vendedores = this.vendedores;
       if (this.venda.tipo == 2)
         this.venda.financeiro = this.financeiroStore.financ;
+
+      this.vendaStore.venda = this.venda;
 
       axios[method](url, this.venda)
         .then(() => {

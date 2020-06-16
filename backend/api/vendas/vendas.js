@@ -7,6 +7,7 @@ module.exports = app => {
 
     async function gerarComissoes(tipoComissao, venda = null, vendedores = null, produtos = null, financeiro = null) {
         if (!tipoComissao) return
+        if (!vendedores) return
 
         const comissoes = []
         if (tipoComissao == 1) {
@@ -48,31 +49,18 @@ module.exports = app => {
                 return { id_usuario: vend, id_venda: venda.id }
             }))
         } else {
-            for (let i = 0; i < financeiro.length; i++) {
+            financeiro.map(async financeiro => {
+                if (!financeiro.id_movimento_origem) return
 
-                if (!financeiro[i].id_movimento_origem) return
 
-                if (!vendedores && financeiro[i].id_movimento_origem) {
-                    vendedores = await app.db('venda')
-                        .join('usuario_vendas', 'venda.id', 'usuario_vendas.id_venda')
-                        .select('usuario_vendas.id_usuario', 'usuario_vendas.id_venda')
-                        .where({ 'venda.id': financeiro[i].id_movimento_origem })
-                }
-
-                if (!produtos && financeiro[i].id_movimento_origem) {
-                    produtos = await app.db('produto_venda')
-                        .where({ id_venda: financeiro[i].id_movimento_origem })
-                }
-
-                vendedores = await Promise.all(vendedores.map(async (vend, i) => {
-                    vend = vend.id_usuario ? vend.id_usuario : vend
-                    if (financeiro[i].pago) {
-                        const configComissao = await app.db('usuario_comissao').where({ id_usuario: vend, ordem: i + 1, ativa: true }).first()
+                vendedores.map(async (vend, i) => {
+                    if (financeiro.pago) {
+                        const configComissao = await app.db('usuario_comissao').where({ id_usuario: vend.id_usuario, ordem: i + 1, ativa: true }).first()
 
                         var base_comissao
                         var perc_comissao
                         if (configComissao && configComissao.tipo == 2) { // tipo venda
-                            base_comissao = financeiro[i].valor_pago
+                            base_comissao = financeiro.valor_pago
                             perc_comissao = configComissao.perc_comissao_vista
                         } else {
                             var produto_comissao = 0, valor_comissao = 0
@@ -84,19 +72,19 @@ module.exports = app => {
                             })
 
                             if (configComissao && configComissao.tipo == 1) { // comissao tipo produto
-                                base_comissao = produto_comissao / financeiro[i].length
+                                base_comissao = produto_comissao / financeiro.length
                                 perc_comissao = configComissao.perc_comissao_vista
                             } else if (produto_comissao != 0) { // comissao do produto
-                                base_comissao = produto_comissao / financeiro[i].length
+                                base_comissao = produto_comissao / financeiro.length
                                 perc_comissao = valor_comissao / produto_comissao * 100
                             }
                         }
 
                         comissoes.push({
-                            id_usuario: vend,
-                            id_venda: financeiro[i].id_movimento_origem,
-                            id_financeiro: financeiro[i].id,
-                            data_comissao: financeiro[i].data_baixa,
+                            id_usuario: vend.id_usuario,
+                            id_venda: financeiro.id_movimento_origem,
+                            id_financeiro: financeiro.id,
+                            data_comissao: financeiro.data_baixa,
                             base_comissao: base_comissao,
                             perc_comissao: perc_comissao,
                             valor_comissao: perc_comissao / 100 * base_comissao
@@ -104,10 +92,14 @@ module.exports = app => {
 
                     }
 
-                    return { id_usuario: vend, id_venda: financeiro[i].id_movimento_origem }
-                }))
-            }
+                    return vend
+                })
+
+                return financeiro
+            })
         }
+
+        // vendedores = await Promise.all(vendedores)
 
         return { comissoes, vendedores }
     }
@@ -172,7 +164,6 @@ module.exports = app => {
             venda.id_tabela_preco = venda.id_tabela_preco.value
         }
 
-        var comissoes = []
         var vendedores = venda.vendedores
         var produtos = venda.produtos
         var financeiro = venda.financeiro
@@ -189,8 +180,6 @@ module.exports = app => {
         venda.valor_total = parseNumber(venda.valor_total || "0,00")
         venda.data_agendamento = venda.data_agendamento || null
 
-        const configComissaoEmpresa = await app.db('empresas').select('comissao_faturamento_recebimento as gerarComissao').where({ id: venda.id_empresa }).first().then(e => e.gerarComissao)
-
         if (venda.id) {
             return app.db.transaction(async function (trx) {
                 return app.db('venda')
@@ -200,6 +189,9 @@ module.exports = app => {
                     .then(async function () {
                         await app.db('produto_venda').where({ id_venda: venda.id }).delete().transacting(trx)
                         await app.db('produto_movimento_estoque').where({ id_movimentacao: venda.id }).delete().transacting(trx)
+                        await app.db('vendedores').where({ id_venda: venda.id }).delete().transacting(trx)
+
+                        vendedores = vendedores.map(vend => { return { id_usuario: vend, id_venda: venda.id } })
 
                         const movim_estoque = []
                         produtos = produtos.map(produto => {
@@ -238,17 +230,7 @@ module.exports = app => {
                         if (venda.tipo == 2) {
                             await app.db('financeiro').where({ id_movimento_origem: venda.id }).delete().transacting(trx)
                             await app.db('conta_movimento').where({ id_movimento_origem: venda.id }).delete().transacting(trx)
-                            await app.db('comissao').where({ id_venda: venda.id }).delete().transacting(trx)
                             await app.db('usuario_vendas').where({ id_venda: venda.id }).delete().transacting(trx)
-
-                            // comissao no faturamento
-                            if (configComissaoEmpresa == 1) {
-                                var result = await Promise.resolve(gerarComissoes(configComissaoEmpresa, { ...venda }, vendedores, produtos))
-
-                                comissoes = result.comissoes
-                                vendedores = result.vendedores
-                            }
-
 
                             financeiro = financeiro.map(parcela => {
                                 const newFinanc = {
@@ -291,15 +273,6 @@ module.exports = app => {
                                             .returning('*')
                                             .transacting(trx)
                                             .then(async function (financs) {
-                                                const movim_conta = []
-                                                if (configComissaoEmpresa == 2 && comissoes.length == 0) {
-                                                    var result = await Promise.resolve(gerarComissoes(configComissaoEmpresa, {}, vendedores, produtos, financs))
-
-                                                    comissoes = result.comissoes
-                                                    vendedores = result.vendedores
-                                                }
-
-
                                                 financs.map(financ_updated => {
                                                     if (financ_updated.pago)
                                                         movim_conta.push({
@@ -322,11 +295,12 @@ module.exports = app => {
                                                 return app.db.batchInsert('usuario_vendas', vendedores)
                                                     .transacting(trx)
                                                     .then(function () {
-                                                        return app.db.batchInsert('comissao', comissoes)
+                                                        return app.db.batchInsert('conta_movimento', movim_conta)
                                                             .transacting(trx)
                                                             .then(function () {
-                                                                return app.db.batchInsert('conta_movimento', movim_conta)
-                                                                    .transacting(trx)
+                                                                if (venda.tipo == 2)
+                                                                    return app.db.raw(`select calcula_comissao_faturamento(${venda.id}::integer, ${venda.valor_total}::float, '${venda.data_criacao}'::date)`)
+                                                                        .transacting(trx)
                                                             })
                                                     })
                                             })
@@ -344,11 +318,13 @@ module.exports = app => {
             });
 
         } else {
-            return app.db.transaction(async function (trx) {
+            app.db.transaction(async function (trx) {
                 return app.db('venda')
                     .insert(venda).returning('id')
                     .transacting(trx)
                     .then(async function (id) {
+                        vendedores = vendedores.map(vend => { return { id_usuario: vend, id_venda: id[0] } })
+
                         const movim_estoque = []
                         produtos = produtos.map((produto) => {
                             const newProd = {
@@ -383,15 +359,6 @@ module.exports = app => {
                         })
 
                         if (venda.tipo == 2) {
-                            // comissao no faturamento
-                            if (configComissaoEmpresa == 1) {
-                                var result = await Promise.resolve(gerarComissoes(configComissaoEmpresa, { id: id[0], ...venda }, vendedores, produtos))
-
-                                comissoes = result.comissoes
-                                vendedores = result.vendedores
-                            }
-
-
                             financeiro = financeiro.map(parcela => {
                                 const newFinanc = {
                                     id_empresa: venda.id_empresa,
@@ -426,50 +393,43 @@ module.exports = app => {
                         return app.db.batchInsert('produto_venda', produtos)
                             .transacting(trx)
                             .then(function () {
-                                return app.db.batchInsert('produto_movimento_estoque', movim_estoque)
+                                return app.db.batchInsert('usuario_vendas', vendedores)
                                     .transacting(trx)
                                     .then(function () {
-                                        return app.db.batchInsert('financeiro', financeiro)
-                                            .returning('*')
+                                        return app.db.batchInsert('produto_movimento_estoque', movim_estoque)
                                             .transacting(trx)
-                                            .then(async function (financs) {
-                                                const movim_conta = []
-                                                //comissao no recebimento
-                                                if (configComissaoEmpresa == 2 && comissoes.length == 0) {
-                                                    var result = await Promise.resolve(gerarComissoes(configComissaoEmpresa, {}, vendedores, produtos, financs))
-
-                                                    comissoes = result.comissoes
-                                                    vendedores = result.vendedores
-                                                }
-
-                                                financs.map(async financ_updated => {
-                                                    if (financ_updated.pago) {
-                                                        movim_conta.push({
-                                                            id_empresa: venda.id_empresa,
-                                                            id_conta: financ_updated.id_conta,
-                                                            id_movimento_origem: id[0],
-                                                            id_movimento_financeiro: financ_updated.id,
-                                                            id_classificacao: financ_updated.classificacao,
-                                                            data_lancamento: new Date(),
-                                                            data_emissao: venda.data_baixa,
-                                                            id_documento: financ_updated.documento_baixa,
-                                                            num_documento: financ_updated.num_documento_baixa,
-                                                            observacao: venda.observacao,
-                                                            origem: "VENDA",
-                                                            dc: 'C',
-                                                            valor: financ_updated.valor_pago
-                                                        })
-                                                    }
-                                                })
-
-                                                return app.db.batchInsert('usuario_vendas', vendedores)
+                                            .then(function () {
+                                                return app.db.batchInsert('financeiro', financeiro)
+                                                    .returning('*')
                                                     .transacting(trx)
-                                                    .then(function () {
-                                                        return app.db.batchInsert('comissao', comissoes)
+                                                    .then(async function (financs) {
+                                                        const movim_conta = []
+                                                        financs.map(async financ_updated => {
+                                                            if (financ_updated.pago) {
+                                                                movim_conta.push({
+                                                                    id_empresa: venda.id_empresa,
+                                                                    id_conta: financ_updated.id_conta,
+                                                                    id_movimento_origem: id[0],
+                                                                    id_movimento_financeiro: financ_updated.id,
+                                                                    id_classificacao: financ_updated.classificacao,
+                                                                    data_lancamento: new Date(),
+                                                                    data_emissao: venda.data_baixa,
+                                                                    id_documento: financ_updated.documento_baixa,
+                                                                    num_documento: financ_updated.num_documento_baixa,
+                                                                    observacao: venda.observacao,
+                                                                    origem: "VENDA",
+                                                                    dc: 'C',
+                                                                    valor: financ_updated.valor_pago
+                                                                })
+                                                            }
+                                                        })
+
+                                                        return app.db.batchInsert('conta_movimento', movim_conta)
                                                             .transacting(trx)
                                                             .then(function () {
-                                                                return app.db.batchInsert('conta_movimento', movim_conta)
-                                                                    .transacting(trx)
+                                                                if (venda.tipo == 2)
+                                                                    return app.db.raw(`select calcula_comissao_faturamento(${id[0]}::integer, ${venda.valor_total}::float, '${venda.data_criacao}'::date)`)
+                                                                        .transacting(trx)
                                                             })
                                                     })
                                             })
@@ -479,11 +439,11 @@ module.exports = app => {
                     })
                     .then(trx.commit)
                     .catch(trx.rollback);
-            }).then(function (inserts) {
+            }).then(async function (inserts) {
                 res.status(204).send()
             }).catch(function (error) {
                 console.log(error.toString())
-                res.status(500).send(error)
+                res.status(500).send('Erro ao salvar a nova venda, tente novamente')
             });
         }
     }
@@ -587,6 +547,10 @@ module.exports = app => {
             .where({ id: req.params.id })
             .first()
             .then(async venda => {
+                venda.vendedores = await app.db('usuario_vendas')
+                    .join('usuarios', 'usuario_vendas.id_usuario', 'usuarios.id')
+                    .select('usuarios.nome as usuario')
+                    .where({ id_venda: item.id })
                 venda.produtos = await app.db('produto_venda as pv')
                     .join('produtos as p', 'pv.id_produto', 'p.id')
                     .select(
@@ -641,8 +605,13 @@ module.exports = app => {
             .where({ 'venda.tipo': 1 })
             .orderBy('venda.data_criacao')
             .then(orcamentos => res.json(
-                orcamentos.map(item => {
+                orcamentos.map(async item => {
                     item.tipo = item.tipo == 1 ? "ORÇAMENTO" : "VENDA"
+                    item.vendedores = await app.db('usuario_vendas')
+                        .join('usuarios', 'usuario_vendas.id_usuario', 'usuarios.id')
+                        .select('usuarios.nome as usuario')
+                        .where({ id_venda: item.id })
+
                     return item
                 })
             ))
@@ -665,7 +634,16 @@ module.exports = app => {
             )
             .where({ 'venda.tipo': 2 })
             .orderBy('venda.data_criacao')
-            .then(vendas => res.json(vendas))
+            .then(vendas => res.json(
+                vendas.map(async item => {
+                    item.tipo = item.tipo == 1 ? "ORÇAMENTO" : "VENDA"
+                    item.vendedores = await app.db('usuario_vendas')
+                        .join('usuarios', 'usuario_vendas.id_usuario', 'usuarios.id')
+                        .select('usuarios.nome as usuario')
+                        .where({ id_venda: item.id })
+
+                    return item
+                })))
             .catch(e => res.status(500).send(e.toString()))
     }
 
@@ -696,7 +674,7 @@ module.exports = app => {
             res.status(204).send()
         }).catch(function (error) {
             console.log(error.toString())
-            res.status(500).send(error)
+            res.status(500).send("Erro ao excluir a venda")
         });
     }
 

@@ -27,7 +27,7 @@ module.exports = app => {
             });
 
             let info = await transporter.sendMail({
-                from: `${empresa.nome}` + `<${email.de}>`, // sender address
+                from: `<${email.de}>`, // sender address
                 to: `${email.para}`, // list of receivers
                 subject: `${email.assunto}`, // Subject line
                 text: `${email.mensagem}`, // plain text body

@@ -583,32 +583,32 @@ export default {
         });
       }
 
-      itens.map(item => {
-        const url = `${urlBD}/compras/${item.id}`;
+      itens = itens.map(async item => {
+        const url = `${urlBD}/financeiro/${item.id}`;
 
-        setTimeout(async () => {
-          await axios
-            .delete(url)
-            .then(() => {
-              showSuccess("Compra excluída com sucesso!");
-              this.itens_selecionados = [];
-              this.confirmaExclusao = false;
+        await axios
+          .delete(url)
+          .then(() => {
+            showSuccess("Compra excluída com sucesso!");
 
-              saveLog(
-                new Date(),
-                "EXCLUSÃO",
-                "COMPRAS",
-                `Usuário ${
-                  this.usuarioStore.currentUsuario.nome
-                } excluiu a compra ${item.id} no valor de ${item.valor_total |
-                  currency}`
-              );
-            })
-            .catch(showError);
-        }, 1000);
+            saveLog(
+              new Date(),
+              "EXCLUSÃO",
+              "COMPRAS",
+              `Usuário ${
+                this.usuarioStore.currentUsuario.nome
+              } excluiu a compra ${item.id} no valor de ${item.valor_total |
+                currency}`
+            );
+          })
+          .catch(showError);
       });
 
-      this.loadCompras();
+      await Promise.all(itens).then(() => {
+        this.confirmaExclusao = false;
+        this.itens_selecionados = [];
+        this.loadCompras();
+      });
     }
   },
   mounted() {

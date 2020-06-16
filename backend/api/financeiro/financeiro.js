@@ -42,13 +42,6 @@ module.exports = app => {
             return res.status(400).send(e.toString())
         }
 
-        const configComissaoEmpresa = await app.db('empresas').select('comissao_faturamento_recebimento as gerarComissao').where({ id: financeiro[0].id_empresa }).first().then(e => e.gerarComissao)
-        if (configComissaoEmpresa == 2) {
-            var result = await Promise.resolve(vendaController(app).gerarComissoes(configComissaoEmpresa, null, null, null, financeiro))
-
-            comissoes = result.comissoes
-        }
-
         financeiro.forEach(financ => {
             if (financ.id) {
                 return app.db.transaction(async function (trx) {
@@ -57,7 +50,6 @@ module.exports = app => {
                         .where({ id: financ.id })
                         .then(async () => {
                             if (financ.pago) {
-                                await app.db('comisao').where({ id_financeiro: financ.id }).delete()
                                 await app.db('conta_movimento').where({ id_movimento_financeiro: financ.id }).delete()
 
                                 const movim_conta = {
@@ -76,12 +68,9 @@ module.exports = app => {
                                     valor: financ.valor_pago
                                 }
 
-                                return app.db.batchInsert('comissao', comissoes)
+
+                                return app.db('conta_movimento').insert(movim_conta)
                                     .transacting(trx)
-                                    .then(function () {
-                                        return app.db('conta_movimento').insert(movim_conta)
-                                            .transacting(trx)
-                                    })
                             }
                         })
                         .then(trx.commit)
@@ -114,12 +103,8 @@ module.exports = app => {
                                     valor: financ.valor_pago
                                 }
 
-                                return app.db.batchInsert('comissao', comissoes)
+                                return app.db('conta_movimento').insert(movim_conta)
                                     .transacting(trx)
-                                    .then(function () {
-                                        return app.db('conta_movimento').insert(movim_conta)
-                                            .transacting(trx)
-                                    })
                             }
                         })
                         .then(trx.commit)
@@ -158,13 +143,6 @@ module.exports = app => {
             return pag
         })
 
-        const configComissaoEmpresa = await app.db('empresas').select('comissao_faturamento_recebimento as gerarComissao').where({ id: pagamento[0].id_empresa }).first().then(e => e.gerarComissao)
-        if (configComissaoEmpresa == 2) {
-            var result = await Promise.resolve(vendaController(app).gerarComissoes(configComissaoEmpresa, null, null, null, pagamento))
-
-            comissoes = result.comissoes
-        }
-
         var promises = pagamento.map(financ => {
             return app.db.transaction(async function (trx) {
                 return app.db('financeiro')
@@ -188,12 +166,8 @@ module.exports = app => {
                             valor: financ.valor_pago
                         }
 
-                        return app.db.batchInsert('comissao', comissoes)
+                        return app.db('conta_movimento').insert(movim_conta)
                             .transacting(trx)
-                            .then(function () {
-                                return app.db('conta_movimento').insert(movim_conta)
-                                    .transacting(trx)
-                            })
                     }).then(trx.commit).catch(trx.rollback);
             })
         })
@@ -372,27 +346,24 @@ module.exports = app => {
         }
 
         app.db.transaction(async function (trx) {
-            return app.db('comisao').where({ id_financeiro: financ.id }).delete()
+
+            return app.db('conta_movimento')
+                .where({ id_movimento_financeiro: req.params.id }).delete()
                 .transacting(trx)
                 .then(function () {
-                    return app.db('conta_movimento')
-                        .where({ id_movimento_financeiro: req.params.id }).delete()
+                    return app.db('financeiro')
+                        .update(financ)
+                        .where({ id: req.params.id })
                         .transacting(trx)
-                        .then(function () {
-                            return app.db('financeiro')
-                                .update(financ)
-                                .where({ id: req.params.id })
-                                .transacting(trx)
-                                .then(trx.commit)
-                                .catch(trx.rollback);
+                        .then(trx.commit)
+                        .catch(trx.rollback);
 
-                        }).then(function (inserts) {
-                            res.status(204).send()
-                        }).catch(function (error) {
-                            console.log(error.toString())
-                            res.status(500).send(error.toString())
-                        });
-                })
+                }).then(function (inserts) {
+                    res.status(204).send()
+                }).catch(function (error) {
+                    console.log(error.toString())
+                    res.status(500).send(error.toString())
+                });
         })
     }
 

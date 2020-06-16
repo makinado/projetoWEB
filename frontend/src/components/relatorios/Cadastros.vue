@@ -21,7 +21,7 @@
                   chips
                   deletable-chips
                   :color="color"
-                  label="Selecione os cadastros"
+                  label="Selecione o relatório desejado"
                   v-model="filter.cadastros"
                   :items="cadastros"
                   :rules="cadRules"
@@ -403,8 +403,8 @@ export default {
           doc.setFontSize(8);
           const date = new Date();
           doc.text(
-            date.toLocaleDateString() + " - " + date.toLocaleTimeString(),
-            doc.internal.pageSize.width - 120,
+            String(i) + " de " + String(pageCount),
+            doc.internal.pageSize.width - 100,
             35
           );
           doc.line(20, 50, doc.internal.pageSize.width - 20, 50);
@@ -412,8 +412,8 @@ export default {
           // rodapé
           doc.text(this.usuarioStore.currentUsuario.nome, 40, 580);
           doc.text(
-            String(i) + " de " + String(pageCount),
-            doc.internal.pageSize.width - 70,
+            date.toLocaleDateString() + " - " + date.toLocaleTimeString(),
+            doc.internal.pageSize.width - 120,
             580
           );
         }
@@ -588,7 +588,6 @@ export default {
           return pessoa;
         });
 
-        console.log(data.pessoas);
         csvExporter.generateCsv(data.pessoas);
       } else if (data.usuarios) {
         csvExporter.generateCsv(data.usuarios);

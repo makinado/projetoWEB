@@ -250,32 +250,14 @@
               </v-list-tile>
             </v-list-group>
 
-            <v-list-group :key="ajuda.title" no-action>
-              <template slot="activator">
-                <v-list-tile>
-                  <v-list-tile-action>
-                    <v-icon>{{ ajuda.icon }}</v-icon>
-                  </v-list-tile-action>
-                  <v-list-tile-content>
-                    <v-list-tile-title>{{ ajuda.title }}</v-list-tile-title>
-                  </v-list-tile-content>
-                </v-list-tile>
-              </template>
-
-              <v-list-tile
-                v-for="item in ajuda.items"
-                :key="item.title"
-                :to="item.link"
-                :active-class="color"
-              >
-                <v-list-tile-action>
-                  <v-icon>{{ item.icon }}</v-icon>
-                </v-list-tile-action>
-                <v-list-tile-content>
-                  <v-list-tile-title>{{ item.title }}</v-list-tile-title>
-                </v-list-tile-content>
-              </v-list-tile>
-            </v-list-group>
+            <v-list-tile :to="ajuda.link" :active-class="color">
+              <v-list-tile-action>
+                <v-icon>{{ ajuda.icon }}</v-icon>
+              </v-list-tile-action>
+              <v-list-tile-content>
+                <v-list-tile-title>{{ ajuda.title }}</v-list-tile-title>
+              </v-list-tile-content>
+            </v-list-tile>
           </v-list>
 
           <v-list-tile
@@ -557,15 +539,9 @@ export default {
         ]
       },
       ajuda: {
-        title: "Ajuda",
-        icon: "fa fa-info",
-        items: [
-          {
-            title: "Central de ajuda",
-            icon: "fa fa-book",
-            link: "/centralAjuda"
-          }
-        ]
+        title: "Central de ajuda",
+        icon: "fa fa-book",
+        link: "/centralAjuda"
       }
     };
   },
@@ -579,7 +555,7 @@ export default {
       }
     },
     getData() {
-      const dayName = new Array(
+      const dayName = [
         "domingo",
         "segunda",
         "terça",
@@ -587,8 +563,8 @@ export default {
         "quinta",
         "sexta",
         "sábado"
-      );
-      const monName = new Array(
+      ];
+      const monName = [
         "janeiro",
         "fevereiro",
         "março",
@@ -601,7 +577,7 @@ export default {
         "outubro",
         "novembro",
         "dezembro"
-      );
+      ];
 
       const now = new Date();
       this.data =

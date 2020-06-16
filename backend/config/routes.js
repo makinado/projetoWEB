@@ -104,7 +104,7 @@ module.exports = app => {
         .get(grantAccess(app.api.empresas.empresas.getById, 'empresa'))
         .delete(grantAccess(app.api.empresas.empresas.remove, 'empresa'))
     app.route('/emailsEmpresa/:id')
-        .all(app.config.passport.authenticate())
+        // .all(app.config.passport.authenticate())
         .get(grantAccess(app.api.empresas.empresas.getEmails, 'empresa'))
 
 
@@ -533,6 +533,21 @@ module.exports = app => {
     app.route('/stats')
         .all(app.config.passport.authenticate())
         .get(app.api.stat.get)
+    app.route('/stats/graficoFinanceiro')
+        .all(app.config.passport.authenticate())
+        .get(app.api.stat.getGraficoFinanceiro)
+    app.route('/stats/graficoPerformance')
+        .all(app.config.passport.authenticate())
+        .get(app.api.stat.getGraficoPerformace)
+    app.route('/stats/graficoCadastros')
+        .all(app.config.passport.authenticate())
+        .get(app.api.stat.getGraficoCadastros)
+    app.route('/stats/graficoFluxoCaixa')
+        .all(app.config.passport.authenticate())
+        .get(app.api.stat.getGraficoFluxoCaixa)
+    app.route('/stats/campeoes')
+        .all(app.config.passport.authenticate())
+        .get(app.api.stat.getCampeoes)
 
 
     app.get('*', function (req, res) {

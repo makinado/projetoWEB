@@ -1,12 +1,13 @@
 <template>
-  <v-container fill-height fluid grid-list-lg>
-    <v-layout wrap>
+  <v-container fluid grid-list-lg>
+    <v-layout row wrap>
       <v-flex xs12>
         <PageTitle main="Home" icon="fa fa-home" />
       </v-flex>
 
+      <!-- painel -->
       <v-flex xs12>
-        <Card title="Selecione o período do painel" icon="fa fa-lg fa-calendar" :color="color">
+        <Card title="Selecione as opções do painel" icon="fa fa-lg fa-calendar" :color="color">
           <v-layout row align-center wrap>
             <v-flex xs12 md3>
               <v-autocomplete
@@ -16,9 +17,8 @@
                 deletable-chips
                 :color="color"
                 label="Selecione um modo de visualização"
-                v-model="mode"
+                v-model="painel.mode"
                 :items="[{ value: 'year', text: 'Ano' }, { value: 'month', text: 'Mês' }]"
-                @change="handleGraficos()"
               ></v-autocomplete>
             </v-flex>
             <v-flex xs12 md3>
@@ -99,6 +99,7 @@
         </Card>
       </v-flex>
 
+      <!-- status -->
       <v-flex sm6 xs12 md6 lg3>
         <router-link to="/financeiro">
           <StatsCard
@@ -143,26 +144,24 @@
         </router-link>
       </v-flex>
 
-      <v-flex class="mt-3" xs12 md9>
-        <ChartCard
-          :data="graficoFluxoCaixa.data"
-          :options="graficoFluxoCaixa.options"
-          color="warning"
-          type="Line"
-          ratio="ct-double-octave"
-        >
-          <h4 class="title font-weight-light">Fluxo de caixa</h4>
-          <p class="category d-inline-flex font-weight-light">Acompanhe o fluxo de caixa da empresa</p>
-
-          <!-- <template slot="actions">
-            <v-icon class="mr-2" small>fa fa-clock-o</v-icon>
-            <span class="caption grey--text font-weight-light">Agora mesmo</span>
-          </template>-->
-        </ChartCard>
+      <!-- grafico fluxo de caixa -->
+      <v-flex xs12 md9>
+        <Card title="Fluxo de caixa" icon="fa fa-lg fa-line-chart" color="warning">
+          <line-chart
+            style="height: 100%"
+            ref="graficoFluxoCaixa"
+            :chart-data="graficoFluxoCaixa.chartData"
+            :gradient-colors="graficoFluxoCaixa.gradientColors"
+            :gradient-stops="graficoFluxoCaixa.gradientStops"
+            :extra-options="graficoFluxoCaixa.extraOptions"
+          />
+        </Card>
       </v-flex>
 
+      <!-- calendario -->
       <v-flex xs12 md3>
         <v-date-picker
+          class="mt-4"
           v-model="datePicker"
           :color="color"
           :events="arrayEvents"
@@ -177,137 +176,145 @@
         </v-date-picker>
       </v-flex>
 
-      <v-flex v-if="mode == 'month'" xs12>
-        <ChartCard
-          :data="graficoFinanceiro.data"
-          :options="graficoFinanceiro.options"
-          ratio="ct-double-octave"
-          color="info"
-          type="Line"
-        >
-          <h4 class="title font-weight-light">Financeiro</h4>
-          <p
-            class="category d-inline-flex font-weight-light"
-          >Acompanhe as despesas e receitas da empresa</p>
-
-          <template slot="actions">
-            <v-switch
-              :label="painel.valorFinanc ? 'Quantidade' : 'Dinheiro'"
-              :color="color"
-              v-model="painel.valorFinanc"
-            ></v-switch>
-          </template>
-        </ChartCard>
-      </v-flex>
-      <v-flex v-else sm12 lg4>
-        <ChartCard
-          ref="chartFinanceiro"
-          :data="graficoFinanceiro.data"
-          :options="graficoFinanceiro.options"
-          color="info"
-          type="Line"
-        >
-          <h4 class="title font-weight-light">Financeiro</h4>
-          <p
-            class="category d-inline-flex font-weight-light"
-          >Acompanhe as despesas e receitas da empresa</p>
-
-          <template slot="actions">
-            <v-switch
-              :label="painel.valorFinanc ? 'Quantidade' : 'Dinheiro'"
-              :color="color"
-              v-model="painel.valorFinanc"
-            ></v-switch>
-          </template>
-        </ChartCard>
+      <!-- grafico performance -->
+      <v-flex xs12 md8>
+        <Card title="Performance de vendas e compras" icon="fa fa-lg fa-line-chart" color="info">
+          <line-chart
+            style="height: 100%"
+            ref="graficoPerformance"
+            :chart-data="graficoPerformance.chartData"
+            :gradient-colors="graficoPerformance.gradientColors"
+            :gradient-stops="graficoPerformance.gradientStops"
+            :extra-options="graficoPerformance.extraOptions"
+          />
+        </Card>
       </v-flex>
 
-      <v-flex v-if="mode == 'month'" xs12>
-        <ChartCard
-          :data="graficoVendas.data"
-          :options="graficoVendas.options"
-          ratio="ct-double-octave"
-          color="red"
-          type="Bar"
-        >
-          <h4 class="title font-weight-light">Vendas</h4>
-          <p
-            class="category d-inline-flex font-weight-light"
-          >Acompanhe as vendas realizadas no sistema</p>
-
-          <template slot="actions">
-            <v-switch
-              :label="painel.valorVenda ? 'Quantidade' : 'Dinheiro'"
-              :color="color"
-              v-model="painel.valorVenda"
-            ></v-switch>
-          </template>
-        </ChartCard>
-      </v-flex>
-      <v-flex v-else sm12 lg4>
-        <ChartCard
-          :data="graficoVendas.data"
-          :options="graficoVendas.options"
-          color="red"
-          type="Bar"
-        >
-          <h4 class="title font-weight-light">Vendas</h4>
-          <p
-            class="category d-inline-flex font-weight-light"
-          >Acompanhe as vendas realizadas no sistema</p>
-
-          <template slot="actions">
-            <v-switch
-              :label="painel.valorVenda ? 'Quantidade' : 'Dinheiro'"
-              :color="color"
-              v-model="painel.valorVenda"
-            ></v-switch>
-          </template>
-        </ChartCard>
-      </v-flex>
-
-      <v-flex v-if="mode == 'month'" xs12>
-        <ChartCard
-          :data="graficoCadastros.data"
-          :options="graficoCadastros.options"
-          ratio="ct-double-octave"
-          color="green"
-          type="Bar"
-        >
-          <h3 class="title font-weight-light">Cadastro de pessoas</h3>
-          <p
-            class="category d-inline-flex font-weight-light"
-          >Acompanhe as pessoas cadastradas no sistema</p>
-
-          <!-- <template slot="actions">
-            <v-icon class="mr-2" small>fa fa-clock-o</v-icon>
-            <span class="caption grey--text font-weight-light">Agora mesmo</span>
-          </template>-->
-        </ChartCard>
-      </v-flex>
-      <v-flex v-else sm12 lg4>
-        <ChartCard
-          :data="graficoCadastros.data"
-          :options="graficoCadastros.options"
-          color="green"
-          type="Bar"
-        >
-          <h3 class="title font-weight-light">Cadastro de pessoas</h3>
-          <p
-            class="category d-inline-flex font-weight-light"
-          >Acompanhe as pessoas cadastradas no sistema</p>
-
-          <!-- <template slot="actions">
-            <v-icon class="mr-2" small>fa fa-clock-o</v-icon>
-            <span class="caption grey--text font-weight-light">Agora mesmo</span>
-          </template>-->
-        </ChartCard>
-      </v-flex>
-
-      <v-flex xs12 md6>
-        <Card class="card-tabs" color="green">
+      <!-- Campeoes -->
+      <v-flex xs12 md4>
+        <Card class="card-tabs" color="secondary">
           <v-flex slot="header">
-            <v-tabs v-model="tabindex" color="transparent" slider-color="white">
+            <v-tabs v-model="campIndex" color="transparent" slider-color="white">
+              <span class="subheading font-weight-light mr-3" style="align-self: center">Campeões:</span>
+
+              <v-tab class="mr-3">
+                <v-icon class="mr-2">fa fa-lg fa-archive</v-icon>Produtos
+              </v-tab>
+              <v-tab class="mr-3">
+                <v-icon class="mr-2">fa fa-lg fa-user-o</v-icon>Usuários
+              </v-tab>
+              <v-tab class="mr-3">
+                <v-icon class="mr-2">fa fa-lg fa-user</v-icon>Clientes
+              </v-tab>
+            </v-tabs>
+          </v-flex>
+
+          <v-tabs-items v-model="campIndex">
+            <v-tab-item :value="0">
+              <v-list three-line>
+                <span
+                  v-if="!campeoes.produtos || campeoes.produtos.length == 0"
+                >Nenhum produto campeão esse mês</span>
+                <v-list-tile v-for="(item, index) in campeoes.produtos" :key="item.descricao">
+                  <v-layout class="my-2" row wrap>
+                    <v-flex xs12>
+                      <v-list-tile-title>
+                        <v-avatar
+                          size="30"
+                          :color="index == 0 ? '#FDD835' : index == 1 ? '#546E7A' : index == 2 ? '#FF8F00' : '#43A047'"
+                        >
+                          <span class="white--text">{{ index + 1 }}</span>
+                        </v-avatar>
+                        - {{ item.descricao }} - {{ item.total | currency }}
+                      </v-list-tile-title>
+                    </v-flex>
+                  </v-layout>
+                </v-list-tile>
+              </v-list>
+            </v-tab-item>
+
+            <v-tab-item :value="1">
+              <v-list three-line>
+                <span
+                  v-if="!campeoes.usuarios || campeoes.usuarios.length == 0"
+                >Nenhum usuário campeão esse mês</span>
+                <v-list-tile v-for="(item, index) in campeoes.usuarios" :key="item.nome">
+                  <v-layout class="my-2" row wrap>
+                    <v-flex xs12>
+                      <v-list-tile-title>
+                        <v-avatar
+                          size="30"
+                          :color="index == 0 ? '#FDD835' : index == 1 ? '#546E7A' : index == 2 ? '#FF8F00' : '#43A047'"
+                        >
+                          <span class="white--text">{{ index + 1 }}</span>
+                        </v-avatar>
+                        - {{ item.nome }} - {{ item.total | currency }}
+                      </v-list-tile-title>
+                    </v-flex>
+                  </v-layout>
+                </v-list-tile>
+              </v-list>
+            </v-tab-item>
+
+            <v-tab-item :value="2">
+              <v-list three-line>
+                <span
+                  v-if="!campeoes.clientes || campeoes.clientes.length == 0"
+                >Nenhum cliente campeão esse mês</span>
+                <v-list-tile v-for="(item, index) in campeoes.clientes" :key="item.nome">
+                  <v-layout class="my-2" row wrap>
+                    <v-flex xs12>
+                      <v-list-tile-title>
+                        <v-avatar
+                          size="30"
+                          :color="index == 0 ? '#FDD835' : index == 1 ? '#546E7A' : index == 2 ? '#FF8F00' : '#43A047'"
+                        >
+                          <span class="white--text">{{ index + 1 }}</span>
+                        </v-avatar>
+                        - {{ item.nome }} - {{ item.total | currency }}
+                      </v-list-tile-title>
+                    </v-flex>
+                  </v-layout>
+                </v-list-tile>
+              </v-list>
+            </v-tab-item>
+          </v-tabs-items>
+        </Card>
+      </v-flex>
+
+      <!-- grafico financeiro -->
+      <v-flex xs12 md6>
+        <Card title="Financeiro" icon="fa fa-lg fa-usd" color="success">
+          <bar-chart
+            style="height: 100%"
+            ref="graficoFinanceiro"
+            :chart-data="graficoFinanceiro.chartData"
+            :gradient-colors="graficoFinanceiro.gradientColors"
+            :gradient-stops="graficoFinanceiro.gradientStops"
+            :extra-options="graficoFinanceiro.extraOptions"
+          />
+        </Card>
+      </v-flex>
+
+      <!-- grafico cadastros -->
+      <v-flex xs12 md6>
+        <Card title="Cadastros" icon="fa fa-lg fa-archive" color="warning">
+          <bar-chart
+            style="height: 100%"
+            ref="graficoCadastros"
+            :chart-data="graficoCadastros.chartData"
+            :gradient-colors="graficoCadastros.gradientColors"
+            :gradient-stops="graficoCadastros.gradientStops"
+            :extra-options="graficoCadastros.extraOptions"
+          />
+        </Card>
+      </v-flex>
+
+      <!-- metas de usuario/empresa -->
+      <v-flex xs12 md6>
+        <Card class="card-tabs" color="danger">
+          <v-flex slot="header">
+            <v-tabs v-model="metaIndex" color="transparent" slider-color="white">
               <span class="subheading font-weight-light mr-3" style="align-self: center">Metas:</span>
 
               <v-tab class="mr-3">
@@ -319,7 +326,7 @@
             </v-tabs>
           </v-flex>
 
-          <v-tabs-items v-model="tabindex">
+          <v-tabs-items v-model="metaIndex">
             <v-tab-item :value="0">
               <v-list three-line>
                 <span v-if="metasUsuario.length == 0">Nenhuma meta cadastrada</span>
@@ -369,6 +376,7 @@
 import { urlBD, showError, formatDate } from "@/global";
 import axios from "axios";
 import { mapState } from "vuex";
+import * as chartConfigs from "@/components/charts/config";
 
 import { formatToBRL } from "brazilian-values";
 
@@ -405,7 +413,6 @@ export default {
     },
     params() {
       return {
-        ...this.mode,
         ...this.painel
       };
     }
@@ -413,12 +420,19 @@ export default {
   components: {
     PageTitle: () => import("../template/PageTitle"),
     Card: () => import("../material/Card"),
-    ChartCard: () => import("../material/ChartCard"),
-    StatsCard: () => import("../material/StatsCard")
+    StatsCard: () => import("../material/StatsCard"),
+    LineChart: () => import("../charts/LineChart"),
+    BarChart: () => import("../charts/BarChart")
   },
   watch: {
     params() {
       this.loadStats();
+
+      this.renderGraficoFluxoCaixa();
+
+      this.renderGraficoPerformance();
+      this.renderGraficoCadastros();
+      this.renderGraficoFinanceiro();
     }
   },
   data() {
@@ -427,136 +441,62 @@ export default {
       painel: {},
       menu: false,
       menu1: false,
-      tabindex: 0,
-      mode: "year",
+      metaIndex: 0,
+      campIndex: 0,
       datePicker: new Date().toISOString().substr(0, 10),
+      graficoFinanceiro: {
+        activeIndex: 0,
+        chartData: null,
+        extraOptions: chartConfigs.greenChartOptions,
+        gradientColors: [
+          "rgba(76, 211, 150, 0.1)",
+          "rgba(53, 183, 125, 0)",
+          "rgba(119,52,169,0)"
+        ],
+        gradientStops: [1, 0.4, 0],
+        categories: []
+      },
+      graficoFluxoCaixa: {
+        activeIndex: 0,
+        chartData: null,
+        extraOptions: chartConfigs.orangeChartOptions,
+        gradientColors: [
+          "rgba(76, 211, 150, 0.1)",
+          "rgba(53, 183, 125, 0)",
+          "rgba(119,52,169,0)"
+        ],
+        gradientStops: [1, 0.4, 0],
+        categories: []
+      },
+      graficoPerformance: {
+        activeIndex: 0,
+        chartData: null,
+        extraOptions: chartConfigs.blueChartOptions,
+        gradientColors: [
+          "rgba(76, 211, 150, 0.1)",
+          "rgba(53, 183, 125, 0)",
+          "rgba(119,52,169,0)"
+        ],
+        gradientStops: [1, 0.4, 0],
+        categories: []
+      },
+      graficoCadastros: {
+        chartData: null,
+        extraOptions: chartConfigs.barChartOptions,
+        gradientColors: [
+          "rgba(76, 211, 150, 0.1)",
+          "rgba(53, 183, 125, 0)",
+          "rgba(119,52,169,0)"
+        ]
+      },
       stats: {
         contasPagar: 0,
         contasReceber: 0,
         vendas: 0
       },
-      graficoFluxoCaixa: {
-        data: {
-          labels: [],
-          series: []
-        },
-        options: {
-          lineSmooth: this.$chartist.Interpolation.cardinal({
-            tension: 0
-          }),
-          low: 0,
-          high: 50, // creative tim: we recommend you to set the high sa the biggest value + something for a better look
-          chartPadding: {
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0
-          },
-          axisY: {
-            onlyInteger: true
-          }
-          // // plugins: [this.$chartist.plugins.tooltip()]
-        }
-      },
-      graficoFinanceiro: {
-        data: {
-          labels: [],
-          series: []
-        },
-        options: {
-          lineSmooth: this.$chartist.Interpolation.cardinal({
-            tension: 0
-          }),
-          low: 0,
-          high: 99999, // creative tim: we recommend you to set the high sa the biggest value + something for a better look
-          chartPadding: {
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0
-          },
-          axisX: {
-            labelOffset: {
-              x: -8
-            }
-          },
-          axisY: {
-            onlyInteger: true,
-            scaleMinSpace: 1
-          },
-          plugins: [
-            this.$chartist.plugins.tooltip({
-              currency: "R$ ",
-              appendToBody: true
-            })
-          ]
-        }
-      },
-      graficoVendas: {
-        data: {
-          labels: [],
-          series: []
-        },
-        options: {
-          lineSmooth: this.$chartist.Interpolation.cardinal({
-            tension: 0
-          }),
-          low: 0,
-          high: 99999, // creative tim: we recommend you to set the high sa the biggest value + something for a better look
-          chartPadding: {
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0
-          },
-          axisY: {
-            onlyInteger: true
-          },
-          plugins: [
-            this.$chartist.plugins.tooltip({
-              currency: "R$ ",
-              appendToBody: true
-            })
-          ]
-        }
-      },
-      graficoCadastros: {
-        data: {
-          labels: [
-            "Clientes",
-            "Fornecedores",
-            "Transportadoras",
-            "usuarios",
-            "produtos"
-          ],
-          series: []
-        },
-        options: {
-          lineSmooth: this.$chartist.Interpolation.cardinal({
-            tension: 0
-          }),
-          low: 0,
-          high: 99999, // creative tim: we recommend you to set the high sa the biggest value + something for a better look
-          chartPadding: {
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0
-          },
-          axisY: {
-            onlyInteger: true
-          },
-          plugins: [this.$chartist.plugins.tooltip()]
-        }
-      },
+      campeoes: {},
       metasUsuario: [],
-      metasEmpresa: [],
-      tabs: 0,
-      list: {
-        0: false,
-        1: false,
-        2: false
-      }
+      metasEmpresa: []
     };
   },
   methods: {
@@ -568,39 +508,12 @@ export default {
         this.$router.push({ path: path });
       }
     },
-    handleGraficos() {
-      this.graficoFinanceiro.data.labels = [];
-      this.graficoFluxoCaixa.data.labels = [];
-      this.graficoVendas.data.labels = [];
-      if (this.mode == "year") {
-        this.graficoFinanceiro.data.labels = this.graficoFluxoCaixa.data.labels = this.graficoVendas.data.labels = [
-          "Jan",
-          "Fev",
-          "Mai",
-          "Abr",
-          "Mai",
-          "Jun",
-          "Jul",
-          "Ago",
-          "Set",
-          "Out",
-          "Nov",
-          "Dez"
-        ];
-      } else if (this.mode == "month") {
-        for (let i = 0; i < 32; i++) {
-          this.graficoFinanceiro.data.labels.push(i);
-          this.graficoFluxoCaixa.data.labels.push(i);
-          this.graficoVendas.data.labels.push(i);
-        }
-      }
-    },
     async loadStats() {
       this.$store.state.isLoading = true;
 
       axios
         .get(
-          `${urlBD}/stats?view=${this.mode}&data_inicial=${this.painel
+          `${urlBD}/stats?view=${this.painel.mode}&data_inicial=${this.painel
             .data_inicial || ""}&data_final=${this.painel.data_final || ""}`
         )
         .then(res => {
@@ -609,69 +522,6 @@ export default {
             contasReceber: res.data.contasReceber,
             vendas: res.data.vendas
           };
-
-          // var maxFluxo = 0;
-          // this.graficoFluxoCaixa.data.series = res.data.graficoFluxoCaixa || [];
-          // if (res.data.graficoFluxoCaixa[0].length > 0) {
-          //   max = res.data.graficoFluxoCaixa[0].reduce((a, b) =>
-          //     Math.max(a, b)
-          //   );
-          //   this.graficoFluxoCaixa.options.high = max + 5;
-          // }
-
-          var maxPagar = 0;
-          var maxReceber = 0;
-          this.graficoFinanceiro.data.series = res.data.graficoFinanceiro.map(
-            series => {
-              return series.map(item => item.sum);
-            }
-          );
-          if (
-            this.graficoFinanceiro.data.series[0].length > 0 &&
-            this.graficoFinanceiro.data.series[1].length > 0
-          ) {
-            maxPagar = this.graficoFinanceiro.data.series[0].reduce((a, b) =>
-              Math.max(a, b)
-            );
-            maxReceber = this.graficoFinanceiro.data.series[1].reduce((a, b) =>
-              Math.max(a, b)
-            );
-
-            this.graficoFinanceiro.options.high =
-              (maxPagar > maxReceber ? maxPagar : maxReceber) + 300;
-          } else if (this.graficoFinanceiro.data.series[0].length > 0) {
-            maxPagar = res.data.graficoFinanceiro[0].reduce((a, b) =>
-              Math.max(a, b)
-            );
-            this.graficoFinanceiro.options.high = maxPagar + 300;
-          } else {
-            maxReceber = res.data.graficoFinanceiro[1].reduce((a, b) =>
-              Math.max(a, b)
-            );
-            this.graficoFinanceiro.options.high = maxReceber + 300;
-          }
-
-          var maxVenda = 0;
-          this.graficoVendas.data.series = res.data.graficoVendas.map(
-            series => {
-              return series.map(item => item.sum);
-            }
-          );
-          if (this.graficoVendas.data.series[0].length > 0) {
-            maxVenda = this.graficoVendas.data.series[0].reduce((a, b) =>
-              Math.max(a, b)
-            );
-            this.graficoVendas.options.high = maxVenda + 300;
-          }
-
-          var maxCad = 0;
-          this.graficoCadastros.data.series = res.data.graficoCadastros || [];
-          if (this.graficoCadastros.data.series[0].length > 0) {
-            maxCad = res.data.graficoCadastros[0].reduce((a, b) =>
-              Math.max(a, b)
-            );
-            this.graficoCadastros.options.high = maxCad + 5;
-          }
 
           axios.get(`${urlBD}/eventos_agenda`).then(res => {
             this.arrayEvents = res.data.map(evento => {
@@ -695,9 +545,355 @@ export default {
             this.$store.state.isLoading = false;
           }, 2000)
         );
+    },
+    async renderGraficoFluxoCaixa() {
+      axios
+        .get(
+          `${urlBD}/stats/graficoFluxoCaixa?view=${
+            this.painel.mode
+          }&empresa=${this.painel.empresa || ""}&data_inicial=${this.painel
+            .data_inicial || ""}&data_final=${this.painel.data_final || ""}`
+        )
+        .then(res => {
+          const contas = res.data.map(series => {
+            return series.map(item => Number(item.sum));
+          });
+
+          let chartData = {
+            datasets: [
+              {
+                label: "Entradas",
+                fill: true,
+                borderColor: "#47A44B",
+                borderWidth: 2,
+                borderDash: [],
+                borderDashOffset: 0.0,
+                pointBackgroundColor: "#47A44B",
+                pointBorderColor: "rgba(255,255,255,0)",
+                pointHoverBackgroundColor: "#47A44B",
+                pointBorderWidth: 20,
+                pointHoverRadius: 4,
+                pointHoverBorderWidth: 15,
+                pointRadius: 4,
+                data: contas[0]
+              },
+              {
+                label: "Saídas",
+                fill: true,
+                borderColor: "#f55a4e",
+                borderWidth: 2,
+                borderDash: [],
+                borderDashOffset: 0.0,
+                pointBackgroundColor: "#f55a4e",
+                pointBorderColor: "rgba(255,255,255,0)",
+                pointHoverBackgroundColor: "#f55a4e",
+                pointBorderWidth: 20,
+                pointHoverRadius: 4,
+                pointHoverBorderWidth: 15,
+                pointRadius: 4,
+                data: contas[1]
+              }
+            ],
+            labels:
+              this.painel.mode == "year"
+                ? [
+                    "JAN",
+                    "FEV",
+                    "MAR",
+                    "ABR",
+                    "MAI",
+                    "JUN",
+                    "JUL",
+                    "AGO",
+                    "SET",
+                    "OUT",
+                    "NOV",
+                    "DEZ"
+                  ]
+                : [
+                    "0",
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                    "6",
+                    "7",
+                    "8",
+                    "9",
+                    "10",
+                    "11",
+                    "12",
+                    "13",
+                    "14",
+                    "15",
+                    "16",
+                    "17",
+                    "18",
+                    "19",
+                    "20",
+                    "21",
+                    "22",
+                    "23",
+                    "24",
+                    "25",
+                    "26",
+                    "27",
+                    "28",
+                    "29",
+                    "30",
+                    "31"
+                  ]
+          };
+          this.graficoFluxoCaixa.chartData = chartData;
+        })
+        .catch(showError);
+    },
+    async renderGraficoFinanceiro() {
+      axios
+        .get(
+          `${urlBD}/stats/graficoFinanceiro?view=${
+            this.painel.mode
+          }&empresa=${this.painel.empresa || ""}&data_inicial=${this.painel
+            .data_inicial || ""}&data_final=${this.painel.data_final || ""}`
+        )
+        .then(res => {
+          const contas = res.data.map(series => {
+            return series.map(item => Number(item.sum));
+          });
+
+          let chartData = {
+            datasets: [
+              {
+                label: "Contas a receber",
+                fill: true,
+                borderColor: "#47A44B",
+                borderWidth: 2,
+                borderDash: [],
+                borderDashOffset: 0.0,
+                pointBackgroundColor: "#47A44B",
+                pointBorderColor: "rgba(255,255,255,0)",
+                pointHoverBackgroundColor: "#47A44B",
+                pointBorderWidth: 20,
+                pointHoverRadius: 4,
+                pointHoverBorderWidth: 15,
+                pointRadius: 4,
+                data: contas[0]
+              },
+              {
+                label: "Contas a pagar",
+                fill: true,
+                borderColor: "#f55a4e",
+                borderWidth: 2,
+                borderDash: [],
+                borderDashOffset: 0.0,
+                pointBackgroundColor: "#f55a4e",
+                pointBorderColor: "rgba(255,255,255,0)",
+                pointHoverBackgroundColor: "#f55a4e",
+                pointBorderWidth: 20,
+                pointHoverRadius: 4,
+                pointHoverBorderWidth: 15,
+                pointRadius: 4,
+                data: contas[1]
+              }
+            ],
+            labels:
+              this.painel.mode == "year"
+                ? [
+                    "JAN",
+                    "FEV",
+                    "MAR",
+                    "ABR",
+                    "MAI",
+                    "JUN",
+                    "JUL",
+                    "AGO",
+                    "SET",
+                    "OUT",
+                    "NOV",
+                    "DEZ"
+                  ]
+                : [
+                    "0",
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                    "6",
+                    "7",
+                    "8",
+                    "9",
+                    "10",
+                    "11",
+                    "12",
+                    "13",
+                    "14",
+                    "15",
+                    "16",
+                    "17",
+                    "18",
+                    "19",
+                    "20",
+                    "21",
+                    "22",
+                    "23",
+                    "24",
+                    "25",
+                    "26",
+                    "27",
+                    "28",
+                    "29",
+                    "30",
+                    "31"
+                  ]
+          };
+          this.graficoFinanceiro.chartData = chartData;
+        })
+        .catch(showError);
+    },
+    async renderGraficoPerformance() {
+      axios
+        .get(
+          `${urlBD}/stats/graficoPerformance?view=${
+            this.painel.mode
+          }&empresa=${this.painel.empresa || ""}&data_inicial=${this.painel
+            .data_inicial || ""}&data_final=${this.painel.data_final || ""}`
+        )
+        .then(res => {
+          const data = res.data.map(series => {
+            return series.map(item => Number(item.sum));
+          });
+          let chartData = {
+            datasets: [
+              {
+                label: "Vendas",
+                fill: true,
+                borderColor: "#1E88E5",
+                borderWidth: 2,
+                borderDash: [],
+                borderDashOffset: 0.0,
+                pointBackgroundColor: "#1E88E5",
+                pointBorderColor: "rgba(255,255,255,0)",
+                pointHoverBackgroundColor: "#1E88E5",
+                pointBorderWidth: 20,
+                pointHoverRadius: 4,
+                pointHoverBorderWidth: 15,
+                pointRadius: 4,
+                data: data[0]
+              },
+              {
+                label: "Compras",
+                fill: true,
+                borderColor: "#ffa21a",
+                borderWidth: 2,
+                borderDash: [],
+                borderDashOffset: 0.0,
+                pointBackgroundColor: "#ffa21a",
+                pointBorderColor: "rgba(255,255,255,0)",
+                pointHoverBackgroundColor: "#ffa21a",
+                pointBorderWidth: 20,
+                pointHoverRadius: 4,
+                pointHoverBorderWidth: 15,
+                pointRadius: 4,
+                data: data[1]
+              }
+            ],
+            labels:
+              this.painel.mode == "year"
+                ? [
+                    "JAN",
+                    "FEV",
+                    "MAR",
+                    "ABR",
+                    "MAI",
+                    "JUN",
+                    "JUL",
+                    "AGO",
+                    "SET",
+                    "OUT",
+                    "NOV",
+                    "DEZ"
+                  ]
+                : [
+                    "0",
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                    "6",
+                    "7",
+                    "8",
+                    "9",
+                    "10",
+                    "11",
+                    "12",
+                    "13",
+                    "14",
+                    "15",
+                    "16",
+                    "17",
+                    "18",
+                    "19",
+                    "20",
+                    "21",
+                    "22",
+                    "23",
+                    "24",
+                    "25",
+                    "26",
+                    "27",
+                    "28",
+                    "29",
+                    "30",
+                    "31"
+                  ]
+          };
+          this.graficoPerformance.chartData = chartData;
+          this.graficoPerformance.activeIndex = 0;
+        })
+        .catch(showError);
+    },
+    async renderGraficoCadastros() {
+      axios
+        .get(`${urlBD}/stats/graficoCadastros?view=${this.painel.mode}`)
+        .then(res => {
+          let chartData = {
+            datasets: [
+              {
+                fill: true,
+                borderColor: "#ffa21a",
+                borderWidth: 2,
+                borderDash: [],
+                borderDashOffset: 0.0,
+                data: res.data
+              }
+            ],
+            labels: [
+              "CLIENTES",
+              "FORNECEDORES",
+              "TRANSPORTADORAS",
+              "USUÁRIOS",
+              "PRODUTOS"
+            ]
+          };
+          this.graficoCadastros.chartData = chartData;
+        })
+        .catch(showError);
+    },
+    async loadCampeoes() {
+      axios
+        .get(`${urlBD}/stats/campeoes?view=${this.painel.mode}`)
+        .then(res => {
+          this.campeoes = res.data;
+        })
+        .catch(showError);
     }
   },
   async mounted() {
+    this.$set(this.painel, "mode", "year");
+    this.$set(this.painel, "empresa", this.empresaStore.currentEmpresa);
     this.$set(
       this.painel,
       "data_inicial",
@@ -708,21 +904,9 @@ export default {
       "data_final",
       new Date().toISOString().substr(0, 10)
     );
-    this.handleGraficos();
     this.$store.dispatch("loadNotificacoes");
+
+    this.loadCampeoes();
   }
 };
 </script>
-
-<style>
-.chartist-tooltip {
-  position: absolute;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  padding: 0px 10px;
-  border-radius: 5px;
-  cursor: pointer;
-
-  transition: all 0.2s linear;
-}
-</style>

@@ -578,7 +578,6 @@ export default {
       axios
         .get(url)
         .then(res => {
-          console.log(res.data.data);
           this.vendaStore.vendas = res.data.data;
           this.count = res.data.count;
           this.pagination.rowsPerPage = res.data.limit;
@@ -608,29 +607,28 @@ export default {
         });
       }
 
-      await itens.map(item => {
-        const url = `${urlBD}/vendas/${item.id}`;
+      itens = itens.map(async item => {
+        console.log(item)
+        await axios
+          .delete(`${urlBD}/vendas/${item.id}`)
+          .then(() => {
+            showSuccess("Venda excluída com sucesso!");
 
-        setTimeout(async () => {
-          await axios
-            .delete(url)
-            .then(() => {
-              showSuccess("Venda excluída com sucesso!");
-              this.itens_selecionados = [];
-              this.confirmaExclusao = false;
-
-              saveLog(
-                new Date(),
-                "EXCLUSÃO",
-                "VENDAS",
-                `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu a venda ${item.id} no valor de ${item.valor_total}`
-              );
-            })
-            .catch(showError);
-        }, 1500);
+            saveLog(
+              new Date(),
+              "EXCLUSÃO",
+              "VENDAS",
+              `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu a venda ${item.id} no valor de ${item.valor_total}`
+            );
+          })
+          .catch(showError);
       });
 
-      this.loadVendas();
+      await Promise.all(itens).then(() => {
+        this.confirmaExclusao = false;
+        this.itens_selecionados = [];
+        this.loadVendas();
+      });
     }
   },
   mounted() {

@@ -5,7 +5,7 @@
         v-if="modalStore.email.visible"
         v-model="modalStore.email.visible"
         persistent
-        max-width="600px"
+        max-width="800px"
       >
         <v-card>
           <v-card-title>
@@ -56,14 +56,7 @@
                   </v-flex>
 
                   <v-flex xs12>
-                    <v-textarea
-                      color="primary"
-                      box
-                      label="Mensagem"
-                      auto-grow
-                      v-model="email.mensagem"
-                      :rules="mensagemRules"
-                    ></v-textarea>
+                    <VueEditor v-model="email.mensagem" :rules="mensagemRules" />
                   </v-flex>
                 </v-layout>
               </v-container>
@@ -81,6 +74,8 @@
 </template>
 
 <script>
+import { VueEditor } from "vue2-editor";
+
 import { mapState } from "vuex";
 
 import axios from "axios";
@@ -88,7 +83,8 @@ import { urlBD, showError } from "@/global";
 
 export default {
   name: "Email",
-  data: function() {
+  components: { VueEditor },
+  data() {
     return {
       email: {},
       emailsEmpresa: [],
@@ -109,7 +105,7 @@ export default {
     ...mapState(["modalStore", "usuarioStore", "empresaStore"])
   },
   watch: {
-    "$store.state.modalStore.email.visible": function() {
+    "$store.state.modalStore.email.visible"() {
       if (this.modalStore.email.visible) {
         this.reset();
         this.prepareEmail();
@@ -159,7 +155,10 @@ export default {
       }
 
       axios.get(url).then(res => {
-        this.emailsEmpresa = Object.values(res.data);
+        this.emailsEmpresa = [
+          this.usuarioStore.currentUsuario.email,
+          ...res.data
+        ];
       });
     }
   }

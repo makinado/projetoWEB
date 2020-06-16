@@ -173,7 +173,7 @@ module.exports = app => {
             .select('email', 'email2', 'email_envio_nfe', 'email_envio_boleto', 'email_envio_compra', 'email_envio_venda')
             .where({ id: req.params.id })
             .first()
-            .then(empresa => res.json(empresa))
+            .then(empresa => res.json(Object.values(empresa).filter(email => email != null)))
             .catch(e => res.status(500).send(e.toString()))
     }
 

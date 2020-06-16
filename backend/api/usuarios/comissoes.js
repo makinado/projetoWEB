@@ -6,8 +6,6 @@ module.exports = app => {
         const result = await app.db('comissao').count('id_usuario').where({ id_usuario: req.params.id_usuario }).first()
         const count = parseInt(result.count)
 
-        console.log(req.query)
-
         app.db('comissao')
             .join('usuarios', 'comissao.id_usuario', 'usuarios.id')
             .select('comissao.*', 'usuarios.nome as usuario')

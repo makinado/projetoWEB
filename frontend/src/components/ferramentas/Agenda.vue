@@ -6,33 +6,49 @@
       </v-flex>
 
       <v-layout row wrap>
-        <v-flex xs12 md4>
-          <v-btn class="v-btn-common" :color="color" @click="$refs.calendar.prev()">
-            <v-icon dark left>keyboard_arrow_left</v-icon>Ant
+        <v-container grid-list-xl fill-height>
+          <v-menu bottom right>
+            <template v-slot:activator="{ on }">
+              <v-btn outline :color="color" class="v-btn-common mr-3" v-on="on">
+                <span>Visualizar</span>
+                <v-icon right>keyboard_arrow_down</v-icon>
+              </v-btn>
+            </template>
+            <v-list dense>
+              <v-list-tile @click="type = 'day'">
+                <v-list-tile-title>Dia</v-list-tile-title>
+              </v-list-tile>
+
+              <v-list-tile @click="type = 'week'">
+                <v-list-tile-title>Semana</v-list-tile-title>
+              </v-list-tile>
+
+              <v-list-tile @click="type = 'month'">
+                <v-list-tile-title>Mês</v-list-tile-title>
+              </v-list-tile>
+
+              <v-list-tile @click="type = '4day'">
+                <v-list-tile-title>4 dias</v-list-tile-title>
+              </v-list-tile>
+            </v-list>
+          </v-menu>
+          <v-btn outline class="v-btn-common mr-3" :color="color" @click="setToday">Hoje</v-btn>
+          <v-btn fab text small @click="$refs.calendar.prev()">
+            <v-icon small>keyboard_arrow_left</v-icon>
           </v-btn>
-          <v-btn class="v-btn-common" :color="color" @click="$refs.calendar.next()">
-            Prox
-            <v-icon right dark>keyboard_arrow_right</v-icon>
+          <v-btn fab text small @click="$refs.calendar.next()" class="mr-3">
+            <v-icon small>keyboard_arrow_right</v-icon>
           </v-btn>
-        </v-flex>
-        <v-flex xs12 md4>
-          <v-autocomplete
-            class="tag-input"
-            label="Tipo"
-            dense
-            chips
-            v-model="type"
-            :color="color"
-            :items="options"
-          ></v-autocomplete>
-        </v-flex>
-        <v-flex xs12 md4 class="text-xs-right">
+          <h3>{{ title }}</h3>
+
+          <v-spacer></v-spacer>
+
           <v-btn
             class="v-btn-common"
             :color="color"
             @click="[modalStore.eventos.visible = true, this.eventoStore.evento = null]"
           >Adicionar evento</v-btn>
-        </v-flex>
+        </v-container>
       </v-layout>
 
       <v-flex xs12>
@@ -46,6 +62,7 @@
             :color="color"
             :now="today"
             :value="today"
+            @change="setTitle"
           >
             <template slot="day" slot-scope="{ date }">
               <template v-for="evento in eventsMap[date]">
@@ -121,7 +138,7 @@
               </template>
             </template>
 
-            <template slot="dayBody" slot-scope="{ date, timeToY, minutesToPixels }">
+            <template slot="dayBody" slot-scope="{ date, timeToY }">
               <template v-for="evento in eventsMap[date]">
                 <v-menu :key="evento.descricao" v-model="evento.open" full-width offset-x>
                   <template v-slot:activator="{ on }">
@@ -207,8 +224,9 @@ export default {
   data() {
     return {
       type: "month",
-      start: "01-01-2010",
-      end: "31-12-2025",
+      title: "",
+      start: null,
+      end: null,
       confirmaExclusao: false,
       options: [
         { text: "Dia", value: "day" },
@@ -221,6 +239,60 @@ export default {
     };
   },
   methods: {
+    setToday() {
+      this.start = this.today;
+    },
+    setTitle(e) {
+      const { start, end } = e;
+      const dayName = [
+        "domingo",
+        "segunda",
+        "terça",
+        "quarta",
+        "quinta",
+        "sexta",
+        "sábado"
+      ];
+      const monName = [
+        "janeiro",
+        "fevereiro",
+        "março",
+        "abril",
+        "Maio",
+        "junho",
+        "julho",
+        "agosto",
+        "setembro",
+        "outubro",
+        "novembro",
+        "dezembro"
+      ];
+
+      const startMonth = monName[start.month - 1];
+      const endMonth = monName[end.month - 1];
+
+      const startYear = start.year;
+      const endYear = end.year;
+
+      const startDay = start.day;
+      const endDay = end.day;
+
+      console.log(`${startDay} - ${endDay} ${startMonth} ${startYear} `);
+
+      this.title = "";
+      switch (this.type) {
+        case "month":
+          this.title = `${startMonth} ${startYear}`;
+          break;
+        case "week":
+        case "4day":
+          this.title = `${startDay} - ${endDay} ${startMonth} ${startYear}`;
+          break;
+        case "day":
+          this.title = `${startDay} ${startMonth} ${startYear}`;
+          break;
+      }
+    },
     loadEventos() {
       const url = `${urlBD}/eventos_agenda`;
       axios.get(url).then(res => {

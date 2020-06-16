@@ -172,6 +172,7 @@
                                 label="Valor de venda"
                                 v-model="produto.valor_venda"
                                 :rules="valorVendaRules"
+                                @blur="calcValorVenda"
                               ></v-text-field>
                             </v-flex>
                           </v-layout>
@@ -183,7 +184,7 @@
                                 color="primary"
                                 label="Valor unitário"
                                 v-model="produto.valor_unitario"
-                                @change="calcMargemContrib"
+                                @blur="[calcValorVenda(), calcMargemContrib()]"
                               ></v-text-field>
                             </v-flex>
                             <v-flex xs12 md3>
@@ -465,12 +466,38 @@ export default {
     navigate(path) {
       window.open(path, "_blank");
     },
+    calcValorVenda() {
+      var valor_unitario = parseNumber(this.produto.valor_unitario);
+      var valor_venda = parseNumber(this.produto.valor_venda);
+      var perc_margem_contribuicao = parseNumber(
+        this.produto.perc_margem_contribuicao
+      );
+
+      if (valor_unitario !== 0 && valor_venda !== 0) {
+        var valor_lucro_bruto = valor_venda - valor_unitario;
+        perc_margem_contribuicao = (valor_lucro_bruto / valor_unitario) * 100;
+      }
+
+      this.produto.perc_margem_contribuicao = formatToBRL(
+        perc_margem_contribuicao
+      );
+      this.produto.valor_lucro_bruto = formatToBRL(valor_lucro_bruto);
+      this.$refs.perc_margem_contribuicao.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.produto.perc_margem_contribuicao;
+
+      this.$refs.valor_lucro_bruto.$el.getElementsByTagName(
+        "input"
+      )[0].value = this.produto.valor_lucro_bruto;
+    },
     calcMargemContrib() {
       var valor_unitario = parseNumber(this.produto.valor_unitario);
       var valor_venda = parseNumber(this.produto.valor_venda);
       var perc_margem_contribuicao = parseNumber(
         this.produto.perc_margem_contribuicao
       );
+
+      if (valor_venda != 0) return
 
       if (valor_unitario !== 0 && perc_margem_contribuicao !== 0) {
         valor_venda =

@@ -749,30 +749,30 @@ export default {
         return;
       }
 
-      itens.map(item => {
+      itens = itens.map(async item => {
         const url = `${urlBD}/financeiro/${item.id}`;
 
-        setTimeout(async () => {
-          await axios
-            .delete(url)
-            .then(() => {
-              showSuccess("Financeiro excluído com sucesso!");
-              this.itens_selecionados = [];
-              this.confirmaExclusao = false;
-              this.confirmacao = false;
+        await axios
+          .delete(url)
+          .then(() => {
+            showSuccess("Financeiro excluído com sucesso!");
 
-              saveLog(
-                new Date(),
-                "EXCLUSÃO",
-                "FINANCEIRO",
-                `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu a parcela ${item.id} no valor de ${item.valor_parcela}`
-              );
-            })
-            .catch(showError);
-        }, 1000);
+            saveLog(
+              new Date(),
+              "EXCLUSÃO",
+              "FINANCEIRO",
+              `Usuário ${this.usuarioStore.currentUsuario.nome} excluiu a parcela ${item.id} no valor de ${item.valor_parcela}`
+            );
+          })
+          .catch(showError);
       });
 
-      this.loadFinanceiro();
+      await Promise.all(itens).then(() => {
+        this.confirmacao = false;
+        this.confirmaExclusao = false;
+        this.itens_selecionados = [];
+        this.loadFinanceiro();
+      });
     },
     async remove_pagamento() {
       var financs = [];

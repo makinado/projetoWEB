@@ -2,7 +2,7 @@ const schedule = require('node-schedule')
 
 module.exports = (app) => {
     schedule.scheduleJob('0 */4 * * *', async function () {
-    // schedule.scheduleJob('*/1 * * * *', async function () {
+        // schedule.scheduleJob('*/1 * * * *', async function () {
         if (!app.db) return
 
         const hoje = new Date()
@@ -14,6 +14,6 @@ module.exports = (app) => {
             if (e.data == amanha && !e.avisar && concluido) return
 
             return { titulo: e.descricao, conteudo: e.observacao, link: '/agenda' }
-        })).then(() => console.log('eventos adicionados em notificacoes'))
+        }))
     })
 }
