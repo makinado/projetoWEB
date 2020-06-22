@@ -5,7 +5,7 @@ module.exports = app => {
         try {
             const contasPagar = await app.db('financeiro').sum('valor_total').where({ tipo_conta: 1, pago: false }).whereBetween('financeiro.data_vencimento', [req.query.data_inicial, req.query.data_final])
             const contasReceber = await app.db('financeiro').sum('valor_total').where({ tipo_conta: 2, pago: false }).whereBetween('financeiro.data_vencimento', [req.query.data_inicial, req.query.data_final])
-            const vendas = await app.db('venda').count('id').having('data_criacao', '>', req.query.data_inicial).having('data_criacao', '<', req.query.data_final).groupBy('id', 'data_criacao')
+            const vendas = await app.db('venda').count('id').whereBetween('venda.data_criacao', [req.query.data_inicial, req.query.data_final]).groupBy('id', 'data_criacao')
 
             return res.json({
                 contasPagar: contasPagar[0].sum || 0,
@@ -88,19 +88,20 @@ module.exports = app => {
                 await app.db
                     .raw(queries.performanceVendas({ view: req.query.view }))
                     .then(vendas => {
+
                         const filtered = []
                         for (let i = 0; i < limit; i++) {
-                            filtered[i] = vendas.rows.find(conta => conta.data_criacao == i) || { sum: 0 }
+                            filtered[i] = vendas.rows.find(conta => conta.vardata == i) || { sum: 0 }
                         }
 
                         return filtered
                     }),
                 await app.db
                     .raw(queries.performanceCompras({ view: req.query.view }))
-                    .then(vendas => {
+                    .then(compras => {
                         const filtered = []
                         for (let i = 0; i < limit; i++) {
-                            filtered[i] = vendas.rows.find(conta => conta.data_criacao == i) || { sum: 0 }
+                            filtered[i] = compras.rows.find(conta => conta.vardata == i) || { sum: 0 }
                         }
 
                         return filtered

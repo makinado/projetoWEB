@@ -20,14 +20,16 @@ module.exports = {
             group by data_venc
     `,
     performanceVendas: (param) => `
-        select extract(${param.view || 'month'} from data_criacao) as data_criacao, sum(valor_total) from venda 
-            ${param.view == 'day' ? `where extract(month from data_criacao) = extract(month from now()) ${param.empresa ? ` and id_empresa = ${param.empresa}` : ''}` : ''}
-            group by data_criacao
+        select extract(${param.view || 'month'} from data_criacao) as varData, sum(valor_total) from venda
+            ${param.empresa ? ` where id_empresa = ${param.empresa}` : ''}
+            ${param.view == 'day' ? ` ${param.empresa ? 'and' : 'where'} extract(month from data_criacao) = extract(month from now())` : ''}
+            group by varData
     `,
     performanceCompras: (param) => `
-        select extract(${param.view || 'month'} from data_lancamento) as data_lancamento, sum(valor_total) from compra 
-        ${param.view == 'day' ? `where extract(month from data_lancamento) = extract(month from now()) ${param.empresa ? ` and id_empresa = ${param.empresa}` : ''}` : ''}
-            group by data_lancamento
+        select extract(${param.view || 'month'} from data_lancamento) as varData, sum(valor_total) from compra 
+            ${param.empresa ? ` where id_empresa = ${param.empresa}` : ''}
+            ${param.view == 'day' ? ` ${param.empresa ? 'and' : 'where'} extract(month from data_lancamento) = extract(month from now())` : ''}
+            group by varData
     `,
     produtosCampeoes: () => `
         select produtos.descricao, sum(produto_venda.valor_total) as total from venda
@@ -52,7 +54,11 @@ module.exports = {
         inner join usuarios on usuario_vendas.id_usuario = usuarios.id
         where extract(month from venda.data_criacao) = extract(month from now())
         group by usuarios.nome
-        order by total
+        order by total desc
         limit 5
+    `,
+    valorEstoque: () => `
+        select sum(pe.quantidade * prod.valor_unitario) as total from produto_estoque as pe
+        inner join produtos as prod on pe.id_produto = prod.id
     `
 }

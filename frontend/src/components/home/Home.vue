@@ -145,8 +145,13 @@
       </v-flex>
 
       <!-- grafico fluxo de caixa -->
-      <v-flex xs12 md9>
-        <Card title="Fluxo de caixa" icon="fa fa-lg fa-line-chart" color="warning">
+      <v-flex :xs12="sizeFluxoCaixa" :md9="!sizeFluxoCaixa">
+        <Card
+          title="Fluxo de caixa"
+          icon="fa fa-lg fa-line-chart"
+          color="warning"
+          :actions="actions.fluxoCaixa"
+        >
           <line-chart
             style="height: 100%"
             ref="graficoFluxoCaixa"
@@ -177,8 +182,13 @@
       </v-flex>
 
       <!-- grafico performance -->
-      <v-flex xs12 md8>
-        <Card title="Performance de vendas e compras" icon="fa fa-lg fa-line-chart" color="info">
+      <v-flex :xs12="sizePerformance" :md7="!sizePerformance">
+        <Card
+          title="Performance de vendas e compras"
+          icon="fa fa-lg fa-line-chart"
+          color="info"
+          :actions="actions.performance"
+        >
           <line-chart
             style="height: 100%"
             ref="graficoPerformance"
@@ -191,7 +201,7 @@
       </v-flex>
 
       <!-- Campeoes -->
-      <v-flex xs12 md4>
+      <v-flex xs12 md5>
         <Card class="card-tabs" color="secondary">
           <v-flex slot="header">
             <v-tabs v-model="campIndex" color="transparent" slider-color="white">
@@ -283,8 +293,13 @@
       </v-flex>
 
       <!-- grafico financeiro -->
-      <v-flex xs12 md6>
-        <Card title="Financeiro" icon="fa fa-lg fa-usd" color="success">
+      <v-flex :xs12="sizeFinanceiro" :md6="!sizeFinanceiro">
+        <Card
+          title="Financeiro"
+          icon="fa fa-lg fa-usd"
+          color="success"
+          :actions="actions.financeiro"
+        >
           <bar-chart
             style="height: 100%"
             ref="graficoFinanceiro"
@@ -297,8 +312,13 @@
       </v-flex>
 
       <!-- grafico cadastros -->
-      <v-flex xs12 md6>
-        <Card title="Cadastros" icon="fa fa-lg fa-archive" color="warning">
+      <v-flex :xs12="sizeCadastros" :md6="!sizeCadastros">
+        <Card
+          title="Cadastros"
+          icon="fa fa-lg fa-archive"
+          color="warning"
+          :actions="actions.cadastros"
+        >
           <bar-chart
             style="height: 100%"
             ref="graficoCadastros"
@@ -437,6 +457,10 @@ export default {
   },
   data() {
     return {
+      sizeCadastros: false,
+      sizeFinanceiro: false,
+      sizePerformance: false,
+      sizeFluxoCaixa: false,
       arrayEvents: null,
       painel: {},
       menu: false,
@@ -444,6 +468,44 @@ export default {
       metaIndex: 0,
       campIndex: 0,
       datePicker: new Date().toISOString().substr(0, 10),
+      actions: {
+        financeiro: [
+          {
+            icon: "fa fa-lg fa-window-maximize",
+            tooltip: "Maximizar visualização",
+            required: true,
+            graph: "financeiro",
+            method: "maximize"
+          }
+        ],
+        performance: [
+          {
+            icon: "fa fa-lg fa-window-maximize",
+            tooltip: "Maximizar visualização",
+            required: true,
+            graph: "performance",
+            method: "maximize"
+          }
+        ],
+        fluxoCaixa: [
+          {
+            icon: "fa fa-lg fa-window-maximize",
+            tooltip: "Maximizar visualização",
+            required: true,
+            graph: "fluxoCaixa",
+            method: "maximize"
+          }
+        ],
+        cadastros: [
+          {
+            icon: "fa fa-lg fa-window-maximize",
+            tooltip: "Maximizar visualização",
+            required: true,
+            graph: "cadastros",
+            method: "maximize"
+          }
+        ]
+      },
       graficoFinanceiro: {
         activeIndex: 0,
         chartData: null,
@@ -506,6 +568,24 @@ export default {
         window.open(routeData.href, "_blank");
       } else {
         this.$router.push({ path: path });
+      }
+    },
+    async maximize(data) {
+      if (!data.graph) return;
+
+      switch (data.graph) {
+        case "fluxoCaixa":
+          this.sizeFluxoCaixa = !this.sizeFluxoCaixa;
+          break;
+        case "financeiro":
+          this.sizeFinanceiro = !this.sizeFinanceiro;
+          break;
+        case "performance":
+          this.sizePerformance = !this.sizePerformance;
+          break;
+        case "cadastros":
+          this.sizeCadastros = !this.sizeCadastros;
+          break;
       }
     },
     async loadStats() {
@@ -881,6 +961,51 @@ export default {
           this.graficoCadastros.chartData = chartData;
         })
         .catch(showError);
+    },
+    async renderMapaGrafico() {
+      axios.get("https://unpkg.com/us-atlas/states-10m.json").then(us => {
+        const nation = this.ChartGeo.topojson.feature(us, us.objects.nation)
+          .features[0];
+        const states = this.ChartGeo.topojson.feature(us, us.objects.states)
+          .features;
+
+        let chartData = {
+          type: "choropleth",
+          labels: states.map(d => d.properties.name),
+          datasets: [
+            {
+              fill: true,
+              borderColor: "#ffa21a",
+              borderWidth: 2,
+              borderDash: [],
+              borderDashOffset: 0.0,
+              data: states.map(d => ({
+                feature: d,
+                value: Math.random() * 10
+              }))
+            }
+          ],
+          options: {
+            legend: {
+              display: false
+            },
+            scale: {
+              projection: "albersUsa"
+            },
+            geo: {
+              colorScale: {
+                display: true,
+                position: "bottom",
+                quantize: 5,
+                legend: {
+                  position: "bottom-right"
+                }
+              }
+            }
+          }
+        };
+        this.graficoMapa.chartData = chartData;
+      });
     },
     async loadCampeoes() {
       axios

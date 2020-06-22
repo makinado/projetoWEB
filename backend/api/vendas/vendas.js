@@ -1,108 +1,7 @@
 const { formatToBRL } = require('brazilian-values')
 
-
-
 module.exports = app => {
     const { existsOrError, parseNumber, formatDate } = app.api.validation
-
-    async function gerarComissoes(tipoComissao, venda = null, vendedores = null, produtos = null, financeiro = null) {
-        if (!tipoComissao) return
-        if (!vendedores) return
-
-        const comissoes = []
-        if (tipoComissao == 1) {
-            vendedores = await Promise.all(vendedores.map(async (vend, i) => {
-                const configComissao = await app.db('usuario_comissao').where({ id_usuario: vend, ordem: i + 1, ativa: true }).first()
-
-                var base_comissao
-                var perc_comissao
-                if (configComissao && configComissao.tipo == 2) { // tipo venda
-                    base_comissao = venda.valor_total
-                    perc_comissao = configComissao.perc_comissao_vista
-                } else {
-                    var produto_comissao = 0, valor_comissao = 0
-                    produtos.map((produto) => {
-                        if (parseNumber(produto.perc_comissao || "0.00", '.') != 0) {
-                            produto_comissao += produto.valor_total
-                            valor_comissao += parseNumber(produto.perc_comissao || "0.00", '.') / 100 * produto.valor_total
-                        }
-                    })
-
-                    if (configComissao && configComissao.tipo == 1) { // comissao tipo produto
-                        base_comissao = produto_comissao
-                        perc_comissao = configComissao.perc_comissao_vista
-                    } else if (produto_comissao != 0) { // comissao do produto
-                        base_comissao = produto_comissao
-                        perc_comissao = valor_comissao / produto_comissao * 100
-                    }
-                }
-
-                comissoes.push({
-                    id_usuario: vend,
-                    id_venda: venda.id,
-                    data_comissao: venda.data_criacao,
-                    base_comissao: base_comissao,
-                    perc_comissao: perc_comissao,
-                    valor_comissao: perc_comissao / 100 * base_comissao
-                })
-
-                return { id_usuario: vend, id_venda: venda.id }
-            }))
-        } else {
-            financeiro.map(async financeiro => {
-                if (!financeiro.id_movimento_origem) return
-
-
-                vendedores.map(async (vend, i) => {
-                    if (financeiro.pago) {
-                        const configComissao = await app.db('usuario_comissao').where({ id_usuario: vend.id_usuario, ordem: i + 1, ativa: true }).first()
-
-                        var base_comissao
-                        var perc_comissao
-                        if (configComissao && configComissao.tipo == 2) { // tipo venda
-                            base_comissao = financeiro.valor_pago
-                            perc_comissao = configComissao.perc_comissao_vista
-                        } else {
-                            var produto_comissao = 0, valor_comissao = 0
-                            produtos.map((produto) => {
-                                if (parseNumber(produto.perc_comissao || "0.00", '.') != 0) {
-                                    produto_comissao += produto.valor_total
-                                    valor_comissao += parseNumber(produto.perc_comissao || "0.00", '.') / 100 * produto.valor_total
-                                }
-                            })
-
-                            if (configComissao && configComissao.tipo == 1) { // comissao tipo produto
-                                base_comissao = produto_comissao / financeiro.length
-                                perc_comissao = configComissao.perc_comissao_vista
-                            } else if (produto_comissao != 0) { // comissao do produto
-                                base_comissao = produto_comissao / financeiro.length
-                                perc_comissao = valor_comissao / produto_comissao * 100
-                            }
-                        }
-
-                        comissoes.push({
-                            id_usuario: vend.id_usuario,
-                            id_venda: financeiro.id_movimento_origem,
-                            id_financeiro: financeiro.id,
-                            data_comissao: financeiro.data_baixa,
-                            base_comissao: base_comissao,
-                            perc_comissao: perc_comissao,
-                            valor_comissao: perc_comissao / 100 * base_comissao
-                        })
-
-                    }
-
-                    return vend
-                })
-
-                return financeiro
-            })
-        }
-
-        // vendedores = await Promise.all(vendedores)
-
-        return { comissoes, vendedores }
-    }
 
     const save = async (req, res) => {
         const venda = { ...req.body }
@@ -474,54 +373,31 @@ module.exports = app => {
                 if (req.query.empresa) {
                     qb.where('venda.id_empresa', '=', req.query.empresa);
                 }
-                if (req.query.tipo == 2) {
-                    // pesquisa avançada
-                    if (req.query.fornecedor) {
-                        qb.where('venda.id_pessoa', '=', req.query.fornecedor);
-                    } else if (req.query.id) {
-                        qb.orWhere('venda.id', '=', req.query.id);
-                    } else if (req.query.documento) {
-                        qb.orWhere('venda.nota_fiscal', '=', req.query.documento);
+                if (req.query.fornecedor) {
+                    qb.where('venda.id_pessoa', '=', req.query.fornecedor);
+                } else if (req.query.id) {
+                    qb.orWhere('venda.id', '=', req.query.id);
+                } else if (req.query.documento) {
+                    qb.orWhere('venda.nota_fiscal', '=', req.query.documento);
+                }
+                if (req.query.tipo_data == 1) {
+                    if (req.query.data_inicial && req.query.data_final) {
+                        qb.whereBetween('venda.data_contato', [req.query.data_inicial, req.query.data_final])
                     }
-                    if (req.query.tipo_data == 1) {
-                        if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('venda.data_notafiscal', [req.query.data_inicial, req.query.data_final])
-                        }
-                    } else {
-                        if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('venda.data_emissao', [req.query.data_inicial, req.query.data_final])
-                        }
-                    }
-                    if (req.query.concluidas) {
-                        qb.where('venda.situacao', 'CONCLUÍDA');
-                    }
-                    if (req.query.canceladas) {
-                        qb.where('venda.situacao', 'CANCELADA');
+                } else if (req.query.tipo_data == 2) {
+                    if (req.query.data_inicial && req.query.data_final) {
+                        qb.whereBetween('venda.data_agendamento', [req.query.data_inicial, req.query.data_final])
                     }
                 } else {
-                    // pesquisa rapida
-                    if (req.query.fornecedor) {
-                        qb.where('venda.id_pessoa', '=', req.query.fornecedor);
-                    } else if (req.query.id) {
-                        qb.orWhere('venda.id', '=', req.query.id);
-                    } else if (req.query.documento) {
-                        qb.orWhere('venda.nota_fiscal', '=', req.query.documento);
+                    if (req.query.data_inicial && req.query.data_final) {
+                        qb.whereBetween('venda.data_criacao', [req.query.data_inicial, req.query.data_final])
                     }
-                    if (req.query.tipo_data == 1) {
-                        if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('venda.data_notafiscal', [req.query.data_inicial, req.query.data_final])
-                        }
-                    } else {
-                        if (req.query.data_inicial && req.query.data_final) {
-                            qb.whereBetween('venda.data_emissao', [req.query.data_inicial, req.query.data_final])
-                        }
-                    }
-                    if (req.query.concluidas) {
-                        qb.where('venda.situacao', 'CONCLUÍDA');
-                    }
-                    if (req.query.canceladas) {
-                        qb.where('venda.situacao', 'CANCELADA');
-                    }
+                }
+                if (req.query.concluidas) {
+                    qb.where('venda.situacao', 'CONCLUÍDA');
+                }
+                if (req.query.canceladas) {
+                    qb.where('venda.situacao', 'CANCELADA');
                 }
             })
             .then(async vendas => {
@@ -678,5 +554,5 @@ module.exports = app => {
         });
     }
 
-    return { save, get, getOrcamentos, getVendas, getById, remove, gerarComissoes }
+    return { save, get, getOrcamentos, getVendas, getById, remove }
 }

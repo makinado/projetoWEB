@@ -478,6 +478,10 @@ export default {
       this.files = [];
       const files = e.target.files;
 
+      if (files.length > 10) {
+        return showError('Escolha no máximo 10 arquivos para realizar a importação')
+      }
+
       for (let i = 0; i < files.length; i++) {
         let fr = new FileReader();
         fr.readAsDataURL(files[i]);

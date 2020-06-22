@@ -141,12 +141,10 @@ export default {
     };
   },
   watch: {
-    "$store.state.modalStore.eventos.visible": function() {
-      this.reset();
+    "$store.state.modalStore.eventos.visible"() {
       if (this.modalStore.eventos.visible) {
+        this.reset();
         this.loadEvento(this.eventoStore.evento);
-      } else {
-        this.loadEventos();
       }
     }
   },
@@ -160,15 +158,6 @@ export default {
           this.avisar = this.evento.avisar;
         });
       }
-    },
-    loadEventos() {
-      const url = `${urlBD}/eventos_agenda`;
-      axios.get(url).then(res => {
-        this.eventoStore.eventos = res.data;
-        this.eventoStore.eventos.map(evento => {
-          evento.open = false;
-        });
-      });
     },
     reset() {
       this.evento = {};

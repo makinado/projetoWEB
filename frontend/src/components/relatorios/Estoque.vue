@@ -8,7 +8,7 @@
         <Card :color="color" title="Selecione as opções para a emissão do relatório">
           <v-form ref="form" v-model="valid">
             <v-layout row wrap>
-              <v-flex xs12 md3>
+              <v-flex xs12 md4>
                 <v-autocomplete
                   class="tag-input"
                   dense
@@ -20,9 +20,25 @@
                   :items="relatorios"
                   :rules="tipoRules"
                   :menu-props="{ maxHeight: '500' }"
+                  @change="loadFiltros"
                 ></v-autocomplete>
               </v-flex>
-              <v-flex xs12 md3>
+              <v-flex xs12 md4>
+                <v-autocomplete
+                  ref="empresa"
+                  class="tag-input"
+                  dense
+                  chips
+                  deletable-chips
+                  :color="color"
+                  :disabled="disableEmpresa"
+                  label="Empresa"
+                  placeholder="Todas as empresas selecionadas"
+                  v-model="filter.empresa"
+                  :items="empresaStore.currentEmpresas"
+                ></v-autocomplete>
+              </v-flex>
+              <v-flex xs12 md4>
                 <v-autocomplete
                   class="tag-input"
                   dense
@@ -35,7 +51,74 @@
                   @focus="$store.dispatch('loadProdutos')"
                 ></v-autocomplete>
               </v-flex>
-              <v-flex class="mt-2" xs12 md3>
+
+              <v-flex xs12 md4>
+                <v-autocomplete
+                  class="tag-input"
+                  dense
+                  chips
+                  deletable-chips
+                  :color="color"
+                  label="Fornecedor"
+                  v-model="filter.pessoa"
+                  :items="pessoaStore.fornecedores"
+                  @focus="$store.dispatch('loadFornecs')"
+                ></v-autocomplete>
+              </v-flex>
+              <v-flex xs12 md2>
+                <v-autocomplete
+                  class="tag-input"
+                  dense
+                  chips
+                  deletable-chips
+                  :color="color"
+                  label="Categoria"
+                  v-model="filter.categoria"
+                  :items="categoriaStore.categorias"
+                  @focus="$store.dispatch('loadCategoriasProdutos')"
+                ></v-autocomplete>
+              </v-flex>
+              <v-flex xs12 md2>
+                <v-autocomplete
+                  class="tag-input"
+                  dense
+                  chips
+                  deletable-chips
+                  :color="color"
+                  label="Marca"
+                  v-model="filter.marca"
+                  :items="produtoStore.marcas"
+                  @focus="$store.dispatch('loadMarcas')"
+                ></v-autocomplete>
+              </v-flex>
+              <v-flex xs12 md2>
+                <v-autocomplete
+                  class="tag-input"
+                  dense
+                  chips
+                  deletable-chips
+                  :color="color"
+                  label="Unidade"
+                  v-model="filter.unidade"
+                  :items="produtoStore.unidades"
+                  @focus="$store.dispatch('loadUnidades')"
+                ></v-autocomplete>
+              </v-flex>
+
+              <v-flex xs12 md2>
+                <v-autocomplete
+                  class="tag-input"
+                  dense
+                  chips
+                  deletable-chips
+                  :color="color"
+                  label="Ordenar por"
+                  v-model="filter.ordem"
+                  :items="ordens"
+                ></v-autocomplete>
+              </v-flex>
+
+              <v-flex class="mt-2" xs12 md2>
                 <v-menu
                   v-model="menu"
                   :close-on-content-click="false"
@@ -54,7 +137,7 @@
                       prepend-icon="event"
                       readonly
                       v-on="on"
-                      :rules="dataRules"
+                      :rules="[dataRules]"
                     ></v-text-field>
                   </template>
                   <v-date-picker
@@ -65,7 +148,7 @@
                   ></v-date-picker>
                 </v-menu>
               </v-flex>
-              <v-flex class="mt-2" xs12 md3>
+              <v-flex class="mt-2" xs12 md2>
                 <v-menu
                   v-model="menu1"
                   :close-on-content-click="false"
@@ -84,7 +167,7 @@
                       prepend-icon="event"
                       readonly
                       v-on="on"
-                      :rules="dataRules"
+                      :rules="[dataRules]"
                     ></v-text-field>
                   </template>
                   <v-date-picker
@@ -126,7 +209,13 @@ export default {
   name: "rel_estoque",
   computed: {
     ...mapState("app", ["color"]),
-    ...mapState(["usuarioStore", "empresaStore", "produtoStore"]),
+    ...mapState([
+      "usuarioStore",
+      "empresaStore",
+      "produtoStore",
+      "categoriaStore",
+      "pessoaStore"
+    ]),
     computedDateFormatted: {
       get() {
         return formatDate(this.filter.data_inicial);
@@ -159,9 +248,15 @@ export default {
     return {
       filter: {},
       valid: true,
+      disableEmpresa: false,
       menu: false,
       menu1: false,
       isLoading: false,
+      ordens: [
+        { value: "id", text: "Código" },
+        { value: "descricao", text: "Descrição" },
+        { value: "data", text: "Data" }
+      ],
       relatorios: [
         { header: "Produtos" },
         {
@@ -190,15 +285,26 @@ export default {
           disabled: false
         }
       ],
-      tipoRules: [v => !!v || "Tipo de relatório obrigatório"],
-      dataRules: [v => !!v || "Datas são obrigatórias"]
+      tipoRules: [v => !!v || "Tipo de relatório obrigatório"]
     };
   },
   methods: {
+    dataRules(v) {
+      if (this.filter.relatorio != "movimento_estoque" && !v) return true;
+      if (!!v) return true;
+
+      return "Datas são obrigatórias para este tipo de relatório";
+    },
     async reset() {
       this.filter = {};
 
       this.$refs.form ? this.$refs.form.reset() : "";
+    },
+    loadFiltros() {
+      if (this.filter.relatorio == "inventario") {
+        delete this.filter.empresa;
+        this.disableEmpresa = true;
+      } else this.disableEmpresa = false;
     },
     emit(type) {
       if (!this.$refs.form.validate()) return;
@@ -207,7 +313,11 @@ export default {
 
       const url = `${urlBD}/rel_estoque?relatorio=${this.filter.relatorio ||
         ""}&produto=${this.filter.produto || ""}&data_inicial=${this.filter
-        .data_inicial || ""}&data_final=${this.filter.data_final || ""}`;
+        .data_inicial || ""}&data_final=${this.filter.data_final ||
+        ""}&empresa=${this.filter.empresa || ""}&categoria=${this.filter
+        .categoria || ""}&marca=${this.filter.marca || ""}&unidade=${this.filter
+        .unidade || ""}&ordem=${this.filter.ordem || ""}&pessoa=${this.filter
+        .pessoa || ""}`;
 
       axios
         .get(url)
@@ -224,7 +334,7 @@ export default {
         .then(() => (this.isLoading = false));
     },
     emitPDF(data) {
-      const addHeadersFooters = doc => {
+      const addHeadersFooters = (doc, title) => {
         const pageCount = doc.internal.getNumberOfPages();
 
         doc.setFont("helvetica", "italic");
@@ -237,11 +347,9 @@ export default {
           doc.text(this.nomeEmpresa, 40, 35);
           doc.setFontSize(12);
           doc.text(
-            "Relatório de cadastros",
+            title,
             doc.internal.pageSize.width / 2 -
-              (doc.getStringUnitWidth("Relatório de cadastros") *
-                doc.internal.getFontSize()) /
-                2,
+              (doc.getStringUnitWidth(title) * doc.internal.getFontSize()) / 2,
             20
           );
           doc.setFontSize(8);
@@ -271,9 +379,23 @@ export default {
           { title: "Vlr unit.", dataKey: "valor_unitario" },
           { title: "Vlr custo", dataKey: "valor_custo_medio" },
           { title: "Qtde estoque", dataKey: "qtdEstoque" }
+        ],
+        entradas_saidas_columns = [
+          { title: "Codigo", dataKey: "id" },
+          { title: "Empresa", dataKey: "empresa" },
+          { title: "Produto", dataKey: "produto" },
+          { title: "Data", dataKey: "data_movimentacao" },
+          { title: "Origem", dataKey: "origem" },
+          { title: "Quantidade", dataKey: "quantidade" },
+          { title: "Custo unit.", dataKey: "custo_unitario" },
+          { title: "Custo médio.", dataKey: "custo_medio" },
+          { title: "Total", dataKey: "total" }
         ];
 
+      var title = "";
       if (data.inventario) {
+        title = "Relatório de inventário";
+
         doc.setFontSize(12);
         doc.text(
           "Totalizadores",
@@ -287,7 +409,8 @@ export default {
           [
             { title: "Produtos", dataKey: "produtos" },
             { title: "Ativos", dataKey: "ativos" },
-            { title: "Inativos", dataKey: "inativos" }
+            { title: "Inativos", dataKey: "inativos" },
+            { title: "Valor total do estoque", dataKey: "valorEstoque" }
           ],
           [data.stats],
           {
@@ -298,19 +421,122 @@ export default {
         );
         doc.autoTable(inventario_columns, data.inventario, {
           theme: "striped",
+          margin: { top: 90 },
           headStyles: { fillColor: "#B2DFDB", textColor: "black" }
         });
+
+        addHeadersFooters(doc, title);
+      } else if (data.entradas) {
+        title = "Relatório de entradas";
+
+        doc.setFontSize(12);
+        doc.text(
+          "Totalizadores",
+          doc.internal.pageSize.width / 2 -
+            (doc.getStringUnitWidth("Totalizadores") *
+              doc.internal.getFontSize()) /
+              2,
+          80
+        );
+        doc.autoTable(
+          [
+            { title: "Total de entradas", dataKey: "quantidadeEntradas" },
+            {
+              title: "Quantidade total movimentada",
+              dataKey: "quantidadeMovimento"
+            },
+            { title: "Valor total das entradas", dataKey: "valorEntradas" }
+          ],
+          [data.stats],
+          {
+            theme: "striped",
+            margin: { top: 90 },
+            headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+          }
+        );
+        doc.autoTable(entradas_saidas_columns, data.entradas, {
+          theme: "striped",
+          margin: { top: 90 },
+          headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+        });
+
+        addHeadersFooters(doc, title);
+      } else if (data.saidas) {
+        title = "Relatório de saídas";
+
+        doc.setFontSize(12);
+        doc.text(
+          "Totalizadores",
+          doc.internal.pageSize.width / 2 -
+            (doc.getStringUnitWidth("Totalizadores") *
+              doc.internal.getFontSize()) /
+              2,
+          80
+        );
+        doc.autoTable(
+          [
+            { title: "Total de saídas", dataKey: "quantidadeSaidas" },
+            {
+              title: "Quantidade total movimentada",
+              dataKey: "quantidadeMovimento"
+            },
+            { title: "Valor total das saídas", dataKey: "valorSaidas" }
+          ],
+          [data.stats],
+          {
+            theme: "striped",
+            margin: { top: 90 },
+            headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+          }
+        );
+        doc.autoTable(entradas_saidas_columns, data.saidas, {
+          theme: "striped",
+          margin: { top: 90 },
+          headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+        });
+
+        addHeadersFooters(doc, title);
+      } else {
+        title = "Relatório de movimento de estoque";
+
+        doc.setFontSize(12);
+        doc.text(
+          "Totalizadores",
+          doc.internal.pageSize.width / 2 -
+            (doc.getStringUnitWidth("Totalizadores") *
+              doc.internal.getFontSize()) /
+              2,
+          80
+        );
+        doc.autoTable(
+          [
+            { title: "Total de saídas", dataKey: "quantidadeSaidas" },
+            { title: "Total de entradas", dataKey: "quantidadeEntradas" },
+            {
+              title: "Quantidade total movimentada",
+              dataKey: "quantidadeMovimento"
+            },
+            { title: "Valor total das saídas", dataKey: "valorSaidas" },
+            { title: "Valor total das entradas", dataKey: "valorEntradas" },
+            { title: "Saldo final", dataKey: "saldo" }
+          ],
+          [data.stats],
+          {
+            theme: "striped",
+            margin: { top: 90 },
+            headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+          }
+        );
+        doc.autoTable(entradas_saidas_columns, data.movimento, {
+          theme: "striped",
+          margin: { top: 90 },
+          headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+        });
+
+        addHeadersFooters(doc, title);
       }
 
-      addHeadersFooters(doc);
-      doc.save(
-        "RelatorioDeEstoque_" +
-          new Date()
-            .toLocaleDateString()
-            .split("/")
-            .join("") +
-          ".pdf"
-      );
+      doc.output("dataurlnewwindow");
     },
     emitCSV(data) {
       const options = {

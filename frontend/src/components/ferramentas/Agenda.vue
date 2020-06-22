@@ -46,7 +46,7 @@
           <v-btn
             class="v-btn-common"
             :color="color"
-            @click="[modalStore.eventos.visible = true, this.eventoStore.evento = null]"
+            @click="[eventoStore.evento = null, modalStore.eventos.visible = true]"
           >Adicionar evento</v-btn>
         </v-container>
       </v-layout>
@@ -89,7 +89,7 @@
                         flat
                         color="secondary"
                         @click="[confirmaExclusao = true, eventoStore.evento = evento]"
-                      >Excluir</v-btn>
+                      >{{ deleteName }}</v-btn>
                       <v-btn
                         flat
                         color="secondary"
@@ -126,7 +126,7 @@
                         flat
                         color="secondary"
                         @click="[confirmaExclusao = true, eventoStore.evento = evento]"
-                      >Excluir</v-btn>
+                      >{{ deleteName }}</v-btn>
                       <v-btn
                         flat
                         color="secondary"
@@ -165,7 +165,7 @@
                         flat
                         color="secondary"
                         @click="[confirmaExclusao = true, eventoStore.evento = evento]"
-                      >{{ new Date() == today ? 'Concluir' : 'Excluir'}}</v-btn>
+                      >{{ deleteName }}</v-btn>
                       <v-btn
                         flat
                         color="secondary"
@@ -219,6 +219,10 @@ export default {
         (map[e.data] = map[e.data] || []).push(e)
       );
       return map;
+    },
+    deleteName() {
+      // console.log(new Date(), new Date(this.today));
+      return new Date() >= new Date(this.today) ? "Concluir" : "Excluir";
     }
   },
   data() {
@@ -276,8 +280,6 @@ export default {
 
       const startDay = start.day;
       const endDay = end.day;
-
-      console.log(`${startDay} - ${endDay} ${startMonth} ${startYear} `);
 
       this.title = "";
       switch (this.type) {

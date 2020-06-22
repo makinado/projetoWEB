@@ -1,150 +1,156 @@
 <template>
   <v-parallax :src="require('@/assets/predios2.jpg')" height="1080" alt="fundo_img">
     <v-container fluid class="container-parallax">
-      <v-layout row>
-        <v-flex
-          xs12
-          md6
-          v-if="!($vuetify.breakpoint.name === 'xs' || $vuetify.breakpoint.name === 'sm')"
-        >
-          <v-layout align-center justify-center>
-            <v-card width="800px" dark flat class="transparent">
-              <v-layout align-center justify-center>
-                <img src="@/assets/logo.png" alt="Vuetify.js" height="200" />
-              </v-layout>
-              <v-card-title class="display-3">Aki vai vir uma frase top que ainda não sei qual é</v-card-title>
-              <v-card-title
-                sescondary-title
-                class="display-1"
-              >Sério mano, vai ser uma frase braba memo</v-card-title>
-            </v-card>
-          </v-layout>
-        </v-flex>
-        <v-flex xs12 md6>
-          <v-layout justify-center>
-            <v-card
-              :style="showSignup? 'top: -80px;' : 'top: 0px;'"
-              width="500px"
-              class="elevation-20"
-            >
-              <v-card-title>
-                <v-layout justify-center>
-                  <span
-                    class="headline"
-                  >{{showForgotPassword ? "Recuperar senha" : showSignup ? "Cadastre-se" : "Entrar"}}</span>
+      <kinesis-container>
+        <v-layout row>
+          <v-flex
+            xs12
+            md6
+            v-if="!($vuetify.breakpoint.name === 'xs' || $vuetify.breakpoint.name === 'sm')"
+          >
+            <v-layout align-center justify-center>
+              <v-card width="800px" dark flat class="transparent">
+                <v-layout align-center justify-center>
+                  <kinesis-element :strength="20">
+                    <img src="@/assets/logo.png" alt="Vuetify.js" height="200" />
+                  </kinesis-element>
                 </v-layout>
-              </v-card-title>
+                <v-card-title
+                  class="display-1"
+                >Bem-vindo ao sistema financeiro online da Campag informática!</v-card-title>
+              </v-card>
+            </v-layout>
+          </v-flex>
 
-              <v-card-text v-if="!showSignup">
-                <v-form v-model="valid" ref="form_login">
-                  <v-text-field
-                    ref="email"
-                    v-model="usuario.email"
-                    prepend-icon="fa fa-envelope"
-                    label="E-mail"
-                    :color="color"
-                    @keyup.enter="showForgotPassword ? recoverPassword() : $refs.senha.focus()"
-                    :rules="emailRules"
-                  ></v-text-field>
-                  <v-text-field
-                    ref="senha"
-                    v-if="!showForgotPassword"
-                    v-model="usuario.senha"
-                    prepend-icon="fa fa-lock"
-                    label="Senha"
-                    type="password"
-                    :color="color"
-                    @keyup.enter="showSignup ? $refs.confirmaSenha.focus() : signin()"
-                    :rules="senhaRules"
-                  ></v-text-field>
-                  <v-text-field
-                    v-if="showSignup"
-                    ref="confirmaSenha"
-                    v-show="!showForgotPassword"
-                    v-model="usuario.confirmaSenha"
-                    prepend-icon="fa fa-lock"
-                    label="Confirme a senha"
-                    type="password"
-                    :color="color"
-                    @keyup.enter="signup"
-                    :rules="confirmaSenhaRules"
-                  ></v-text-field>
-                  <v-layout v-if="!showForgotPassword && !showSignup" justify-center wrap>
-                    <v-btn color="secondary" flat @click="showForgotPassword = !showForgotPassword">
-                      <span>Esqueci minha senha</span>
-                    </v-btn>
+          <v-flex xs12 md6>
+            <v-layout justify-center>
+              <v-card
+                :style="showSignup? 'top: -80px;' : 'top: 0px;'"
+                width="500px"
+                class="elevation-20"
+              >
+                <v-card-title>
+                  <v-layout justify-center>
+                    <span
+                      class="headline"
+                    >{{showForgotPassword ? "Recuperar senha" : showSignup ? "Cadastre-se" : "Entrar"}}</span>
                   </v-layout>
-                </v-form>
-              </v-card-text>
+                </v-card-title>
 
-              <v-card-text v-else>
-                <v-tabs v-model="stepper" centered color="#FFFFFF" light icons-and-text>
-                  <v-tabs-slider color="primary"></v-tabs-slider>
+                <v-card-text v-if="!showSignup">
+                  <v-form v-model="valid" ref="form_login">
+                    <v-text-field
+                      ref="email"
+                      v-model="usuario.email"
+                      prepend-icon="fa fa-envelope"
+                      label="E-mail"
+                      :color="color"
+                      @keyup.enter="showForgotPassword ? recoverPassword() : $refs.senha.focus()"
+                      :rules="emailRules"
+                    ></v-text-field>
+                    <v-text-field
+                      ref="senha"
+                      v-if="!showForgotPassword"
+                      v-model="usuario.senha"
+                      prepend-icon="fa fa-lock"
+                      label="Senha"
+                      type="password"
+                      :color="color"
+                      @keyup.enter="showSignup ? $refs.confirmaSenha.focus() : signin()"
+                      :rules="senhaRules"
+                    ></v-text-field>
+                    <v-text-field
+                      v-if="showSignup"
+                      ref="confirmaSenha"
+                      v-show="!showForgotPassword"
+                      v-model="usuario.confirmaSenha"
+                      prepend-icon="fa fa-lock"
+                      label="Confirme a senha"
+                      type="password"
+                      :color="color"
+                      @keyup.enter="signup"
+                      :rules="confirmaSenhaRules"
+                    ></v-text-field>
+                    <v-layout v-if="!showForgotPassword && !showSignup" justify-center wrap>
+                      <v-btn
+                        color="secondary"
+                        flat
+                        @click="showForgotPassword = !showForgotPassword"
+                      >
+                        <span>Esqueci minha senha</span>
+                      </v-btn>
+                    </v-layout>
+                  </v-form>
+                </v-card-text>
 
-                  <v-tab href="#1">
-                    Usuário
-                    <v-icon>fa fa-lg fa-user</v-icon>
-                  </v-tab>
+                <v-card-text v-else>
+                  <v-tabs v-model="stepper" centered color="#FFFFFF" light icons-and-text>
+                    <v-tabs-slider color="primary"></v-tabs-slider>
 
-                  <v-tab href="#2">
-                    Empresa
-                    <v-icon>fa fa-lg fa-building-o</v-icon>
-                  </v-tab>
+                    <v-tab href="#1">
+                      Usuário
+                      <v-icon>fa fa-lg fa-user</v-icon>
+                    </v-tab>
 
-                  <v-tab-item value="1">
-                    <v-form v-model="valid" ref="form_usuario" class="my-4">
-                      <v-text-field
-                        ref="nome"
-                        v-model="usuario.nome"
-                        prepend-icon="fa fa-user"
-                        label="Nome"
-                        :color="color"
-                        @keyup.enter="$refs.email.focus()"
-                        :rules="nomeRules"
-                      ></v-text-field>
-                      <v-text-field
-                        ref="email"
-                        v-model="usuario.email"
-                        prepend-icon="fa fa-envelope"
-                        label="E-mail"
-                        :color="color"
-                        @keyup.enter="$refs.contato.focus()"
-                        :rules="emailRules"
-                      ></v-text-field>
-                      <v-text-field
-                        ref="contato"
-                        v-model="usuario.contato"
-                        prepend-icon="fa fa-phone"
-                        label="Contato pessoal"
-                        v-mask="['(##) ####-####', '(##) #####-####']"
-                        :color="color"
-                        @keyup.enter="$refs.senha.focus()"
-                        :rules="contatoRules"
-                      ></v-text-field>
-                      <v-text-field
-                        ref="senha"
-                        v-model="usuario.senha"
-                        prepend-icon="fa fa-lock"
-                        label="Senha"
-                        type="password"
-                        :color="color"
-                        @keyup.enter="$refs.confirmaSenha.focus()"
-                        :rules="senhaRules"
-                      ></v-text-field>
-                      <v-text-field
-                        v-if="showSignup"
-                        ref="confirmaSenha"
-                        v-show="!showForgotPassword"
-                        v-model="usuario.confirmaSenha"
-                        prepend-icon="fa fa-lock"
-                        label="Confirme a senha"
-                        type="password"
-                        :color="color"
-                        @keyup.enter="signup"
-                        :rules="confirmaSenhaRules"
-                      ></v-text-field>
-                    </v-form>
-                    <!-- <v-flex xs12>
+                    <v-tab href="#2">
+                      Empresa
+                      <v-icon>fa fa-lg fa-building-o</v-icon>
+                    </v-tab>
+
+                    <v-tab-item value="1">
+                      <v-form v-model="valid" ref="form_usuario" class="my-4">
+                        <v-text-field
+                          ref="nome"
+                          v-model="usuario.nome"
+                          prepend-icon="fa fa-user"
+                          label="Nome"
+                          :color="color"
+                          @keyup.enter="$refs.email.focus()"
+                          :rules="nomeRules"
+                        ></v-text-field>
+                        <v-text-field
+                          ref="email"
+                          v-model="usuario.email"
+                          prepend-icon="fa fa-envelope"
+                          label="E-mail"
+                          :color="color"
+                          @keyup.enter="$refs.contato.focus()"
+                          :rules="emailRules"
+                        ></v-text-field>
+                        <v-text-field
+                          ref="contato"
+                          v-model="usuario.contato"
+                          prepend-icon="fa fa-phone"
+                          label="Contato pessoal"
+                          v-mask="['(##) ####-####', '(##) #####-####']"
+                          :color="color"
+                          @keyup.enter="$refs.senha.focus()"
+                          :rules="contatoRules"
+                        ></v-text-field>
+                        <v-text-field
+                          ref="senha"
+                          v-model="usuario.senha"
+                          prepend-icon="fa fa-lock"
+                          label="Senha"
+                          type="password"
+                          :color="color"
+                          @keyup.enter="$refs.confirmaSenha.focus()"
+                          :rules="senhaRules"
+                        ></v-text-field>
+                        <v-text-field
+                          v-if="showSignup"
+                          ref="confirmaSenha"
+                          v-show="!showForgotPassword"
+                          v-model="usuario.confirmaSenha"
+                          prepend-icon="fa fa-lock"
+                          label="Confirme a senha"
+                          type="password"
+                          :color="color"
+                          @keyup.enter="signup"
+                          :rules="confirmaSenhaRules"
+                        ></v-text-field>
+                      </v-form>
+                      <!-- <v-flex xs12>
                       <v-layout align-center justify-center>
                         <v-btn color="#4267B2" dark large @click="socialLogin('facebook')">
                           <v-icon class="mr-2">fa fa-facebook</v-icon>
@@ -155,86 +161,87 @@
                           <span>Google</span>
                         </v-btn>
                       </v-layout>
-                    </v-flex>-->
-                  </v-tab-item>
+                      </v-flex>-->
+                    </v-tab-item>
 
-                  <v-tab-item value="2">
-                    <v-form v-model="valid" ref="form_empresa">
-                      <v-text-field
-                        ref="cnpj"
-                        v-model="usuario.cnpj"
-                        prepend-icon="fa fa-file-text"
-                        label="CNPJ"
-                        :color="color"
-                        v-mask="['##.###.###/####-##']"
-                        @keyup.enter="$refs.nome_empresa.focus()"
-                        :rules="cnpjRules"
-                      ></v-text-field>
-                      <v-text-field
-                        ref="nome_empresa"
-                        v-model="usuario.nomeEmpresa"
-                        prepend-icon="fa fa-building-o"
-                        label="Razão social"
-                        :color="color"
-                        @keyup.enter="$refs.email_empresa.focus()"
-                        :rules="nomeRules"
-                      ></v-text-field>
-                      <v-text-field
-                        ref="email_empresa"
-                        v-model="usuario.emailEmpresa"
-                        prepend-icon="fa fa-envelope"
-                        label="E-mail empresarial (opcional)"
-                        :color="color"
-                        @keyup.enter="$refs.contato_empresa.focus()"
-                        :rules="emailOptionalRules"
-                      ></v-text-field>
-                      <v-text-field
-                        ref="contato_empresa"
-                        v-model="usuario.contatoEmpresa"
-                        prepend-icon="fa fa-phone"
-                        label="Contato (opcional)"
-                        :color="color"
-                        v-mask="['(##) ####-####', '(##) #####-####']"
-                        @keyup.enter="signup"
-                        :rules="contatoRules"
-                      ></v-text-field>
-                    </v-form>
-                  </v-tab-item>
-                </v-tabs>
-              </v-card-text>
+                    <v-tab-item value="2">
+                      <v-form v-model="valid" ref="form_empresa">
+                        <v-text-field
+                          ref="cnpj"
+                          v-model="usuario.cnpj"
+                          prepend-icon="fa fa-file-text"
+                          label="CNPJ"
+                          :color="color"
+                          v-mask="['##.###.###/####-##']"
+                          @keyup.enter="$refs.nome_empresa.focus()"
+                          :rules="cnpjRules"
+                        ></v-text-field>
+                        <v-text-field
+                          ref="nome_empresa"
+                          v-model="usuario.nomeEmpresa"
+                          prepend-icon="fa fa-building-o"
+                          label="Razão social"
+                          :color="color"
+                          @keyup.enter="$refs.email_empresa.focus()"
+                          :rules="nomeRules"
+                        ></v-text-field>
+                        <v-text-field
+                          ref="email_empresa"
+                          v-model="usuario.emailEmpresa"
+                          prepend-icon="fa fa-envelope"
+                          label="E-mail empresarial (opcional)"
+                          :color="color"
+                          @keyup.enter="$refs.contato_empresa.focus()"
+                          :rules="emailOptionalRules"
+                        ></v-text-field>
+                        <v-text-field
+                          ref="contato_empresa"
+                          v-model="usuario.contatoEmpresa"
+                          prepend-icon="fa fa-phone"
+                          label="Contato (opcional)"
+                          :color="color"
+                          v-mask="['(##) ####-####', '(##) #####-####']"
+                          @keyup.enter="signup"
+                          :rules="contatoRules"
+                        ></v-text-field>
+                      </v-form>
+                    </v-tab-item>
+                  </v-tabs>
+                </v-card-text>
 
-              <v-card-actions>
-                <v-layout wrap>
-                  <v-flex xs12>
-                    <v-layout align-center justify-center>
-                      <v-btn
-                        :loading="isLoading"
-                        :class="color"
-                        large
-                        @click="[showForgotPassword ? recoverPassword() : showSignup? signup() : signin()]"
-                      >{{ showForgotPassword ? "Enviar" : showSignup? "Continuar" :"Entrar" }}</v-btn>
-                    </v-layout>
-                    <v-divider class="my-4" />
-                  </v-flex>
-                  <v-flex xs12>
-                    <v-layout justify-center>
-                      <v-btn
-                        class="mb-4 mt-3"
-                        type="submit"
-                        color="secondary"
-                        flat
-                        @click="[showForgotPassword ? showForgotPassword = false : showSignup ? showSignup = false : showSignup = true]"
-                      >
-                        <span>{{showForgotPassword ? "Voltar" : showSignup ? "Já possuo login" : "Não possuo login"}}</span>
-                      </v-btn>
-                    </v-layout>
-                  </v-flex>
-                </v-layout>
-              </v-card-actions>
-            </v-card>
-          </v-layout>
-        </v-flex>
-      </v-layout>
+                <v-card-actions>
+                  <v-layout wrap>
+                    <v-flex xs12>
+                      <v-layout align-center justify-center>
+                        <v-btn
+                          :loading="isLoading"
+                          :class="color"
+                          large
+                          @click="[showForgotPassword ? recoverPassword() : showSignup? signup() : signin()]"
+                        >{{ showForgotPassword ? "Enviar" : showSignup? "Continuar" :"Entrar" }}</v-btn>
+                      </v-layout>
+                      <v-divider class="my-4" />
+                    </v-flex>
+                    <v-flex xs12>
+                      <v-layout justify-center>
+                        <v-btn
+                          class="mb-4 mt-3"
+                          type="submit"
+                          color="secondary"
+                          flat
+                          @click="[showForgotPassword ? showForgotPassword = false : showSignup ? showSignup = false : showSignup = true]"
+                        >
+                          <span>{{showForgotPassword ? "Voltar" : showSignup ? "Já possuo login" : "Não possuo login"}}</span>
+                        </v-btn>
+                      </v-layout>
+                    </v-flex>
+                  </v-layout>
+                </v-card-actions>
+              </v-card>
+            </v-layout>
+          </v-flex>
+        </v-layout>
+      </kinesis-container>
     </v-container>
   </v-parallax>
 </template>
@@ -245,6 +252,7 @@ import axios from "axios";
 import { mapState } from "vuex";
 
 import { isCNPJ } from "brazilian-values";
+import { KinesisContainer, KinesisElement } from "vue-kinesis";
 
 import firebase from "firebase";
 
@@ -253,6 +261,10 @@ export default {
   computed: {
     ...mapState("app", ["color"]),
     ...mapState(["modalStore", "usuarioStore", "empresaStore"])
+  },
+  components: {
+    KinesisContainer,
+    KinesisElement
   },
   data() {
     return {

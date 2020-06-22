@@ -217,7 +217,7 @@ export default {
       // required significa que posso chamar o método do componente pai diretamente
       if (action.required) {
         if (action.param) return this.$parent[action.method](action.param);
-        return this.$parent[action.method]().then(() =>
+        return this.$parent[action.method](action).then(() =>
           this.$toasted.global.defaultSuccess()
         );
       }

@@ -326,9 +326,9 @@ export default {
   },
   methods: {
     async reset() {
-      this.filter = {};
-
       this.$refs.form ? this.$refs.form.reset() : "";
+
+      this.filter = {};
     },
     loadFiltros() {
       if (
@@ -380,7 +380,7 @@ export default {
         .then(() => (this.isLoading = false));
     },
     emitPDF(data) {
-      const addHeadersFooters = doc => {
+      const addHeadersFooters = (doc, title) => {
         const pageCount = doc.internal.getNumberOfPages();
 
         doc.setFont("helvetica", "italic");
@@ -393,11 +393,9 @@ export default {
           doc.text(this.nomeEmpresa, 40, 35);
           doc.setFontSize(12);
           doc.text(
-            "Relatório de cadastros",
+            title,
             doc.internal.pageSize.width / 2 -
-              (doc.getStringUnitWidth("Relatório de cadastros") *
-                doc.internal.getFontSize()) /
-                2,
+              (doc.getStringUnitWidth(title) * doc.internal.getFontSize()) / 2,
             20
           );
           doc.setFontSize(8);
@@ -447,6 +445,7 @@ export default {
           { title: "Vlr custo", dataKey: "valor_custo_medio" }
         ];
 
+      var title = "";
       if (data.pessoas) {
         data.pessoas.map(pessoa => {
           if (pessoa.cpf) pessoa.cpf_cnpj = pessoa.cpf;
@@ -456,6 +455,7 @@ export default {
 
           return pessoa;
         });
+        title = "Relatório de pessoas"
 
         doc.setFontSize(12);
         doc.text(
@@ -484,9 +484,14 @@ export default {
         );
         doc.autoTable(pessoas_columns, data.pessoas, {
           theme: "striped",
+          margin: { top: 90 },
           headStyles: { fillColor: "#B2DFDB", textColor: "black" }
         });
+
+        addHeadersFooters(doc, title);
       } else if (data.usuarios) {
+        title = "Relatório de usuários"
+
         doc.setFontSize(12);
         doc.text(
           "Totalizadores",
@@ -507,8 +512,11 @@ export default {
         );
         doc.autoTable(usuarios_columns, data.usuarios, {
           theme: "striped",
+          margin: { top: 90 },
           headStyles: { fillColor: "#B2DFDB", textColor: "black" }
         });
+
+        addHeadersFooters(doc, title);
       } else if (data.produtos) {
         data.produtos.map(produto => {
           if (!produto.valor_venda) produto.valor_venda = "0.00";
@@ -518,6 +526,8 @@ export default {
           return produto;
         });
 
+        title = "Relatório de produtos"
+        
         doc.setFontSize(12);
         doc.text(
           "Totalizadores",
@@ -545,17 +555,11 @@ export default {
           margin: { top: 90 },
           headStyles: { fillColor: "#B2DFDB", textColor: "black" }
         });
+
+        addHeadersFooters(doc, title);
       }
 
-      addHeadersFooters(doc);
-      doc.save(
-        "RelatorioDeCadastros_" +
-          new Date()
-            .toLocaleDateString()
-            .split("/")
-            .join("") +
-          ".pdf"
-      );
+      doc.output("dataurlnewwindow");
     },
     emitCSV(data) {
       const options = {
