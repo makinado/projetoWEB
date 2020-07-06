@@ -283,6 +283,7 @@
       floating
       dark
       mobile-break-point="1500px"
+      v-if="usuarioStore.currentUsuario.atividades"
     >
       <v-layout class="fill-height" tag="v-list" column>
         <v-list-tile

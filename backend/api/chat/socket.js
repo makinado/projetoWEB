@@ -57,7 +57,7 @@ module.exports = (io, app) => {
         socket.on('join', async room => {
             socket.join(room)
 
-            app.db('chat')
+            req.knex('chat')
                 .select('id_usuario_origem', 'id_chat', 'mensagem', 'data')
                 .where({ id_chat: room })
                 .then(async msgs => {
@@ -65,7 +65,7 @@ module.exports = (io, app) => {
                         return {
                             user: {
                                 id: msg.id_usuario_origem,
-                                nome: await app.db('usuarios').select('nome').where({ id: msg.id_usuario_origem }).first().then(usuario => usuario ? usuario.nome : "")
+                                nome: await req.knex('usuarios').select('nome').where({ id: msg.id_usuario_origem }).first().then(usuario => usuario ? usuario.nome : "")
                             },
                             id_chat: msg.id_chat,
                             content: msg.mensagem,
@@ -78,7 +78,7 @@ module.exports = (io, app) => {
         })
 
         socket.on('join private', (data) => {
-            app.db('chat')
+            req.knex('chat')
                 .select('id_usuario_origem', 'id_chat', 'mensagem', 'data')
                 .where({ id_usuario_destino: data.sender.id, id_usuario_origem: data.receiver.id })
                 .orWhere({ id_usuario_destino: data.receiver.id, id_usuario_origem: data.sender.id })
@@ -87,7 +87,7 @@ module.exports = (io, app) => {
                         return {
                             user: {
                                 id: msg.id_usuario_origem,
-                                nome: await app.db('usuarios').select('nome').where({ id: msg.id_usuario_origem }).first().then(usuario => usuario.nome)
+                                nome: await req.knex('usuarios').select('nome').where({ id: msg.id_usuario_origem }).first().then(usuario => usuario.nome)
                             },
                             id_chat: msg.id_chat,
                             content: msg.mensagem,
@@ -111,10 +111,10 @@ module.exports = (io, app) => {
             }
 
             if (userReceiver) {
-                await app.db('chat').insert(msg_bd)
+                await req.knex('chat').insert(msg_bd)
                     .then(() => socket.to(userReceiver.socketId).broadcast.emit('privateChatMessage', msg))
             } else {
-                app.db('chat').insert(msg_bd)
+                req.knex('chat').insert(msg_bd)
             }
         })
 
@@ -127,7 +127,7 @@ module.exports = (io, app) => {
                 data: msg.data,
             }
 
-            await app.db('chat').insert(msg_bd)
+            await req.knex('chat').insert(msg_bd)
                 .then(() => socket.to(msg.id_chat).broadcast.emit('chatMessage', msg))
                 .catch(e => {
                     msg.content = e.message

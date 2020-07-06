@@ -1,4 +1,5 @@
 const { isCNPJ } = require('brazilian-values')
+
 module.exports = app => {
     const { existsOrError, notExistsOrError, parseNumber } = app.api.validation
 
@@ -12,7 +13,7 @@ module.exports = app => {
             existsOrError(empresa.cnpj, 'Informe o cnpj da empresa')
             if (!isCNPJ(empresa.cnpj))
                 throw 'cnpj inválido'
-            const empresaDB = await app.db('empresas').where({ cnpj: empresa.cnpj }).first()
+            const empresaDB = await req.knex('empresas').where({ cnpj: empresa.cnpj }).first()
             if (!empresa.id) {
                 notExistsOrError(empresaDB, 'Empresa já cadastrada')
             }
@@ -85,16 +86,16 @@ module.exports = app => {
         }
 
         if (empresa.id) {
-            app.db('empresas')
+            req.knex('empresas')
                 .update(empresa)
                 .where({ id: empresa.id })
                 .then(_ => res.status(204).send())
-                .catch(e => res.status(500).send(e.toString()))
+                .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao salvar empresa") })
         } else {
-            app.db('empresas')
+            req.knex('empresas')
                 .insert(empresa)
                 .then(_ => res.status(204).send())
-                .catch(e => res.status(500).send(e.toString()))
+                .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao salvar empresa") })
         }
     }
 
@@ -103,97 +104,93 @@ module.exports = app => {
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 5
 
-        const result = await app.db('empresas').count('id').first()
+        const result = await req.knex('empresas').count('id').first()
         const count = parseInt(result.count)
 
-        try {
-            app.db('empresas')
-                .select('id', 'cnpj', 'nome', 'email', 'contato')
-                .limit(limit).offset(page * limit - limit)
-                .orderBy(req.query.order || "nome", req.query.desc || "asc")
-                .where((qb) => {
-                    if (req.query.tipo == 2) {
-                        // pesquisa avançada
-                        if (req.query.nome) {
-                            qb.where('empresas.nome', 'ilike', `%${req.query.nome}%`);
-                        } else if (req.query.id) {
-                            qb.orWhere('empresas.id', '=', req.query.id);
-                        } else if (req.query.cnpj) {
-                            qb.orWhere('empresas.cnpj', 'ilike', `%${req.query.cnpj}%`);
-                        }
-                        if (req.query.email) {
-                            qb.where('empresas.email', 'ilike', `%${req.query.email}%`);
-                        }
-                        if (req.query.contato) {
-                            qb.where('empresas.contato', 'ilike', `%${req.query.contato}%`);
-                        }
-                    } else {
-                        // pesquisa rapida
-                        if (req.query.nome) {
-                            qb.where('empresas.nome', 'ilike', `${req.query.nome}%`);
-                        } else if (req.query.id) {
-                            qb.orWhere('empresas.id', '=', req.query.id);
-                        } else if (req.query.cnpj) {
-                            qb.orWhere('empresas.cnpj', 'ilike', `${req.query.cnpj}%`);
-                        }
-                        if (req.query.email) {
-                            qb.where('empresas.email', 'ilike', `${req.query.email}%`);
-                        }
-                        if (req.query.contato) {
-                            qb.where('empresas.contato', 'ilike', `${req.query.contato}%`);
-                        }
+        req.knex('empresas')
+            .select('id', 'cnpj', 'nome', 'email', 'contato')
+            .limit(limit).offset(page * limit - limit)
+            .orderBy(req.query.order || "nome", req.query.desc || "asc")
+            .where((qb) => {
+                if (req.query.tipo == 2) {
+                    // pesquisa avançada
+                    if (req.query.nome) {
+                        qb.where('empresas.nome', 'ilike', `%${req.query.nome}%`);
+                    } else if (req.query.id) {
+                        qb.orWhere('empresas.id', '=', req.query.id);
+                    } else if (req.query.cnpj) {
+                        qb.orWhere('empresas.cnpj', 'ilike', `%${req.query.cnpj}%`);
                     }
-                })
-                .then(empresas => res.json({ data: empresas, count, limit }))
-                .catch(e => res.status(500).send(e.toString()))
-        } catch (e) {
-            res.status(500).send(e.toString())
-        }
+                    if (req.query.email) {
+                        qb.where('empresas.email', 'ilike', `%${req.query.email}%`);
+                    }
+                    if (req.query.contato) {
+                        qb.where('empresas.contato', 'ilike', `%${req.query.contato}%`);
+                    }
+                } else {
+                    // pesquisa rapida
+                    if (req.query.nome) {
+                        qb.where('empresas.nome', 'ilike', `${req.query.nome}%`);
+                    } else if (req.query.id) {
+                        qb.orWhere('empresas.id', '=', req.query.id);
+                    } else if (req.query.cnpj) {
+                        qb.orWhere('empresas.cnpj', 'ilike', `${req.query.cnpj}%`);
+                    }
+                    if (req.query.email) {
+                        qb.where('empresas.email', 'ilike', `${req.query.email}%`);
+                    }
+                    if (req.query.contato) {
+                        qb.where('empresas.contato', 'ilike', `${req.query.contato}%`);
+                    }
+                }
+            })
+            .then(empresas => res.json({ data: empresas, count, limit }))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar empresas") })
     }
 
     const getAll = async (req, res) => {
-        app.db('empresas')
+        req.knex('empresas')
             .select('id as value', 'nome as text')
             .then(empresas => res.json(empresas))
-            .catch(e => { console.log(e); res.status(500).send(e.toString()) })
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar empresas") })
     }
 
     const getById = async (req, res) => {
-        app.db('empresas')
+        req.knex('empresas')
             .leftJoin('municipios', 'empresas.id_cidade', 'municipios.cmun')
             .select('*', 'municipios.uf as uf', 'municipios.xmun as cidade')
             .where({ id: req.params.id })
             .first()
             .then(empresa => res.json(empresa))
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar empresa") })
     }
 
     const getEmails = async (req, res) => {
-        app.db('empresas')
+        req.knex('empresas')
             .select('email', 'email2', 'email_envio_nfe', 'email_envio_boleto', 'email_envio_compra', 'email_envio_venda')
             .where({ id: req.params.id })
             .first()
             .then(empresa => res.json(Object.values(empresa).filter(email => email != null)))
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => res.status(500).send("Erro ao buscar e-mails"))
     }
 
     const remove = async (req, res) => {
         try {
-            const estoque = await app.db('produto_estoque')
+            const estoque = await req.knex('produto_estoque')
                 .where({ id_empresa: req.params.id }).first()
             notExistsOrError(estoque, 'Há movimentos de estoque associados a essa empresa')
 
-            const financeiro = await app.db('financeiro').where({ id_empresa: req.params.id }).first()
+            const financeiro = await req.knex('financeiro').where({ id_empresa: req.params.id }).first()
             notExistsOrError(financeiro, 'Há movimentos financeiros associados a essa empresa')
 
-            const compras = await app.db('compra').where({ id_empresa: req.params.id }).first()
+            const compras = await req.knex('compra').where({ id_empresa: req.params.id }).first()
             notExistsOrError(compras, 'Há compras associadas a essa empresa')
 
-            const vendas = await app.db('venda').where({ id_empresa: req.params.id }).first()
+            const vendas = await req.knex('venda').where({ id_empresa: req.params.id }).first()
             notExistsOrError(vendas, 'Há vendas associadas a essa empresa')
 
 
-            const empresa = await app.db('empresas')
+            const empresa = await req.knex('empresas')
                 .where({ id: req.params.id }).delete()
             existsOrError(empresa, 'Empresa não encontrada')
 

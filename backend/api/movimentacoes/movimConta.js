@@ -20,14 +20,14 @@ module.exports = app => {
         if (!movim.data_lancamento)
             movim.data_lancamento = new Date()
 
-        app.db('conta_movimento')
+        req.knex('conta_movimento')
             .insert(movim)
             .then(_ => res.status(204).send())
             .catch(e => res.status(500).send(e.toString()))
     }
 
     const get = async (req, res) => {
-        app.db('conta_movimento')
+        req.knex('conta_movimento')
             .then(movims => res.json(movims))
             .catch(e => res.status(500).send(e))
     }
@@ -36,10 +36,10 @@ module.exports = app => {
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 10
 
-        const result = await app.db('conta_movimento').count('id').where({ id_conta: req.params.id }).first()
+        const result = await req.knex('conta_movimento').count('id').where({ id_conta: req.params.id }).first()
         const count = parseInt(result.count)
 
-        app.db('conta_movimento')
+        req.knex('conta_movimento')
             .join('empresas', 'conta_movimento.id_empresa', 'empresas.id')
             // .join('conta', 'conta_movimento.id_conta', 'conta.id')
             .select(
@@ -63,7 +63,7 @@ module.exports = app => {
                 movims = await Promise.all(movims.map(async m => {
                     m.dados = null
                     if (m.origem == 'COMPRA' && m.id_movimento_origem) {
-                        m.dados = await app.db('compra')
+                        m.dados = await req.knex('compra')
                             .join('pessoas', 'compra.id_pessoa', 'pessoas.id')
                             .select(
                                 'compra.id',
@@ -73,7 +73,7 @@ module.exports = app => {
                             )
                             .where({ 'compra.id': m.id_movimento_origem }).first()
                     } else if (m.origem == 'VENDA' && m.id_movimento_origem) {
-                        m.dados = await app.db('venda')
+                        m.dados = await req.knex('venda')
                             .join('pessoas', 'venda.id_pessoa', 'pessoas.id')
                             .select(
                                 'venda.id',
@@ -83,7 +83,7 @@ module.exports = app => {
                             )
                             .where({ 'venda.id': m.id_movimento_origem }).first()
                     } else if (m.origem == 'FINANCEIRO' && m.id_movimento_financeiro) {
-                        m.dados = await app.db('financeiro')
+                        m.dados = await req.knex('financeiro')
                             .join('pessoas', 'financeiro.id_pessoa', 'pessoas.id')
                             .join('documentos', 'financeiro.documento_origem', 'documentos.id')
                             .select(
@@ -111,7 +111,7 @@ module.exports = app => {
     const remove = async (req, res) => {
 
         try {
-            const origem = await app.db('conta_movimento')
+            const origem = await req.knex('conta_movimento')
                 .where({ id: req.params.id }).first()
             if (origem.id_movimento_origem || origem.id_movimento_financeiro) throw 'Há movimentos associados a este registro'
         } catch (e) {
@@ -119,7 +119,7 @@ module.exports = app => {
         }
 
         try {
-            const movim = await app.db('conta_movimento')
+            const movim = await req.knex('conta_movimento')
                 .where({ id: req.params.id }).delete()
             existsOrError(movim, 'Movimento não encontrado')
 

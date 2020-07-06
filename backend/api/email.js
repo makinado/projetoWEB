@@ -6,7 +6,7 @@ module.exports = app => {
     const enviarEmail = async (req, res) => {
         const email = { ...req.body }
 
-        const empresa = await app.db('empresas')
+        const empresa = await req.knex('empresas')
             .select('nome', 'provedor_email', 'endereco_servidor', 'porta', 'usuario', 'senha', 'protocolo_ssl')
             .where({ id: email.id_empresa })
             .first()

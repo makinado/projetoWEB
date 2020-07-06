@@ -13,7 +13,7 @@ module.exports = app => {
 
         try {
             if (relatorio == 'inventario') {
-                inventario = await app.db('produtos')
+                inventario = await req.knex('produtos')
                     .leftJoin('unidades', 'produtos.unidade', 'unidades.id')
                     .leftJoin('categorias', 'produtos.categoria', 'categorias.id')
                     .leftJoin('marcas', 'produtos.marca', 'marcas.id')
@@ -42,16 +42,16 @@ module.exports = app => {
                         if (req.query.data_inicial && req.query.data_final)
                             qb.whereBetween('produtos.data_atualizado', [req.query.data_inicial, req.query.data_final])
                     })
-                    .then(async produtos => await Promise.all(withEstoque(produtos)))
+                    .then(async produtos => await Promise.all(withEstoque(req, produtos)))
 
                 stats = {
                     produtos: inventario.length,
                     ativos: inventario.filter(item => item.ativo).length,
                     inativos: inventario.filter(item => !item.ativo).length,
-                    valorEstoque: await app.db.raw(queries.valorEstoque()).then(result => result.rows.map(item => item.total)[0])
+                    valorEstoque: await req.knex.raw(queries.valorEstoque()).then(result => result.rows.map(item => item.total)[0])
                 }
             } else if (relatorio == 'entradas') {
-                entradas = await app.db('produto_movimento_estoque as pme')
+                entradas = await req.knex('produto_movimento_estoque as pme')
                     .join('empresas', 'pme.id_empresa', 'empresas.id')
                     .join('produtos', 'pme.id_produto', 'produtos.id')
                     .leftJoin('unidades', 'produtos.unidade', 'unidades.id')
@@ -98,7 +98,7 @@ module.exports = app => {
                     valorEntradas: formatToBRL(entradas.reduce((total, entrada) => total + Number(entrada.total), 0))
                 }
             } else if (relatorio == 'saidas') {
-                saidas = await app.db('produto_movimento_estoque as pme')
+                saidas = await req.knex('produto_movimento_estoque as pme')
                     .join('empresas', 'pme.id_empresa', 'empresas.id')
                     .join('produtos', 'pme.id_produto', 'produtos.id')
                     .leftJoin('unidades', 'produtos.unidade', 'unidades.id')
@@ -145,7 +145,7 @@ module.exports = app => {
                     valorSaidas: formatToBRL(saidas.reduce((total, saida) => total + Number(saida.total), 0))
                 }
             } else {
-                movimento = await app.db('produto_movimento_estoque as pme')
+                movimento = await req.knex('produto_movimento_estoque as pme')
                     .join('empresas', 'pme.id_empresa', 'empresas.id')
                     .join('produtos', 'pme.id_produto', 'produtos.id')
                     .leftJoin('unidades', 'produtos.unidade', 'unidades.id')

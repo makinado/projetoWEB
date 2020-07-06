@@ -9,7 +9,7 @@ module.exports = app => {
         try {
             existsOrError(perfil.descricao, 'Informe uma descrição')
 
-            const perfilDB = await app.db('perfil').where({ descricao: perfil.descricao }).first()
+            const perfilDB = await req.knex('perfil').where({ descricao: perfil.descricao }).first()
             if (!perfil.id) {
                 notExistsOrError(perfilDB, 'Perfil já cadastrado')
             }
@@ -22,13 +22,13 @@ module.exports = app => {
         delete perfil.value
 
         if (perfil.id) {
-            app.db('perfil')
+            req.knex('perfil')
                 .update(perfil)
                 .where({ id: perfil.id })
                 .then(_ => res.status(204).send())
                 .catch(e => res.status(500).send(e.toString()))
         } else {
-            app.db('perfil')
+            req.knex('perfil')
                 .insert(perfil)
                 .then(_ => res.status(204).send())
                 .catch(e => res.status(500).send(e.toString()))
@@ -36,13 +36,13 @@ module.exports = app => {
     }
 
     const get = async (req, res) => {
-        app.db('perfil')
+        req.knex('perfil')
             .then(perfis => res.json(perfis))
             .catch(e => res.status(500).send(e.toString()))
     }
 
     const getById = async (req, res) => {
-        app.db('perfil')
+        req.knex('perfil')
             .where({ id: req.params.id }).first()
             .then(perfil => res.json(perfil))
             .catch(e => res.status(500).send(e.toString()))
@@ -50,10 +50,10 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
-            const usuario = await app.dbUsers('usuarios').select('id').where({ id_perfil: req.params.id })
+            const usuario = await app.commonDb('usuarios').select('id').where({ id_perfil: req.params.id })
             notExistsOrError(usuario, 'Há usuários com este perfil')
 
-            const perfil = await app.db('perfil')
+            const perfil = await req.knex('perfil')
                 .where({ id: req.params.id }).delete()
             existsOrError(perfil, 'Perfil não encontrado')
 

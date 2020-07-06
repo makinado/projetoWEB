@@ -11,7 +11,7 @@ module.exports = app => {
         try {
             existsOrError(documento.nome, 'Informe o nome do documento')
 
-            const docDB = await app.db('documentos').where({ nome: documento.nome }).first()
+            const docDB = await req.knex('documentos').where({ nome: documento.nome }).first()
             if (!documento.id) {
                 notExistsOrError(docDB, 'documento já cadastrada')
             }
@@ -25,13 +25,13 @@ module.exports = app => {
         documento.perc_custo = documento.perc_custo ? parseNumber(documento.perc_custo) : 0
 
         if (documento.id) {
-            app.db('documentos')
+            req.knex('documentos')
                 .update(documento)
                 .where({ id: documento.id })
                 .then(_ => res.status(200).send())
                 .catch(e => res.status(500).send(e.toString()))
         } else {
-            app.db('documentos')
+            req.knex('documentos')
                 .insert(documento)
                 .then(_ => res.status(200).send())
                 .catch(e => res.status(500).send(e.toString()))
@@ -39,20 +39,20 @@ module.exports = app => {
     }
 
     const get = async (req, res) => {
-        app.db('documentos')
+        req.knex('documentos')
             .then(docs => res.json(docs))
             .catch(e => res.status(500).send(e.toString()))
     }
 
     const getAll = async (req, res) => {
-        app.db('documentos')
+        req.knex('documentos')
             .select('id as value', 'nome as text')
             .then(docs => res.json(docs))
             .catch(e => res.status(500).send(e.toString()))
     }
 
     const getById = async (req, res) => {
-        app.db('documentos')
+        req.knex('documentos')
             .where({ id: req.params.id })
             .first()
             .then(documento => res.json(documento))
@@ -61,7 +61,7 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
-            const exclusao = await app.db('documentos')
+            const exclusao = await req.knex('documentos')
                 .where({ id: req.params.id }).delete()
             existsOrError(exclusao, 'documento não encontrada')
 

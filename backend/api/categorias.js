@@ -11,7 +11,7 @@ module.exports = app => {
             existsOrError(categoria.tipo, 'Informe tipo da categoria')
             existsOrError(categoria.descricao, 'Informe uma descrição')
 
-            const categoriaDB = await app.db('categorias').where({ tipo: categoria.tipo, descricao: categoria.descricao }).first()
+            const categoriaDB = await req.knex('categorias').where({ tipo: categoria.tipo, descricao: categoria.descricao }).first()
             if (!categoria.id) {
                 notExistsOrError(categoriaDB, 'categoria já cadastrada')
             }
@@ -24,13 +24,13 @@ module.exports = app => {
         delete categoria.text
 
         if (categoria.id) {
-            app.db('categorias')
+            req.knex('categorias')
                 .update(categoria)
                 .where({ id: categoria.id })
                 .then(_ => res.status(200).send())
                 .catch(e => res.status(500).send(e.toString()))
         } else {
-            const resProd = await app.db('categorias')
+            const resProd = await req.knex('categorias')
                 .insert(categoria).returning('id')
                 .catch(e => res.status(500).send(e.toString()))
 
@@ -39,20 +39,20 @@ module.exports = app => {
     }
 
     const get = async (req, res) => {
-        app.db('categorias').select('id as value', 'descricao as text')
+        req.knex('categorias').select('id as value', 'descricao as text')
             .then(categorias => res.json(categorias))
             .catch(e => res.status(500).send(e.toString()))
     }
 
     const getById = async (req, res) => {
-        app.db('categorias')
+        req.knex('categorias')
             .where({ id: req.params.id }).first()
             .then(categoria => res.json(categoria))
             .catch(e => res.status(500).send(e.toString()))
     }
 
     const getPessoa = async (req, res) => {
-        app.db('categorias')
+        req.knex('categorias')
             .select('id', 'descricao', 'id as value', 'descricao as text')
             .where({ tipo: 1 })
             .then(categorias => res.status(200).send(categorias))
@@ -60,7 +60,7 @@ module.exports = app => {
     }
 
     const getProduto = async (req, res) => {
-        app.db('categorias')
+        req.knex('categorias')
             .select('id', 'descricao', 'id as value', 'descricao as text')
             .where({ tipo: 2 })
             .then(categorias => res.status(200).send(categorias))
@@ -69,7 +69,7 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
-            const exclusao = await app.db('categorias')
+            const exclusao = await req.knex('categorias')
                 .where({ id: req.params.id }).delete()
             existsOrError(exclusao, 'Categoria não encontrada')
 

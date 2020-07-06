@@ -16,7 +16,7 @@ import Content from "./components/template/Content";
 import ThemeOptions from "./components/template/ThemeOptions";
 import Chat from "./components/template/Chat";
 
-import { urlBD, showError, usuarioKey, loadEmpresas } from "@/global";
+import { urlBD, showError, usuarioKey } from "@/global";
 import axios from "axios";
 import { mapState } from "vuex";
 export default {

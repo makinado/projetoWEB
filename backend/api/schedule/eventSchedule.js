@@ -1,19 +1,39 @@
 const schedule = require('node-schedule')
 
+const knex = require('knex')
+const { createConnectionConfig } = require('../../config/connectionManager')
+
 module.exports = (app) => {
     schedule.scheduleJob('0 */4 * * *', async function () {
-        // schedule.scheduleJob('*/1 * * * *', async function () {
-        if (!app.db) return
+        let tenants = await app.commonDb('usuarios').select('nome_base')
 
-        const hoje = new Date()
-        const amanha = new Date(hoje.setDate(hoje.getDate() + 1))
+        const connectionMap =
+            tenants
+                .map(tenant => {
+                    return {
+                        [tenant.nome_base]: knex(createConnectionConfig(tenant.nome_base))
+                    }
+                })
+                .reduce((prev, next) => {
+                    return Object.assign({}, prev, next);
+                }, {});
 
-        const eventos = await app.db('eventos_agenda').where({ data: new Date() }).orWhere({ data: amanha, avisar: true })
+        for (conn in connectionMap) {
+            if (!conn) return
 
-        app.db.batchInsert('notificacoes', eventos.map(e => {
-            if (e.data == amanha && !e.avisar && concluido) return
+            const hoje = new Date()
+            const amanha = new Date(hoje.setDate(hoje.getDate() + 1))
 
-            return { titulo: e.descricao, conteudo: e.observacao, link: '/agenda' }
-        }))
+            try {
+                const eventos = await conn('eventos_agenda').where({ data: new Date() }).orWhere({ data: amanha, avisar: true })
+
+                conn.batchInsert('notificacoes', eventos.map(e => {
+                    if (e.data == amanha && !e.avisar && concluido) return
+
+                    return { titulo: e.descricao, conteudo: e.observacao, link: '/agenda' }
+                }))
+            } catch (e) {
+            }
+        }
     })
 }

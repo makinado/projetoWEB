@@ -3,7 +3,6 @@ const grantAccess = require('./grantAccess')
 const fs = require('fs'),
     sharp = require('sharp');
 
-
 const storageIMG = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'uploads/img/');
@@ -83,11 +82,11 @@ module.exports = app => {
     })
 
     app.post('/signup', app.api.auth.auth.signup)
+    app.post('/signinFunc', app.api.auth.func.signin)
+    app.post('/signupFunc', app.api.auth.func.signup)
     app.post('/signin', app.api.auth.auth.signin)
     app.post('/validateToken', app.api.auth.auth.validateToken)
     app.post('/recoverPassword', app.api.auth.usuarios.recoverPassword)
-
-
     app.get('/notificacoes', app.api.notificacoes.get)
 
 
@@ -104,7 +103,7 @@ module.exports = app => {
         .get(grantAccess(app.api.empresas.empresas.getById, 'empresa'))
         .delete(grantAccess(app.api.empresas.empresas.remove, 'empresa'))
     app.route('/emailsEmpresa/:id')
-        // .all(app.config.passport.authenticate())
+        .all(app.config.passport.authenticate())
         .get(grantAccess(app.api.empresas.empresas.getEmails, 'empresa'))
 
 
@@ -126,7 +125,7 @@ module.exports = app => {
 
 
     app.route('/pessoas/clientes')
-        // .all(app.config.passport.authenticate())
+        .all(app.config.passport.authenticate())
         .post(app.api.pessoas.pessoas.fastSave)
         .get(app.api.pessoas.pessoas.getClientes)
     app.route('/pessoas/fornecedores')
@@ -535,16 +534,16 @@ module.exports = app => {
         .get(app.api.stat.get)
     app.route('/stats/graficoFinanceiro')
         .all(app.config.passport.authenticate())
-        .get(app.api.stat.getGraficoFinanceiro)
+        .get(grantAccess(app.api.stat.getGraficoFinanceiro, 'financeiro'))
     app.route('/stats/graficoPerformance')
         .all(app.config.passport.authenticate())
-        .get(app.api.stat.getGraficoPerformace)
+        .get(grantAccess(app.api.stat.getGraficoPerformace, 'vendas'))
     app.route('/stats/graficoCadastros')
         .all(app.config.passport.authenticate())
         .get(app.api.stat.getGraficoCadastros)
     app.route('/stats/graficoFluxoCaixa')
         .all(app.config.passport.authenticate())
-        .get(app.api.stat.getGraficoFluxoCaixa)
+        .get(grantAccess(app.api.stat.getGraficoFluxoCaixa, 'financeiro'))
     app.route('/stats/campeoes')
         .all(app.config.passport.authenticate())
         .get(app.api.stat.getCampeoes)

@@ -17,13 +17,13 @@ module.exports = app => {
         }
 
         if (category.id) {
-            app.dbUsers('categorias')
+            app.commonDb('categorias')
                 .update(category)
                 .where({ id: category.id })
                 .then(_ => res.status(204).send())
                 .catch(err => res.status(500).send(err))
         } else {
-            app.dbUsers('categorias')
+            app.commonDb('categorias')
                 .insert(category)
                 .then(_ => res.status(204).send())
                 .catch(err => res.status(500).send(err))
@@ -34,15 +34,15 @@ module.exports = app => {
         try {
             existsOrError(req.params.id, 'Código da Categoria não informado.')
 
-            const subcategory = await app.dbUsers('categorias')
+            const subcategory = await app.commonDb('categorias')
                 .where({ id_parent: req.params.id })
             notExistsOrError(subcategory, 'Categoria possui subcategorias.')
 
-            const articles = await app.dbUsers('artigos')
+            const articles = await app.commonDb('artigos')
                 .where({ id_categoria: req.params.id })
             notExistsOrError(articles, 'Categoria possui artigos.')
 
-            const rowsDeleted = await app.dbUsers('categorias')
+            const rowsDeleted = await app.commonDb('categorias')
                 .where({ id: req.params.id }).del()
             existsOrError(rowsDeleted, 'Categoria não foi encontrada.')
 
@@ -80,13 +80,13 @@ module.exports = app => {
     }
 
     const get = (req, res) => {
-        app.dbUsers('categorias')
+        app.commonDb('categorias')
             .then(categorias => res.json(withPath(categorias)))
             .catch(err => res.status(500).send(err))
     }
 
     const getById = (req, res) => {
-        app.dbUsers('categorias')
+        app.commonDb('categorias')
             .where({ id: req.params.id })
             .first()
             .then(category => res.json(category))
@@ -104,7 +104,7 @@ module.exports = app => {
     }
 
     const getTree = (req, res) => {
-        app.dbUsers('categorias')
+        app.commonDb('categorias')
             .then(categorias => res.json(toTree(categorias)))
             .catch(err => res.status(500).send(err))
     }

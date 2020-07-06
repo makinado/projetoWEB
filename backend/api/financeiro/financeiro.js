@@ -1,8 +1,5 @@
-const { formatToBRL } = require('brazilian-values')
-
 module.exports = app => {
     const { existsOrError, notExistsOrError, parseNumber } = app.api.validation
-    const vendaController = require('../vendas/vendas')
 
     const save = async (req, res) => {
         var financeiro = Object.values({ ...req.body })
@@ -44,13 +41,13 @@ module.exports = app => {
 
         financeiro.forEach(financ => {
             if (financ.id) {
-                return app.db.transaction(async function (trx) {
-                    return app.db('financeiro')
+                return req.knex.transaction(async function (trx) {
+                    return req.knex('financeiro')
                         .update(financ)
                         .where({ id: financ.id })
                         .then(async () => {
                             if (financ.pago) {
-                                await app.db('conta_movimento').where({ id_movimento_financeiro: financ.id }).delete()
+                                await req.knex('conta_movimento').where({ id_movimento_financeiro: financ.id }).delete()
 
                                 const movim_conta = {
                                     id_empresa: financ.id_empresa,
@@ -69,7 +66,7 @@ module.exports = app => {
                                 }
 
 
-                                return app.db('conta_movimento').insert(movim_conta)
+                                return req.knex('conta_movimento').insert(movim_conta)
                                     .transacting(trx)
                             }
                         })
@@ -79,11 +76,11 @@ module.exports = app => {
                     res.status(204).send()
                 }).catch(function (error) {
                     console.log(error.toString())
-                    res.status(500).send(error.toString())
+                    res.status(500).send("Erro ao salvar conta financeira")
                 });
             } else {
-                return app.db.transaction(async function (trx) {
-                    return app.db('financeiro')
+                return req.knex.transaction(async function (trx) {
+                    return req.knex('financeiro')
                         .insert(financ).returning('id')
                         .then(id => {
                             if (financ.pago) {
@@ -103,7 +100,7 @@ module.exports = app => {
                                     valor: financ.valor_pago
                                 }
 
-                                return app.db('conta_movimento').insert(movim_conta)
+                                return req.knex('conta_movimento').insert(movim_conta)
                                     .transacting(trx)
                             }
                         })
@@ -113,7 +110,7 @@ module.exports = app => {
                     res.status(204).send()
                 }).catch(function (error) {
                     console.log(error.toString())
-                    res.status(500).send(error.toString())
+                    res.status(500).send("Erro ao salvar conta financeira")
                 });
             }
         })
@@ -144,8 +141,8 @@ module.exports = app => {
         })
 
         var promises = pagamento.map(financ => {
-            return app.db.transaction(async function (trx) {
-                return app.db('financeiro')
+            return req.knex.transaction(async function (trx) {
+                return req.knex('financeiro')
                     .update(financ).returning('*')
                     .where({ id: financ.id })
                     .transacting(trx)
@@ -166,7 +163,7 @@ module.exports = app => {
                             valor: financ.valor_pago
                         }
 
-                        return app.db('conta_movimento').insert(movim_conta)
+                        return req.knex('conta_movimento').insert(movim_conta)
                             .transacting(trx)
                     }).then(trx.commit).catch(trx.rollback);
             })
@@ -181,10 +178,10 @@ module.exports = app => {
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 10
 
-        const result = await app.db('financeiro').count('id').first()
+        const result = await req.knex('financeiro').count('id').first()
         const count = parseInt(result.count)
 
-        app.db('financeiro')
+        req.knex('financeiro')
             .join('empresas', 'financeiro.id_empresa', 'empresas.id')
             .leftJoin('pessoas', 'financeiro.id_pessoa', 'pessoas.id')
             .leftJoin('documentos', 'financeiro.documento_origem', 'documentos.id')
@@ -256,19 +253,19 @@ module.exports = app => {
                 })
                 res.json({ data: contas, count, limit })
             })
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar contas financeiras") })
     }
 
     const getById = async (req, res) => {
-        app.db('financeiro')
+        req.knex('financeiro')
             .where({ id: req.params.id })
             .first()
             .then(financ => res.json(financ))
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar conta financeira") })
     }
 
     const getConta = async (req, res) => {
-        app.db('financeiro')
+        req.knex('financeiro')
             .join('empresas', 'financeiro.id_empresa', 'empresas.id')
             .join('pessoas', 'financeiro.id_pessoa', 'pessoas.id')
             .leftJoin('documentos as doc_origem', 'financeiro.documento_origem', 'doc_origem.id')
@@ -301,22 +298,22 @@ module.exports = app => {
             .where({ 'financeiro.id': req.params.id })
             .first()
             .then(financ => res.json(financ))
-            .catch(e => { console.log(e); res.status(500).send(e.toString()) })
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar conta financeira") })
     }
 
     const remove = async (req, res) => {
 
         try {
-            const origem = await app.db('financeiro').select('id_movimento_origem', 'pago').where({ id: req.params.id }).first()
+            const origem = await req.knex('financeiro').select('id_movimento_origem', 'pago').where({ id: req.params.id }).first()
             notExistsOrError(origem.id_movimento_origem, 'Há movimentos associados a este registro')
             notExistsOrError(origem.pago, 'Não é possível exluir uma conta paga')
 
-            await app.db.transaction(async function (trx) {
-                return app.db('financeiro')
+            await req.knex.transaction(async function (trx) {
+                return req.knex('financeiro')
                     .where({ id: req.params.id }).delete()
                     .transacting(trx)
                     .then(function () {
-                        return app.db('conta_movimento')
+                        return req.knex('conta_movimento')
                             .where({ id_movimento_financeiro: req.params.id }).delete()
                             .transacting(trx)
                             .then(trx.commit)
@@ -345,13 +342,13 @@ module.exports = app => {
             id_conta: null,
         }
 
-        app.db.transaction(async function (trx) {
+        req.knex.transaction(async function (trx) {
 
-            return app.db('conta_movimento')
+            return req.knex('conta_movimento')
                 .where({ id_movimento_financeiro: req.params.id }).delete()
                 .transacting(trx)
                 .then(function () {
-                    return app.db('financeiro')
+                    return req.knex('financeiro')
                         .update(financ)
                         .where({ id: req.params.id })
                         .transacting(trx)
@@ -362,7 +359,7 @@ module.exports = app => {
                     res.status(204).send()
                 }).catch(function (error) {
                     console.log(error.toString())
-                    res.status(500).send(error.toString())
+                    res.status(500).send("Erro ao remover o pagamento da conta")
                 });
         })
     }

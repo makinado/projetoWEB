@@ -19,7 +19,7 @@ module.exports = app => {
             return res.status(400).send(e.toString())
         }
 
-        app.db('log')
+        req.knex('log')
             .insert(log)
             .then(_ => res.status(204).send())
             .catch(e => res.status(500).send(e.toString()))
@@ -29,10 +29,10 @@ module.exports = app => {
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 10
 
-        const result = await app.db('log').count('id').first()
+        const result = await req.knex('log').count('id').first()
         const count = parseInt(result.count)
 
-        app.db('log')
+        req.knex('log')
             .leftJoin('usuarios', 'log.id_usuario', 'usuarios.id')
             .select('log.id', 'usuarios.nome as usuario', 'data', 'hora', 'tela', 'tipo', 'detalhe')
             .limit(limit).offset(page * limit - limit)
@@ -91,13 +91,13 @@ module.exports = app => {
     }
 
     const get = async (req, res) => {
-        app.db('log')
+        req.knex('log')
             .select('hora', 'id_usuario', 'tela', 'tipo', 'detalhe')
             .where({ data: new Date() })
             .orderBy([{ column: 'data', order: 'desc' }, { column: 'hora', order: 'desc' }])
             .then(async logs => {
                 logs = logs.map(async log => {
-                    log.usuario = await app.db('usuarios').select('img', 'nome').where({ id: log.id_usuario }).first()
+                    log.usuario = await req.knex('usuarios').select('img', 'nome').where({ id: log.id_usuario }).first()
 
                     return log
                 })

@@ -15,7 +15,7 @@ module.exports = app => {
             existsOrError(vinculacao.id_fornecedor, 'Informe o fornecedor do produto')
             existsOrError(vinculacao.id_produto_fornecedor, 'Informe o código do produto de seu fornecedor')
             existsOrError(vinculacao.id_produto_empresa, 'Informe o produto que deseja vincular')
-            const vinculacaoDB = await app.db('compra_vinculacao')
+            const vinculacaoDB = await req.knex('compra_vinculacao')
                 .select('id')
                 .where({
                     id_fornecedor: vinculacao.id_fornecedor,
@@ -32,19 +32,19 @@ module.exports = app => {
 
         vinculacao.qtde_embalagem = parseNumber(vinculacao.qtde_embalagem || "0,00")
 
-        // await app.db('compra_vinculacao').where({
+        // await req.knex('compra_vinculacao').where({
         //     id_fornecedor: vinculacao.id_fornecedor,
         //     id_produto_fornecedor: vinculacao.id_produto_fornecedor,
         // }).delete()
 
         if (vinculacao.id) {
-            app.db('compra_vinculacao')
+            req.knex('compra_vinculacao')
                 .update(vinculacao)
                 .where({ id: vinculacao.id })
                 .then(id => res.json({ id: vinculacao.id }))
                 .catch(e => res.status(500).send(e.toString()))
         } else {
-            app.db('compra_vinculacao')
+            req.knex('compra_vinculacao')
                 .insert(vinculacao)
                 .returning('id')
                 .then(id => res.json({ id: id[0] }))
@@ -55,7 +55,7 @@ module.exports = app => {
     const get = async (req, res) => { }
 
     const getById = async (req, res) => {
-        app.db('compra_vinculacao')
+        req.knex('compra_vinculacao')
             .where({ id: req.params.id })
             .first()
             .then(vinculacao => res.json(vinculacao))
@@ -64,7 +64,7 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
-            const exclusao = await app.db('compra_vinculacao')
+            const exclusao = await req.knex('compra_vinculacao')
                 .where({ id: req.params.id }).delete()
             existsOrError(exclusao, 'Vinculação não encontrada')
 

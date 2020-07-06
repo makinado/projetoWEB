@@ -80,6 +80,45 @@
                     :rules="nameRules"
                   ></v-text-field>
                 </v-flex>
+                <v-flex xs12 md6 v-if="pessoa.tipo === 'Física'">
+                  <v-menu
+                    v-model="menu"
+                    :close-on-content-click="false"
+                    :nudge-right="40"
+                    transition="scale-transition"
+                    offset-y
+                    full-width
+                    max-width="290px"
+                    min-width="290px"
+                  >
+                    <template v-slot:activator="{ on }">
+                      <v-text-field
+                        :color="color"
+                        v-model="computedDateFormatted"
+                        label="Data de nascimento"
+                        prepend-icon="event"
+                        readonly
+                        v-on="on"
+                      ></v-text-field>
+                    </template>
+                    <v-date-picker
+                      :color="color"
+                      v-model="pessoa.data_nascimento"
+                      @input="menu = false"
+                      locale="pt-br"
+                    ></v-date-picker>
+                  </v-menu>
+                </v-flex>
+                <v-flex xs12 md6 v-if="pessoa.tipo === 'Física'">
+                  <v-autocomplete
+                    dense
+                    :color="color"
+                    label="Sexo"
+                    v-model="pessoa.sexo"
+                    :items="['Masculino','Feminino']"
+                    clearable
+                  ></v-autocomplete>
+                </v-flex>
               </v-layout>
             </transition>
           </v-form>
@@ -226,45 +265,6 @@
                                 :rules="foneRules"
                               ></v-text-field>
                             </v-flex>
-                            <v-flex xs12 md6>
-                              <v-menu
-                                v-model="menu"
-                                :close-on-content-click="false"
-                                :nudge-right="40"
-                                transition="scale-transition"
-                                offset-y
-                                full-width
-                                max-width="290px"
-                                min-width="290px"
-                              >
-                                <template v-slot:activator="{ on }">
-                                  <v-text-field
-                                    :color="color"
-                                    v-model="computedDateFormatted"
-                                    label="Data de nascimento"
-                                    prepend-icon="event"
-                                    readonly
-                                    v-on="on"
-                                  ></v-text-field>
-                                </template>
-                                <v-date-picker
-                                  :color="color"
-                                  v-model="pessoa.data_nascimento"
-                                  @input="menu = false"
-                                  locale="pt-br"
-                                ></v-date-picker>
-                              </v-menu>
-                            </v-flex>
-                            <v-flex xs12 md6>
-                              <v-autocomplete
-                                dense
-                                :color="color"
-                                label="Sexo"
-                                v-model="pessoa.sexo"
-                                :items="['Masculino','Feminino']"
-                                clearable
-                              ></v-autocomplete>
-                            </v-flex>
                           </v-layout>
                         </v-form>
                       </v-container>
@@ -407,6 +407,7 @@ import { urlBD, showError, saveLog, formatDate } from "@/global";
 import { mapState, mapActions } from "vuex";
 
 import ViaCep from "vue-viacep";
+import ReceitaWS from "receitaws";
 
 import { isCNPJ, isCPF, formatToCNPJ } from "brazilian-values";
 

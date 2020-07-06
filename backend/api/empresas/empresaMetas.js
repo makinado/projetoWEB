@@ -20,7 +20,7 @@ module.exports = app => {
             if (meta.valor === '0,00')
                 throw 'O valor da meta não pode ser 0,00'
 
-            const metaBD = await app.db('empresa_metas')
+            const metaBD = await req.knex('empresa_metas')
                 .where({ id_empresa: meta.id_empresa, tipo_receita_despesa: meta.tipo_receita_despesa, data: new Date(meta.data), valor: meta.valor }).first()
             if (!meta.id) {
                 notExistsOrError(metaBD, 'Meta com mesma data e valor já cadastrada para esta empresa')
@@ -46,13 +46,13 @@ module.exports = app => {
         delete meta.concluido_porc
 
         if (meta.id)
-            app.db('empresa_metas')
+            req.knex('empresa_metas')
                 .update(meta)
                 .where({ id: meta.id })
                 .then(_ => res.status(204).send())
                 .catch(e => res.status(500).send(e.toString()))
         else
-            app.db('empresa_metas')
+            req.knex('empresa_metas')
                 .insert(meta)
                 .then(_ => res.status(204).send())
                 .catch(e => res.status(500).send(e.toString()))
@@ -63,10 +63,10 @@ module.exports = app => {
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 10
 
-        const result = await app.db('empresa_metas').count('id').first()
+        const result = await req.knex('empresa_metas').count('id').first()
         const count = parseInt(result.count)
 
-        app.db('empresa_metas')
+        req.knex('empresa_metas')
             .join('empresas', 'empresa_metas.id_empresa', 'empresas.id')
             .select('empresa_metas.id', 'empresa_metas.nome', 'empresas.nome as empresa', 'tipo_receita_despesa', 'data', 'valor')
             .limit(limit).offset(page * limit - limit)
@@ -81,12 +81,12 @@ module.exports = app => {
             .then(async metas => {
                 metas = await Promise.all(metas.map(async m => {
                     if (m.tipo_receita_despesa == 'RECEITA') {
-                        const valor_receitas = await app.db('venda').sum('valor_total')
+                        const valor_receitas = await req.knex('venda').sum('valor_total')
                         m.concluido_valor = valor_receitas[0] ? valor_receitas[0].sum || 0 : 0
                         m.concluido_porc = parseNumber(m.concluido_valor || "0,00", '.') * 100 / parseNumber(m.valor, '.')
 
                     } else {
-                        const valor_despesas = await app.db('financeiro')
+                        const valor_despesas = await req.knex('financeiro')
                             .sum('valor_total')
                             .having('tipo_conta', '=', 1).having('pago', '=', true)
                             .groupBy('tipo_conta', 'pago')
@@ -102,7 +102,7 @@ module.exports = app => {
     }
 
     const getById = async (req, res) => {
-        app.db('empresa_metas')
+        req.knex('empresa_metas')
             .where({ id: req.params.id }).first()
             .then(metas => res.json(metas))
             .catch(e => res.status(500).send(e))
@@ -110,7 +110,7 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
-            const exclusao = await app.db('empresa_metas')
+            const exclusao = await req.knex('empresa_metas')
                 .where({ id: req.params.id }).delete()
             existsOrError(exclusao, 'Meta não encontrada')
 

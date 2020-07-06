@@ -3,10 +3,10 @@ module.exports = app => {
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 10
 
-        const result = await app.db('comissao').count('id_usuario').where({ id_usuario: req.params.id_usuario }).first()
+        const result = await req.knex('comissao').count('id_usuario').where({ id_usuario: req.params.id_usuario }).first()
         const count = parseInt(result.count)
 
-        app.db('comissao')
+        req.knex('comissao')
             .join('usuarios', 'comissao.id_usuario', 'usuarios.id')
             .select('comissao.*', 'usuarios.nome as usuario')
             .limit(limit).offset(page * limit - limit)
@@ -33,10 +33,10 @@ module.exports = app => {
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 10
 
-        const result = await app.db('comissao').count('id_venda').where({ id_usuario: req.params.id_usuario, id_venda: req.params.id_venda }).first()
+        const result = await req.knex('comissao').count('id_venda').where({ id_usuario: req.params.id_usuario, id_venda: req.params.id_venda }).first()
         const count = parseInt(result.count)
 
-        app.db('comissao')
+        req.knex('comissao')
             .limit(limit).offset(page * limit - limit)
             .where({ id_usuario: req.params.id_usuario, id_venda: req.params.id_venda })
             .orderBy('data_comissao')

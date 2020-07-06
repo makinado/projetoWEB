@@ -14,7 +14,7 @@ module.exports = app => {
 
     const save = async (req, res) => {
         const usuario = { ...req.body }
-
+        
         try {
             existsOrError(usuario.nome, 'Nome não informado')
             existsOrError(usuario.email, 'E-mail não informado')
@@ -25,7 +25,7 @@ module.exports = app => {
             equalsOrError(usuario.senha, usuario.confirmaSenha,
                 'Senhas não conferem')
 
-            const usuarioFromDB = await app.dbUsers('usuarios')
+            const usuarioFromDB = await app.commonDb('usuarios')
                 .where({ email: usuario.email }).first()
             if (!usuario.id) {
                 notExistsOrError(usuarioFromDB, 'Usuário já cadastrado')
@@ -35,6 +35,7 @@ module.exports = app => {
         }
 
         usuario.senha = encryptSenha(usuario.senha)
+
         delete usuario.confirmaSenha
         delete usuario.token
 
@@ -44,19 +45,19 @@ module.exports = app => {
         delete usuario.acessos
 
         if (usuario.id) {
-            return app.dbUsers.transaction(async function (trx) {
-                return app.dbUsers('usuarios')
+            return app.commonDb.transaction(async function (trx) {
+                return app.commonDb('usuarios')
                     .update(usuario)
                     .where({ id: usuario.id })
                     .transacting(trx)
                     .then(async function () {
                         if (acessos) {
-                            await app.dbUsers('acesso').where({ id_usuario: usuario.id }).delete().transacting(trx)
-                            return app.dbUsers('acesso')
+                            await app.commonDb('acesso').where({ id_usuario: usuario.id }).delete().transacting(trx)
+                            return app.commonDb('acesso')
                                 .insert({ ...acessos, id_usuario: usuario.id })
                                 .transacting(trx)
                                 .then(() => {
-                                    return app.db('usuarios')
+                                    return req.knex('usuarios')
                                         .update(usuario)
                                         .where({ id: usuario.id })
                                         .then(async () => {
@@ -69,13 +70,13 @@ module.exports = app => {
 
                                                     return newEmp
                                                 })
-                                                await app.db('usuario_empresas').where({ id_usuario: usuario.id }).delete()
-                                                return app.db.batchInsert('usuario_empresas', empresas)
+                                                await req.knex('usuario_empresas').where({ id_usuario: usuario.id }).delete()
+                                                return req.knex.batchInsert('usuario_empresas', empresas)
                                             }
                                         })
                                 })
                         } else {
-                            return app.db('usuarios')
+                            return req.knex('usuarios')
                                 .update(usuario)
                                 .where({ id: usuario.id })
                                 .then(async () => {
@@ -88,8 +89,8 @@ module.exports = app => {
 
                                             return newEmp
                                         })
-                                        await app.db('usuario_empresas').where({ id_usuario: usuario.id }).delete()
-                                        return app.db.batchInsert('usuario_empresas', empresas)
+                                        await req.knex('usuario_empresas').where({ id_usuario: usuario.id }).delete()
+                                        return req.knex.batchInsert('usuario_empresas', empresas)
                                     }
                                 })
                         }
@@ -99,20 +100,20 @@ module.exports = app => {
                 res.status(204).send()
             }).catch(function (error) {
                 console.log(error.toString())
-                res.status(500).send(error.toString())
+                res.status(500).send("Erro ao salvar usuário")
             });
         } else {
-            return app.dbUsers.transaction(async function (trx) {
-                return app.dbUsers('usuarios')
+            return app.commonDb.transaction(async function (trx) {
+                return app.commonDb('usuarios')
                     .insert(usuario).returning('id')
                     .transacting(trx)
                     .then(async function (id_usuario) {
                         if (acessos) {
-                            return app.dbUsers('acesso')
+                            return app.commonDb('acesso')
                                 .insert({ ...acessos, id_usuario: id_usuario[0] })
                                 .transacting(trx)
                                 .then(() => {
-                                    return app.db('usuarios')
+                                    return req.knex('usuarios')
                                         .insert({ ...usuario, id: id_usuario[0] })
                                         .then(() => {
                                             if (empresas) {
@@ -124,12 +125,12 @@ module.exports = app => {
 
                                                     return newEmp
                                                 })
-                                                return app.db.batchInsert('usuario_empresas', empresas)
+                                                return req.knex.batchInsert('usuario_empresas', empresas)
                                             }
                                         })
                                 })
                         } else {
-                            return app.db('usuarios')
+                            return req.knex('usuarios')
                                 .insert({ ...usuario, id: id_usuario[0] })
                                 .then(() => {
                                     if (empresas) {
@@ -141,7 +142,7 @@ module.exports = app => {
 
                                             return newEmp
                                         })
-                                        return app.db.batchInsert('usuario_empresas', empresas)
+                                        return req.knex.batchInsert('usuario_empresas', empresas)
                                     }
                                 })
                         }
@@ -151,28 +152,28 @@ module.exports = app => {
                 res.status(204).send()
             }).catch(function (error) {
                 console.log(error.toString())
-                res.status(500).send(error.toString())
+                res.status(500).send("Erro ao salvar usuário")
             });
         }
     }
 
     const getEmpresas = async (req, res) => {
-        app.db('usuario_empresas')
+        req.knex('usuario_empresas')
             .join('empresas', 'usuario_empresas.id_empresa', 'empresas.id')
             .select('empresas.id as value', 'empresas.nome as text', 'cnpj')
             .where({ id_usuario: req.params.id })
             .then(empresas => res.json(empresas))
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar empresas do usuário") })
     }
 
     const get = async (req, res) => {
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 10
 
-        const result = await app.db('usuarios').count('id').first()
+        const result = await req.knex('usuarios').count('id').first()
         const count = parseInt(result.count)
 
-        app.db('usuarios')
+        req.knex('usuarios')
             .select('usuarios.id', 'nome', 'email', 'contato')
             .limit(limit).offset(page * limit - limit)
             .orderBy(req.query.order || "nome", req.query.desc || "asc")
@@ -206,50 +207,50 @@ module.exports = app => {
                 }
             })
             .then(usuarios => res.json({ data: usuarios, count, limit }))
-            .catch(e => res.status(500).send(e))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar usuários") })
     }
 
     const getAll = async (req, res) => {
-        app.db('usuarios')
+        req.knex('usuarios')
             .select('id as value', 'nome as text')
             .then(usuarios => res.json(usuarios))
-            .catch(e => { console.log(e); res.status(500).send(e.toString()) })
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar usuários") })
     }
 
     const getById = async (req, res) => {
-        app.db('usuarios')
+        req.knex('usuarios')
             .select('id', 'nome', 'email', 'contato')
             .where({ id: req.params.id })
             .first()
             .then(async usuario => {
-                usuario.empresas = await app.db('usuario_empresas')
+                usuario.empresas = await req.knex('usuario_empresas')
                     .select('id_empresa').where({ id_usuario: usuario.id }).then(empresas => empresas.map(e => e.id_empresa))
-                usuario.acessos = await app.dbUsers('acesso').where({ id_usuario: usuario.id }).first()
+                usuario.acessos = await app.commonDb('acesso').where({ id_usuario: usuario.id }).first()
                 res.json(usuario)
             })
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar usuário") })
     }
 
     const remove = async (req, res) => {
         try {
-            const log = await app.db('log').where({ id_usuario: req.params.id }).first()
+            const log = await req.knex('log').where({ id_usuario: req.params.id }).first()
             notExistsOrError(log, 'Há atividades associadas a esse usuário')
 
-            const vendas = await app.db('venda').where({ id_vendedor: req.params.id }).first()
+            const vendas = await req.knex('venda').where({ id_vendedor: req.params.id }).first()
             notExistsOrError(vendas, 'Há vendas associadas a essa pessoa')
 
-            app.dbUsers.transaction(async function (trx) {
-                return app.dbUsers('usuarios')
+            app.commonDb.transaction(async function (trx) {
+                return app.commonDb('usuarios')
                     .where({ id: req.params.id }).delete()
                     .transacting(trx)
                     .then(function () {
-                        return app.dbUsers('acesso')
+                        return app.commonDb('acesso')
                             .where({ id_usuario: req.params.id }).delete()
                             .transacting(trx)
                             .then(function () {
-                                return app.db('usuarios').where({ id: req.params.id }).delete()
+                                return req.knex('usuarios').where({ id: req.params.id }).delete()
                                     .then(function () {
-                                        return app.db('usuario_empresas').where({ id_usuario: req.params.id }).delete()
+                                        return req.knex('usuario_empresas').where({ id_usuario: req.params.id }).delete()
                                     })
                             })
                     })
@@ -272,7 +273,7 @@ module.exports = app => {
         try {
             existsOrError(email, 'E-mail não informado')
 
-            var usuarioBD = await app.db('usuarios')
+            var usuarioBD = await req.knex('usuarios')
                 .where({ email: email }).first()
             existsOrError(usuarioBD, 'Nenhum usuário encontrado com esse e-mail')
         } catch (e) {

@@ -9,7 +9,7 @@ module.exports = app => {
     }
 
     const bearerStrategy = new Strategy(params, (payload, done) => {
-        app.dbUsers('usuarios')
+        app.commonDb('usuarios')
             .where({ id: payload.id })
             .first()
             .then(user => done(null, user ? { ...payload } : false))

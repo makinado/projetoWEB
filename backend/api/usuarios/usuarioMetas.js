@@ -17,7 +17,7 @@ module.exports = app => {
 
             meta.valor = parseNumber(meta.valor)
 
-            const metaBD = await app.db('usuario_metas')
+            const metaBD = await req.knex('usuario_metas')
                 .where({ id_usuario: meta.id_usuario, data: new Date(meta.data), valor: meta.valor }).first()
             if (!meta.id) {
                 notExistsOrError(metaBD, 'Meta com mesma data e valor já cadastrada para este usuário')
@@ -45,20 +45,20 @@ module.exports = app => {
         delete meta.concluido_porc
 
         if (meta.id)
-            app.db('usuario_metas')
+            req.knex('usuario_metas')
                 .update(meta)
                 .where({ id: meta.id })
                 .then(_ => res.status(204).send())
                 .catch(e => res.status(500).send(e.toString()))
         else
-            app.db('usuario_metas')
+            req.knex('usuario_metas')
                 .insert(meta)
                 .then(_ => res.status(204).send())
                 .catch(e => res.status(500).send(e.toString()))
     }
 
     const get = async (req, res) => {
-        app.db('usuario_metas')
+        req.knex('usuario_metas')
             .join('usuarios', 'usuario_metas.id_usuario', 'usuarios.id')
             .select('usuario_metas.id', 'usuarios.nome as usuario', 'data', 'valor')
             .orderBy('usuarios.nome')
@@ -67,14 +67,14 @@ module.exports = app => {
     }
 
     const getById = async (req, res) => {
-        app.db('usuario_metas')
+        req.knex('usuario_metas')
             .join('usuarios', 'usuario_metas.id_usuario', 'usuarios.id')
             .select('usuario_metas.*', 'usuarios.nome as usuario')
             .where({ id_usuario: req.params.id })
             .orderBy('usuarios.nome')
             .then(async metas => {
                 metas = await Promise.all(metas.map(async m => {
-                    const valor_vendas = await app.db('venda')
+                    const valor_vendas = await req.knex('venda')
                         .join('usuario_vendas', 'usuario_vendas.id_venda', 'venda.id')
                         .sum('venda.valor_total')
                         .groupBy('id_usuario')
@@ -94,7 +94,7 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
-            const exclusao = await app.db('usuario_metas')
+            const exclusao = await req.knex('usuario_metas')
                 .where({ id: req.params.id }).delete()
             existsOrError(exclusao, 'Meta não encontrada')
 

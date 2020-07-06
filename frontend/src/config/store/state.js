@@ -19,6 +19,10 @@ export default {
     meta: null,
     metas: []
   },
+  funcionarioStore: {
+    currentFuncionario: null,
+    currentFuncionarios: []
+  },
   usuarioStore: {
     currentUsuario: null,
     usuariosOnline: null,

@@ -27,6 +27,7 @@
     "node-sass": "^4.14.1",
     "nprogress": "^0.2.0",
     "printd": "^1.4.1",
+    "receitaws": "^0.1.4",
     "sass-loader": "^8.0.2",
     "socket.io": "^2.3.0",
     "v-money": "^0.8.1",

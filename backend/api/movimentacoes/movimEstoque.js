@@ -26,14 +26,14 @@ module.exports = app => {
         movim.data_movimentacao.setMinutes(data.getMinutes())
         movim.data_movimentacao.setSeconds(data.getSeconds())
 
-        app.db('produto_movimento_estoque')
+        req.knex('produto_movimento_estoque')
             .insert(movim)
             .then(_ => res.status(204).send())
             .catch(e => res.status(500).send(e.toString()))
     }
 
     const get = async (req, res) => {
-        app.db('produto_movimento_estoque')
+        req.knex('produto_movimento_estoque')
             .then(movims => res.json(movims))
             .catch(e => res.status(500).send(e))
     }
@@ -42,10 +42,10 @@ module.exports = app => {
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 10
 
-        const result = await app.db('produto_movimento_estoque').count('id').where({ id_produto: req.params.id }).first()
+        const result = await req.knex('produto_movimento_estoque').count('id').where({ id_produto: req.params.id }).first()
         const count = parseInt(result.count)
 
-        app.db('produto_movimento_estoque')
+        req.knex('produto_movimento_estoque')
             .join('empresas', 'produto_movimento_estoque.id_empresa', 'empresas.id')
             .select(
                 'produto_movimento_estoque.id',
@@ -71,7 +71,7 @@ module.exports = app => {
                 movims = await Promise.all(movims.map(async m => {
                     m.dados = null
                     if (m.origem == 'COMPRA' && m.id_movimentacao) {
-                        m.dados = await app.db('compra')
+                        m.dados = await req.knex('compra')
                             .join('pessoas', 'compra.id_pessoa', 'pessoas.id')
                             .select(
                                 'compra.id',
@@ -81,7 +81,7 @@ module.exports = app => {
                             )
                             .where({ 'compra.id': m.id_movimentacao }).first()
                     } else if (m.origem == 'VENDA' && m.id_movimentacao) {
-                        m.dados = await app.db('venda')
+                        m.dados = await req.knex('venda')
                             .join('usuarios', 'venda.id_vendedor', 'usuarios.id')
                             .join('pessoas', 'venda.id_pessoa', 'pessoas.id')
                             .select(
@@ -105,7 +105,7 @@ module.exports = app => {
     }
 
     const getEstoque = async (req, res) => {
-        var estoque = await app.db('produto_estoque')
+        var estoque = await req.knex('produto_estoque')
             .join('empresas', 'produto_estoque.id_empresa', 'empresas.id')
             .join('produtos', 'produto_estoque.id_produto', 'produtos.id')
             .leftJoin('unidades', 'produtos.unidade', 'unidades.id')
@@ -118,7 +118,7 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
-            const origem = await app.db('produto_movimento_estoque')
+            const origem = await req.knex('produto_movimento_estoque')
                 .where({ id: req.params.id }).first()
             if (origem.id_movimentacao) throw 'Há movimentos associados a este registro'
         } catch (e) {
@@ -126,7 +126,7 @@ module.exports = app => {
         }
 
         try {
-            const movim = await app.db('produto_movimento_estoque')
+            const movim = await req.knex('produto_movimento_estoque')
                 .where({ id: req.params.id }).delete()
             existsOrError(movim, 'Movimento não encontrado')
 

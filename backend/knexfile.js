@@ -1,35 +1,14 @@
-const db = {
-	host: process.env.DB_HOST,
-	port: process.env.DB_PORT,
-	database: process.env.DB_NAME,
-	user: 'postgres',
-	password: process.env.DB_PASS
-}
+const knex = require('knex')
 
-const dbUsers = {
-	host: process.env.DB_HOST,
-	port: process.env.DB_PORT,
-	database: process.env.DB_USERS,
-	user: 'postgres',
-	password: process.env.DB_PASS
-}
-
-module.exports = {
-	db: {
-		client: 'postgresql',
-		connection: db,
-		pool: {
-			min: 2,
-			max: 100
-		}
+module.exports = knex({
+	client: process.env.DB_CLIENT,
+	debug: false,
+	connection: {
+		user: process.env.DB_USER,
+		host: process.env.DB_HOST,
+		port: process.env.DB_PORT,
+		database: process.env.DB_DATABASE,
+		password: process.env.DB_PASSWORD
 	},
-	dbUsers: {
-		client: 'postgresql',
-		connection: dbUsers,
-		pool: {
-			min: 2,
-			max: 100
-		}
-	}
-}
-
+	pool: { min: 2, max: 20 }
+});

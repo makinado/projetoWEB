@@ -1,5 +1,3 @@
-const { formatToBRL } = require('brazilian-values')
-
 module.exports = app => {
     const { existsOrError, parseNumber } = app.api.validation
 
@@ -91,8 +89,8 @@ module.exports = app => {
             compra.situacao = compra.situacao ? compra.situacao : 'CONCLUÍDA'
 
             if (!compra.id) {
-                return app.db.transaction(async function (trx) {
-                    return app.db('compra')
+                return req.knex.transaction(async function (trx) {
+                    return req.knex('compra')
                         .insert(compra).returning('id')
                         .transacting(trx)
                         .then(function (id) {
@@ -158,17 +156,17 @@ module.exports = app => {
                             })
 
 
-                            return app.db.batchInsert('produto_compra', produtos)
+                            return req.knex.batchInsert('produto_compra', produtos)
                                 .transacting(trx)
                                 .then(function () {
-                                    return app.db.batchInsert('produto_movimento_estoque', movim_estoque)
+                                    return req.knex.batchInsert('produto_movimento_estoque', movim_estoque)
                                         .transacting(trx)
                                         .then(function () {
-                                            return app.db('compra_pedido').update({ nota_fiscal: compra.nota_fiscal, situacao: 'CONCLUÍDO', id_compra: id[0] })
+                                            return req.knex('compra_pedido').update({ nota_fiscal: compra.nota_fiscal, situacao: 'CONCLUÍDO', id_compra: id[0] })
                                                 .where({ id: id_pedido })
                                                 .transacting(trx)
                                                 .then(function () {
-                                                    return app.db.batchInsert('financeiro', financeiro)
+                                                    return req.knex.batchInsert('financeiro', financeiro)
                                                         .returning('*')
                                                         .transacting(trx)
                                                         .then(function (financs) {
@@ -191,7 +189,7 @@ module.exports = app => {
                                                                         valor: financ_updated.valor_pago
                                                                     })
                                                             })
-                                                            return app.db.batchInsert('conta_movimento', movim_conta)
+                                                            return req.knex.batchInsert('conta_movimento', movim_conta)
                                                                 .transacting(trx)
                                                         })
                                                 })
@@ -205,7 +203,7 @@ module.exports = app => {
                     res.status(204).send()
                 }).catch(function (error) {
                     console.log(error.toString())
-                    res.status(500).send(error.toString())
+                    res.status(500).send("Erro ao salvar compra")
                 });
             }
         } catch (e) {
@@ -217,10 +215,10 @@ module.exports = app => {
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 10
 
-        const result = await app.db('compra').count('id').first()
+        const result = await req.knex('compra').count('id').first()
         const count = parseInt(result.count)
 
-        app.db('compra')
+        req.knex('compra')
             .join('empresas', 'compra.id_empresa', 'empresas.id')
             .join('pessoas', 'compra.id_pessoa', 'pessoas.id')
             .select(
@@ -295,16 +293,16 @@ module.exports = app => {
                 }
             })
             .then(pedido => res.json({ data: pedido, count, limit }))
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar compras") })
     }
 
     const getById = async (req, res) => {
-        app.db('compra')
+        req.knex('compra')
             .where({ id: req.params.id })
             .first()
             .then(async compra => {
-                compra.id_pedido = await app.db('compra_pedido').select('id').where({ id_compra: compra.id }).first()
-                compra.produtos = await app.db('produto_compra as pc')
+                compra.id_pedido = await req.knex('compra_pedido').select('id').where({ id_compra: compra.id }).first()
+                compra.produtos = await req.knex('produto_compra as pc')
                     .join('produtos as p', 'pc.id_produto', 'p.id')
                     .select(
                         'p.id',
@@ -318,8 +316,8 @@ module.exports = app => {
                         'pc.perc_custo_adicional',
                         'pc.valor_total')
                     .where({ id_compra: compra.id })
-                    .catch(e => res.status(500).send(e.toString()))
-                compra.financeiro = await app.db('financeiro as f')
+                    .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar produtos da compra") })
+                compra.financeiro = await req.knex('financeiro as f')
                     .select(
                         'f.id',
                         'f.parcela as parcelas',
@@ -337,32 +335,32 @@ module.exports = app => {
                         'f.valor_pago',
                     )
                     .where({ id_movimento_origem: compra.id })
-                    .catch(e => res.status(500).send(e.toString()))
+                    .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar dados financeiros da compra") })
                 res.json(compra)
             })
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar compra") })
     }
 
     const remove = async (req, res) => {
-        await app.db.transaction(async function (trx) {
-            return app.db('compra_pedido')
+        await req.knex.transaction(async function (trx) {
+            return req.knex('compra_pedido')
                 .update({ nota_fiscal: null, situacao: 'PENDENTE', id_compra: null })
                 .where({ id_compra: req.params.id })
                 .transacting(trx)
                 .then(function () {
-                    return app.db('compra')
+                    return req.knex('compra')
                         .where({ id: req.params.id }).delete()
                         .transacting(trx)
                         .then(function () {
-                            return app.db('produto_movimento_estoque')
+                            return req.knex('produto_movimento_estoque')
                                 .where({ id_movimentacao: req.params.id }).delete()
                                 .transacting(trx)
                                 .then(function () {
-                                    return app.db('financeiro')
+                                    return req.knex('financeiro')
                                         .where({ id_movimento_origem: req.params.id }).delete()
                                         .transacting(trx)
                                         .then(function () {
-                                            return app.db('conta_movimento')
+                                            return req.knex('conta_movimento')
                                                 .where({ id_movimento_origem: req.params.id }).delete()
                                                 .transacting(trx)
                                         })

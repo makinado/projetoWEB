@@ -15,7 +15,7 @@ module.exports = app => {
 
             tabela.tipo = tabela.tipo == 'ACRÉSCIMO' ? 1 : 2
 
-            const tabDB = await app.db('tabela_preco').where({ id_empresa: tabela.id_empresa, descricao: tabela.descricao, tipo: tabela.tipo }).first()
+            const tabDB = await req.knex('tabela_preco').where({ id_empresa: tabela.id_empresa, descricao: tabela.descricao, tipo: tabela.tipo }).first()
             if (!tabela.id) {
                 notExistsOrError(tabDB, 'Tabela já cadastrada')
             }
@@ -29,13 +29,13 @@ module.exports = app => {
         tabela.percentual = tabela.percentual ? parseNumber(tabela.percentual) : 0
 
         if (tabela.id) {
-            app.db('tabela_preco')
+            req.knex('tabela_preco')
                 .update(tabela)
                 .where({ id: tabela.id })
                 .then(_ => res.status(204).send())
                 .catch(e => res.status(500).send(e.toString()))
         } else {
-            app.db('tabela_preco')
+            req.knex('tabela_preco')
                 .insert(tabela)
                 .then(_ => res.status(204).send())
                 .catch(e => res.status(500).send(e.toString()))
@@ -43,7 +43,7 @@ module.exports = app => {
     }
 
     const get = async (req, res) => {
-        app.db('tabela_preco')
+        req.knex('tabela_preco')
             .then(tabelas => {
                 tabelas = tabelas.map(tab => {
                     tab.tipo = tab.tipo === 1 ? 'ACRÉSCIMO' : 'DESCONTO'
@@ -56,7 +56,7 @@ module.exports = app => {
     }
 
     const getAll = async (req, res) => {
-        app.db('tabela_preco')
+        req.knex('tabela_preco')
             .select('id as value', 'descricao as text', 'percentual')
             .then(tabelas => {
                 tabelas = tabelas.map(tab => {
@@ -70,7 +70,7 @@ module.exports = app => {
     }
 
     const getById = async (req, res) => {
-        app.db('tabela_preco')
+        req.knex('tabela_preco')
             .where({ id: req.params.id })
             .first()
             .then(tabela => res.json(tabela))
@@ -79,7 +79,7 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
-            const exclusao = await app.db('tabela_preco')
+            const exclusao = await req.knex('tabela_preco')
                 .where({ id: req.params.id }).delete()
             existsOrError(exclusao, 'tabela não encontrada')
 

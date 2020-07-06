@@ -1,6 +1,4 @@
-const { isCPF, isCNPJ, isCEP } = require('brazilian-values')
 module.exports = app => {
-
     const { existsOrError, notExistsOrError } = app.api.validation
 
     const save = async (req, res) => {
@@ -26,9 +24,9 @@ module.exports = app => {
             }
             var pessoaDB
             if (pessoa.cpf) {
-                pessoaDB = await app.db('pessoas').where({ cpf: pessoa.cpf }).first()
+                pessoaDB = await req.knex('pessoas').where({ cpf: pessoa.cpf }).first()
             } else if (pessoa.cnpj) {
-                pessoaDB = await app.db('pessoas').where({ cnpj: pessoa.cnpj }).first()
+                pessoaDB = await req.knex('pessoas').where({ cnpj: pessoa.cnpj }).first()
             }
 
             if (!pessoa.id) {
@@ -47,30 +45,16 @@ module.exports = app => {
         delete pessoa.cidade
 
         if (pessoa.id) {
-            return app.db.transaction(async function (trx) {
-                return app.db('pessoas')
-                    .update(pessoa)
-                    .where({ id: pessoa.id })
-                    .then(trx.commit)
-                    .catch(trx.rollback);
-            }).then(function (updates) {
-                res.status(204).send()
-            }).catch(function (error) {
-                console.log(error.toString())
-                res.status(500).send(error.toString())
-            });
+            req.knex('pessoas')
+                .update(pessoa)
+                .where({ id: pessoa.id })
+                .then(_ => res.status(204).send())
+                .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao salvar pessoa") })
         } else {
-            return app.db.transaction(async function (trx) {
-                return app.db('pessoas')
-                    .insert(pessoa).returning('id')
-                    .then(trx.commit)
-                    .catch(trx.rollback);
-            }).then(function (inserts) {
-                res.status(204).send()
-            }).catch(function (error) {
-                console.log(error.toString())
-                res.status(500).send(error.toString())
-            });
+            req.knex('pessoas')
+                .insert(pessoa)
+                .then(_ => res.status(204).send())
+                .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao salvar pessoa") })
         }
     }
 
@@ -78,10 +62,11 @@ module.exports = app => {
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 10
 
-        const result = await app.db('pessoas').count('id').first()
+        const result = await req.knex('pessoas').count('id').first()
         const count = parseInt(result.count)
 
-        app.db('pessoas')
+
+        req.knex('pessoas')
             .select('id', 'nome', 'cpf', 'cnpj', 'email', 'contato')
             .limit(limit).offset(page * limit - limit)
             .orderBy(req.query.order || "nome", req.query.desc || "asc")
@@ -150,20 +135,20 @@ module.exports = app => {
                 }
             })
             .then(pessoas => res.json({ data: pessoas, count, limit }))
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar pessoas") })
     }
 
     const getById = async (req, res) => {
-        app.db('pessoas')
+        req.knex('pessoas')
             .leftJoin('municipios', 'pessoas.id_cidade', 'municipios.cmun')
             .select('*', 'municipios.uf as uf', 'municipios.xmun as cidade')
             .where({ id: req.params.id }).first()
             .then(pessoa => res.json(pessoa))
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar pessoa") })
     }
 
     const getWithFinanceiro = async (req, res) => {
-        app.db('pessoas')
+        req.knex('pessoas')
             .leftJoin('categorias', 'pessoas.categoria', 'categorias.id')
             .select(
                 'pessoas.id',
@@ -177,13 +162,13 @@ module.exports = app => {
             )
             .where({ 'pessoas.id': req.params.id }).first()
             .then(async pessoa => {
-                res.json(await Promise.resolve(withFinanceiro(pessoa)))
+                res.json(await Promise.resolve(withFinanceiro(req, pessoa)))
             })
-            .catch(e => { console.log(e); res.status(500).send(e.toString()) })
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar pessoas") })
     }
 
-    withFinanceiro = async pessoa => {
-        pessoa.financeiro = await app.db('financeiro').select('id').where({ id_pessoa: pessoa.id, pago: false }).where('data_vencimento', '<', new Date())
+    withFinanceiro = async (req, pessoa) => {
+        pessoa.financeiro = await req.knex('financeiro').select('id').where({ id_pessoa: pessoa.id, pago: false }).where('data_vencimento', '<', new Date())
             .then(situacao => {
                 if (situacao.length === 0)
                     situacao = "OK"
@@ -199,60 +184,60 @@ module.exports = app => {
     }
 
     const getAll = async (req, res) => {
-        app.db('pessoas')
+        req.knex('pessoas')
             .select('id as value', 'nome as text', 'cpf', 'cnpj')
             .orderBy('nome')
             .then(pessoas => res.json(pessoas))
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar pessoas") })
     }
 
     const getByCategoria = async (req, res) => {
-        app.db('pessoas')
+        req.knex('pessoas')
             .select('id', 'cpf', 'cnpj', 'nome', 'email', 'contato')
             .where({ categoria: req.params.id_categoria })
             .then(pessoas => res.json(pessoas))
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar pessoas") })
     }
 
     const getClientes = async (req, res) => {
-        app.db('pessoas')
+        req.knex('pessoas')
             .select('id as value', 'nome as text', 'cpf', 'cnpj')
             .where({ cliente: true })
             .orderBy('nome')
             .then(pessoas => res.json(pessoas))
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar clientes") })
     }
 
     const getFornecs = async (req, res) => {
-        app.db('pessoas')
+        req.knex('pessoas')
             .select('id as value', 'nome as text', 'cpf', 'cnpj')
             .where({ fornecedor: true })
             .orderBy('nome')
             .then(pessoas => res.json(pessoas))
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar fornecedores") })
     }
 
     const getTransps = async (req, res) => {
-        app.db('pessoas')
+        req.knex('pessoas')
             .select('id as value', 'nome as text', 'cpf', 'cnpj')
             .where({ transportadora: true })
             .orderBy('nome')
             .then(pessoas => res.json(pessoas))
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar transportadoras") })
     }
 
     const remove = async (req, res) => {
         try {
-            const financeiro = await app.db('financeiro').where({ id_pessoa: req.params.id }).first()
+            const financeiro = await req.knex('financeiro').where({ id_pessoa: req.params.id }).first()
             notExistsOrError(financeiro, 'Há movimentos financeiros associados a essa pessoa')
 
-            const compras = await app.db('compra').where({ id_pessoa: req.params.id }).first()
+            const compras = await req.knex('compra').where({ id_pessoa: req.params.id }).first()
             notExistsOrError(compras, 'Há compras associadas a essa pessoa')
 
-            const vendas = await app.db('venda').where({ id_pessoa: req.params.id }).first()
+            const vendas = await req.knex('venda').where({ id_pessoa: req.params.id }).first()
             notExistsOrError(vendas, 'Há vendas associadas a essa pessoa')
 
-            const exclusao = await app.db('pessoas')
+            const exclusao = await req.knex('pessoas')
                 .where({ id: req.params.id }).delete()
             existsOrError(exclusao, 'Pessoa não encontrada')
 
@@ -267,7 +252,7 @@ module.exports = app => {
 
         try {
             existsOrError(pessoa.nome, 'Nome é obrigatório')
-            const pessoaDB = await app.db('pessoas').where({ nome: pessoa.nome }).first()
+            const pessoaDB = await req.knex('pessoas').where({ nome: pessoa.nome }).first()
 
             notExistsOrError(pessoaDB, 'Pessoa já cadastrada')
         } catch (e) {
@@ -280,10 +265,10 @@ module.exports = app => {
             pessoa.fornecedor = true
         else if (req.url.includes('transportadoras')) pessoa.transportadora = true
 
-        app.db('pessoas')
+        req.knex('pessoas')
             .insert(pessoa)
             .then(_ => res.status(204).send())
-            .catch(e => res.status(204).send(e))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao salvar pessoa") })
     }
 
 

@@ -241,8 +241,20 @@
                       :pagination.sync="paginationComissoes"
                     >
                       <template slot="items" slot-scope="data">
-                        <td>{{ data.item.id_venda }}</td>
-                        <td>{{ data.item.id_finananceiro }}</td>
+                        <td>
+                          <router-link to="#">
+                            <span
+                              @click.prevent="loadVenda(data.item.id_venda)"
+                            >{{ data.item.id_venda }}</span>
+                          </router-link>
+                        </td>
+                        <td>
+                          <router-link to="#">
+                            <span
+                              @click.prevent="loadFinanceiro(data.item.id_financeiro)"
+                            >{{ data.item.id_financeiro }}</span>
+                          </router-link>
+                        </td>
                         <td>{{ data.item.usuario }}</td>
                         <td>{{ data.item.data_comissao | date }}</td>
                         <td>{{ data.item.base_comissao | decimal }}</td>
@@ -295,6 +307,9 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <AddVenda />
+    <VerConta />
   </div>
 </template>
 
@@ -310,7 +325,12 @@ export default {
   directives: { money: VMoney },
   computed: {
     ...mapState("app", ["color"]),
-    ...mapState(["usuarioStore", "modalStore"]),
+    ...mapState([
+      "usuarioStore",
+      "modalStore",
+      "vendaStore",
+      "financeiroStore"
+    ]),
     computedDateFormatted1: {
       get() {
         return formatDate(this.date1);
@@ -327,6 +347,10 @@ export default {
         this.date2 = formatDate(value);
       }
     }
+  },
+  components: {
+    AddVenda: () => import("../vendas/AddVenda"),
+    VerConta: () => import("../financeiro/VerConta")
   },
   data() {
     return {
@@ -468,6 +492,15 @@ export default {
           this.usuarioStore.comissoesGeradas = res.data.data;
         })
         .catch(showError);
+    },
+    loadVenda(idVenda) {
+      this.vendaStore.venda = { id: idVenda };
+      this.modalStore.vendas.vendas.visible = true;
+      this.modalStore.vendas.vendas.title = "Visualizar dados da venda";
+    },
+    loadFinanceiro(idFinanceiro) {
+      this.financeiroStore.venda = { id: idFinanceiro };
+      this.modalStore.financeiro.financ.visualizar = true;
     },
     async save() {
       if (!this.$refs.form.validate()) return;

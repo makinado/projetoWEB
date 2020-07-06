@@ -9,7 +9,7 @@ module.exports = app => {
         try {
             existsOrError(produtoCategoria.descricao, 'Informe o percentual de frete do produtoCategoria')
             
-            const produtoCategoriaDB = await app.db('produtoCategorias').where({ descricao: produtoCategoria.descricao }).first()
+            const produtoCategoriaDB = await req.knex('produtoCategorias').where({ descricao: produtoCategoria.descricao }).first()
             if (!produtoCategoria.id) {
                 notExistsOrError(produtoCategoriaDB, 'ProdutoCategoria já cadastrado')
             }
@@ -23,13 +23,13 @@ module.exports = app => {
         delete produtoCategoria.text
 
         if (produtoCategoria.id) {
-            app.db('produtoCategorias')
+            req.knex('produtoCategorias')
                 .update(produtoCategoria)
                 .where({ id: produtoCategoria.id })
                 .then(_ => res.status(204).send())
                 .catch(e => res.status(500).send(e))
         } else {
-            app.db('produtoCategorias')
+            req.knex('produtoCategorias')
                 .insert(produtoCategoria)
                 .then(_ => res.status(204).send())
                 .catch(e => res.status(500).send(e))
@@ -37,14 +37,14 @@ module.exports = app => {
     }
 
     const get = async (req, res) => {
-        app.db('produtoCategorias')
+        req.knex('produtoCategorias')
             .select('id', 'descricao', 'valorUnitario', 'marca', 'localizacaoEstoque')
             .then(produtoCategorias => res.json(produtoCategorias))
             .catch(e => res.status(500).send(e))
     }
 
     const getById = async (req, res) => {
-        app.db('produtoCategorias')
+        req.knex('produtoCategorias')
             .select('id', 'descricao', 'valorUnitario', 'marca', 'localizacaoEstoque')
             .where({ id: req.params.id })
             .first()
@@ -53,7 +53,7 @@ module.exports = app => {
     }
 
     const getByDesc = async (req, res) => {
-        app.db('produtoCategorias')
+        req.knex('produtoCategorias')
             .select('id', 'descricao', 'valorUnitario', 'marca', 'localizacaoEstoque')
             .where({ nome: req.params.nome })
             .first()
@@ -63,7 +63,7 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
-            const exclusao = await app.db('produtoCategorias')
+            const exclusao = await req.knex('produtoCategorias')
                 .where({ id: req.params.id })
             existsOrError(exclusao, 'produtoCategoria não encontrada')
         } catch (e) {

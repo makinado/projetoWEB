@@ -1,23 +1,13 @@
-var app = require('express')();
-var http = require('http').createServer(app);
+var app = require('express')()
+var http = require('http').createServer(app)
 const io = require('socket.io')(http)
 
 require('dotenv').config()
 
-const compression = require('compression')
-require('./api/chat/socket')(io, app);
+require('./api/chat/socket')(io, app)
 const consign = require('consign')
 
-require('./config/mongodb')
-const mongoose = require('mongoose')
-
-const { dbUsers, db } = require('./config/db')
-
-app.dbUsers = dbUsers
-app.db = db
-
-app.mongoose = mongoose
-app.use(compression())
+app.commonDb = require('./knexfile')
 
 consign()
     .include('./config/passport.js')
@@ -30,5 +20,5 @@ consign()
 const PORT = process.env.PORT || 3000
 
 http.listen(PORT, function () {
-    console.log('api online na porta ' + PORT);
-});
+    console.log('api online na porta ' + PORT)
+})

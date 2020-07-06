@@ -18,13 +18,13 @@ module.exports = app => {
         }
 
         if (artigo.id) {
-            app.dbUsers('artigos')
+            app.commonDb('artigos')
                 .update(artigo)
                 .where({ id: artigo.id })
                 .then(_ => res.status(204).send())
                 .catch(err => res.status(500).send(err))
         } else {
-            app.dbUsers('artigos')
+            app.commonDb('artigos')
                 .insert(artigo)
                 .then(_ => res.status(204).send())
                 .catch(err => res.status(500).send(err.toString()))
@@ -33,7 +33,7 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
-            const rowsDeleted = await app.dbUsers('artigos')
+            const rowsDeleted = await app.commonDb('artigos')
                 .where({ id: req.params.id }).delete()
 
             try {
@@ -52,10 +52,10 @@ module.exports = app => {
         const page = req.query.page || 1
         const limit = parseInt(req.query.limit) || 10
 
-        const result = await app.dbUsers('artigos').count('id').first()
+        const result = await app.commonDb('artigos').count('id').first()
         const count = parseInt(result.count)
 
-        app.dbUsers('artigos')
+        app.commonDb('artigos')
             .leftJoin('usuarios', 'artigos.id_usuario', 'usuarios.id')
             .select('artigos.id', 'artigos.nome', 'artigos.descricao', 'artigos.image_url', 'usuarios.nome as autor')
             .limit(limit).offset(page * limit - limit)
@@ -73,7 +73,7 @@ module.exports = app => {
     }
 
     const getById = (req, res) => {
-        app.dbUsers('artigos')
+        app.commonDb('artigos')
             .where({ id: req.params.id })
             .first()
             .then(artigo => {
@@ -86,10 +86,10 @@ module.exports = app => {
     const getByCategory = async (req, res) => {
         const categoryId = req.params.id
         const page = req.query.page || 1
-        const categories = await app.dbUsers.raw(queries.categoryWithChildren, categoryId)
+        const categories = await app.commonDb.raw(queries.categoryWithChildren, categoryId)
         const ids = categories.rows.map(c => c.id)
 
-        app.dbUsers({ a: 'articles', u: 'users' })
+        app.commonDb({ a: 'articles', u: 'users' })
             .select('a.id', 'a.nome', 'a.descricao', 'a.image_url', { author: 'u.nome' })
             .limit(limit).offset(page * limit - limit)
             .whereRaw('?? = ??', ['u.id', 'a.userId'])

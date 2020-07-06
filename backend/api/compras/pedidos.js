@@ -48,13 +48,13 @@ module.exports = app => {
         pedido.valor_total = parseNumber(pedido.valor_total || "0,00")
 
         if (pedido.id) {
-            return app.db.transaction(async function (trx) {
-                return app.db('compra_pedido')
+            return req.knex.transaction(async function (trx) {
+                return req.knex('compra_pedido')
                     .update(pedido)
                     .where({ id: pedido.id })
                     .transacting(trx)
                     .then(async function () {
-                        await app.db('produto_pedido_compra').where({ id_pedido: pedido.id }).delete()
+                        await req.knex('produto_pedido_compra').where({ id_pedido: pedido.id }).delete()
 
                         produtos = produtos.map(produto => {
                             let newProd = {
@@ -73,7 +73,7 @@ module.exports = app => {
                             return newProd
                         })
 
-                        return app.db.batchInsert('produto_pedido_compra', produtos)
+                        return req.knex.batchInsert('produto_pedido_compra', produtos)
                             .transacting(trx)
                     })
                     .then(trx.commit)
@@ -87,8 +87,8 @@ module.exports = app => {
                     res.status(500).send(error.toString())
                 });
         } else {
-            return app.db.transaction(async function (trx) {
-                return app.db('compra_pedido')
+            return req.knex.transaction(async function (trx) {
+                return req.knex('compra_pedido')
                     .insert(pedido).returning('id')
                     .transacting(trx)
                     .then(function (id) {
@@ -109,7 +109,7 @@ module.exports = app => {
                             return newProd
                         })
 
-                        return app.db.batchInsert('produto_pedido_compra', produtos)
+                        return req.knex.batchInsert('produto_pedido_compra', produtos)
                             .transacting(trx)
                     })
                     .then(trx.commit)
@@ -129,10 +129,10 @@ module.exports = app => {
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 10
 
-        const result = await app.db('compra_pedido').count('id').first()
+        const result = await req.knex('compra_pedido').count('id').first()
         const count = parseInt(result.count)
 
-        app.db('compra_pedido')
+        req.knex('compra_pedido')
             .join('empresas', 'compra_pedido.id_empresa', 'empresas.id')
             .join('pessoas', 'compra_pedido.id_pessoa', 'pessoas.id')
             .select(
@@ -207,11 +207,11 @@ module.exports = app => {
     }
 
     const getById = async (req, res) => {
-        app.db('compra_pedido')
+        req.knex('compra_pedido')
             .where({ id: req.params.id })
             .first()
             .then(async pedido => {
-                pedido.produtos = await app.db('produto_pedido_compra as pped')
+                pedido.produtos = await req.knex('produto_pedido_compra as pped')
                     .join('produtos as p', 'pped.id_produto', 'p.id')
                     .select('p.id', 'p.descricao', 'pped.quantidade', 'pped.valor_desconto', 'pped.valor_seguro', 'pped.valor_frete', 'pped.valor_unitario', 'pped.valor_total')
                     .where({ id_pedido: pedido.id })
@@ -222,7 +222,7 @@ module.exports = app => {
     }
 
     const getPendentes = async (req, res) => {
-        app.db('compra_pedido')
+        req.knex('compra_pedido')
             .join('pessoas', 'compra_pedido.id_pessoa', 'pessoas.id')
             .select('compra_pedido.id', 'pessoas.nome as fornecedor', 'data_pedido', 'valor_total')
             .then(pedidos => {
@@ -248,7 +248,7 @@ module.exports = app => {
     const getBySituacao = async (req, res) => {
         if (req.params.situacao === '1') {
             try {
-                let pedidos = await app.db('compra_pedido')
+                let pedidos = await req.knex('compra_pedido')
                     .join('empresas', 'compra_pedido.id_empresa', 'empresas.id')
                     .join('pessoas', 'compra_pedido.id_pessoa', 'pessoas.id')
                     .select(
@@ -276,7 +276,7 @@ module.exports = app => {
             }
         } else {
             try {
-                let pedidos = await app.db('compra_pedido')
+                let pedidos = await req.knex('compra_pedido')
                     .join('empresas', 'compra_pedido.id_empresa', 'empresas.id')
                     .join('pessoas', 'compra_pedido.id_pessoa', 'pessoas.id')
                     .select(
@@ -307,10 +307,10 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
-            const compra = await app.db('compra_pedido').select('id', 'id_compra').where({ id: req.params.id })
+            const compra = await req.knex('compra_pedido').select('id', 'id_compra').where({ id: req.params.id })
             notExistsOrError(compra.id_compra, 'Há compras relacionadas a esse pedido')
 
-            const pedido = await app.db('compra_pedido')
+            const pedido = await req.knex('compra_pedido')
                 .where({ id: req.params.id }).delete()
             existsOrError(pedido, 'pedido não encontrado')
 

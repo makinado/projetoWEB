@@ -784,6 +784,7 @@ export default {
       this.$store.dispatch("loadTabelas");
       this.$store.dispatch("loadDocumentos");
       this.$store.dispatch("loadContas");
+
       let url = `${urlBD}/vendas`;
       if (venda.id) {
         axios
@@ -810,8 +811,6 @@ export default {
 
       this.produtos_venda = await this.produtos_venda.map(produto => {
         if (produto.sequencia === item.sequencia) {
-          console.log(produtoFilter);
-
           produto.valor_venda = produtoFilter.valor_venda;
           produto.qtdEstoque = produtoFilter.qtdEstoque;
           produto.perc_comissao = produtoFilter.perc_comissao;
@@ -822,6 +821,9 @@ export default {
       this.disable = true;
     },
     parseValores() {
+      this.venda.data_criacao = new Date(this.venda.data_criacao)
+        .toISOString()
+        .substr(0, 10);
       this.venda.data_contato = new Date(this.venda.data_contato)
         .toISOString()
         .substr(0, 10);

@@ -13,7 +13,7 @@ module.exports = app => {
             existsOrError(grupo.situacao_tributaria, 'Informe a situação tributária do grupo')
             existsOrError(grupo.perc_icms, 'Informe o percentual de ICMS do grupo')
 
-            const grupoDB = await app.db('grupos_tributacao')
+            const grupoDB = await req.knex('grupos_tributacao')
                 .where({ uf: grupo.uf, descricao: grupo.descricao })
             if (!grupo.id) {
                 notExistsOrError(grupoDB, 'Grupo já cadastrado')
@@ -25,7 +25,7 @@ module.exports = app => {
         grupo.perc_icms = parseNumber(grupo.perc_icms, ',')
 
         if (grupo.id) {
-            app.db('grupos_tributacao')
+            req.knex('grupos_tributacao')
                 .update(grupo)
                 .where({ id: grupo.id })
                 .then(_ => res.status(204).send())
@@ -34,7 +34,7 @@ module.exports = app => {
                     res.status(500).send('Erro ao atualizar o registro!')
                 })
         } else {
-            app.db('grupos_tributacao')
+            req.knex('grupos_tributacao')
                 .insert(grupo)
                 .then(_ => res.status(204).send())
                 .catch(e => {
@@ -45,14 +45,14 @@ module.exports = app => {
     }
 
     const get = async (req, res) => {
-        app.db('grupos_tributacao')
+        req.knex('grupos_tributacao')
             .select('id', 'uf', 'descricao', 'cfop')
             .then(grupos => res.json(grupos))
             .catch(e => res.status(500).send(e.toString()))
     }
 
     const getById = async (req, res) => {
-        app.db('grupos_tributacao')
+        req.knex('grupos_tributacao')
             .where({ id: req.params.id }).first()
             .then(grupo => res.json(grupo))
             .catch(e => res.status(500).send(e.toString()))
@@ -60,12 +60,12 @@ module.exports = app => {
 
     const getTela = async (req, res) => {
         if (req.params.id) {
-            const grupo = await app.db('grupos_tributacao')
+            const grupo = await req.knex('grupos_tributacao')
                 .where({ id: req.params.id }).first()
                 .catch(e => res.status(500).send(e.toString()))
 
-            const cfop = await app.db('cfop').select('codigo_cfop', 'desc_cfop')
-            const empresa = await app.db('empresas').select('regime_tributario').first();
+            const cfop = await req.knex('cfop').select('codigo_cfop', 'desc_cfop')
+            const empresa = await req.knex('empresas').select('regime_tributario').first();
 
             let st = []
 
@@ -106,9 +106,9 @@ module.exports = app => {
             res.json(tela);
 
         } else {
-            const cfop = await app.db('cfop').select('codigo_cfop', 'desc_cfop')
+            const cfop = await req.knex('cfop').select('codigo_cfop', 'desc_cfop')
 
-            const empresa = await app.db('empresas').select('regime_tributario').first();
+            const empresa = await req.knex('empresas').select('regime_tributario').first();
 
             let st = []
 
@@ -152,7 +152,7 @@ module.exports = app => {
     const remove = async (req, res) => {
         try {
 
-            const exclusao = await app.db('grupos_tributacao')
+            const exclusao = await req.knex('grupos_tributacao')
                 .where({ id: req.params.id }).delete()
 
             existsOrError(exclusao, 'Grupo não encontrado')

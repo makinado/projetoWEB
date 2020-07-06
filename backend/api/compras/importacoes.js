@@ -63,7 +63,7 @@ module.exports = app => {
                 nota_fiscal: xml.dados.nNF,
                 chave_nfe: xml.dados.chNFe,
                 natureza_operacao: xml.dados.natOp,
-                id_pessoa: await app.db('pessoas').select('id').where({ cnpj: xml.dados.cnpj }).first().then(fornec => fornec ? fornec.id : null),
+                id_pessoa: await req.knex('pessoas').select('id').where({ cnpj: xml.dados.cnpj }).first().then(fornec => fornec ? fornec.id : null),
                 data_lancamento: new Date().toISOString().substr(0, 10),
                 data_notafiscal: xml.dados.dhEmi.substr(0, 10),
                 observacao: xml.dados.observacao,
@@ -88,8 +88,8 @@ module.exports = app => {
                 xml: xml.xml
             }
 
-            return app.db.transaction(async function (trx) {
-                return app.db('compra')
+            return req.knex.transaction(async function (trx) {
+                return req.knex('compra')
                     .insert(compra).returning('id')
                     .transacting(trx)
                     .then(function (id) {
@@ -182,13 +182,13 @@ module.exports = app => {
                             return newFinanc
                         })
 
-                        return app.db.batchInsert('produto_compra', produtos)
+                        return req.knex.batchInsert('produto_compra', produtos)
                             .transacting(trx)
                             .then(function () {
-                                return app.db.batchInsert('produto_movimento_estoque', movim_estoque)
+                                return req.knex.batchInsert('produto_movimento_estoque', movim_estoque)
                                     .transacting(trx)
                                     .then(function () {
-                                        return app.db.batchInsert('financeiro', financeiro)
+                                        return req.knex.batchInsert('financeiro', financeiro)
                                             .returning('*')
                                             .transacting(trx)
                                             .then(function (financs) {
@@ -211,7 +211,7 @@ module.exports = app => {
                                                             valor: financ.valor_pago
                                                         })
                                                 })
-                                                return app.db.batchInsert('conta_movimento', movim_conta)
+                                                return req.knex.batchInsert('conta_movimento', movim_conta)
                                                     .transacting(trx)
                                             })
                                     })
@@ -265,7 +265,7 @@ module.exports = app => {
 
         //validar arquivo
         const fornec = formatToCNPJ(xml.nfeProc.NFe.infNFe.emit.CNPJ)
-        const fornecDB = await app.db('pessoas')
+        const fornecDB = await req.knex('pessoas')
             .select('id')
             .where({ cnpj: fornec }).first()
             .then(fornec => {
@@ -273,7 +273,7 @@ module.exports = app => {
             })
         if (fornecDB) {
             xml.id_fornecedor = fornecDB.id
-            const jaImportado = await app.db('compra')
+            const jaImportado = await req.knex('compra')
                 .where({ id_pessoa: fornecDB.id, nota_fiscal: xml.nfeProc.NFe.infNFe.ide.nNF }).first()
             if (jaImportado) {
                 xml.situacao = 3
@@ -513,7 +513,7 @@ module.exports = app => {
                 produto.prod.CFOP = produto.prod.CFOP.replace('6', '2')
 
             if (fornecDB) {
-                let produtoVinc = await app.db('compra_vinculacao').select('id', 'id_produto_empresa', 'qtde_embalagem')
+                let produtoVinc = await req.knex('compra_vinculacao').select('id', 'id_produto_empresa', 'qtde_embalagem')
                     .where({ id_fornecedor: fornecDB.id, id_produto_fornecedor: produto.prod.cProd }).first()
 
                 produto.id_fornecedor = fornecDB.id

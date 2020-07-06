@@ -16,12 +16,12 @@ module.exports = app => {
             }
 
             if (evento.hora) {
-                const eventoDB = await app.db('eventos_agenda').where({ descricao: evento.descricao, data: evento.data, hora: evento.hora }).first()
+                const eventoDB = await req.knex('eventos_agenda').where({ descricao: evento.descricao, data: evento.data, hora: evento.hora }).first()
                 if (!evento.id) {
                     notExistsOrError(eventoDB, 'evento já cadastrado')
                 }
             } else {
-                const eventoDB = await app.db('eventos_agenda').where({ descricao: evento.descricao, data: evento.data }).first()
+                const eventoDB = await req.knex('eventos_agenda').where({ descricao: evento.descricao, data: evento.data }).first()
                 if (!evento.id) {
                     notExistsOrError(eventoDB, 'evento já cadastrado')
                 }
@@ -32,13 +32,13 @@ module.exports = app => {
         }
 
         if (evento.id) {
-            app.db('eventos_agenda')
+            req.knex('eventos_agenda')
                 .update(evento)
                 .where({ id: evento.id })
                 .then(_ => res.status(200).send())
                 .catch(e => res.status(500).send(e.toString()))
         } else {
-            const resProd = await app.db('eventos_agenda')
+            const resProd = await req.knex('eventos_agenda')
                 .insert(evento).returning('id')
                 .catch(e => res.status(500).send(e.toString()))
 
@@ -47,7 +47,7 @@ module.exports = app => {
     }
 
     const get = async (req, res) => {
-        let eventos = await app.db('eventos_agenda')
+        let eventos = await req.knex('eventos_agenda')
             .catch(e => res.status(500).send(e.toString()))
 
         eventos = eventos.map(evento => {
@@ -61,7 +61,7 @@ module.exports = app => {
     }
 
     const getById = async (req, res) => {
-        let evento = await app.db('eventos_agenda')
+        let evento = await req.knex('eventos_agenda')
             .where({ id: req.params.id }).first()
             .catch(e => res.status(500).send(e))
 
@@ -76,7 +76,7 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
-            const exclusao = await app.db('eventos_agenda')
+            const exclusao = await req.knex('eventos_agenda')
                 .where({ id: req.params.id }).delete()
             existsOrError(exclusao, 'evento não encontrado')
 

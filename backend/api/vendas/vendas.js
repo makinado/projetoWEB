@@ -1,5 +1,3 @@
-const { formatToBRL } = require('brazilian-values')
-
 module.exports = app => {
     const { existsOrError, parseNumber, formatDate } = app.api.validation
 
@@ -80,15 +78,15 @@ module.exports = app => {
         venda.data_agendamento = venda.data_agendamento || null
 
         if (venda.id) {
-            return app.db.transaction(async function (trx) {
-                return app.db('venda')
+            return req.knex.transaction(async function (trx) {
+                return req.knex('venda')
                     .update(venda)
                     .where({ id: venda.id })
                     .transacting(trx)
                     .then(async function () {
-                        await app.db('produto_venda').where({ id_venda: venda.id }).delete().transacting(trx)
-                        await app.db('produto_movimento_estoque').where({ id_movimentacao: venda.id }).delete().transacting(trx)
-                        await app.db('vendedores').where({ id_venda: venda.id }).delete().transacting(trx)
+                        await req.knex('produto_venda').where({ id_venda: venda.id }).delete().transacting(trx)
+                        await req.knex('produto_movimento_estoque').where({ id_movimentacao: venda.id }).delete().transacting(trx)
+                        await req.knex('vendedores').where({ id_venda: venda.id }).delete().transacting(trx)
 
                         vendedores = vendedores.map(vend => { return { id_usuario: vend, id_venda: venda.id } })
 
@@ -127,9 +125,9 @@ module.exports = app => {
                         })
 
                         if (venda.tipo == 2) {
-                            await app.db('financeiro').where({ id_movimento_origem: venda.id }).delete().transacting(trx)
-                            await app.db('conta_movimento').where({ id_movimento_origem: venda.id }).delete().transacting(trx)
-                            await app.db('usuario_vendas').where({ id_venda: venda.id }).delete().transacting(trx)
+                            await req.knex('financeiro').where({ id_movimento_origem: venda.id }).delete().transacting(trx)
+                            await req.knex('conta_movimento').where({ id_movimento_origem: venda.id }).delete().transacting(trx)
+                            await req.knex('usuario_vendas').where({ id_venda: venda.id }).delete().transacting(trx)
 
                             financeiro = financeiro.map(parcela => {
                                 const newFinanc = {
@@ -162,13 +160,13 @@ module.exports = app => {
                             })
                         }
 
-                        return app.db.batchInsert('produto_venda', produtos)
+                        return req.knex.batchInsert('produto_venda', produtos)
                             .transacting(trx)
                             .then(function () {
-                                return app.db.batchInsert('produto_movimento_estoque', movim_estoque)
+                                return req.knex.batchInsert('produto_movimento_estoque', movim_estoque)
                                     .transacting(trx)
                                     .then(function () {
-                                        return app.db.batchInsert('financeiro', financeiro)
+                                        return req.knex.batchInsert('financeiro', financeiro)
                                             .returning('*')
                                             .transacting(trx)
                                             .then(async function (financs) {
@@ -191,14 +189,14 @@ module.exports = app => {
                                                         })
                                                 })
 
-                                                return app.db.batchInsert('usuario_vendas', vendedores)
+                                                return req.knex.batchInsert('usuario_vendas', vendedores)
                                                     .transacting(trx)
                                                     .then(function () {
-                                                        return app.db.batchInsert('conta_movimento', movim_conta)
+                                                        return req.knex.batchInsert('conta_movimento', movim_conta)
                                                             .transacting(trx)
                                                             .then(function () {
                                                                 if (venda.tipo == 2)
-                                                                    return app.db.raw(`select calcula_comissao_faturamento(${venda.id}::integer, ${venda.valor_total}::float, '${venda.data_criacao}'::date)`)
+                                                                    return req.knex.raw(`select calcula_comissao_faturamento(${venda.id}::integer, ${venda.valor_total}::float, '${venda.data_criacao}'::date)`)
                                                                         .transacting(trx)
                                                             })
                                                     })
@@ -213,12 +211,12 @@ module.exports = app => {
                 res.status(204).send()
             }).catch(function (error) {
                 console.log(error.toString())
-                res.status(500).send(error)
+                res.status(500).send("Erro ao salvar venda")
             });
 
         } else {
-            app.db.transaction(async function (trx) {
-                return app.db('venda')
+            req.knex.transaction(async function (trx) {
+                return req.knex('venda')
                     .insert(venda).returning('id')
                     .transacting(trx)
                     .then(async function (id) {
@@ -289,16 +287,16 @@ module.exports = app => {
                             })
                         }
 
-                        return app.db.batchInsert('produto_venda', produtos)
+                        return req.knex.batchInsert('produto_venda', produtos)
                             .transacting(trx)
                             .then(function () {
-                                return app.db.batchInsert('usuario_vendas', vendedores)
+                                return req.knex.batchInsert('usuario_vendas', vendedores)
                                     .transacting(trx)
                                     .then(function () {
-                                        return app.db.batchInsert('produto_movimento_estoque', movim_estoque)
+                                        return req.knex.batchInsert('produto_movimento_estoque', movim_estoque)
                                             .transacting(trx)
                                             .then(function () {
-                                                return app.db.batchInsert('financeiro', financeiro)
+                                                return req.knex.batchInsert('financeiro', financeiro)
                                                     .returning('*')
                                                     .transacting(trx)
                                                     .then(async function (financs) {
@@ -323,11 +321,11 @@ module.exports = app => {
                                                             }
                                                         })
 
-                                                        return app.db.batchInsert('conta_movimento', movim_conta)
+                                                        return req.knex.batchInsert('conta_movimento', movim_conta)
                                                             .transacting(trx)
                                                             .then(function () {
                                                                 if (venda.tipo == 2)
-                                                                    return app.db.raw(`select calcula_comissao_faturamento(${id[0]}::integer, ${venda.valor_total}::float, '${venda.data_criacao}'::date)`)
+                                                                    return req.knex.raw(`select calcula_comissao_faturamento(${id[0]}::integer, ${venda.valor_total}::float, '${venda.data_criacao}'::date)`)
                                                                         .transacting(trx)
                                                             })
                                                     })
@@ -342,7 +340,7 @@ module.exports = app => {
                 res.status(204).send()
             }).catch(function (error) {
                 console.log(error.toString())
-                res.status(500).send('Erro ao salvar a nova venda, tente novamente')
+                res.status(500).send("Erro ao salvar venda")
             });
         }
     }
@@ -351,10 +349,10 @@ module.exports = app => {
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 10
 
-        const result = await app.db('venda').count('id').first()
+        const result = await req.knex('venda').count('id').first()
         const count = parseInt(result.count)
 
-        app.db('venda')
+        req.knex('venda')
             .join('empresas', 'venda.id_empresa', 'empresas.id')
             .join('pessoas as cliente', 'venda.id_pessoa', 'cliente.id')
             .select(
@@ -404,7 +402,7 @@ module.exports = app => {
                 return res.json({
                     data: await Promise.all(vendas.map(async item => {
                         item.tipo = item.tipo == 1 ? "ORÇAMENTO" : "VENDA"
-                        item.vendedores = await app.db('usuario_vendas')
+                        item.vendedores = await req.knex('usuario_vendas')
                             .join('usuarios', 'usuario_vendas.id_usuario', 'usuarios.id')
                             .select('usuarios.nome as usuario')
                             .where({ id_venda: item.id })
@@ -415,19 +413,19 @@ module.exports = app => {
             }
 
             )
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar vendas") })
     }
 
     const getById = async (req, res) => {
-        app.db('venda')
+        req.knex('venda')
             .where({ id: req.params.id })
             .first()
             .then(async venda => {
-                venda.vendedores = await app.db('usuario_vendas')
+                venda.vendedores = await req.knex('usuario_vendas')
                     .join('usuarios', 'usuario_vendas.id_usuario', 'usuarios.id')
                     .select('usuarios.nome as usuario')
-                    .where({ id_venda: item.id })
-                venda.produtos = await app.db('produto_venda as pv')
+                    .where({ id_venda: venda.id })
+                venda.produtos = await req.knex('produto_venda as pv')
                     .join('produtos as p', 'pv.id_produto', 'p.id')
                     .select(
                         'p.id',
@@ -439,8 +437,8 @@ module.exports = app => {
                         'pv.valor_unitario',
                         'pv.valor_total')
                     .where({ id_venda: venda.id })
-                    .catch(e => res.status(500).send(e.toString()))
-                venda.financeiro = await app.db('financeiro as f')
+                    .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar produtos da venda") })
+                venda.financeiro = await req.knex('financeiro as f')
                     .select(
                         'f.id',
                         'f.parcela as parcelas',
@@ -458,14 +456,14 @@ module.exports = app => {
                         'f.valor_pago',
                     )
                     .where({ id_movimento_origem: venda.id })
-                    .catch(e => res.status(500).send(e.toString()))
+                    .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar dados financeiros da venda") })
                 res.json(venda)
             })
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar venda") })
     }
 
     const getOrcamentos = async (req, res) => {
-        app.db('venda')
+        req.knex('venda')
             .join('empresas', 'venda.id_empresa', 'empresas.id')
             .join('pessoas as cliente', 'venda.id_pessoa', 'cliente.id')
             .select(
@@ -483,7 +481,7 @@ module.exports = app => {
             .then(orcamentos => res.json(
                 orcamentos.map(async item => {
                     item.tipo = item.tipo == 1 ? "ORÇAMENTO" : "VENDA"
-                    item.vendedores = await app.db('usuario_vendas')
+                    item.vendedores = await req.knex('usuario_vendas')
                         .join('usuarios', 'usuario_vendas.id_usuario', 'usuarios.id')
                         .select('usuarios.nome as usuario')
                         .where({ id_venda: item.id })
@@ -491,11 +489,11 @@ module.exports = app => {
                     return item
                 })
             ))
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar orçamentos") })
     }
 
     const getVendas = async (req, res) => {
-        app.db('venda')
+        req.knex('venda')
             .join('empresas', 'venda.id_empresa', 'empresas.id')
             .join('pessoas as cliente', 'venda.id_pessoa', 'cliente.id')
             .select(
@@ -513,31 +511,31 @@ module.exports = app => {
             .then(vendas => res.json(
                 vendas.map(async item => {
                     item.tipo = item.tipo == 1 ? "ORÇAMENTO" : "VENDA"
-                    item.vendedores = await app.db('usuario_vendas')
+                    item.vendedores = await req.knex('usuario_vendas')
                         .join('usuarios', 'usuario_vendas.id_usuario', 'usuarios.id')
                         .select('usuarios.nome as usuario')
                         .where({ id_venda: item.id })
 
                     return item
                 })))
-            .catch(e => res.status(500).send(e.toString()))
+            .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao buscar vendas") })
     }
 
     const remove = async (req, res) => {
-        await app.db.transaction(async function (trx) {
-            return app.db('venda')
+        await req.knex.transaction(async function (trx) {
+            return req.knex('venda')
                 .where({ id: req.params.id }).delete()
                 .transacting(trx)
                 .then(function () {
-                    return app.db('financeiro')
+                    return req.knex('financeiro')
                         .where({ id_movimento_origem: req.params.id }).delete()
                         .transacting(trx)
                         .then(function () {
-                            return app.db('produto_movimento_estoque')
+                            return req.knex('produto_movimento_estoque')
                                 .where({ id_movimentacao: req.params.id }).delete()
                                 .transacting(trx)
                                 .then(function () {
-                                    return app.db('conta_movimento')
+                                    return req.knex('conta_movimento')
                                         .where({ id_movimento_origem: req.params.id }).delete()
                                         .transacting(trx)
                                 })

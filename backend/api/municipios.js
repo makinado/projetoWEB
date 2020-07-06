@@ -1,12 +1,12 @@
 module.exports = app => {
     const get = async (res) => {
-        app.db('municipios')
+        req.knex('municipios')
             .then(municipios => res.json(municipios))
             .catch(e => res.status(500).send(e.toString()))
     }
 
     const getById = async (req, res) => {
-        app.db('municipios')
+        req.knex('municipios')
             .where({ cmun: req.params.id })
             .first()
             .then(municipio => res.json(municipio))

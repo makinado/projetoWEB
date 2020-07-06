@@ -17,7 +17,7 @@ module.exports = app => {
         if (!usuario.email || !usuario.senha) {
             return res.status(400).send('Usuário ou senha não informados')
         }
-        var usuarioBD = await app.dbUsers('usuarios')
+        var usuarioBD = await app.commonDb('usuarios')
             .join('acesso', 'usuarios.id', 'acesso.id_usuario')
             .select('id', 'nome', 'email', 'senha', 'contato', 'img', 'nome_base', 'acesso.*')
             .where({ email: usuario.email })
@@ -26,19 +26,10 @@ module.exports = app => {
         if (!usuarioBD) return res.status(400).send('Usuário não encontrado')
         const isMatch = bcrypt.compareSync(usuario.senha, usuarioBD.senha)
         if (!isMatch) return res.status(400).send('Senha inválida')
+        if (new Date(usuarioBD.data_validade) < new Date())
+            return res.status(400).send('Parece que seu período de utilização do sistema acabou, realize o pagamento da sua fatura')
 
-        const db = {
-            host: process.env.DB_HOST,
-            port: process.env.DB_PORT,
-            database: usuarioBD.nome_base,
-            user: 'postgres',
-            password: process.env.DB_PASS
-        }
-
-        app.db ? app.db.destroy() : null
-        app.db = require('knex')({ client: 'pg', connection: db })
-
-        console.log('login', db)
+        console.log(usuarioBD)
 
         const now = Math.floor(Date.now() / 1000)
         delete usuarioBD.senha
@@ -59,7 +50,7 @@ module.exports = app => {
     const createDatabase = (cnpj) => {
         const databasename = 'db' + cnpj.replace(/[^\w\s]/gi, '')
 
-        return app.dbUsers.raw(`CREATE DATABASE ${databasename} TEMPLATE 'CampagWEB'`)
+        return app.commonDb.raw(`CREATE DATABASE ${databasename} TEMPLATE 'CampagWEB'`)
             .then(() => {
                 return databasename
             })
@@ -78,7 +69,7 @@ module.exports = app => {
             equalsOrError(usuario.senha, usuario.confirmaSenha,
                 'Senhas não conferem')
 
-            const usuarioFromDB = await app.dbUsers('usuarios')
+            const usuarioFromDB = await app.commonDb('usuarios')
                 .where({ email: usuario.email }).first()
             if (!usuario.id) {
                 notExistsOrError(usuarioFromDB, 'Usuário já cadastrado')
@@ -182,37 +173,35 @@ module.exports = app => {
             rel_estoque: true,
             rel_financeiro: true,
             rel_estat: true,
+            data_validade: new Date().setDate(new Date().getDate() + 7)
         }
 
         try {
             await createDatabase(empresa.cnpj)
                 .then(databasename => {
                     usuario.nome_base = databasename
-
-                    app.db.destroy();
-                    app.db = require('knex')({ client: 'pg', connection: { ...app.db.client.config.connection, database: databasename } })
                 })
         } catch (e) {
             console.log(e)
             return res.status(500).send('Erro ao criar a base de dados, tente novamente mais tarde.')
         }
 
-        return app.dbUsers.transaction(async function (trx) {
-            return app.dbUsers('usuarios')
+        return app.commonDb.transaction(async function (trx) {
+            return app.commonDb('usuarios')
                 .insert(usuario).returning('id')
                 .transacting(trx)
                 .then(id_usuario => {
-                    return app.dbUsers('acesso')
+                    return app.commonDb('acesso')
                         .insert({ ...acesso, id_usuario: id_usuario[0] })
                         .transacting(trx)
                         .then(() => {
-                            return app.db('usuarios')
+                            return req.knex('usuarios')
                                 .insert({ ...usuario, id: id_usuario[0] })
                                 .then(() => {
-                                    return app.db('empresas')
+                                    return req.knex('empresas')
                                         .insert(empresa).returning('id')
                                         .then(id_empresa => {
-                                            return app.db('usuario_empresas')
+                                            return req.knex('usuario_empresas')
                                                 .insert({ id_empresa: id_empresa[0], id_usuario: id_usuario[0] })
                                         })
                                 })
@@ -231,8 +220,7 @@ module.exports = app => {
 
             return res.status(204).send()
         }).catch(async e => {
-            app.db.destroy()
-            await app.dbUsers.raw(`DROP DATABASE ${usuario.nome_base}`)
+            await app.commonDb.raw(`DROP DATABASE ${usuario.nome_base}`)
             console.log(e);
             return res.status(500).send('Ocorreu um erro durante o processo, tente novamente mais tarde')
         })
@@ -242,36 +230,18 @@ module.exports = app => {
 
         const usuario = req.body || null
 
-        if (!usuario.nome_base)
-            return res.send(false)
-
-        const db = {
-            host: process.env.DB_HOST,
-            port: process.env.DB_PORT,
-            database: usuario.nome_base,
-            user: 'postgres',
-            password: process.env.DB_PASS
+        try {
+            if (usuario) {
+                const token = jwt.decode(usuario.token, process.env.AUTH_SECRET)
+                if (new Date(token.exp * 1000) > new Date()) {
+                    return res.send(true)
+                }
+            }
+        } catch (e) {
+            // erro com o token
         }
 
-        app.db ? app.db.destroy() : null
-        app.db = require('knex')({ client: 'pg', connection: db })
-
-        app.db.raw('select 1+1 as result')
-            .then(function () {
-                try {
-                    if (usuario) {
-                        const token = jwt.decode(usuario.token, process.env.AUTH_SECRET)
-                        if (new Date(token.exp * 1000) > new Date()) {
-                            return res.send(true)
-                        }
-                    }
-                } catch (e) {
-                    // erro com o token
-                }
-
-                res.send(false)
-            })
-            .catch(e => res.send(false))
+        res.send(false)
     }
 
     return { signin, signup, validateToken }

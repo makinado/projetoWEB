@@ -11,7 +11,7 @@ module.exports = app => {
             existsOrError(unidade.sigla, 'Informe a unidades')
             existsOrError(unidade.descricao, 'Informe a unidades')
 
-            const unidadeDB = await app.db('unidades').where({ sigla: unidade.sigla }).first()
+            const unidadeDB = await req.knex('unidades').where({ sigla: unidade.sigla }).first()
             if (!unidade.id) {
                 notExistsOrError(unidadeDB, 'Unidade já cadastrada')
             }
@@ -23,13 +23,13 @@ module.exports = app => {
         delete unidade.text
 
         if (unidade.id) {
-            app.db('unidades')
+            req.knex('unidades')
                 .update(unidade)
                 .where({ id: unidade.id })
                 .then(_ => res.status(200).send())
                 .catch(e => res.status(500).send(e.toString()))
         } else {
-            app.db('unidades')
+            req.knex('unidades')
                 .insert(unidade)
                 .then(_ => res.status(200).send())
                 .catch(e => res.status(500).send(e.toString()))
@@ -37,13 +37,13 @@ module.exports = app => {
     }
 
     const get = async (req, res) => {
-        app.db('unidades')
+        req.knex('unidades')
             .then(unidades => res.json(unidades))
             .catch(e => res.status(500).send(e.toString()))
     }
 
     const getAll = async (req, res) => {
-        app.db('unidades')
+        req.knex('unidades')
             .select('id as value', 'descricao as text')
             .then(unidades => res.json(unidades))
             .catch(e => res.status(500).send(e.toString()))
@@ -51,7 +51,7 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
-            const exclusao = await app.db('unidades')
+            const exclusao = await req.knex('unidades')
                 .where({ id: req.params.id }).delete()
             existsOrError(exclusao, 'unidade não encontrada')
 

@@ -5,7 +5,7 @@ module.exports = app => {
 
         try {
             if (req.query.cadastros.includes('cliente') || req.query.cadastros.includes('fornecedor') || req.query.cadastros.includes('transportadora')) {
-                pessoas = await app.db('pessoas')
+                pessoas = await req.knex('pessoas')
                     .leftJoin('categorias', 'pessoas.categoria', 'categorias.id')
                     .leftJoin('municipios', 'pessoas.id_cidade', 'municipios.cmun')
                     .select(
@@ -59,15 +59,15 @@ module.exports = app => {
                     })
 
                 stats = {
-                    clientes: await app.db('pessoas').count('id').where({ cliente: true }).then(pessoas => pessoas[0].count),
-                    fornecedores: await app.db('pessoas').count('id').where({ fornecedor: true }).then(pessoas => pessoas[0].count),
-                    transportadoras: await app.db('pessoas').count('id').where({ transportadora: true }).then(pessoas => pessoas[0].count),
-                    ativos: await app.db('pessoas').count('id').where({ situacao: 'Ativo' }).then(pessoas => pessoas[0].count),
-                    inativos: await app.db('pessoas').count('id').where({ situacao: 'Inativo' }).then(pessoas => pessoas[0].count),
-                    emAnalise: await app.db('pessoas').count('id').where({ situacao: 'Em análise' }).then(pessoas => pessoas[0].count),
+                    clientes: await req.knex('pessoas').count('id').where({ cliente: true }).then(pessoas => pessoas[0].count),
+                    fornecedores: await req.knex('pessoas').count('id').where({ fornecedor: true }).then(pessoas => pessoas[0].count),
+                    transportadoras: await req.knex('pessoas').count('id').where({ transportadora: true }).then(pessoas => pessoas[0].count),
+                    ativos: await req.knex('pessoas').count('id').where({ situacao: 'Ativo' }).then(pessoas => pessoas[0].count),
+                    inativos: await req.knex('pessoas').count('id').where({ situacao: 'Inativo' }).then(pessoas => pessoas[0].count),
+                    emAnalise: await req.knex('pessoas').count('id').where({ situacao: 'Em análise' }).then(pessoas => pessoas[0].count),
                 }
             } else if (req.query.cadastros.includes('usuario')) {
-                usuarios = await app.db('venda')
+                usuarios = await req.knex('venda')
                     .select('usuarios.id', 'usuarios.nome', 'usuarios.email', 'usuarios.contato', 'usuarios.data_criado', 'usuarios.data_atualizado', 'usuarios.img')
                     .sum('venda.valor_total as valor_vendas')
                     .sum('comissao.valor_comissao as valor_comissoes')
@@ -86,10 +86,10 @@ module.exports = app => {
                         }
                     })
                 stats = {
-                    usuarios: await app.db('usuarios').count('id').then(usuarios => usuarios[0].count),
+                    usuarios: await req.knex('usuarios').count('id').then(usuarios => usuarios[0].count),
                 }
             } else if (req.query.cadastros.includes('produto')) {
-                produtos = await app.db('produtos as p')
+                produtos = await req.knex('produtos as p')
                     .leftJoin('categorias', 'p.categoria', 'categorias.id')
                     .leftJoin('marcas', 'p.marca', 'marcas.id')
                     .leftJoin('unidades', 'p.unidade', 'unidades.id')
@@ -120,9 +120,9 @@ module.exports = app => {
                     })
 
                 stats = {
-                    produtos: await app.db('produtos').count('id').then(produtos => produtos[0].count),
-                    ativos: await app.db('produtos').count('id').where({ ativo: true }).then(produtos => produtos[0].count),
-                    inativos: await app.db('produtos').count('id').where({ ativo: false }).then(produtos => produtos[0].count),
+                    produtos: await req.knex('produtos').count('id').then(produtos => produtos[0].count),
+                    ativos: await req.knex('produtos').count('id').where({ ativo: true }).then(produtos => produtos[0].count),
+                    inativos: await req.knex('produtos').count('id').where({ ativo: false }).then(produtos => produtos[0].count),
                 }
             }
 

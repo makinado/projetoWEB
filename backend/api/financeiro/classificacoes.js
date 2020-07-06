@@ -13,10 +13,10 @@ module.exports = app => {
 
             if (!classificacao.id) {
                 if (!classificacao.id_pai) {
-                    const classificacaoDB = await app.db('classificacao').where({ tipo: classificacao.tipo, descricao: classificacao.descricao }).first()
+                    const classificacaoDB = await req.knex('classificacao').where({ tipo: classificacao.tipo, descricao: classificacao.descricao }).first()
                     notExistsOrError(classificacaoDB, 'classificacao já cadastrada')
                 } else {
-                    const classificacaoDB = await app.db('classificacao').where({ tipo: classificacao.tipo, descricao: classificacao.descricao, id_pai: classificacao.id_pai }).first()
+                    const classificacaoDB = await req.knex('classificacao').where({ tipo: classificacao.tipo, descricao: classificacao.descricao, id_pai: classificacao.id_pai }).first()
                     notExistsOrError(classificacaoDB, 'classificacao já cadastrada')
                 }
             }
@@ -30,13 +30,13 @@ module.exports = app => {
         delete classificacao.children
 
         if (classificacao.id) {
-            app.db('classificacao')
+            req.knex('classificacao')
                 .update(classificacao)
                 .where({ id: classificacao.id })
                 .then(_ => res.status(200).send())
                 .catch(e => res.status(500).send(e.toString()))
         } else {
-            app.db('classificacao')
+            req.knex('classificacao')
                 .insert(classificacao)
                 .then(_ => res.status(200).send())
                 .catch(e => res.status(500).send(e.toString()))
@@ -71,7 +71,7 @@ module.exports = app => {
     }
 
     const getAll = async (req, res) => {
-        app.db('classificacao')
+        req.knex('classificacao')
             .select('id as value', 'descricao as text', 'id_pai')
             .where(async (qb) => {
                 if (req.query.tipo == 1)
@@ -85,7 +85,7 @@ module.exports = app => {
     }
 
     const get = async (req, res) => {
-        app.db('classificacao')
+        req.knex('classificacao')
             .where(async (qb) => {
                 if (req.query.tipo == 1)
                     qb.where('classificacao.tipo', '=', 1);
@@ -109,7 +109,7 @@ module.exports = app => {
     }
 
     const getById = async (req, res) => {
-        app.db('classificacao')
+        req.knex('classificacao')
             .where({ id: req.params.id }).first()
             .then(classificacao => res.json(classificacao))
             .catch(e => res.status(500).send(e.toString()))
@@ -117,8 +117,8 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
-            app.db('classificacao').where({ id_pai: req.params.id }).delete()
-            const exclusao = await app.db('classificacao')
+            req.knex('classificacao').where({ id_pai: req.params.id }).delete()
+            const exclusao = await req.knex('classificacao')
                 .where({ id: req.params.id }).delete()
             existsOrError(exclusao, 'classificacao não encontrada')
 
@@ -129,7 +129,7 @@ module.exports = app => {
     }
 
     const getTree = (req, res) => {
-        app.db('classificacao')
+        req.knex('classificacao')
             .then(classificacao => res.json(toTree(classificacao)))
             .catch(err => res.status(500).send(err))
     }

@@ -226,7 +226,6 @@
                       <v-layout justify-center>
                         <v-btn
                           class="mb-4 mt-3"
-                          type="submit"
                           color="secondary"
                           flat
                           @click="[showForgotPassword ? showForgotPassword = false : showSignup ? showSignup = false : showSignup = true]"
@@ -247,7 +246,7 @@
 </template>
 
 <script>
-import { urlBD, showError, usuarioKey } from "@/global";
+import { urlBD, showError, usuarioKey, funcionarioKey } from "@/global";
 import axios from "axios";
 import { mapState } from "vuex";
 
@@ -269,6 +268,7 @@ export default {
   data() {
     return {
       stepper: 1,
+      showFunc: false,
       showSignup: false,
       showForgotPassword: false,
       valid: true,
@@ -280,6 +280,7 @@ export default {
         v => !!v || "Email é obrigatório",
         v => (v ? /.+@.+\..+/.test(v) || "E-mail inválido" : true)
       ],
+      senhaMestreRules: [v => !!v || "Senha mestre é obrigatória"],
       senhaRules: [
         v => !!v || "Senha é obrigatória",
         v => (!!v && v.length >= 6) || "Senha deve ter no mínimo 6 caracteres"
@@ -300,12 +301,22 @@ export default {
     afterSignIn(usuario) {
       this.$store.commit("setUsuario", usuario);
       localStorage.setItem(usuarioKey, JSON.stringify(usuario));
-      this.$socket.emit("login", { id: usuario.id, nome: usuario.nome });
-
-      axios.get(`${urlBD}/usuarioEmpresas/${usuario.id}`).then(res => {
-        this.empresaStore.currentEmpresas = res.data;
-        this.$store.commit("setEmpresa", res.data[0].value);
+      this.$socket.emit("login", {
+        id: usuario.id,
+        nome: usuario.nome
       });
+
+      console.log(this.usuarioStore.currentusuario);
+
+      axios
+        .get(`${urlBD}/usuarioEmpresas/${this.usuarioStore.currentUsuario.id}`)
+        .then(res => {
+          this.empresaStore.currentEmpresas = res.data;
+          this.$store.commit(
+            "setEmpresa",
+            this.empresaStore.currentEmpresas[0].value
+          );
+        });
 
       this.$router.push({ path: "/" });
     },

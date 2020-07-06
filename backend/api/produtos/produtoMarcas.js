@@ -9,7 +9,7 @@ module.exports = app => {
         try {
             existsOrError(marca.nome, 'Informe o nome da marca')
 
-            const marcaDB = await app.db('marcas').where({ nome: marca.nome }).first()
+            const marcaDB = await req.knex('marcas').where({ nome: marca.nome }).first()
             if (!marca.id) {
                 notExistsOrError(marcaDB, 'marca já cadastrada')
             }
@@ -21,13 +21,13 @@ module.exports = app => {
         delete marca.text
 
         if (marca.id) {
-            app.db('marcas')
+            req.knex('marcas')
                 .update(marca)
                 .where({ id: marca.id })
                 .then(_ => res.status(200).send())
                 .catch(e => res.status(500).send(e.toString()))
         } else {
-            app.db('marcas')
+            req.knex('marcas')
                 .insert(marca)
                 .then(_ => res.status(200).send())
                 .catch(e => res.status(500).send(e.toString()))
@@ -35,13 +35,13 @@ module.exports = app => {
     }
 
     const get = async (req, res) => {
-        app.db('marcas')
+        req.knex('marcas')
             .then(marcas => res.json(marcas))
             .catch(e => res.status(500).send(e.toString()))
     }
 
     const getAll = async (req, res) => {
-        app.db('marcas')
+        req.knex('marcas')
             .select('id as value', 'nome as text')
             .then(marcas => res.json(marcas))
             .catch(e => res.status(500).send(e.toString()))
@@ -49,7 +49,7 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
-            const exclusao = await app.db('marcas')
+            const exclusao = await req.knex('marcas')
                 .where({ id: req.params.id }).delete()
             existsOrError(exclusao, 'marca não encontrada')
 

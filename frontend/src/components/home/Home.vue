@@ -145,7 +145,11 @@
       </v-flex>
 
       <!-- grafico fluxo de caixa -->
-      <v-flex :xs12="sizeFluxoCaixa" :md9="!sizeFluxoCaixa">
+      <v-flex
+        v-if="usuarioStore.currentUsuario['financeiro_read']"
+        :xs12="sizeFluxoCaixa"
+        :md9="!sizeFluxoCaixa"
+      >
         <Card
           title="Fluxo de caixa"
           icon="fa fa-lg fa-line-chart"
@@ -182,7 +186,11 @@
       </v-flex>
 
       <!-- grafico performance -->
-      <v-flex :xs12="sizePerformance" :md7="!sizePerformance">
+      <v-flex
+        v-if="usuarioStore.currentUsuario['vendas_read']"
+        :xs12="sizePerformance"
+        :md7="!sizePerformance"
+      >
         <Card
           title="Performance de vendas e compras"
           icon="fa fa-lg fa-line-chart"
@@ -293,7 +301,11 @@
       </v-flex>
 
       <!-- grafico financeiro -->
-      <v-flex :xs12="sizeFinanceiro" :md6="!sizeFinanceiro">
+      <v-flex
+        v-if="usuarioStore.currentUsuario['financeiro_read']"
+        :xs12="sizeFinanceiro"
+        :md6="!sizeFinanceiro"
+      >
         <Card
           title="Financeiro"
           icon="fa fa-lg fa-usd"
@@ -388,6 +400,9 @@
           </v-tabs-items>
         </Card>
       </v-flex>
+
+      <!-- grafico classificacoes -->
+      <v-flex :xs12="sizeClassificacoes" :md6="!sizeClassificacoes"></v-flex>
     </v-layout>
   </v-container>
 </template>
@@ -448,11 +463,13 @@ export default {
     params() {
       this.loadStats();
 
-      this.renderGraficoFluxoCaixa();
-
-      this.renderGraficoPerformance();
+      if (this.usuarioStore.currentUsuario["financeiro_read"]) {
+        this.renderGraficoFluxoCaixa();
+        this.renderGraficoFinanceiro();
+      }
+      if (this.usuarioStore.currentUsuario["financeiro_read"])
+        this.renderGraficoPerformance();
       this.renderGraficoCadastros();
-      this.renderGraficoFinanceiro();
     }
   },
   data() {
@@ -461,6 +478,7 @@ export default {
       sizeFinanceiro: false,
       sizePerformance: false,
       sizeFluxoCaixa: false,
+      sizeClassificacoes: false,
       arrayEvents: null,
       painel: {},
       menu: false,
@@ -504,6 +522,15 @@ export default {
             graph: "cadastros",
             method: "maximize"
           }
+        ],
+        classificacoes: [
+          {
+            icon: "fa fa-lg fa-window-maximize",
+            tooltip: "Maximizar visualização",
+            required: true,
+            graph: "classificacoes",
+            method: "maximize"
+          }
         ]
       },
       graficoFinanceiro: {
@@ -545,6 +572,15 @@ export default {
       graficoCadastros: {
         chartData: null,
         extraOptions: chartConfigs.barChartOptions,
+        gradientColors: [
+          "rgba(76, 211, 150, 0.1)",
+          "rgba(53, 183, 125, 0)",
+          "rgba(119,52,169,0)"
+        ]
+      },
+      graficoClassificacoes: {
+        chartData: null,
+        extraOptions: chartConfigs.doughnutChartOptions,
         gradientColors: [
           "rgba(76, 211, 150, 0.1)",
           "rgba(53, 183, 125, 0)",
@@ -962,50 +998,32 @@ export default {
         })
         .catch(showError);
     },
-    async renderMapaGrafico() {
-      axios.get("https://unpkg.com/us-atlas/states-10m.json").then(us => {
-        const nation = this.ChartGeo.topojson.feature(us, us.objects.nation)
-          .features[0];
-        const states = this.ChartGeo.topojson.feature(us, us.objects.states)
-          .features;
-
-        let chartData = {
-          type: "choropleth",
-          labels: states.map(d => d.properties.name),
-          datasets: [
-            {
-              fill: true,
-              borderColor: "#ffa21a",
-              borderWidth: 2,
-              borderDash: [],
-              borderDashOffset: 0.0,
-              data: states.map(d => ({
-                feature: d,
-                value: Math.random() * 10
-              }))
-            }
-          ],
-          options: {
-            legend: {
-              display: false
-            },
-            scale: {
-              projection: "albersUsa"
-            },
-            geo: {
-              colorScale: {
-                display: true,
-                position: "bottom",
-                quantize: 5,
-                legend: {
-                  position: "bottom-right"
-                }
+    async renderGraficoClassificacoes() {
+      axios
+        .get(`${urlBD}/stats/graficoClassificacoes?view=${this.painel.mode}`)
+        .then(res => {
+          let chartData = {
+            datasets: [
+              {
+                fill: true,
+                borderColor: "#ffa21a",
+                borderWidth: 2,
+                borderDash: [],
+                borderDashOffset: 0.0,
+                data: res.data
               }
-            }
-          }
-        };
-        this.graficoMapa.chartData = chartData;
-      });
+            ],
+            labels: [
+              "CLIENTES",
+              "FORNECEDORES",
+              "TRANSPORTADORAS",
+              "USUÁRIOS",
+              "PRODUTOS"
+            ]
+          };
+          this.graficoClassificacoes.chartData = chartData;
+        })
+        .catch(showError);
     },
     async loadCampeoes() {
       axios
@@ -1018,7 +1036,7 @@ export default {
   },
   async mounted() {
     this.$set(this.painel, "mode", "year");
-    this.$set(this.painel, "empresa", this.empresaStore.currentEmpresa);
+    this.$set(this.painel, "empresa", this.empresaStore.currentEmpresa || 1);
     this.$set(
       this.painel,
       "data_inicial",

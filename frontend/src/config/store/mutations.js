@@ -9,9 +9,13 @@ export default {
     state.usuarioStore.currentUsuario = usuario
     if (usuario) {
       axios.defaults.headers.common['Authorization'] = `bearer ${usuario.token}`
+      axios.defaults.headers.common['client_base'] = usuario.nome_base
+      axios.defaults.headers.common['user'] = JSON.stringify(usuario)
       state.TemplateVisible = true
     } else {
       delete axios.defaults.headers.common['Authorization']
+      delete axios.defaults.headers.common['client_base']
+      delete axios.defaults.headers.common['user']
       state.empresaStore.currentEmpresa = null
       state.usuarioStore.currentPerfil = null
       state.TemplateVisible = false

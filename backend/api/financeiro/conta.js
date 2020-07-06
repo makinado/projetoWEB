@@ -18,7 +18,7 @@ module.exports = app => {
                 existsOrError(conta.num_conta, 'Informe o número da conta')
             }
 
-            const contaDB = await app.db('conta')
+            const contaDB = await req.knex('conta')
                 .where({ nome: conta.nome }).first()
             if (!conta.id) {
                 notExistsOrError(contaDB, 'Conta conta já cadastrada')
@@ -29,14 +29,14 @@ module.exports = app => {
 
 
         if (conta.id) {
-            app.db('conta')
+            req.knex('conta')
                 .update(conta)
                 .where({ id: conta.id })
                 .then(async _ => res.status(204).send())
                 .catch(e => res.status(500).send(e.toString()))
         } else {
             conta.saldo_atual = 0
-            app.db('conta')
+            req.knex('conta')
                 .insert(conta)
                 .then(async _ => res.status(204).send())
                 .catch(e => res.status(500).send(e.toString()))
@@ -47,10 +47,10 @@ module.exports = app => {
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 10
 
-        const result = await app.db('conta').count('id').first()
+        const result = await req.knex('conta').count('id').first()
         const count = parseInt(result.count)
 
-        app.db('conta')
+        req.knex('conta')
             .join('empresas', 'conta.id_empresa', 'empresas.id')
             .select('conta.id', 'conta.nome', 'conta.observacao', 'empresas.nome as empresa', 'saldo_atual')
             .limit(limit).offset(page * limit - limit)
@@ -86,14 +86,14 @@ module.exports = app => {
     }
 
     const getAll = async (req, res) => {
-        app.db('conta')
+        req.knex('conta')
             .select('id as value', 'nome as text', 'saldo_atual')
             .then(contas => res.json(contas))
             .catch(e => res.status(500).send(e.toString()))
     }
 
     const getById = async (req, res) => {
-        app.db('conta')
+        req.knex('conta')
             .where({ 'conta.id': req.params.id }).first()
             .then(conta => res.json(conta))
             .catch(e => res.status(500).send(e.toString()))
@@ -116,7 +116,7 @@ module.exports = app => {
 
     const remove = async (req, res) => {
         try {
-            const conta = await app.db('conta')
+            const conta = await req.knex('conta')
                 .where({ id: req.params.id }).delete()
 
             existsOrError(conta, 'conta não encontrado')
