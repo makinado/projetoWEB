@@ -1,20 +1,56 @@
 // https://vuex.vuejs.org/en/mutations.html
 
 import axios from 'axios'
+import * as firebase from 'firebase'
 import { formatToBRL } from 'brazilian-values'
 import { showSuccess } from '@/global'
 
 export default {
+  setOnlineUsers(state, payload) {
+    state.usuarioStore.usuariosOnline = payload
+  },
   setUsuario(state, usuario) {
     state.usuarioStore.currentUsuario = usuario
     if (usuario) {
       axios.defaults.headers.common['Authorization'] = `bearer ${usuario.token}`
-      axios.defaults.headers.common['client_base'] = usuario.nome_base
       axios.defaults.headers.common['user'] = JSON.stringify(usuario)
       state.TemplateVisible = true
+
+      const userListRef = firebase.database().ref('presence')
+      const myUserRef = userListRef.push()
+      firebase.database().ref('.info/connected')
+        .on(
+          'value', function (snap) {
+            if (snap.val()) {
+              // if we lose network then remove this user from the list
+              myUserRef.onDisconnect()
+                .remove()
+              // set user's online status
+              let presenceObject = {
+                user: {
+                  id: usuario.id,
+                  nome: usuario.nome,
+                  email: usuario.email
+                },
+                status: 'online'
+              }
+              myUserRef.set(presenceObject)
+            } else {
+              // client has lost network
+              let presenceObject = {
+                user: {
+                  id: usuario.id,
+                  nome: usuario.nome,
+                  email: usuario.email
+                },
+                status: 'offline'
+              }
+              myUserRef.set(presenceObject)
+            }
+          }
+        )
     } else {
       delete axios.defaults.headers.common['Authorization']
-      delete axios.defaults.headers.common['client_base']
       delete axios.defaults.headers.common['user']
       state.empresaStore.currentEmpresa = null
       state.usuarioStore.currentPerfil = null

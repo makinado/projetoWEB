@@ -1,3 +1,5 @@
+const { isCPF, isCNPJ } = require("brazilian-values")
+
 module.exports = app => {
     const { existsOrError, notExistsOrError } = app.api.validation
 
@@ -271,6 +273,25 @@ module.exports = app => {
             .catch(e => { console.log(e.toString()); res.status(500).send("Erro ao salvar pessoa") })
     }
 
+    const verificaCadastro = async (req, res) => {
+        const registro = { ...req.body }
+        try {
+            existsOrError(registro.reg, 'Informe um cpf ou cnpj')
+
+            if (isCPF(registro.reg)) {
+                const cadastro = await req.knex('pessoas').select('id').where({ cpf: registro.reg }).first()
+                notExistsOrError(cadastro, 'Pessoa já cadastrada')
+            } else if (isCNPJ(registro.reg)) {
+                const cadastro = await req.knex('pessoas').select('id').where({ cnpj: registro.reg }).first()
+                notExistsOrError(cadastro, 'Pessoa já cadastrada')
+            }
+        } catch (e) {
+            return res.status(400).send(e)
+        }
+
+        res.status(204).send()
+    }
+
 
     return {
         save,
@@ -283,6 +304,7 @@ module.exports = app => {
         getFornecs,
         getTransps,
         getAll,
+        verificaCadastro,
         remove
     }
 }

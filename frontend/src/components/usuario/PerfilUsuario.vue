@@ -212,7 +212,6 @@ export default {
     afterSignIn(usuario) {
       this.$store.commit("setUsuario", usuario);
       localStorage.setItem(usuarioKey, JSON.stringify(usuario));
-      this.$socket.emit("login", { id: usuario.id, nome: usuario.nome });
 
       axios.get(`${urlBD}/usuarioEmpresas/${usuario.id}`).then(res => {
         this.empresaStore.currentEmpresas = res.data;

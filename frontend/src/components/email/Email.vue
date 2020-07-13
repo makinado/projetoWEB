@@ -56,6 +56,25 @@
                   </v-flex>
 
                   <v-flex xs12>
+                    <v-text-field
+                      :color="color"
+                      label="Anexar arquivos"
+                      prepend-icon="fa fa-lg fa-folder-open-o"
+                      readonly
+                      v-model="email.file"
+                      @click="pickFile"
+                    ></v-text-field>
+                    <input
+                      type="file"
+                      style="display: none"
+                      ref="files"
+                      accept="file/*"
+                      multiple
+                      @change="onFilePicked"
+                    />
+                  </v-flex>
+
+                  <v-flex xs12>
                     <VueEditor v-model="email.mensagem" :rules="mensagemRules" />
                   </v-flex>
                 </v-layout>
@@ -64,8 +83,8 @@
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="blue darken-1" flat @click="modalStore.email.visible = false">Fechar</v-btn>
-            <v-btn color="blue darken-1" flat @click="enviarEmail()">Enviar</v-btn>
+            <v-btn :disabled="isLoading" color="blue darken-1" flat @click="modalStore.email.visible = false">Fechar</v-btn>
+            <v-btn :disabled="isLoading" color="blue darken-1" flat @click="enviarEmail()" :loading="isLoading">Enviar</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -86,7 +105,11 @@ export default {
   components: { VueEditor },
   data() {
     return {
+      isLoading: false,
       email: {},
+      fileName: "",
+      fileUrl: "",
+      files: "",
       emailsEmpresa: [],
       deRules: [
         v => !!v || "E-mail inválido",
@@ -102,6 +125,7 @@ export default {
     };
   },
   computed: {
+    ...mapState("app", ["color"]),
     ...mapState(["modalStore", "usuarioStore", "empresaStore"])
   },
   watch: {
@@ -124,17 +148,77 @@ export default {
       this.loadEmpresas();
     },
     enviarEmail() {
-      if (this.$refs.form.validate()) {
-        const url = `${urlBD}/email`;
+      if (!this.$refs.form.validate()) return;
 
+      const url = `${urlBD}/email`;
+      const fd = new FormData();
+      const attachments = [];
+
+      this.isLoading = true;
+      if (this.files.length > 0) {
+        for (let i = 0; i < this.files.length; i++) {
+          fd.append("file", this.files[i], this.files[i].name);
+          attachments.push({
+            filename: this.files[i].name,
+            path: `../backend/uploads/arquivos/${this.files[i].name}`
+          });
+        }
+
+        axios
+          .post(`${urlBD}/uploadFiles`, fd)
+          .then(res => {
+            this.email.attachments = attachments;
+            axios
+              .post(url, this.email)
+              .then(() => {
+                this.$toasted.global.defaultSuccess();
+                this.modalStore.email.visible = false;
+              })
+              .catch(showError);
+          })
+          .catch(showError)
+          .finally(_ => (this.isLoading = false));
+      } else {
         axios
           .post(url, this.email)
           .then(() => {
             this.$toasted.global.defaultSuccess();
             this.modalStore.email.visible = false;
           })
-          .catch(showError);
+          .catch(showError)
+          .finally(_ => (this.isLoading = false));
       }
+    },
+    onFilePicked(e) {
+      const files = e.target.files;
+      if (files[0] !== undefined) {
+        this.fileName = files[0].name;
+        if (this.fileName.lastIndexOf(".") <= 0) {
+          return;
+        }
+
+        if (files.length == 1) this.$set(this.email, "file", this.fileName);
+        else
+          this.$set(
+            this.email,
+            "file",
+            files.length + " arquivos selecionados"
+          );
+
+        const fr = new FileReader();
+        fr.readAsDataURL(files[0]);
+        fr.addEventListener("load", () => {
+          this.fileUrl = fr.result;
+          this.files = files; // this is an file file that can be sent to server...
+        });
+      } else {
+        this.fileName = "";
+        this.files = "";
+        this.fileUrl = "";
+      }
+    },
+    pickFile() {
+      this.$refs.files.click();
     },
     async loadEmpresas() {
       const url = `${urlBD}/usuarioEmpresas/${this.usuarioStore.currentUsuario.id}`;

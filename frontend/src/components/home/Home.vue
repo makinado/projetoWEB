@@ -135,12 +135,7 @@
       </v-flex>
       <v-flex sm6 xs12 md6 lg3>
         <router-link to="/usuarios">
-          <StatsCard
-            color="info"
-            icon="fa fa-user-o"
-            title="Usuários online"
-            :value="usuariosOnline || 1"
-          />
+          <StatsCard color="info" icon="fa fa-user-o" title="Usuários online" />
         </router-link>
       </v-flex>
 
@@ -420,16 +415,6 @@ export default {
   computed: {
     ...mapState("app", ["color"]),
     ...mapState(["usuarioStore", "empresaStore"]),
-    usuariosOnline: {
-      get() {
-        return (
-          "" + Object.values(this.usuarioStore.usuariosOnline || []).length
-        );
-      },
-      set(value) {
-        this.usuarioStore.usuariosOnline = value;
-      }
-    },
     computedDateFormatted: {
       get() {
         return formatDate(this.painel.data_inicial);
@@ -450,6 +435,11 @@ export default {
       return {
         ...this.painel
       };
+    },
+    onlineUsers: {
+      get() {
+        return this.$store.getters.onlineUsers;
+      }
     }
   },
   components: {

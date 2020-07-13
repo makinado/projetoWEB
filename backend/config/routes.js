@@ -19,6 +19,15 @@ const storageXML = multer.diskStorage({
         cb(null, file.originalname)
     }
 })
+const storageFiles = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/arquivos/');
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.originalname)
+    }
+})
+
 const fileFilterIMG = (req, file, cb) => {
     // reject a file
     if (file.mimetype === 'image/jpg' || file.mimetype === 'image/jpeg' || file.mimetype === 'image/png')
@@ -43,6 +52,10 @@ const uploadXML = multer({
     storage: storageXML,
     limits: { fileSize: 1024 * 1024 * 20 },
     fileFilter: fileFilterXML
+})
+const uploadFiles = multer({
+    storage: storageFiles,
+    limits: { fileSize: 1024 * 1024 * 20 }
 })
 
 module.exports = app => {
@@ -78,6 +91,9 @@ module.exports = app => {
 
     })
     app.post('/uploadXML', uploadXML.fields([{ name: 'xml' }]), function (req, res, next) {
+        return res.status(204).send()
+    })
+    app.post('/uploadFiles', uploadFiles.fields([{ name: 'file' }]), function (req, res, next) {
         return res.status(204).send()
     })
 
@@ -124,6 +140,9 @@ module.exports = app => {
         .delete(grantAccess(app.api.auth.usuarios.remove, 'usuario'))
 
 
+    app.route('/pessoas/verificaCadastro')
+        // .all(app.config.passport.authenticate())
+        .post(app.api.pessoas.pessoas.verificaCadastro)
     app.route('/pessoas/clientes')
         .all(app.config.passport.authenticate())
         .post(app.api.pessoas.pessoas.fastSave)

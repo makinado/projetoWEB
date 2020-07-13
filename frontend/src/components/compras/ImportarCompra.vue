@@ -544,7 +544,7 @@ export default {
 
       this.isLoadingImport = true;
       await axios
-        .post(`${urlBD}/uploadXML`, fd) // arquivos salvos no backend: uploads/xml
+        .post(`${urlBD}/uploadXML`, fd) // arquivos salvos no backend: uploads
         .then(res => {
           axios
             .post(`${urlBD}/compras/prepararXML`, filesUpload)

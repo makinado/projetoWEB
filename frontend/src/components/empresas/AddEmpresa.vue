@@ -544,6 +544,7 @@
                                 :color="color"
                                 label="Provedor de e-mail"
                                 v-model="empresa.provedor_email"
+                                placeholder="Ex: Gmail"
                               ></v-text-field>
                             </v-flex>
                             <v-flex xs12 md4>
@@ -551,6 +552,7 @@
                                 :color="color"
                                 label="Endereço do servidor"
                                 v-model="empresa.endereco_servidor"
+                                placeholder="Ex: smtp.gmail.com"
                               ></v-text-field>
                             </v-flex>
                             <v-flex xs12 md4>
@@ -559,6 +561,7 @@
                                 label="Porta"
                                 type="number"
                                 v-model="empresa.porta"
+                                placeholder="Ex: 465"
                               ></v-text-field>
                             </v-flex>
                             <v-flex xs12 md4>
@@ -735,7 +738,9 @@ export default {
       }
     },
     reset() {
-      this.empresa = {};
+      this.empresa = {
+        protocolo_ssl: true
+      };
       this.imageName = "";
       this.imageFile = "";
       this.imageUrl = "";

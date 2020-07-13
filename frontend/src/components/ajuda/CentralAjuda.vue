@@ -100,11 +100,6 @@ export default {
       }
     }
   },
-  // watch: {
-  //   "$store.state.artigoStore.filter"() {
-  //     console.log("filter");
-  //   }
-  // },
   components: {
     PageTitle: () => import("@/components/template/PageTitle"),
     AddFeedback: () => import("./AddFeedback"),

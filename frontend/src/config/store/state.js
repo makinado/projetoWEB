@@ -7,7 +7,6 @@ export default {
   isLoading: false,
   dialogLoading: false,
   notificacoes: [],
-  sockets: [],
   filter: {},
   empresaStore: {
     currentEmpresa: null,
@@ -25,7 +24,7 @@ export default {
   },
   usuarioStore: {
     currentUsuario: null,
-    usuariosOnline: null,
+    usuariosOnline: [],
     currentUsuarios: [],
 
     usuario: null,

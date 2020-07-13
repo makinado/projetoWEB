@@ -3,8 +3,8 @@ import axios from 'axios'
 import store from './config/store/state'
 
 export const usuarioKey = 'ALO47@#369QADB20%-'
-export const funcionarioKey = 'LK42_871*!369ANBT-'
-// export const urlBD = 'https://35.247.196.105/'          // production
+
+// export const urlBD = 'https://campag-nodejs-server.herokuapp.com'          // production
 // export const urlBD = 'http://192.168.0.80:3000'              // LOCAL NETWORK
 export const urlBD = 'http://localhost:3000'              // LOCAL
 

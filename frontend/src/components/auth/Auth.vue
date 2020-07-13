@@ -246,7 +246,7 @@
 </template>
 
 <script>
-import { urlBD, showError, usuarioKey, funcionarioKey } from "@/global";
+import { urlBD, showError, usuarioKey } from "@/global";
 import axios from "axios";
 import { mapState } from "vuex";
 
@@ -301,10 +301,6 @@ export default {
     afterSignIn(usuario) {
       this.$store.commit("setUsuario", usuario);
       localStorage.setItem(usuarioKey, JSON.stringify(usuario));
-      this.$socket.emit("login", {
-        id: usuario.id,
-        nome: usuario.nome
-      });
 
       console.log(this.usuarioStore.currentusuario);
 

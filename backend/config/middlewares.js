@@ -21,15 +21,16 @@ module.exports = app => {
         if (req.url == '/signupFunc' || req.url == '/signinFunc' || req.url == '/signup' || req.url == '/signin' || req.url == '/validateToken' || req.url == '/recoverPassword')
             return next()
 
-        if (!req.headers.client_base) {
-            res.status(400).send('Informe a base de dados');
+        if (!req.headers.user || req.headers.user.nome_base) {
+            res.status(400).send('Nenhum usuário logado');
             return;
         }
+        const user = JSON.parse(req.headers.user)
         try {
-            var conn = connectionsMap[req.headers.client_base]
+            var conn = connectionsMap[user.nome_base]
             if (!conn) {
-                connectionsMap[req.headers.client_base] = knex(createConnectionConfig(req.headers.client_base))
-                conn = connectionsMap[req.headers.client_base]
+                connectionsMap[user.nome_base] = knex(createConnectionConfig(user.nome_base))
+                conn = connectionsMap[user.nome_base]
             }
 
             req.knex = conn

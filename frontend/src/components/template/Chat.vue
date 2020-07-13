@@ -28,7 +28,8 @@
       </v-badge>
       <v-icon>fa fa-lg fa-comments</v-icon>
     </v-btn>
-    <v-card v-if="menu">
+
+    <v-card>
       <v-toolbar dark dense flat :color="color">
         <v-toolbar-title class="white--text">Bem vindo ao chat!</v-toolbar-title>
         <!-- <small>Usuários - {{ connections }}</small> -->
@@ -65,7 +66,7 @@
             <v-icon>fa fa-lg fa-phone</v-icon>
           </v-tab>
 
-          <v-tab-item value="tab-1">
+          <!-- <v-tab-item value="tab-1">
             <v-container grid-list-xl>
               <v-form ref="priv_form" v-model="priv_valid">
                 <v-layout wrap justify-center>
@@ -77,17 +78,13 @@
                       deletable-chips
                       :color="color"
                       label="Selecione um usuário"
-                      v-model="message.receiver"
-                      :items="usuarios"
-                      item-value="id"
-                      item-text="nome"
-                      return-object
-                      @change="joinPrivate"
+                      :items="usersOnline"
                       :rules="usuarioRules"
+                      v-model="usuario"
+                      no-data-text="Nenhum usuário online no momento"
                     >
                       <template slot="item" slot-scope="data">
-                        <v-avatar v-if="data.item.online" class="mr-4" color="success" size="15"></v-avatar>
-                        <v-avatar v-else class="mr-4" color="danger" size="15"></v-avatar>
+                        <v-avatar class="mr-4" color="success" size="15"></v-avatar>
                         {{ data.item.nome }}
                       </template>
                     </v-autocomplete>
@@ -101,12 +98,11 @@
                     <v-layout wrap justify-space-between>
                       <v-text-field
                         autofocus
-                        v-model="message.content"
+                        v-model="content"
                         class="ml-3"
                         placeholder="Digite aqui"
-                        @keyup.enter="sendPrivateMessage"
                       ></v-text-field>
-                      <v-btn :color="color" class="mt-3" @click="sendPrivateMessage">
+                      <v-btn :color="color" class="mt-3" @click>
                         <v-icon>fa fa-lg fa-paper-plane</v-icon>
                       </v-btn>
                     </v-layout>
@@ -114,9 +110,9 @@
                 </v-layout>
               </v-form>
             </v-container>
-          </v-tab-item>
+          </v-tab-item>-->
 
-          <v-tab-item value="tab-2">
+          <!-- <v-tab-item value="tab-2">
             <v-container grid-list-xl>
               <v-form ref="team_form" v-model="team_valid">
                 <v-layout wrap justify-center>
@@ -128,10 +124,8 @@
                       deletable-chips
                       :color="color"
                       label="Selecione a empresa"
-                      v-model="message.id_chat"
                       :items="empresaStore.currentEmpresas"
                       item-value="cnpj"
-                      @change="join"
                       :rules="empresaRules"
                     ></v-autocomplete>
                   </v-flex>
@@ -144,12 +138,55 @@
                     <v-layout wrap justify-space-between>
                       <v-text-field
                         autofocus
-                        v-model="message.content"
+                        v-model="content"
                         class="ml-3"
                         placeholder="Digite aqui"
-                        @keyup.enter="sendMessage"
                       ></v-text-field>
-                      <v-btn :color="color" class="mt-3" @click="sendMessage">
+                      <v-btn :color="color" class="mt-3" @click>
+                        <v-icon>fa fa-lg fa-paper-plane</v-icon>
+                      </v-btn>
+                    </v-layout>
+                  </v-flex>
+                </v-layout>
+              </v-form>
+            </v-container>
+          </v-tab-item>-->
+
+          <v-tab-item value="tab-3">
+            <v-container grid-list-xl>
+              <v-form ref="team_form" v-model="team_valid">
+                <v-layout wrap justify-center>
+                  <v-flex xs12>
+                    <v-autocomplete
+                      class="tag-input"
+                      dense
+                      chips
+                      deletable-chips
+                      :color="color"
+                      label="Seus chamados"
+                      no-data-text="Nenhum chamado aberto"
+                      :items="chats"
+                      item-Text="name"
+                      item-Value="name"
+                      prepend-icon="fa fa-lg fa-plus-circle"
+                      @click:prepend="dialog = true"
+                      @change=""
+                    ></v-autocomplete>
+                  </v-flex>
+                  <v-flex xs12>
+                    <div class="chat-container" ref="teamChatContainer">
+                      <Message :messages="messages"></Message>
+                    </div>
+                  </v-flex>
+                  <v-flex xs12>
+                    <v-layout wrap justify-space-between>
+                      <v-text-field
+                        autofocus
+                        v-model="content"
+                        class="ml-3"
+                        placeholder="Digite aqui"
+                      ></v-text-field>
+                      <v-btn :color="color" class="mt-3" @click>
                         <v-icon>fa fa-lg fa-paper-plane</v-icon>
                       </v-btn>
                     </v-layout>
@@ -161,13 +198,38 @@
         </v-tabs>
       </v-card-text>
     </v-card>
+
+    <v-dialog v-model="dialog" persistent max-width="500px" transition="dialog-transition">
+      <v-card>
+        <v-card-title class="headline">Criar novo chamado</v-card-title>
+        <v-card-text>
+          <v-form>
+            <v-text-field label="Descrição curta" v-model="chatName"></v-text-field>
+            <v-autocomplete
+              label="Categoria"
+              :items="categoriaStore.categoriasArtigos"
+              clearable
+              dense
+              @focus="$store.dispatch('loadCategoriasArtigos')"
+            ></v-autocomplete>
+          </v-form>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn flat color="blue" @click="dialog = false">Fechar</v-btn>
+          <v-btn flat color="blue" @click="addChat">Continuar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-menu>
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { mapState, mapActions } from "vuex";
 import axios from "axios";
 import { urlBD, showError } from "@/global";
+
+import modules from "../../config/store/modules";
 export default {
   name: "Chat",
   components: {
@@ -175,42 +237,68 @@ export default {
   },
   computed: {
     ...mapState("app", ["color"]),
-    ...mapState(["usuarioStore", "empresaStore"]),
+    ...mapState(["usuarioStore", "empresaStore", "categoriaStore"]),
     user: {
       get() {
         return this.usuarioStore.currentUsuario;
       }
+    },
+    chats: {
+      get() {
+        return Object.values(modules.chat.state.chats).map((item, index) => {
+          item.text = item.name;
+          item.value = item.index;
+
+          return item;
+        });
+      }
+    },
+    messages: {
+      get() {
+        return this.chatMessages;
+      }
+    },
+    username: {
+      get() {
+        return this.usuarioStore.currentUsuario.nome;
+      }
+    },
+    onlineUsers: {
+      get() {
+        return this.$store.getters.onlineUsers;
+      }
+    },
+    chatStore: {
+      get() {
+        return modules.chat;
+      }
     }
   },
+  props: ["id"],
   watch: {
     menu() {
       if (this.menu) {
+        // this.$store.dispatch("loadUsuarios");
         this.$notification.requestPermission();
-        this.loadUsuariosChat();
       }
     },
-    tabIndex() {
-      if (this.message.receiver && this.tabIndex == "tab-1") this.joinPrivate();
-      else if (this.message.id_chat && this.tabIndex == "tab-2") this.join();
-      else
-        this.messages = [
-          {
-            content:
-              "Dica! não compartilhe seu login e/ou senha com outros usuários ;)",
-            user: { id: "", nome: "NOME_EMPRESA" }
-          }
-        ];
+    watch: {
+      "$route.params.id"(newId, oldId) {
+        this.currentRef.off("child_added", this.onNewMessageAdded);
+        this.loadChat();
+      }
     }
   },
   data() {
     return {
-      message: {},
-      messages: [],
-      usuarios: [],
-      info: [],
       menu: false,
-      tabIndex: "tab-2",
-      connections: 0,
+      dialog: false,
+      content: "",
+      chatMessages: [],
+      chatName: "",
+      currentRef: {},
+      usuario: {},
+      tabIndex: "tab-3",
       new_messages: 0,
       priv_valid: true,
       team_valid: true,
@@ -220,89 +308,51 @@ export default {
     };
   },
   methods: {
-    reset() {
-      this.tabIndex = "tab-2";
-      this.message = {};
-      this.messages = [];
-      this.messages.push({
-        content:
-          "Dica! não compartilhe seu login e/ou senha com outros usuários ;)",
-        user: { id: "", nome: "NOME_EMPRESA" }
-      });
+    ...mapActions("chat", ["loadUserChats"]),
+    loadChat() {
+      this.loading = false;
+
       this.$refs.priv_form ? this.$refs.priv_form.reset() : "";
       this.$refs.team_form ? this.$refs.team_form.reset() : "";
       this.$refs.supp_form ? this.$refs.supp_form.reset() : "";
+
+      if (this.id !== undefined) {
+        this.chatMessages = [
+          {
+            id: 0,
+            content:
+              "Dica! não compartilhe seu login e/ou senha com outros usuários ;)",
+            username: "Campag Informática"
+          }
+        ];
+        let chatID = this.id;
+        this.currentRef = firebase
+          .database()
+          .ref("messages")
+          .child(chatID)
+          .child("messages")
+          .limitToLast(20);
+        this.currentRef.on("child_added", this.onNewMessageAdded);
+      }
     },
-    loadUsuariosChat() {
-      this.$store.dispatch("loadUsuarios");
+    async addChat() {
+      if (!this.dialog) {
+        this.dialog = true;
+        return;
+      }
 
-      this.usuarios = this.usuarioStore.currentUsuarios.map(u => {
-        return { id: u.value, nome: u.text };
-      });
+      if (this.chatName == "") return;
 
-      this.usuarios.map(u => {
-        if (u.id == this.usuarioStore.currentUsuario.id) u.disabled = true;
-        if (u.nome in this.usuarioStore.usuariosOnline) u.online = true;
-        return u;
-      });
-    },
-    joinPrivate() {
-      if (!this.message.receiver) return;
-
-      this.$socket.emit("join private", {
-        receiver: {
-          id: this.message.receiver.id,
-          nome: this.message.receiver.nome
-        },
-        sender: {
-          id: this.usuarioStore.currentUsuario.id,
-          nome: this.usuarioStore.currentUsuario.nome
-        }
-      });
-    },
-    join() {
-      if (!this.message.id_chat) return;
-      this.$socket.emit("join", this.message.id_chat);
-    },
-    sendPrivateMessage() {
-      if (!this.message.content || this.$refs.team_form.validate()) return;
-
-      const new_message = {
-        user: {
-          id: this.usuarioStore.currentUsuario.id,
-          nome: this.usuarioStore.currentUsuario.nome
-        },
-        receiver: {
-          id: this.message.receiver.id,
-          nome: this.message.receiver.nome
-        },
-        content: this.message.content,
-        data: new Date().toLocaleString().substr(0, 18),
-        id_chat: this.message.id_chat
-      };
-
-      this.messages.push(new_message);
-      this.$socket.emit("private chat message", new_message);
-      this.message.content = "";
-      this.scrollToEnd();
-    },
-    sendMessage() {
-      if (!this.message.content || !this.$refs.team_form.validate()) return;
-
-      const new_message = {
-        user: {
-          id: this.usuarioStore.currentUsuario.id,
-          nome: this.usuarioStore.currentUsuario.nome,
-          email: this.usuarioStore.currentUsuario.email
-        },
-        content: this.message.content,
-        data: new Date().toLocaleString().substr(0, 18),
-        id_chat: this.message.id_chat
-      };
-      this.messages.push(new_message);
-      this.$socket.emit("chat message", new_message);
-      this.message.content = "";
-      this.scrollToEnd();
+      this.chatStore.actions
+        .createChat(null, {
+          chatName: this.chatName,
+          user: this.user
+        })
+        .then(() => {
+          this.$toasted.global.defaultSuccess();
+          this.loadUserChats();
+          this.dialog = false;
+        });
     },
     scrollToEnd(container) {
       this.$nextTick(() => {
@@ -324,6 +374,17 @@ export default {
         audio.play();
       }
     },
+    sendMessage() {
+      if (this.content !== "") {
+        this.$store.dispatch("sendMessage", {
+          username: this.username,
+          content: this.content,
+          date: new Date().toString(),
+          chatID: this.id
+        });
+        this.content = "";
+      }
+    },
     notify(msg) {
       if (this.menu) this.scrollToEnd();
       else {
@@ -334,28 +395,12 @@ export default {
       }
     }
   },
-  mounted() {
-    this.reset();
-    this.loadUsuariosChat();
+  created() {
+    this.loadUserChats();
   },
-  sockets: {
-    chatMessage(msg) {
-      this.messages.push(msg);
-      this.notify(msg);
-    },
-    privateChatMessage(msg) {
-      this.messages.push(msg);
-      this.notify(msg);
-    },
-    onlineUsers(data) {
-      this.usuarioStore.usuariosOnline = data;
-
-      this.loadUsuariosChat();
-    },
-    join(msgs) {
-      this.messages = msgs;
-      this.scrollToEnd();
-    }
+  mounted() {
+    this.loadChat();
+    this.$store.dispatch("loadOnlineUsers");
   }
 };
 </script>

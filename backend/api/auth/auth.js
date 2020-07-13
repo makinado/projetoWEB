@@ -173,7 +173,7 @@ module.exports = app => {
             rel_estoque: true,
             rel_financeiro: true,
             rel_estat: true,
-            data_validade: new Date().setDate(new Date().getDate() + 7)
+            data_validade: new Date().setDate(new Date().getDate() + 15)
         }
 
         try {

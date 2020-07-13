@@ -32,6 +32,7 @@
                     v-mask="'##.###.###/####-##'"
                     v-model="pessoa.cnpj"
                     :rules="cnpjRules"
+                    @blur="verificaCadastro"
                   ></v-text-field>
                 </v-flex>
                 <v-flex xs12 md6 v-show="pessoa.tipo === 'Jurídica'">
@@ -67,6 +68,7 @@
                     v-mask="'###.###.###-##'"
                     v-model="pessoa.cpf"
                     :rules="cpfRules"
+                    @blur="verificaCadastro"
                   ></v-text-field>
                 </v-flex>
                 <v-flex xs12 md6 v-show="pessoa.tipo === 'Física'">
@@ -413,7 +415,7 @@ import { isCNPJ, isCPF, formatToCNPJ } from "brazilian-values";
 
 export default {
   name: "AddPessoa",
-  data: function() {
+  data() {
     return {
       valid: true,
       valid1: true,
@@ -488,7 +490,7 @@ export default {
     }
   },
   watch: {
-    "$store.state.modalStore.pessoas.visible": function() {
+    "$store.state.modalStore.pessoas.visible"() {
       if (this.modalStore.pessoas.visible) {
         this.reset();
         this.loadTela(this.pessoaStore.pessoa);
@@ -497,7 +499,9 @@ export default {
   },
   methods: {
     reset() {
-      this.pessoa = {};
+      this.pessoa = {
+        situacao: 'Ativo'
+      };
       this.empresas = this.selected = [];
 
       this.$refs.form ? this.$refs.form.reset() : "";
@@ -552,6 +556,18 @@ export default {
         this.pessoa.fornecedor ? this.selected.push("Fornecedor") : "";
         this.pessoa.transportadora ? this.selected.push("Transportadora") : "";
       }
+    },
+    async verificaCadastro() {
+      axios
+        .post(`${urlBD}/pessoas/verificaCadastro`, {
+          reg:
+            this.pessoa.tipo === "Jurídica" ? this.pessoa.cnpj : this.pessoa.cpf
+        })
+        .catch(e => {
+          showError(e);
+          if (this.pessoa.tipo === "Jurídica") this.cnpjRules = false;
+          else this.cpfRules = false;
+        });
     },
     save() {
       if (!this.$refs.form.validate()) return;

@@ -221,7 +221,6 @@ export default {
       return map;
     },
     deleteName() {
-      // console.log(new Date(), new Date(this.today));
       return new Date() >= new Date(this.today) ? "Concluir" : "Excluir";
     }
   },

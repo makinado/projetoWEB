@@ -1,12 +1,9 @@
 var app = require('express')()
 var http = require('http').createServer(app)
-const io = require('socket.io')(http)
 
 require('dotenv').config()
 
-require('./api/chat/socket')(io, app)
 const consign = require('consign')
-
 app.commonDb = require('./knexfile')
 
 consign()

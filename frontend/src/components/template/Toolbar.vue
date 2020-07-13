@@ -80,7 +80,12 @@
       </v-list>
     </v-menu>
 
-    <v-btn v-if="usuarioStore.currentUsuario.atividades" class="mr-4" icon @click="clickDrawerRight">
+    <v-btn
+      v-if="usuarioStore.currentUsuario.atividades"
+      class="mr-4"
+      icon
+      @click="clickDrawerRight"
+    >
       <v-icon>fa fa-lg fa-align-left</v-icon>
     </v-btn>
 
@@ -148,7 +153,6 @@ export default {
     },
     logout() {
       localStorage.removeItem(usuarioKey);
-      this.$socket.emit("logout", this.usuarioStore.currentUsuario);
       this.$store.commit("setUsuario", null);
 
       this.$router.push({ path: "/auth" });

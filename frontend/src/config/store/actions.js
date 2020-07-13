@@ -4,11 +4,21 @@ import axios from 'axios'
 import { urlBD, parseNumber, showError, showSuccess } from '@/global'
 import Vue from 'vue'
 
+import * as firebase from 'firebase'
 import store from '@/config/store'
 
 import { formatToBRL } from 'brazilian-values'
 
 export default {
+  async loadOnlineUsers({ commit }) {
+    firebase.database().ref('presence').on('value', function (snapshot) {
+      let result = []
+      result[0] = snapshot.numChildren()
+      result[1] = snapshot.val()
+
+      commit('setOnlineUsers', result)
+    })
+  },
   async addPessoa(state, pessoa) {
     const url = `${urlBD}/pessoas/todas/`
     axios.post(url, pessoa).then(res => {
