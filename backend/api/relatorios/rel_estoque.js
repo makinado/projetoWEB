@@ -7,12 +7,25 @@ module.exports = app => {
     const { withEstoque } = app.api.produtos.produtos
 
     const getData = async (req, res) => {
-        const relatorio = req.query.relatorio
-
         var inventario, entradas, saidas, movimento, stats
 
+        switch (req.query.ordem) {
+            case 'id':
+                ordem = 'id'
+                break;
+            case 'descricao':
+                ordem = 'descricao'
+                break;
+            case 'data':
+                if (req.query.relatorio == 'inventario')
+                    ordem = 'data_atualizado'
+                else
+                    ordem = 'data_movimentacao'
+                break;
+        }
+
         try {
-            if (relatorio == 'inventario') {
+            if (req.query.relatorio == 'inventario') {
                 inventario = await req.knex('produtos')
                     .leftJoin('unidades', 'produtos.unidade', 'unidades.id')
                     .leftJoin('categorias', 'produtos.categoria', 'categorias.id')
@@ -24,9 +37,7 @@ module.exports = app => {
                         'categorias.descricao as categoria',
                         'marcas.nome as marca',
                     )
-                    .orderBy(req.query.ordem = 'id' ? 'produtos.id' : '')
-                    .orderBy(req.query.ordem = 'descricao' ? 'produtos.descricao' : '')
-                    .orderBy(req.query.ordem = 'data' ? 'produtos.data_atualizado' : '')
+                    .orderBy(`produtos.${ordem || 'id'}`)
                     .where(async qb => {
                         if (req.query.produto)
                             qb.where('produtos.id', req.query.produto)
@@ -50,7 +61,7 @@ module.exports = app => {
                     inativos: inventario.filter(item => !item.ativo).length,
                     valorEstoque: await req.knex.raw(queries.valorEstoque()).then(result => result.rows.map(item => item.total)[0])
                 }
-            } else if (relatorio == 'entradas') {
+            } else if (req.query.relatorio == 'entradas') {
                 entradas = await req.knex('produto_movimento_estoque as pme')
                     .join('empresas', 'pme.id_empresa', 'empresas.id')
                     .join('produtos', 'pme.id_produto', 'produtos.id')
@@ -66,9 +77,7 @@ module.exports = app => {
                         'categorias.descricao as categoria',
                         'marcas.nome as marca',
                     )
-                    .orderBy(req.query.ordem = 'id' ? 'pme.id' : '')
-                    .orderBy(req.query.ordem = 'descricao' ? 'produtos.descricao' : '')
-                    .orderBy(req.query.ordem = 'data' ? 'pme.data_movimentacao' : '')
+                    .orderBy(`pme.${ordem || 'id'}`)
                     .where(qb => {
                         qb.where('pme.tipo_movimentacao', 0)
                         if (req.query.empresa)
@@ -89,6 +98,7 @@ module.exports = app => {
                     })
                     .then(entradas => entradas.map(e => {
                         e.data_movimentacao = moment(e.data_movimentacao).format('DD/MM/YYYY')
+
                         return e
                     }))
 
@@ -97,7 +107,7 @@ module.exports = app => {
                     quantidadeMovimento: entradas.reduce((total, entrada) => total + Number(entrada.quantidade), 0),
                     valorEntradas: formatToBRL(entradas.reduce((total, entrada) => total + Number(entrada.total), 0))
                 }
-            } else if (relatorio == 'saidas') {
+            } else if (req.query.relatorio == 'saidas') {
                 saidas = await req.knex('produto_movimento_estoque as pme')
                     .join('empresas', 'pme.id_empresa', 'empresas.id')
                     .join('produtos', 'pme.id_produto', 'produtos.id')
@@ -113,9 +123,7 @@ module.exports = app => {
                         'categorias.descricao as categoria',
                         'marcas.nome as marca',
                     )
-                    .orderBy(req.query.ordem = 'id' ? 'pme.id' : '')
-                    .orderBy(req.query.ordem = 'descricao' ? 'produtos.descricao' : '')
-                    .orderBy(req.query.ordem = 'data' ? 'pme.data_movimentacao' : '')
+                    .orderBy(`pme.${ordem || 'id'}`)
                     .where(qb => {
                         qb.where('pme.tipo_movimentacao', 1)
                         if (req.query.empresa)
@@ -160,9 +168,7 @@ module.exports = app => {
                         'categorias.descricao as categoria',
                         'marcas.nome as marca',
                     )
-                    .orderBy(req.query.ordem = 'id' ? 'pme.id' : '')
-                    .orderBy(req.query.ordem = 'descricao' ? 'produtos.descricao' : '')
-                    .orderBy(req.query.ordem = 'data' ? 'pme.data_movimentacao' : '')
+                    .orderBy(`pme.${ordem || 'id'}`)
                     .where(qb => {
                         if (req.query.empresa)
                             qb.where('pme.id_empresa', req.query.empresa)
@@ -195,6 +201,7 @@ module.exports = app => {
                     saldo: formatToBRL(movimento.reduce((total, entrada_saida) => entrada_saida.tipo_movimentacao == 0 ? total + Number(entrada_saida.total) : total - Number(entrada_saida.total), 0))
                 }
             }
+
         } catch (error) {
             console.log(error.toString())
             return res.status(500).send('Erro na geração do relatório')

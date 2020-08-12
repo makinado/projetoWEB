@@ -2,6 +2,8 @@ const jwt = require('jwt-simple')
 const bcrypt = require('bcrypt-nodejs')
 const client = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
 
+const knex = require('knex')
+
 module.exports = app => {
     const { existsOrError, notExistsOrError, equalsOrError } = app.api.validation
 
@@ -96,6 +98,7 @@ module.exports = app => {
         delete usuario.contatoEmpresa
 
         usuario.senha = encryptSenha(usuario.senha)
+        let data = new Date()
 
         const acesso = {
             empresa_create: true,
@@ -173,7 +176,7 @@ module.exports = app => {
             rel_estoque: true,
             rel_financeiro: true,
             rel_estat: true,
-            data_validade: new Date().setDate(new Date().getDate() + 15)
+            data_validade: new Date(data.setDate(data.getDate() + 15))
         }
 
         try {
@@ -186,6 +189,23 @@ module.exports = app => {
             return res.status(500).send('Erro ao criar a base de dados, tente novamente mais tarde.')
         }
 
+        const conn = knex({
+            client: process.env.DB_CLIENT,
+            connection: {
+                user: process.env.DB_USER,
+                host: process.env.DB_HOST,
+                port: process.env.DB_PORT,
+                database: usuario.nome_base,
+                password: process.env.DB_PASSWORD
+            },
+            pool: { min: 2, max: 20 }
+        });
+
+        console.log(empresa)
+
+        console.log(await conn('empresas')
+            .insert(empresa).returning('id'))
+
         return app.commonDb.transaction(async function (trx) {
             return app.commonDb('usuarios')
                 .insert(usuario).returning('id')
@@ -195,14 +215,14 @@ module.exports = app => {
                         .insert({ ...acesso, id_usuario: id_usuario[0] })
                         .transacting(trx)
                         .then(() => {
-                            return req.knex('usuarios')
+                            return conn('usuarios')
                                 .insert({ ...usuario, id: id_usuario[0] })
                                 .then(() => {
-                                    return req.knex('empresas')
+                                    return conn('empresas')
                                         .insert(empresa).returning('id')
                                         .then(id_empresa => {
-                                            return req.knex('usuario_empresas')
-                                                .insert({ id_empresa: id_empresa[0], id_usuario: id_usuario[0] })
+                                            // return conn('usuario_empresas')
+                                            //     .insert({ id_empresa: id_empresa[0], id_usuario: id_usuario[0] })
                                         })
                                 })
                         })
@@ -227,7 +247,6 @@ module.exports = app => {
     }
 
     const validateToken = async (req, res) => {
-
         const usuario = req.body || null
 
         try {

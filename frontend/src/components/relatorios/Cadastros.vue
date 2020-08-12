@@ -29,20 +29,8 @@
                   @change="loadFiltros"
                 ></v-autocomplete>
               </v-flex>
-              <v-flex xs12 md2>
-                <v-autocomplete
-                  class="tag-input"
-                  dense
-                  chips
-                  deletable-chips
-                  :color="color"
-                  label="Sexo"
-                  v-model="filter.sexo"
-                  :items="filter.sexos"
-                  no-data-text="Filtro de sexo não permitido"
-                ></v-autocomplete>
-              </v-flex>
-              <v-flex xs12 md2>
+
+              <v-flex xs12 md4>
                 <v-autocomplete
                   class="tag-input"
                   dense
@@ -55,7 +43,7 @@
                   no-data-text="Filtro de categoria não permitido ou nada cadastrado"
                 ></v-autocomplete>
               </v-flex>
-              <v-flex xs12 md2>
+              <v-flex xs12 md4>
                 <v-autocomplete
                   class="tag-input"
                   dense
@@ -68,7 +56,7 @@
                   no-data-text="Filtro de marca não permitido ou nada cadastrado"
                 ></v-autocomplete>
               </v-flex>
-              <v-flex xs12 md2>
+              <v-flex xs12 md4>
                 <v-autocomplete
                   class="tag-input"
                   dense
@@ -79,6 +67,18 @@
                   v-model="filter.unidade"
                   :items="produtoStore.unidades"
                   no-data-text="Filtro de unidade não permitido ou nada cadastrado"
+                ></v-autocomplete>
+              </v-flex>
+              <v-flex xs12 md4>
+                <v-autocomplete
+                  class="tag-input"
+                  dense
+                  chips
+                  deletable-chips
+                  :color="color"
+                  label="Ordenar por"
+                  v-model="filter.ordem"
+                  :items="ordens"
                 ></v-autocomplete>
               </v-flex>
             </v-layout>
@@ -147,16 +147,6 @@
                   ></v-date-picker>
                 </v-menu>
               </v-flex>
-              <v-flex xs12 md2>
-                <v-autocomplete
-                  dense
-                  clearable
-                  :color="color"
-                  label="Ordenar por"
-                  v-model="filter.ordem"
-                  :items="ordens"
-                ></v-autocomplete>
-              </v-flex>
             </v-layout>
           </v-form>
 
@@ -188,7 +178,7 @@ export default {
   name: "rel_cadastros",
   components: {
     PageTitle: () => import("@/components/template/PageTitle"),
-    Card: () => import("../material/Card")
+    Card: () => import("../material/Card"),
   },
   computed: {
     ...mapState("app", ["color"]),
@@ -196,7 +186,7 @@ export default {
       "usuarioStore",
       "empresaStore",
       "produtoStore",
-      "categoriaStore"
+      "categoriaStore",
     ]),
     computedDateFormatted: {
       get() {
@@ -204,7 +194,7 @@ export default {
       },
       set(value) {
         this.filter.data_inicial = value;
-      }
+      },
     },
     computedDateFormatted1: {
       get() {
@@ -212,15 +202,11 @@ export default {
       },
       set(value) {
         this.filter.data_final = value;
-      }
+      },
     },
     nomeEmpresa() {
-      if (!this.empresaStore.currentEmpresa)
-        return "Todas as empresas estão selecionadas";
-      return this.empresaStore.currentEmpresas.find(
-        emp => emp.value == this.empresaStore.currentEmpresa
-      ).text;
-    }
+      return "Todas as empresas estão selecionadas";
+    },
   },
   watch: {
     "filter.cadastros"() {
@@ -229,37 +215,37 @@ export default {
         this.filter.cadastros.includes("fornecedor") ||
         this.filter.cadastros.includes("transportadora")
       ) {
-        this.cadastros.map(item => {
+        this.cadastros.map((item) => {
           if (item.group != "Pessoas") item.disabled = true;
 
           return item;
         });
       } else {
-        this.cadastros.map(item => {
+        this.cadastros.map((item) => {
           if (item.group != "Pessoas") item.disabled = false;
 
           return item;
         });
         if (this.filter.cadastros.includes("usuario")) {
-          this.cadastros.map(item => {
+          this.cadastros.map((item) => {
             if (item.group != "Usuários") item.disabled = true;
 
             return item;
           });
         } else {
-          this.cadastros.map(item => {
+          this.cadastros.map((item) => {
             if (item.group != "Usuários") item.disabled = false;
 
             return item;
           });
           if (this.filter.cadastros.includes("produto")) {
-            this.cadastros.map(item => {
+            this.cadastros.map((item) => {
               if (item.group != "Produtos") item.disabled = true;
 
               return item;
             });
           } else {
-            this.cadastros.map(item => {
+            this.cadastros.map((item) => {
               if (item.group != "Produtos") item.disabled = false;
 
               return item;
@@ -267,7 +253,7 @@ export default {
           }
         }
       }
-    }
+    },
   },
   data() {
     return {
@@ -278,50 +264,50 @@ export default {
           group: "Pessoas",
           value: "cliente",
           text: "Clientes",
-          disabled: false
+          disabled: false,
         },
         {
           group: "Pessoas",
           value: "fornecedor",
           text: "Fornecedores",
-          disabled: false
+          disabled: false,
         },
         {
           group: "Pessoas",
           value: "transportadora",
           text: "Transportadoras",
-          disabled: false
+          disabled: false,
         },
         { header: "Usuários" },
         {
           group: "Usuários",
           value: "usuario",
           text: "Usuários",
-          disabled: false
+          disabled: false,
         },
         { header: "Produtos" },
         {
           group: "Produtos",
           value: "produto",
           text: "Produtos",
-          disabled: false
-        }
+          disabled: false,
+        },
       ],
       ordens: [
         { value: "id", text: "Código" },
-        { value: "nome", text: "Nome/Descrição" }
+        { value: "nome", text: "Nome/Descrição" },
       ],
       valid: true,
       categoriaVisible: true,
       menu: false,
       menu1: false,
       isLoading: false,
-      empresaRules: [v => !!v || "Empresa é obrigatória"],
+      empresaRules: [(v) => !!v || "Empresa é obrigatória"],
       cadRules: [
-        v =>
+        (v) =>
           (!!v && v.length > 0) ||
-          "Selecione os cadastros que aparecerão no relatório"
-      ]
+          "Selecione os cadastros que aparecerão no relatório",
+      ],
     };
   },
   methods: {
@@ -357,17 +343,21 @@ export default {
 
       this.isLoading = true;
 
-      const url = `${urlBD}/rel_cadastros?categoria=${this.filter.categoria ||
-        ""}&sexo=${this.filter.sexo || ""}&marca=${this.filter.marca ||
-        ""}&unidade=${this.filter.unidade || ""}&ordem=${this.filter.ordem ||
-        ""}&cadastros=${this.filter.cadastros || ""}&data_type=${
+      const url = `${urlBD}/rel_cadastros?categoria=${
+        this.filter.categoria || ""
+      }&sexo=${this.filter.sexo || ""}&marca=${
+        this.filter.marca || ""
+      }&unidade=${this.filter.unidade || ""}&ordem=${
+        this.filter.ordem || ""
+      }&cadastros=${this.filter.cadastros || ""}&data_type=${
         this.filter.data_type
-      }&data_inicial=${this.filter.data_inicial || ""}&data_final=${this.filter
-        .data_final || ""}`;
+      }&data_inicial=${this.filter.data_inicial || ""}&data_final=${
+        this.filter.data_final || ""
+      }`;
 
       axios
         .post(url)
-        .then(res => {
+        .then((res) => {
           this.$toasted.global.defaultSuccess();
 
           if (type == "pdf") {
@@ -424,7 +414,7 @@ export default {
           { title: "CPF/CNPJ", dataKey: "cpf_cnpj" },
           { title: "Categoria", dataKey: "categoria" },
           { title: "Email", dataKey: "email" },
-          { title: "Contato", dataKey: "contato" }
+          { title: "Contato", dataKey: "contato" },
         ],
         usuarios_columns = [
           { title: "Código", dataKey: "id" },
@@ -432,7 +422,7 @@ export default {
           { title: "E-mail", dataKey: "email" },
           { title: "Contato", dataKey: "contato" },
           { title: "Vendas", dataKey: "valor_vendas" },
-          { title: "Comissões", dataKey: "valor_comissoes" }
+          { title: "Comissões", dataKey: "valor_comissoes" },
         ],
         produtos_columns = [
           { title: "Codigo", dataKey: "id" },
@@ -442,12 +432,12 @@ export default {
           { title: "Unid", dataKey: "unidade" },
           { title: "Vlr unit.", dataKey: "valor_unitario" },
           { title: "Vlr venda", dataKey: "valor_venda" },
-          { title: "Vlr custo", dataKey: "valor_custo_medio" }
+          { title: "Vlr custo", dataKey: "valor_custo_medio" },
         ];
 
       var title = "";
       if (data.pessoas) {
-        data.pessoas.map(pessoa => {
+        data.pessoas.map((pessoa) => {
           if (pessoa.cpf) pessoa.cpf_cnpj = pessoa.cpf;
           else pessoa.cpf_cnpj = pessoa.cnpj;
 
@@ -455,7 +445,7 @@ export default {
 
           return pessoa;
         });
-        title = "Relatório de pessoas"
+        title = "Relatório de pessoas";
 
         doc.setFontSize(12);
         doc.text(
@@ -473,24 +463,24 @@ export default {
             { title: "Transportadoras", dataKey: "transportadoras" },
             { title: "Ativos", dataKey: "ativos" },
             { title: "Inativos", dataKey: "inativos" },
-            { title: "Em análise", dataKey: "emAnalise" }
+            { title: "Em análise", dataKey: "emAnalise" },
           ],
           [data.stats],
           {
             theme: "striped",
             margin: { top: 90 },
-            headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+            headStyles: { fillColor: "#B2DFDB", textColor: "black" },
           }
         );
         doc.autoTable(pessoas_columns, data.pessoas, {
           theme: "striped",
           margin: { top: 90 },
-          headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+          headStyles: { fillColor: "#B2EBF2", textColor: "black" },
         });
 
         addHeadersFooters(doc, title);
       } else if (data.usuarios) {
-        title = "Relatório de usuários"
+        title = "Relatório de usuários";
 
         doc.setFontSize(12);
         doc.text(
@@ -507,27 +497,19 @@ export default {
           {
             theme: "striped",
             margin: { top: 90 },
-            headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+            headStyles: { fillColor: "#B2DFDB", textColor: "black" },
           }
         );
         doc.autoTable(usuarios_columns, data.usuarios, {
           theme: "striped",
           margin: { top: 90 },
-          headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+          headStyles: { fillColor: "#B2EBF2", textColor: "black" },
         });
 
         addHeadersFooters(doc, title);
       } else if (data.produtos) {
-        data.produtos.map(produto => {
-          if (!produto.valor_venda) produto.valor_venda = "0.00";
-          if (!produto.valor_unitario) produto.valor_unitario = "0.00";
-          if (!produto.valor_custo_medio) produto.valor_custo_medio = "0.00";
+        title = "Relatório de produtos";
 
-          return produto;
-        });
-
-        title = "Relatório de produtos"
-        
         doc.setFontSize(12);
         doc.text(
           "Totalizadores",
@@ -541,19 +523,19 @@ export default {
           [
             { title: "Produtos", dataKey: "produtos" },
             { title: "Ativos", dataKey: "ativos" },
-            { title: "Inativos", dataKey: "inativos" }
+            { title: "Inativos", dataKey: "inativos" },
           ],
           [data.stats],
           {
             theme: "striped",
             margin: { top: 90 },
-            headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+            headStyles: { fillColor: "#B2DFDB", textColor: "black" },
           }
         );
         doc.autoTable(produtos_columns, data.produtos, {
           theme: "striped",
           margin: { top: 90 },
-          headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+          headStyles: { fillColor: "#B2EBF2", textColor: "black" },
         });
 
         addHeadersFooters(doc, title);
@@ -570,20 +552,17 @@ export default {
         showTitle: false,
         title:
           "RelatorioDeCadastros_" +
-          new Date()
-            .toLocaleDateString()
-            .split("/")
-            .join(""),
+          new Date().toLocaleDateString().split("/").join(""),
         useTextFile: false,
         useBom: true,
-        useKeysAsHeaders: true
+        useKeysAsHeaders: true,
         // headers: ['id', 'Nome', ''] //<-- Won't work with useKeysAsHeaders present!
       };
 
       const csvExporter = new ExportToCsv(options);
 
       if (data.pessoas) {
-        data.pessoas.map(pessoa => {
+        data.pessoas.map((pessoa) => {
           if (pessoa.cpf) pessoa.cnpj = "";
           else pessoa.cpf = "";
 
@@ -598,7 +577,7 @@ export default {
       } else if (data.produtos) {
         csvExporter.generateCsv(data.produtos);
       }
-    }
-  }
+    },
+  },
 };
 </script>

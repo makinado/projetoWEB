@@ -254,12 +254,18 @@ import { isCNPJ } from "brazilian-values";
 import { KinesisContainer, KinesisElement } from "vue-kinesis";
 
 import firebase from "firebase";
+import modules from "../../config/store/modules";
 
 export default {
   name: "Auth",
   computed: {
     ...mapState("app", ["color"]),
-    ...mapState(["modalStore", "usuarioStore", "empresaStore"])
+    ...mapState(["modalStore", "usuarioStore", "empresaStore"]),
+    chatStore: {
+      get() {
+        return modules.chat;
+      }
+    }
   },
   components: {
     KinesisContainer,
@@ -271,6 +277,7 @@ export default {
       showFunc: false,
       showSignup: false,
       showForgotPassword: false,
+      firstAccess: false,
       valid: true,
       valid2: true,
       isLoading: false,
@@ -301,8 +308,7 @@ export default {
     afterSignIn(usuario) {
       this.$store.commit("setUsuario", usuario);
       localStorage.setItem(usuarioKey, JSON.stringify(usuario));
-
-      console.log(this.usuarioStore.currentusuario);
+      // console.log(this.usuarioStore.currentusuario);
 
       axios
         .get(`${urlBD}/usuarioEmpresas/${this.usuarioStore.currentUsuario.id}`)
@@ -312,6 +318,16 @@ export default {
             "setEmpresa",
             this.empresaStore.currentEmpresas[0].value
           );
+
+          if (this.firstAccess) {
+            this.chatStore.actions.createChat(null, {
+              chatName: this.empresaStore.currentEmpresas[0].text,
+              isEnterprise: true,
+              user: this.user,
+              cnpjEmpresa: this.cnpjEmpresa,
+              status: "Aberto"
+            });
+          }
         });
 
       this.$router.push({ path: "/" });
@@ -336,6 +352,7 @@ export default {
         return (this.stepper = "2");
       }
 
+      this.firstAccess = true;
       this.isLoading = true;
 
       axios

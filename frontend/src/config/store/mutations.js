@@ -7,6 +7,7 @@ import { showSuccess } from '@/global'
 
 export default {
   setOnlineUsers(state, payload) {
+    console.log(payload)
     state.usuarioStore.usuariosOnline = payload
   },
   setUsuario(state, usuario) {

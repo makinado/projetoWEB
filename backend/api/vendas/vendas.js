@@ -166,41 +166,42 @@ module.exports = app => {
                                 return req.knex.batchInsert('produto_movimento_estoque', movim_estoque)
                                     .transacting(trx)
                                     .then(function () {
-                                        return req.knex.batchInsert('financeiro', financeiro)
-                                            .returning('*')
-                                            .transacting(trx)
-                                            .then(async function (financs) {
-                                                financs.map(financ_updated => {
-                                                    if (financ_updated.pago)
-                                                        movim_conta.push({
-                                                            id_empresa: venda.id_empresa,
-                                                            id_conta: financ_updated.id_conta,
-                                                            id_movimento_origem: venda.id,
-                                                            id_movimento_financeiro: financ_updated.id,
-                                                            id_classificacao: financ_updated.classificacao,
-                                                            data_lancamento: new Date(),
-                                                            data_emissao: venda.data_baixa,
-                                                            id_documento: financ_updated.documento_baixa,
-                                                            num_documento: financ_updated.num_documento_baixa,
-                                                            observacao: venda.observacao,
-                                                            origem: "VENDA",
-                                                            dc: 'C',
-                                                            valor: financ_updated.valor_pago
-                                                        })
-                                                })
-
-                                                return req.knex.batchInsert('usuario_vendas', vendedores)
-                                                    .transacting(trx)
-                                                    .then(function () {
-                                                        return req.knex.batchInsert('conta_movimento', movim_conta)
-                                                            .transacting(trx)
-                                                            .then(function () {
-                                                                if (venda.tipo == 2)
-                                                                    return req.knex.raw(`select calcula_comissao_faturamento(${venda.id}::integer, ${venda.valor_total}::float, '${venda.data_criacao}'::date)`)
-                                                                        .transacting(trx)
+                                        if (financeiro)
+                                            return req.knex.batchInsert('financeiro', financeiro)
+                                                .returning('*')
+                                                .transacting(trx)
+                                                .then(async function (financs) {
+                                                    financs.map(financ_updated => {
+                                                        if (financ_updated.pago)
+                                                            movim_conta.push({
+                                                                id_empresa: venda.id_empresa,
+                                                                id_conta: financ_updated.id_conta,
+                                                                id_movimento_origem: venda.id,
+                                                                id_movimento_financeiro: financ_updated.id,
+                                                                id_classificacao: financ_updated.classificacao,
+                                                                data_lancamento: new Date(),
+                                                                data_emissao: venda.data_baixa,
+                                                                id_documento: financ_updated.documento_baixa,
+                                                                num_documento: financ_updated.num_documento_baixa,
+                                                                observacao: venda.observacao,
+                                                                origem: "VENDA",
+                                                                dc: 'C',
+                                                                valor: financ_updated.valor_pago
                                                             })
                                                     })
-                                            })
+
+                                                    return req.knex.batchInsert('usuario_vendas', vendedores)
+                                                        .transacting(trx)
+                                                        .then(function () {
+                                                            return req.knex.batchInsert('conta_movimento', movim_conta)
+                                                                .transacting(trx)
+                                                                .then(function () {
+                                                                    if (venda.tipo == 2)
+                                                                        return req.knex.raw(`select calcula_comissao_faturamento(${venda.id}::integer, ${venda.valor_total}::float, '${venda.data_criacao}'::date)`)
+                                                                            .transacting(trx)
+                                                                })
+                                                        })
+                                                })
                                     })
                             })
 
@@ -296,39 +297,40 @@ module.exports = app => {
                                         return req.knex.batchInsert('produto_movimento_estoque', movim_estoque)
                                             .transacting(trx)
                                             .then(function () {
-                                                return req.knex.batchInsert('financeiro', financeiro)
-                                                    .returning('*')
-                                                    .transacting(trx)
-                                                    .then(async function (financs) {
-                                                        const movim_conta = []
-                                                        financs.map(async financ_updated => {
-                                                            if (financ_updated.pago) {
-                                                                movim_conta.push({
-                                                                    id_empresa: venda.id_empresa,
-                                                                    id_conta: financ_updated.id_conta,
-                                                                    id_movimento_origem: id[0],
-                                                                    id_movimento_financeiro: financ_updated.id,
-                                                                    id_classificacao: financ_updated.classificacao,
-                                                                    data_lancamento: new Date(),
-                                                                    data_emissao: venda.data_baixa,
-                                                                    id_documento: financ_updated.documento_baixa,
-                                                                    num_documento: financ_updated.num_documento_baixa,
-                                                                    observacao: venda.observacao,
-                                                                    origem: "VENDA",
-                                                                    dc: 'C',
-                                                                    valor: financ_updated.valor_pago
-                                                                })
-                                                            }
-                                                        })
-
-                                                        return req.knex.batchInsert('conta_movimento', movim_conta)
-                                                            .transacting(trx)
-                                                            .then(function () {
-                                                                if (venda.tipo == 2)
-                                                                    return req.knex.raw(`select calcula_comissao_faturamento(${id[0]}::integer, ${venda.valor_total}::float, '${venda.data_criacao}'::date)`)
-                                                                        .transacting(trx)
+                                                if (financeiro)
+                                                    return req.knex.batchInsert('financeiro', financeiro)
+                                                        .returning('*')
+                                                        .transacting(trx)
+                                                        .then(async function (financs) {
+                                                            const movim_conta = []
+                                                            financs.map(async financ_updated => {
+                                                                if (financ_updated.pago) {
+                                                                    movim_conta.push({
+                                                                        id_empresa: venda.id_empresa,
+                                                                        id_conta: financ_updated.id_conta,
+                                                                        id_movimento_origem: id[0],
+                                                                        id_movimento_financeiro: financ_updated.id,
+                                                                        id_classificacao: financ_updated.classificacao,
+                                                                        data_lancamento: new Date(),
+                                                                        data_emissao: venda.data_baixa,
+                                                                        id_documento: financ_updated.documento_baixa,
+                                                                        num_documento: financ_updated.num_documento_baixa,
+                                                                        observacao: venda.observacao,
+                                                                        origem: "VENDA",
+                                                                        dc: 'C',
+                                                                        valor: financ_updated.valor_pago
+                                                                    })
+                                                                }
                                                             })
-                                                    })
+
+                                                            return req.knex.batchInsert('conta_movimento', movim_conta)
+                                                                .transacting(trx)
+                                                                .then(function () {
+                                                                    if (venda.tipo == 2)
+                                                                        return req.knex.raw(`select calcula_comissao_faturamento(${id[0]}::integer, ${venda.valor_total}::float, '${venda.data_criacao}'::date)`)
+                                                                            .transacting(trx)
+                                                                })
+                                                        })
                                             })
                                     })
                             })
@@ -368,16 +370,14 @@ module.exports = app => {
             .limit(limit).offset(page * limit - limit)
             .orderBy('venda.situacao')
             .where(async (qb) => {
-                if (req.query.empresa) {
+                if (req.query.empresa)
                     qb.where('venda.id_empresa', '=', req.query.empresa);
-                }
-                if (req.query.fornecedor) {
+                if (req.query.fornecedor)
                     qb.where('venda.id_pessoa', '=', req.query.fornecedor);
-                } else if (req.query.id) {
+                else if (req.query.id)
                     qb.orWhere('venda.id', '=', req.query.id);
-                } else if (req.query.documento) {
+                else if (req.query.documento)
                     qb.orWhere('venda.nota_fiscal', '=', req.query.documento);
-                }
                 if (req.query.tipo_data == 1) {
                     if (req.query.data_inicial && req.query.data_final) {
                         qb.whereBetween('venda.data_contato', [req.query.data_inicial, req.query.data_final])

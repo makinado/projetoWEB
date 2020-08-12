@@ -35,13 +35,13 @@ module.exports = app => {
                     .orderBy(req.query.ordem || "nome")
                     .where((qb) => {
                         if (req.query.cadastros.includes('cliente')) {
-                            qb.where('pessoas.cliente', '=', true);
+                            qb.where('pessoas.cliente', true);
                         }
                         if (req.query.cadastros.includes('fornecedor')) {
-                            qb.orWhere('pessoas.fornecedor', '=', true);
+                            qb.orWhere('pessoas.fornecedor', true);
                         }
                         if (req.query.cadastros.includes('transportadora')) {
-                            qb.orWhere('pessoas.transportadora', '=', true);
+                            qb.orWhere('pessoas.transportadora', true);
                         }
                         if (req.query.categoria) {
                             qb.where('pessoas.categoria', '=', req.query.categoria)

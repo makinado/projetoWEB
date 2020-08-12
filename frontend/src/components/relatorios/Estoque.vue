@@ -214,7 +214,7 @@ export default {
       "empresaStore",
       "produtoStore",
       "categoriaStore",
-      "pessoaStore"
+      "pessoaStore",
     ]),
     computedDateFormatted: {
       get() {
@@ -222,7 +222,7 @@ export default {
       },
       set(value) {
         this.filter.data_inicial = value;
-      }
+      },
     },
     computedDateFormatted1: {
       get() {
@@ -230,19 +230,18 @@ export default {
       },
       set(value) {
         this.filter.data_final = value;
-      }
+      },
     },
     nomeEmpresa() {
-      if (!this.empresaStore.currentEmpresa)
-        return "Todas as empresas estão selecionadas";
+      if (!this.filter.empresa) return "Todas as empresas estão selecionadas";
       return this.empresaStore.currentEmpresas.find(
-        emp => emp.value == this.empresaStore.currentEmpresa
+        (emp) => emp.value == this.filter.empresa
       ).text;
-    }
+    },
   },
   components: {
     PageTitle: () => import("@/components/template/PageTitle"),
-    Card: () => import("../material/Card")
+    Card: () => import("../material/Card"),
   },
   data() {
     return {
@@ -255,7 +254,7 @@ export default {
       ordens: [
         { value: "id", text: "Código" },
         { value: "descricao", text: "Descrição" },
-        { value: "data", text: "Data" }
+        { value: "data", text: "Data" },
       ],
       relatorios: [
         { header: "Produtos" },
@@ -263,29 +262,29 @@ export default {
           group: "Produtos",
           value: "inventario",
           text: "Inventário",
-          disabled: false
+          disabled: false,
         },
         { header: "Movimento de estoque" },
         {
           group: "Movimento de estoque",
           value: "entradas",
           text: "Entradas",
-          disabled: false
+          disabled: false,
         },
         {
           group: "Movimento de estoque",
           value: "saidas",
           text: "Saídas",
-          disabled: false
+          disabled: false,
         },
         {
           group: "Movimento de estoque",
           value: "movimento_estoque",
           text: "Movimento de estoque completo",
-          disabled: false
-        }
+          disabled: false,
+        },
       ],
-      tipoRules: [v => !!v || "Tipo de relatório obrigatório"]
+      tipoRules: [(v) => !!v || "Tipo de relatório obrigatório"],
     };
   },
   methods: {
@@ -311,17 +310,21 @@ export default {
 
       this.isLoading = true;
 
-      const url = `${urlBD}/rel_estoque?relatorio=${this.filter.relatorio ||
-        ""}&produto=${this.filter.produto || ""}&data_inicial=${this.filter
-        .data_inicial || ""}&data_final=${this.filter.data_final ||
-        ""}&empresa=${this.filter.empresa || ""}&categoria=${this.filter
-        .categoria || ""}&marca=${this.filter.marca || ""}&unidade=${this.filter
-        .unidade || ""}&ordem=${this.filter.ordem || ""}&pessoa=${this.filter
-        .pessoa || ""}`;
+      const url = `${urlBD}/rel_estoque?relatorio=${
+        this.filter.relatorio || ""
+      }&produto=${this.filter.produto || ""}&data_inicial=${
+        this.filter.data_inicial || ""
+      }&data_final=${this.filter.data_final || ""}&empresa=${
+        this.filter.empresa || ""
+      }&categoria=${this.filter.categoria || ""}&marca=${
+        this.filter.marca || ""
+      }&unidade=${this.filter.unidade || ""}&ordem=${
+        this.filter.ordem || ""
+      }&pessoa=${this.filter.pessoa || ""}`;
 
       axios
         .get(url)
-        .then(res => {
+        .then((res) => {
           this.$toasted.global.defaultSuccess();
 
           if (type == "pdf") {
@@ -378,7 +381,7 @@ export default {
           { title: "NCM", dataKey: "ncm" },
           { title: "Vlr unit.", dataKey: "valor_unitario" },
           { title: "Vlr custo", dataKey: "valor_custo_medio" },
-          { title: "Qtde estoque", dataKey: "qtdEstoque" }
+          { title: "Qtde estoque", dataKey: "qtdEstoque" },
         ],
         entradas_saidas_columns = [
           { title: "Codigo", dataKey: "id" },
@@ -389,7 +392,7 @@ export default {
           { title: "Quantidade", dataKey: "quantidade" },
           { title: "Custo unit.", dataKey: "custo_unitario" },
           { title: "Custo médio.", dataKey: "custo_medio" },
-          { title: "Total", dataKey: "total" }
+          { title: "Total", dataKey: "total" },
         ];
 
       var title = "";
@@ -410,19 +413,19 @@ export default {
             { title: "Produtos", dataKey: "produtos" },
             { title: "Ativos", dataKey: "ativos" },
             { title: "Inativos", dataKey: "inativos" },
-            { title: "Valor total do estoque", dataKey: "valorEstoque" }
+            { title: "Valor total do estoque", dataKey: "valorEstoque" },
           ],
           [data.stats],
           {
             theme: "striped",
             margin: { top: 90 },
-            headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+            headStyles: { fillColor: "#B2DFDB", textColor: "black" },
           }
         );
         doc.autoTable(inventario_columns, data.inventario, {
           theme: "striped",
           margin: { top: 90 },
-          headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+          headStyles: { fillColor: "#B2EBF2", textColor: "black" },
         });
 
         addHeadersFooters(doc, title);
@@ -443,21 +446,21 @@ export default {
             { title: "Total de entradas", dataKey: "quantidadeEntradas" },
             {
               title: "Quantidade total movimentada",
-              dataKey: "quantidadeMovimento"
+              dataKey: "quantidadeMovimento",
             },
-            { title: "Valor total das entradas", dataKey: "valorEntradas" }
+            { title: "Valor total das entradas", dataKey: "valorEntradas" },
           ],
           [data.stats],
           {
             theme: "striped",
             margin: { top: 90 },
-            headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+            headStyles: { fillColor: "#B2DFDB", textColor: "black" },
           }
         );
         doc.autoTable(entradas_saidas_columns, data.entradas, {
           theme: "striped",
           margin: { top: 90 },
-          headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+          headStyles: { fillColor: "#B2EBF2", textColor: "black" },
         });
 
         addHeadersFooters(doc, title);
@@ -478,21 +481,21 @@ export default {
             { title: "Total de saídas", dataKey: "quantidadeSaidas" },
             {
               title: "Quantidade total movimentada",
-              dataKey: "quantidadeMovimento"
+              dataKey: "quantidadeMovimento",
             },
-            { title: "Valor total das saídas", dataKey: "valorSaidas" }
+            { title: "Valor total das saídas", dataKey: "valorSaidas" },
           ],
           [data.stats],
           {
             theme: "striped",
             margin: { top: 90 },
-            headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+            headStyles: { fillColor: "#B2DFDB", textColor: "black" },
           }
         );
         doc.autoTable(entradas_saidas_columns, data.saidas, {
           theme: "striped",
           margin: { top: 90 },
-          headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+          headStyles: { fillColor: "#B2EBF2", textColor: "black" },
         });
 
         addHeadersFooters(doc, title);
@@ -514,23 +517,23 @@ export default {
             { title: "Total de entradas", dataKey: "quantidadeEntradas" },
             {
               title: "Quantidade total movimentada",
-              dataKey: "quantidadeMovimento"
+              dataKey: "quantidadeMovimento",
             },
             { title: "Valor total das saídas", dataKey: "valorSaidas" },
             { title: "Valor total das entradas", dataKey: "valorEntradas" },
-            { title: "Saldo final", dataKey: "saldo" }
+            { title: "Saldo final", dataKey: "saldo" },
           ],
           [data.stats],
           {
             theme: "striped",
             margin: { top: 90 },
-            headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+            headStyles: { fillColor: "#B2DFDB", textColor: "black" },
           }
         );
         doc.autoTable(entradas_saidas_columns, data.movimento, {
           theme: "striped",
           margin: { top: 90 },
-          headStyles: { fillColor: "#B2DFDB", textColor: "black" }
+          headStyles: { fillColor: "#B2EBF2", textColor: "black" },
         });
 
         addHeadersFooters(doc, title);
@@ -547,13 +550,10 @@ export default {
         showTitle: false,
         title:
           "RelatorioDeEstoque" +
-          new Date()
-            .toLocaleDateString()
-            .split("/")
-            .join(""),
+          new Date().toLocaleDateString().split("/").join(""),
         useTextFile: false,
         useBom: true,
-        useKeysAsHeaders: true
+        useKeysAsHeaders: true,
         // headers: ['id', 'Nome', ''] //<-- Won't work with useKeysAsHeaders present!
       };
 
@@ -562,7 +562,7 @@ export default {
       if (data.inventario) {
         csvExporter.generateCsv(data.inventario);
       }
-    }
-  }
+    },
+  },
 };
 </script>

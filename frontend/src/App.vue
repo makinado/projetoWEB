@@ -74,7 +74,7 @@ export default {
       }
 
       this.validatingToken = false;
-    }
+    },
   },
   created() {
     this.validateToken();

@@ -5,8 +5,8 @@ import store from './config/store/state'
 export const usuarioKey = 'ALO47@#369QADB20%-'
 
 // export const urlBD = 'https://campag-nodejs-server.herokuapp.com'          // production
-// export const urlBD = 'http://192.168.0.80:3000'              // LOCAL NETWORK
-export const urlBD = 'http://localhost:3000'              // LOCAL
+export const urlBD = 'http://192.168.0.80:3000'              // LOCAL NETWORK
+// export const urlBD = 'http://localhost:3000'              // LOCAL
 
 Vue.directive('uppercase', {
     bind(el, _, vnode) {

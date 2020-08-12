@@ -4,17 +4,21 @@ import mainState from '../../state'
 import { mapMutations } from 'vuex'
 
 export default {
-    sendMessage(state, payload) {
+    sendMessage(payload) {
+        console.log(payload)
         let chatID = payload.chatID
         const message = {
             user: payload.username,
             content: payload.content,
             date: payload.date
         }
+
+        console.log(chatID)
+
         firebase.database().ref('messages').child(chatID).child('messages').push(message)
             .then(
-                (data) => {
-                }
+                // (data) => {
+                // }
             )
             .catch(
                 (error) => {
@@ -40,7 +44,6 @@ export default {
     },
     async createChat(state, payload) {
         let time = new Date().valueOf();
-        let status = "Aberto"
 
         let newPostKey = firebase
             .database()
@@ -48,17 +51,31 @@ export default {
             .child("chats")
             .push().key;
 
+        delete Object.assign(payload, { ['name']: payload['chatName'] })['chatName'];
 
         let updates = {};
-        updates["/chats/" + newPostKey] = { name: payload.chatName };
-        updates["/chat_members/" + newPostKey + "/users/" + payload.user.id] = {
-            timestamp: time,
-            status
-        };
-        updates["users/" + payload.user.id + "/chats/" + newPostKey] = {
-            timestamp: time,
-            status
-        };
+        if (payload.users) {
+            payload.users.forEach(user => {
+                updates["/chat_members/" + newPostKey + "/users/" + user] = {
+                    timestamp: time
+                };
+
+                updates["users/" + user + "/chats/" + newPostKey] = {
+                    timestamp: time
+                }
+            });
+
+            delete payload.users
+        } else {
+            updates["/chat_members/" + newPostKey + "/users/" + payload.user.id] = {
+                timestamp: time
+            };
+
+            updates["users/" + payload.user.id + "/chats/" + newPostKey] = {
+                timestamp: time
+            };
+        }
+        updates["/chats/" + newPostKey] = payload;
 
         return firebase
             .database()
@@ -66,5 +83,33 @@ export default {
             .update(updates)
             .then(() => newPostKey)
             .catch(e => e)
+    },
+    async editChat(state, payload) {
+        console.log(payload)
+        delete Object.assign(payload, { ['name']: payload['chatName'] })['chatName'];
+        let updates = {};
+        updates["/chats/" + payload.key] = payload;
+
+        return firebase
+            .database()
+            .ref()
+            .update(updates)
+            .catch(e => e)
+    },
+    async deleteChat(state, id) {
+        return firebase
+            .database()
+            .ref('/chat_members/' + id)
+            .remove()
+            .then(() => firebase
+                .database()
+                .ref('/chats/' + id)
+                .remove()
+                .then(() => firebase
+                    .database()
+                    .ref('/messeges/' + id)
+                    .remove()
+                )
+            )
     }
 }

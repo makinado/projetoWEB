@@ -135,7 +135,12 @@
       </v-flex>
       <v-flex sm6 xs12 md6 lg3>
         <router-link to="/usuarios">
-          <StatsCard color="info" icon="fa fa-user-o" title="Usuários online" />
+          <StatsCard
+            color="info"
+            icon="fa fa-user-o"
+            title="Usuários online"
+            :value="usuarioStore.usuariosOnline[0] || 0"
+          />
         </router-link>
       </v-flex>
 
@@ -421,7 +426,7 @@ export default {
       },
       set(value) {
         this.painel.data_inicial = value;
-      }
+      },
     },
     computedDateFormatted1: {
       get() {
@@ -429,25 +434,25 @@ export default {
       },
       set(value) {
         this.painel.data_final = value;
-      }
+      },
     },
     params() {
       return {
-        ...this.painel
+        ...this.painel,
       };
     },
     onlineUsers: {
       get() {
         return this.$store.getters.onlineUsers;
-      }
-    }
+      },
+    },
   },
   components: {
     PageTitle: () => import("../template/PageTitle"),
     Card: () => import("../material/Card"),
     StatsCard: () => import("../material/StatsCard"),
     LineChart: () => import("../charts/LineChart"),
-    BarChart: () => import("../charts/BarChart")
+    BarChart: () => import("../charts/BarChart"),
   },
   watch: {
     params() {
@@ -460,7 +465,7 @@ export default {
       if (this.usuarioStore.currentUsuario["financeiro_read"])
         this.renderGraficoPerformance();
       this.renderGraficoCadastros();
-    }
+    },
   },
   data() {
     return {
@@ -483,8 +488,8 @@ export default {
             tooltip: "Maximizar visualização",
             required: true,
             graph: "financeiro",
-            method: "maximize"
-          }
+            method: "maximize",
+          },
         ],
         performance: [
           {
@@ -492,8 +497,8 @@ export default {
             tooltip: "Maximizar visualização",
             required: true,
             graph: "performance",
-            method: "maximize"
-          }
+            method: "maximize",
+          },
         ],
         fluxoCaixa: [
           {
@@ -501,8 +506,8 @@ export default {
             tooltip: "Maximizar visualização",
             required: true,
             graph: "fluxoCaixa",
-            method: "maximize"
-          }
+            method: "maximize",
+          },
         ],
         cadastros: [
           {
@@ -510,8 +515,8 @@ export default {
             tooltip: "Maximizar visualização",
             required: true,
             graph: "cadastros",
-            method: "maximize"
-          }
+            method: "maximize",
+          },
         ],
         classificacoes: [
           {
@@ -519,9 +524,9 @@ export default {
             tooltip: "Maximizar visualização",
             required: true,
             graph: "classificacoes",
-            method: "maximize"
-          }
-        ]
+            method: "maximize",
+          },
+        ],
       },
       graficoFinanceiro: {
         activeIndex: 0,
@@ -530,10 +535,10 @@ export default {
         gradientColors: [
           "rgba(76, 211, 150, 0.1)",
           "rgba(53, 183, 125, 0)",
-          "rgba(119,52,169,0)"
+          "rgba(119,52,169,0)",
         ],
         gradientStops: [1, 0.4, 0],
-        categories: []
+        categories: [],
       },
       graficoFluxoCaixa: {
         activeIndex: 0,
@@ -542,10 +547,10 @@ export default {
         gradientColors: [
           "rgba(76, 211, 150, 0.1)",
           "rgba(53, 183, 125, 0)",
-          "rgba(119,52,169,0)"
+          "rgba(119,52,169,0)",
         ],
         gradientStops: [1, 0.4, 0],
-        categories: []
+        categories: [],
       },
       graficoPerformance: {
         activeIndex: 0,
@@ -554,10 +559,10 @@ export default {
         gradientColors: [
           "rgba(76, 211, 150, 0.1)",
           "rgba(53, 183, 125, 0)",
-          "rgba(119,52,169,0)"
+          "rgba(119,52,169,0)",
         ],
         gradientStops: [1, 0.4, 0],
-        categories: []
+        categories: [],
       },
       graficoCadastros: {
         chartData: null,
@@ -565,8 +570,8 @@ export default {
         gradientColors: [
           "rgba(76, 211, 150, 0.1)",
           "rgba(53, 183, 125, 0)",
-          "rgba(119,52,169,0)"
-        ]
+          "rgba(119,52,169,0)",
+        ],
       },
       graficoClassificacoes: {
         chartData: null,
@@ -574,17 +579,17 @@ export default {
         gradientColors: [
           "rgba(76, 211, 150, 0.1)",
           "rgba(53, 183, 125, 0)",
-          "rgba(119,52,169,0)"
-        ]
+          "rgba(119,52,169,0)",
+        ],
       },
       stats: {
         contasPagar: 0,
         contasReceber: 0,
-        vendas: 0
+        vendas: 0,
       },
       campeoes: {},
       metasUsuario: [],
-      metasEmpresa: []
+      metasEmpresa: [],
     };
   },
   methods: {
@@ -619,18 +624,19 @@ export default {
 
       axios
         .get(
-          `${urlBD}/stats?view=${this.painel.mode}&data_inicial=${this.painel
-            .data_inicial || ""}&data_final=${this.painel.data_final || ""}`
+          `${urlBD}/stats?view=${this.painel.mode}&data_inicial=${
+            this.painel.data_inicial || ""
+          }&data_final=${this.painel.data_final || ""}`
         )
-        .then(res => {
+        .then((res) => {
           this.stats = {
             contasPagar: res.data.contasPagar,
             contasReceber: res.data.contasReceber,
-            vendas: res.data.vendas
+            vendas: res.data.vendas,
           };
 
-          axios.get(`${urlBD}/eventos_agenda`).then(res => {
-            this.arrayEvents = res.data.map(evento => {
+          axios.get(`${urlBD}/eventos_agenda`).then((res) => {
+            this.arrayEvents = res.data.map((evento) => {
               const date = new Date(evento.data);
 
               return date.toISOString().substr(0, 10);
@@ -638,10 +644,10 @@ export default {
           });
           axios
             .get(`${urlBD}/usuarioMetas/${this.usuarioStore.currentUsuario.id}`)
-            .then(res => {
+            .then((res) => {
               this.metasUsuario = res.data;
             });
-          axios.get(`${urlBD}/empresaMetas/`).then(res => {
+          axios.get(`${urlBD}/empresaMetas/`).then((res) => {
             this.metasEmpresa = res.data.data;
           });
         })
@@ -655,14 +661,15 @@ export default {
     async renderGraficoFluxoCaixa() {
       axios
         .get(
-          `${urlBD}/stats/graficoFluxoCaixa?view=${
-            this.painel.mode
-          }&empresa=${this.painel.empresa || ""}&data_inicial=${this.painel
-            .data_inicial || ""}&data_final=${this.painel.data_final || ""}`
+          `${urlBD}/stats/graficoFluxoCaixa?view=${this.painel.mode}&empresa=${
+            this.painel.empresa || ""
+          }&data_inicial=${this.painel.data_inicial || ""}&data_final=${
+            this.painel.data_final || ""
+          }`
         )
-        .then(res => {
-          const contas = res.data.map(series => {
-            return series.map(item => Number(item.sum));
+        .then((res) => {
+          const contas = res.data.map((series) => {
+            return series.map((item) => Number(item.sum));
           });
 
           let chartData = {
@@ -681,7 +688,7 @@ export default {
                 pointHoverRadius: 4,
                 pointHoverBorderWidth: 15,
                 pointRadius: 4,
-                data: contas[0]
+                data: contas[0],
               },
               {
                 label: "Saídas",
@@ -697,8 +704,8 @@ export default {
                 pointHoverRadius: 4,
                 pointHoverBorderWidth: 15,
                 pointRadius: 4,
-                data: contas[1]
-              }
+                data: contas[1],
+              },
             ],
             labels:
               this.painel.mode == "year"
@@ -714,7 +721,7 @@ export default {
                     "SET",
                     "OUT",
                     "NOV",
-                    "DEZ"
+                    "DEZ",
                   ]
                 : [
                     "0",
@@ -748,8 +755,8 @@ export default {
                     "28",
                     "29",
                     "30",
-                    "31"
-                  ]
+                    "31",
+                  ],
           };
           this.graficoFluxoCaixa.chartData = chartData;
         })
@@ -758,14 +765,15 @@ export default {
     async renderGraficoFinanceiro() {
       axios
         .get(
-          `${urlBD}/stats/graficoFinanceiro?view=${
-            this.painel.mode
-          }&empresa=${this.painel.empresa || ""}&data_inicial=${this.painel
-            .data_inicial || ""}&data_final=${this.painel.data_final || ""}`
+          `${urlBD}/stats/graficoFinanceiro?view=${this.painel.mode}&empresa=${
+            this.painel.empresa || ""
+          }&data_inicial=${this.painel.data_inicial || ""}&data_final=${
+            this.painel.data_final || ""
+          }`
         )
-        .then(res => {
-          const contas = res.data.map(series => {
-            return series.map(item => Number(item.sum));
+        .then((res) => {
+          const contas = res.data.map((series) => {
+            return series.map((item) => Number(item.sum));
           });
 
           let chartData = {
@@ -784,7 +792,7 @@ export default {
                 pointHoverRadius: 4,
                 pointHoverBorderWidth: 15,
                 pointRadius: 4,
-                data: contas[0]
+                data: contas[0],
               },
               {
                 label: "Contas a pagar",
@@ -800,8 +808,8 @@ export default {
                 pointHoverRadius: 4,
                 pointHoverBorderWidth: 15,
                 pointRadius: 4,
-                data: contas[1]
-              }
+                data: contas[1],
+              },
             ],
             labels:
               this.painel.mode == "year"
@@ -817,7 +825,7 @@ export default {
                     "SET",
                     "OUT",
                     "NOV",
-                    "DEZ"
+                    "DEZ",
                   ]
                 : [
                     "0",
@@ -851,8 +859,8 @@ export default {
                     "28",
                     "29",
                     "30",
-                    "31"
-                  ]
+                    "31",
+                  ],
           };
           this.graficoFinanceiro.chartData = chartData;
         })
@@ -861,14 +869,15 @@ export default {
     async renderGraficoPerformance() {
       axios
         .get(
-          `${urlBD}/stats/graficoPerformance?view=${
-            this.painel.mode
-          }&empresa=${this.painel.empresa || ""}&data_inicial=${this.painel
-            .data_inicial || ""}&data_final=${this.painel.data_final || ""}`
+          `${urlBD}/stats/graficoPerformance?view=${this.painel.mode}&empresa=${
+            this.painel.empresa || ""
+          }&data_inicial=${this.painel.data_inicial || ""}&data_final=${
+            this.painel.data_final || ""
+          }`
         )
-        .then(res => {
-          const data = res.data.map(series => {
-            return series.map(item => Number(item.sum));
+        .then((res) => {
+          const data = res.data.map((series) => {
+            return series.map((item) => Number(item.sum));
           });
           let chartData = {
             datasets: [
@@ -886,7 +895,7 @@ export default {
                 pointHoverRadius: 4,
                 pointHoverBorderWidth: 15,
                 pointRadius: 4,
-                data: data[0]
+                data: data[0],
               },
               {
                 label: "Compras",
@@ -902,8 +911,8 @@ export default {
                 pointHoverRadius: 4,
                 pointHoverBorderWidth: 15,
                 pointRadius: 4,
-                data: data[1]
-              }
+                data: data[1],
+              },
             ],
             labels:
               this.painel.mode == "year"
@@ -919,7 +928,7 @@ export default {
                     "SET",
                     "OUT",
                     "NOV",
-                    "DEZ"
+                    "DEZ",
                   ]
                 : [
                     "0",
@@ -953,8 +962,8 @@ export default {
                     "28",
                     "29",
                     "30",
-                    "31"
-                  ]
+                    "31",
+                  ],
           };
           this.graficoPerformance.chartData = chartData;
           this.graficoPerformance.activeIndex = 0;
@@ -964,7 +973,7 @@ export default {
     async renderGraficoCadastros() {
       axios
         .get(`${urlBD}/stats/graficoCadastros?view=${this.painel.mode}`)
-        .then(res => {
+        .then((res) => {
           let chartData = {
             datasets: [
               {
@@ -973,16 +982,16 @@ export default {
                 borderWidth: 2,
                 borderDash: [],
                 borderDashOffset: 0.0,
-                data: res.data
-              }
+                data: res.data,
+              },
             ],
             labels: [
               "CLIENTES",
               "FORNECEDORES",
               "TRANSPORTADORAS",
               "USUÁRIOS",
-              "PRODUTOS"
-            ]
+              "PRODUTOS",
+            ],
           };
           this.graficoCadastros.chartData = chartData;
         })
@@ -991,7 +1000,7 @@ export default {
     async renderGraficoClassificacoes() {
       axios
         .get(`${urlBD}/stats/graficoClassificacoes?view=${this.painel.mode}`)
-        .then(res => {
+        .then((res) => {
           let chartData = {
             datasets: [
               {
@@ -1000,16 +1009,16 @@ export default {
                 borderWidth: 2,
                 borderDash: [],
                 borderDashOffset: 0.0,
-                data: res.data
-              }
+                data: res.data,
+              },
             ],
             labels: [
               "CLIENTES",
               "FORNECEDORES",
               "TRANSPORTADORAS",
               "USUÁRIOS",
-              "PRODUTOS"
-            ]
+              "PRODUTOS",
+            ],
           };
           this.graficoClassificacoes.chartData = chartData;
         })
@@ -1018,28 +1027,22 @@ export default {
     async loadCampeoes() {
       axios
         .get(`${urlBD}/stats/campeoes?view=${this.painel.mode}`)
-        .then(res => {
+        .then((res) => {
           this.campeoes = res.data;
         })
         .catch(showError);
-    }
+    },
   },
   async mounted() {
-    this.$set(this.painel, "mode", "year");
-    this.$set(this.painel, "empresa", this.empresaStore.currentEmpresa || 1);
-    this.$set(
-      this.painel,
-      "data_inicial",
-      new Date().toISOString().substr(0, 10)
-    );
-    this.$set(
-      this.painel,
-      "data_final",
-      new Date().toISOString().substr(0, 10)
-    );
+    this.painel = {
+      mode: "year",
+      empresa: this.empresaStore.currentEmpresa,
+      data_inicial: new Date().toISOString().substr(0, 10),
+      data_final: new Date().toISOString().substr(0, 10),
+    };
     this.$store.dispatch("loadNotificacoes");
 
     this.loadCampeoes();
-  }
+  },
 };
 </script>
