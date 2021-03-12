@@ -20,7 +20,7 @@
     "firebase": "^7.14.0",
     "font-awesome": "4.7.0",
     "formatar-valores": "0.0.6",
-    "jspdf": "^1.5.3",
+    "jspdf": "^2.3.1",
     "jspdf-autotable": "^3.2.11",
     "material-design-icons-iconfont": "^5.0.1",
     "moment": "^2.26.0",
